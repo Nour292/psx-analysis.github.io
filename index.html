@@ -244,18 +244,19 @@ function score(s){
 // ===============================
 function verdict(s, score, z) {
 
+  const supportLow = Number(z.support.split("–")[0]);
+
   // BUY
   if (score >= 82) {
     return {
       v: "🟢 BUY",
       rr: "0",
-      target: z.target  // upside target
+      target: z.target   // upside target
     };
   }
 
   // SHORT SELL
   if (score <= 42) {
-    const supportLow = Number(z.support.split("–")[0]);
     return {
       v: "🟠 SHORT SELL",
       rr: "0",
