@@ -10,7 +10,7 @@ button { margin: 5px; padding: 6px 12px; }
 #addForm input { width: 90px; margin: 2px; }
 table { border-collapse: collapse; margin-top: 10px; }
 th, td { border: 1px solid #999; padding: 4px 8px; font-size: 13px; }
-pre { font-size: 13px; }
+pre { font-size: 13px; white-space: pre-wrap; }
 </style>
 </head>
 
@@ -54,33 +54,7 @@ Volume <input id="fVolume">
 
 <div id="output"></div>
 
-<script data-version="v3">
-
-// ===============================
-// CONFIG
-// ===============================
-const csvFile = "data.csv";
-let inMemoryData = [];
-
-// ===============================
-// LOAD CSV
-// ===============================
-async function loadCSV() {
-  const res = await fetch(csvFile);
-  const text = await res.text();
-  return parseCSV(text);
-}
-
-function parseCSV(text) {
-  const lines = text.trim().split("\n");
-  const headers = lines[0].split(",");
-  return lines.slice(1).map(line => {
-    const cols = line.split(",");
-    const obj = {};
-    headers.forEach((h, i) => obj[h.trim()] = cols[i] ? cols[i].trim() : "");
-    return obj;
-  });
-}
+<script>
 
 // ===============================
 // HELPERS
@@ -116,9 +90,7 @@ function zones(s){
 
   anchors.sort((a,b)=>Math.abs(p-a)-Math.abs(p-b));
 
-  let support="";
-  if(anchors.length===0) support=range(p-w,w);
-  else support=range(anchors[0],w);
+  let support = anchors.length===0 ? range(p-w,w) : range(anchors[0],w);
 
   let resAnchor=Math.ceil(p/10)*10;
   if(high52 && Math.abs(high52-p)<=w) resAnchor=high52;
@@ -133,26 +105,25 @@ function zones(s){
 // SCORING
 // ===============================
 function score(s){
-  let pts = 0;
-  let max = 0;
+  let pts=0, max=0;
 
-  const p = num(s.Price);
-  const ma50 = num(s["MA50-D"]);
-  const ma200 = num(s["MA200-D"]);
-  const ma50w = num(s["MA50-W"]);
-  const ma200w = num(s["MA200-W"]);
-  const rsid = num(s["RSI-D"]);
-  const rsiw = num(s["RSI-W"]);
-  const macdD = num(s["MACD-H-D"]);
-  const macdW = num(s["MACD-H-W"]);
-  const vol = num(s["Volume"]);
-  const high52 = num(s["52W-High"]);
-  const low52 = num(s["52W-Low"]);
+  const p=num(s.Price);
+  const ma50=num(s["MA50-D"]);
+  const ma200=num(s["MA200-D"]);
+  const ma50w=num(s["MA50-W"]);
+  const ma200w=num(s["MA200-W"]);
+  const rsid=num(s["RSI-D"]);
+  const rsiw=num(s["RSI-W"]);
+  const macdD=num(s["MACD-H-D"]);
+  const macdW=num(s["MACD-H-W"]);
+  const vol=num(s["Volume"]);
+  const high52=num(s["52W-High"]);
+  const low52=num(s["52W-Low"]);
 
-  if(ma50){ max+=10; pts+= p>ma50 ? 10 : 3; }
-  if(ma200){ max+=10; pts+= p>ma200 ? 10 : 3; }
-  if(ma50 && ma200){ max+=8; pts+= ma50>ma200 ? 8 : 2; }
-  if(ma50w && ma200w){ max+=8; pts+= ma50w>ma200w ? 8 : 2; }
+  if(ma50){ max+=10; pts+= p>ma50?10:3; }
+  if(ma200){ max+=10; pts+= p>ma200?10:3; }
+  if(ma50&&ma200){ max+=8; pts+= ma50>ma200?8:2; }
+  if(ma50w&&ma200w){ max+=8; pts+= ma50w>ma200w?8:2; }
 
   if(rsid){ max+=10; pts+= (rsid>=40&&rsid<=70)?8:(rsid<50?4:2); }
   if(rsiw){ max+=10; pts+= (rsiw>=40&&rsiw<=70)?8:(rsiw<50?4:2); }
@@ -162,27 +133,25 @@ function score(s){
 
   if(vol){ max+=8; pts+=6; }
 
-  if(high52 && low52){
+  if(high52&&low52){
     max+=7;
     const distLow=(p-low52)/low52;
     const distHigh=(high52-p)/high52;
-    if(distLow<=0.10) pts+=7;
-    else if(distHigh<=0.05) pts+=2;
-    else pts+=4;
+    pts+= distLow<=0.10?7:(distHigh<=0.05?2:4);
   }
 
   if(ma50||ma200){
     max+=5;
-    const anchor = ma50&&ma200 ? (Math.abs(p-ma50)<Math.abs(p-ma200)?ma50:ma200) : (ma50||ma200);
+    const anchor=ma50&&ma200?(Math.abs(p-ma50)<Math.abs(p-ma200)?ma50:ma200):(ma50||ma200);
     pts+= (anchor && Math.abs(p-anchor)/p<=0.02)?5:2;
   }
 
-  let sc = max ? (pts/max)*100 : 0;
+  let sc=max?(pts/max)*100:0;
 
   if(ma50&&ma200&&ma50w&&ma200w){
-    const dailyUp = p>ma50 && p>ma200 && ma50>=ma200;
-    const weeklyUp = ma50w>ma200w;
-    if(dailyUp && weeklyUp) sc+=5;
+    const dailyUp=p>ma50&&p>ma200&&ma50>=ma200;
+    const weeklyUp=ma50w>ma200w;
+    if(dailyUp&&weeklyUp) sc+=5;
   }
 
   return Math.round(Math.min(sc,100));
@@ -191,8 +160,8 @@ function score(s){
 // ===============================
 // VERDICT
 // ===============================
-function verdict(s, score, z){
-  const supportLow = Number(z.support.split("–")[0]);
+function verdict(s,score,z){
+  const supportLow=Number(z.support.split("–")[0]);
 
   if(score>=82) return {v:"🟢 BUY", target:z.target};
   if(score<=42) return {v:"🟠 SHORT SELL", target:supportLow};
@@ -282,48 +251,55 @@ function render(rows){
 // ===============================
 // RUN ANALYSIS
 // ===============================
-function runAnalysis(){
+async function runAnalysis(){
 
-  const source = inMemoryData.length>0 ? inMemoryData : inMemoryData;
+  const res=await fetch("data.csv");
+  const text=await res.text();
 
-  loadCSV().then(data=>{
-    inMemoryData=data;
+  const lines=text.trim().split("\n");
+  const headers=lines[0].split(",");
 
-    const rows=data.map(s=>{
-      const z=zones(s);
-      const sc=score(s);
-      const v=verdict(s,sc,z);
+  const data=lines.slice(1).map(line=>{
+    const cols=line.split(",");
+    const obj={};
+    headers.forEach((h,i)=> obj[h.trim()]=cols[i]?cols[i].trim():"");
+    return obj;
+  });
 
-      const p=num(s.Price);
-      const supportLow=Number(z.support.split("–")[0]);
-      const reward=Math.abs(v.target-p);
-      const risk=Math.abs(p-supportLow);
-      const rr=risk===0?0:(reward/risk).toFixed(2);
+  const rows=data.map(s=>{
+    const z=zones(s);
+    const sc=score(s);
+    const v=verdict(s,sc,z);
 
-      return {
+    const p=num(s.Price);
+    const supportLow=Number(z.support.split("–")[0]);
+    const reward=Math.abs(v.target-p);
+    const risk=Math.abs(p-supportLow);
+    const rr=risk===0?0:(reward/risk).toFixed(2);
+
+    return {
+      Symbol:s.Symbol,
+      Price:s.Price,
+      Support:z.support,
+      Resistance:z.resistance,
+      Target:v.target,
+      Score:sc,
+      Verdict:v.v,
+      RR:rr,
+      TradePlan:tradePlan({
         Symbol:s.Symbol,
         Price:s.Price,
         Support:z.support,
         Resistance:z.resistance,
         Target:v.target,
-        Score:sc,
-        Verdict:v.v,
         RR:rr,
-        TradePlan:tradePlan({
-          Symbol:s.Symbol,
-          Price:s.Price,
-          Support:z.support,
-          Resistance:z.resistance,
-          Target:v.target,
-          RR:rr,
-          Verdict:v.v,
-          Score:sc
-        })
-      };
-    });
-
-    render(rows);
+        Verdict:v.v,
+        Score:sc
+      })
+    };
   });
+
+  render(rows);
 }
 
 // initial run
