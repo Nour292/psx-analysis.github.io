@@ -303,24 +303,39 @@ At ₨${p}: EXIT NOW or TRIM.
 // RENDER
 // ===============================
 function render(rows){
-  const order = {
-  "🟢": 1,   // BUY → top
-  "🟡": 2,   // WATCH
-  "⚪": 3,   // WAIT
-  "🟠": 4    // SHORT SELL → bottom
-};
+  // Group order: BUY → WATCH → WAIT → SHORT SELL
+  const groupOrder = {
+    "🟢": 1,   // BUY
+    "🟡": 2,   // WATCH
+    "⚪": 3,   // WAIT
+    "🟠": 4    // SHORT SELL
+  };
 
-  rows.sort((a,b)=>{
-    const va = order[a.Verdict[0]] || 9;
-    const vb = order[b.Verdict[0]] || 9;
-    if(va!==vb) return va-vb;
-    return b.Score - a.Score;
+  rows.sort((a, b) => {
+    const ga = groupOrder[a.Verdict] || 99;
+    const gb = groupOrder[b.Verdict] || 99;
+
+    // First: sort by group (BUY top, SHORT bottom)
+    if (ga !== gb) return ga - gb;
+
+    // Inside each group:
+    // BUY / WATCH / WAIT → higher score first
+    if (a.Verdict === "🟢" || a.Verdict === "🟡" || a.Verdict === "⚪") {
+      return b.Score - a.Score; // descending
+    }
+
+    // SHORT SELL → lower score last (ascending)
+    if (a.Verdict === "🟠") {
+      return a.Score - b.Score; // ascending
+    }
+
+    return 0;
   });
 
-  let html="<table><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th></tr>";
+  let html = "<table><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th></tr>";
 
   rows.forEach((r,i)=>{
-    html+=`<tr>
+    html += `<tr>
       <td>${i+1}</td>
       <td>${r.Symbol}</td>
       <td>${r.Price}</td>
@@ -332,33 +347,25 @@ function render(rows){
     </tr>`;
   });
 
-  html+="</table>";
+  html += "</table>";
 
-  const buy=rows.filter(r=>r.Verdict.startsWith("🟢")).map(r=>r.Symbol).join(", ")||"—";
-  const watch=rows.filter(r=>r.Verdict.startsWith("🟡")).map(r=>r.Symbol).join(", ")||"—";
-  const wait=rows.filter(r=>r.Verdict.startsWith("⚪")).map(r=>r.Symbol).join(", ")||"—";
-  const ss=rows.filter(r=>r.Verdict.startsWith("🔴")||r.Verdict.startsWith("🟠")).map(r=>r.Symbol).join(", ")||"—";
+  const buy   = rows.filter(r=>r.Verdict==="🟢").map(r=>r.Symbol).join(", ") || "—";
+  const watch = rows.filter(r=>r.Verdict==="🟡").map(r=>r.Symbol).join(", ") || "—";
+  const wait  = rows.filter(r=>r.Verdict==="⚪").map(r=>r.Symbol).join(", ") || "—";
+  const ss    = rows.filter(r=>r.Verdict==="🟠").map(r=>r.Symbol).join(", ") || "—";
 
-  html+=`
+  html += `
 <pre>
 ─────────────────────────────────────
 📈 BUY       → ${buy}
 👀 WATCH     → ${watch}
 ⏳ WAIT      → ${wait}
-📉 SELL/SHORT→ ${ss}
+📉 SHORT SELL→ ${ss}
 ─────────────────────────────────────
 </pre>
 `;
 
-  html+=`<h3>Trade Plans</h3>`;
-  rows.forEach(r=>{
-    const z=zones(r);
-    const rr = (Math.abs(z.target - num(r.Price)) / Math.abs(num(r.Price) - Number(z.support.split("–")[0]))).toFixed(2);
-    r.RR = rr;
-    html+=`<pre>${tradePlan(r)}</pre>`;
-  });
-
-  document.getElementById("output").innerHTML=html;
+  document.getElementById("output").innerHTML = html;
 }
 
 // ===============================
