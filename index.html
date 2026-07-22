@@ -3,10 +3,53 @@
 <head>
 <title>PSX Technical Analysis</title>
 <meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; }
+  button { margin: 5px; padding: 6px 12px; }
+  #addForm { margin-top: 10px; padding: 10px; border: 1px solid #ccc; display:none; }
+  #addForm input { width: 90px; margin: 2px; }
+  table { border-collapse: collapse; margin-top: 10px; }
+  th, td { border: 1px solid #999; padding: 4px 8px; font-size: 13px; }
+  pre { font-size: 13px; }
+</style>
 </head>
 
 <body>
 <h2>PSX Technical Analysis</h2>
+
+<div>
+  <button onclick="showAddForm()">Add Data</button>
+  <button onclick="runAnalysis()">Technical Analysis</button>
+</div>
+
+<div id="addForm">
+  <h4>Add Row (will appear in analysis & CSV output)</h4>
+  <div>
+    Symbol <input id="fSymbol">
+    Price <input id="fPrice">
+    MA50-D <input id="fMA50D">
+    MA200-D <input id="fMA200D">
+    RSI-D <input id="fRSID">
+    MACD-H-D <input id="fMACDDD">
+    Signal-D <input id="fSignalD">
+  </div>
+  <div>
+    MA50-W <input id="fMA50W">
+    MA200-W <input id="fMA200W">
+    RSI-W <input id="fRSIW">
+    MACD-H-W <input id="fMACDDW">
+    Signal-W <input id="fSignalW">
+    Volume <input id="fVolume">
+    52W-High <input id="fHigh52">
+    52W-Low <input id="fLow52">
+  </div>
+  <button onclick="addRow()">Add to in-memory data</button>
+  <button onclick="hideAddForm()">Close</button>
+  <div>
+    <p><b>Updated CSV (copy this into data.csv on GitHub):</b></p>
+    <textarea id="csvOut" rows="8" cols="120"></textarea>
+  </div>
+</div>
 
 <div id="output"></div>
 
@@ -15,6 +58,7 @@
 // CONFIG
 // ===============================
 const csvFile = "data.csv";   // MUST match your file name
+let inMemoryData = [];        // parsed rows + added rows
 
 // ===============================
 // LOAD CSV
@@ -55,7 +99,7 @@ function range(center,w){
 }
 
 // ===============================
-// SUPPORT / RESISTANCE
+// SUPPORT / RESISTANCE (SKILL)
 // ===============================
 function zones(s){
   const p=num(s.Price);
@@ -154,7 +198,7 @@ function score(s){
 // ===============================
 // VERDICT (SKILL RULES)
 // ===============================
-function verdict(s,scoreVal,z){
+function verdict(s,score,z){
   const p = num(s.Price);
   const ma50 = num(s["MA50-D"]);
   const ma200 = num(s["MA200-D"]);
@@ -163,6 +207,7 @@ function verdict(s,scoreVal,z){
   const rsid = num(s["RSI-D"]);
   const macdD = num(s["MACD-H-D"]);
   const macdW = num(s["MACD-H-W"]);
+  const high52 = num(s["52W-High"]);
 
   const [s1] = z.support.split("–").map(Number);
   const reward = Math.abs(z.target - p);
@@ -189,8 +234,8 @@ function verdict(s,scoreVal,z){
   if(buyCond) v="🟢 BUY";
   else if(shortCond) v="🟠 SHORT SALE";
   else if(macdD<0 && macdW<0) v="🔴 SELL";
-  else if(scoreVal>=45 && scoreVal<60) v="🟡 WATCH";
-  else if(scoreVal<45) v="⚫ AVOID";
+  else if(score>=45 && score<60) v="🟡 WATCH";
+  else if(score<45) v="⚫ AVOID";
 
   return {v, rr: rr.toFixed(2)};
 }
@@ -199,7 +244,16 @@ function verdict(s,scoreVal,z){
 // RENDER
 // ===============================
 function render(rows){
-  let html="<table border='1' cellpadding='5'><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th></tr>";
+  // sort: BUY → WATCH → WAIT → SELL/SHORT/AVOID
+  const order = {"🟢":1,"🟡":2,"⚪":3,"🔴":4,"🟠":4,"⚫":5};
+  rows.sort((a,b)=>{
+    const va = order[a.Verdict[0]] || 9;
+    const vb = order[b.Verdict[0]] || 9;
+    if(va!==vb) return va-vb;
+    return b.Score - a.Score;
+  });
+
+  let html="<table><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th></tr>";
 
   rows.forEach((r,i)=>{
     html+=`<tr>
@@ -236,26 +290,91 @@ function render(rows){
 }
 
 // ===============================
-// RUN
+// ADD DATA FORM
 // ===============================
-loadCSV().then(data => {
-  const rows=data.map(s=>{
-    const z=zones(s);
-    const sc=score(s);
-    const v=verdict(s,sc,z);
-    return {
-      Symbol:s.Symbol,
-      Price:s.Price,
-      Support:z.support,
-      Resistance:z.resistance,
-      Target:z.target.toFixed(2),
-      Score:sc,
-      Verdict:v.v
-    };
-  });
+function showAddForm(){ document.getElementById("addForm").style.display="block"; }
+function hideAddForm(){ document.getElementById("addForm").style.display="none"; }
 
-  render(rows);
-});
+function addRow(){
+  const s = {
+    Symbol: document.getElementById("fSymbol").value,
+    Price: document.getElementById("fPrice").value,
+    "MA50-D": document.getElementById("fMA50D").value,
+    "MA200-D": document.getElementById("fMA200D").value,
+    "RSI-D": document.getElementById("fRSID").value,
+    "MACD-H-D": document.getElementById("fMACDDD").value,
+    "Signal-D": document.getElementById("fSignalD").value,
+    "MA50-W": document.getElementById("fMA50W").value,
+    "MA200-W": document.getElementById("fMA200W").value,
+    "RSI-W": document.getElementById("fRSIW").value,
+    "MACD-H-W": document.getElementById("fMACDDW").value,
+    "Signal-W": document.getElementById("fSignalW").value,
+    "Volume": document.getElementById("fVolume").value,
+    "52W-High": document.getElementById("fHigh52").value,
+    "52W-Low": document.getElementById("fLow52").value
+  };
+  inMemoryData.push(s);
+  updateCSVOutput();
+  runAnalysis(); // re-run with new row
+}
+
+function updateCSVOutput(){
+  const headers = [
+    "Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
+    "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low"
+  ];
+  let lines = [headers.join(",")];
+  inMemoryData.forEach(r=>{
+    lines.push(headers.map(h=>r[h] ?? "").join(","));
+  });
+  document.getElementById("csvOut").value = lines.join("\n");
+}
+
+// ===============================
+// RUN TECHNICAL ANALYSIS
+// ===============================
+function runAnalysis(){
+  if(inMemoryData.length>0){
+    const rows = inMemoryData.map(s=>{
+      const z=zones(s);
+      const sc=score(s);
+      const v=verdict(s,sc,z);
+      return {
+        Symbol:s.Symbol,
+        Price:s.Price,
+        Support:z.support,
+        Resistance:z.resistance,
+        Target:z.target.toFixed(2),
+        Score:sc,
+        Verdict:v.v
+      };
+    });
+    render(rows);
+  } else {
+    loadCSV().then(data => {
+      inMemoryData = data;
+      updateCSVOutput();
+      const rows=data.map(s=>{
+        const z=zones(s);
+        const sc=score(s);
+        const v=verdict(s,sc,z);
+        return {
+          Symbol:s.Symbol,
+          Price:s.Price,
+          Support:z.support,
+          Resistance:z.resistance,
+          Target:z.target.toFixed(2),
+          Score:sc,
+          Verdict:v.v
+        };
+      });
+      render(rows);
+    });
+  }
+}
+
+// initial run
+runAnalysis();
 </script>
 
 </body>
