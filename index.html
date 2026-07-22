@@ -14,7 +14,7 @@
 // ===============================
 // CONFIG
 // ===============================
-const csvFile = "data.csv";
+const csvFile = "data.csv";   // make sure your file name is EXACTLY data.csv
 
 // ===============================
 // LOAD CSV
@@ -210,7 +210,7 @@ function render(rows){
 // ===============================
 // RUN
 // ===============================
-loadCSV().then(data.csv=>{
+loadCSV().then(data => {
   const rows=data.map(s=>{
     const z=zones(s);
     const sc=score(s);
