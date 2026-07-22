@@ -258,6 +258,7 @@ function verdict(s,score,z){
   const risk = Math.abs(p - s1);
   const rr = risk === 0 ? 0 : reward / risk;
 
+  // Claude BUY logic
   const macdTurningUp = (macdD < 0 && signalD > macdD);
 
   let v = "⚪ WAIT";
