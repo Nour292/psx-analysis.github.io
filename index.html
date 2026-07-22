@@ -4,53 +4,58 @@
 <title>PSX Technical Analysis</title>
 <meta charset="UTF-8">
 <style>
-  body { font-family: Arial; }
-  button { margin: 5px; padding: 6px 12px; }
-  #addForm { margin-top: 10px; padding: 10px; border: 1px solid #ccc; display:none; }
-  #addForm input { width: 90px; margin: 2px; }
-  table { border-collapse: collapse; margin-top: 10px; }
-  th, td { border: 1px solid #999; padding: 4px 8px; font-size: 13px; }
-  pre { font-size: 13px; }
+body { font-family: Arial; }
+button { margin: 5px; padding: 6px 12px; }
+#addForm { margin-top: 10px; padding: 10px; border: 1px solid #ccc; display:none; }
+#addForm input { width: 90px; margin: 2px; }
+table { border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #999; padding: 4px 8px; font-size: 13px; }
+pre { font-size: 13px; }
 </style>
 </head>
 
 <body>
+
 <h2>PSX Technical Analysis</h2>
 
 <button onclick="showAddForm()">Add Data</button>
 <button onclick="runAnalysis()">Technical Analysis</button>
 
 <div id="addForm">
-  <h4>Add Row</h4>
-  <div>
-    Symbol <input id="fSymbol">
-    Price <input id="fPrice">
-    MA50-D <input id="fMA50D">
-    MA200-D <input id="fMA200D">
-    RSI-D <input id="fRSID">
-    MACD-H-D <input id="fMACDDD">
-    Signal-D <input id="fSignalD">
-  </div>
-  <div>
-    MA50-W <input id="fMA50W">
-    MA200-W <input id="fMA200W">
-    RSI-W <input id="fRSIW">
-    MACD-H-W <input id="fMACDDW">
-    Signal-W <input id="fSignalW">
-    Volume <input id="fVolume">
-    52W-High <input id="fHigh52">
-    52W-Low <input id="fLow52">
-  </div>
-  <button onclick="addRow()">Add</button>
-  <button onclick="hideAddForm()">Close</button>
+<h4>Add Row</h4>
 
-  <p><b>Updated CSV (copy into data.csv on GitHub):</b></p>
-  <textarea id="csvOut" rows="8" cols="120"></textarea>
+<div>
+Symbol <input id="fSymbol">
+Price <input id="fPrice">
+MA50-D <input id="fMA50D">
+MA200-D <input id="fMA200D">
+RSI-D <input id="fRSID">
+MACD-H-D <input id="fMACDDD">
+Signal-D <input id="fSignalD">
+</div>
+
+<div>
+MA50-W <input id="fMA50W">
+MA200-W <input id="fMA200W">
+RSI-W <input id="fRSIW">
+MACD-H-W <input id="fMACDDW">
+Signal-W <input id="fSignalW">
+Volume <input id="fVolume">
+52W-High <input id="fHigh52">
+52W-Low <input id="fLow52">
+</div>
+
+<button onclick="addRow()">Add</button>
+<button onclick="hideAddForm()">Close</button>
+
+<p><b>Updated CSV (copy into data.csv on GitHub):</b></p>
+<textarea id="csvOut" rows="8" cols="120"></textarea>
 </div>
 
 <div id="output"></div>
-  
+
 <script data-version="v3">
+
 // ===============================
 // CONFIG
 // ===============================
@@ -108,6 +113,7 @@ function zones(s){
   let anchors=[];
   if(ma50 && ma50<p) anchors.push(ma50);
   if(ma200 && ma200<p) anchors.push(ma200);
+
   anchors.sort((a,b)=>Math.abs(p-a)-Math.abs(p-b));
 
   let support="";
@@ -116,6 +122,7 @@ function zones(s){
 
   let resAnchor=Math.ceil(p/10)*10;
   if(high52 && Math.abs(high52-p)<=w) resAnchor=high52;
+
   let resistance=range(resAnchor,w);
   let target=resAnchor+w*2;
 
@@ -123,7 +130,7 @@ function zones(s){
 }
 
 // ===============================
-// ⭐ CORRECTED CLAUDE-MATCHING SCORING
+// SCORING
 // ===============================
 function score(s){
   let pts = 0;
@@ -142,155 +149,80 @@ function score(s){
   const high52 = num(s["52W-High"]);
   const low52 = num(s["52W-Low"]);
 
-  // Price vs MA50-D (10)
-  if(ma50){
-    max += 10;
-    if(p > ma50) pts += 10;
-    else if(p < ma50) pts += 3;
-  }
+  if(ma50){ max+=10; pts+= p>ma50 ? 10 : 3; }
+  if(ma200){ max+=10; pts+= p>ma200 ? 10 : 3; }
+  if(ma50 && ma200){ max+=8; pts+= ma50>ma200 ? 8 : 2; }
+  if(ma50w && ma200w){ max+=8; pts+= ma50w>ma200w ? 8 : 2; }
 
-  // Price vs MA200-D (10)
-  if(ma200){
-    max += 10;
-    if(p > ma200) pts += 10;
-    else if(p < ma200) pts += 3;
-  }
+  if(rsid){ max+=10; pts+= (rsid>=40&&rsid<=70)?8:(rsid<50?4:2); }
+  if(rsiw){ max+=10; pts+= (rsiw>=40&&rsiw<=70)?8:(rsiw<50?4:2); }
 
-  // MA50-D vs MA200-D (8)
-  if(ma50 && ma200){
-    max += 8;
-    if(ma50 > ma200) pts += 8;
-    else pts += 2;
-  }
+  if(macdD!==null){ max+=12; pts+= macdD>0?10:3; }
+  if(macdW!==null){ max+=12; pts+= macdW>0?10:3; }
 
-  // MA50-W vs MA200-W (8)
-  if(ma50w && ma200w){
-    max += 8;
-    if(ma50w > ma200w) pts += 8;
-    else pts += 2;
-  }
+  if(vol){ max+=8; pts+=6; }
 
-  // RSI-D (10)
-  if(rsid){
-    max += 10;
-    if(rsid >= 40 && rsid <= 70) pts += 8;
-    else if(rsid < 50) pts += 4;
-    else pts += 2;
-  }
-
-  // RSI-W (10)
-  if(rsiw){
-    max += 10;
-    if(rsiw >= 40 && rsiw <= 70) pts += 8;
-    else if(rsiw < 50) pts += 4;
-    else pts += 2;
-  }
-
-  // MACD Hist-D (12)
-  if(macdD !== null){
-    max += 12;
-    if(macdD > 0) pts += 10;
-    else pts += 3;
-  }
-
-  // MACD Hist-W (12)
-  if(macdW !== null){
-    max += 12;
-    if(macdW > 0) pts += 10;
-    else pts += 3;
-  }
-
-  // Volume (8)
-  if(vol){
-    max += 8;
-    pts += 6;
-  }
-
-  // 52W Position (7)
   if(high52 && low52){
-    max += 7;
-    const distLow = (p - low52) / low52;
-    const distHigh = (high52 - p) / high52;
-    if(distLow <= 0.10) pts += 7;
-    else if(distHigh <= 0.05) pts += 2;
-    else pts += 4;
+    max+=7;
+    const distLow=(p-low52)/low52;
+    const distHigh=(high52-p)/high52;
+    if(distLow<=0.10) pts+=7;
+    else if(distHigh<=0.05) pts+=2;
+    else pts+=4;
   }
 
-  // S/R location (5)
-  if(ma50 || ma200){
-    max += 5;
-    const anchor = ma50 && ma200
-      ? (Math.abs(p - ma50) < Math.abs(p - ma200) ? ma50 : ma200)
-      : (ma50 || ma200);
-    if(anchor && Math.abs(p - anchor) / p <= 0.02) pts += 5;
-    else pts += 2;
+  if(ma50||ma200){
+    max+=5;
+    const anchor = ma50&&ma200 ? (Math.abs(p-ma50)<Math.abs(p-ma200)?ma50:ma200) : (ma50||ma200);
+    pts+= (anchor && Math.abs(p-anchor)/p<=0.02)?5:2;
   }
 
-  // Rescale
-  let sc = max ? (pts / max) * 100 : 0;
+  let sc = max ? (pts/max)*100 : 0;
 
-  // Dual timeframe bonus (+5)
-  if(ma50 && ma200 && ma50w && ma200w){
+  if(ma50&&ma200&&ma50w&&ma200w){
     const dailyUp = p>ma50 && p>ma200 && ma50>=ma200;
-    const weeklyUp = ma50w > ma200w;
-    if(dailyUp && weeklyUp) sc += 5;
+    const weeklyUp = ma50w>ma200w;
+    if(dailyUp && weeklyUp) sc+=5;
   }
 
-  return Math.round(Math.min(sc, 100));
+  return Math.round(Math.min(sc,100));
 }
 
 // ===============================
-// VERDICT (SKILL RULES)
+// VERDICT
 // ===============================
-function verdict(s, score, z) {
-
+function verdict(s, score, z){
   const supportLow = Number(z.support.split("–")[0]);
 
-  if (score >= 82) {
-    return { v: "🟢 BUY", rr: "0", target: z.target };
-  }
-
-  if (score <= 42) {
-    return { v: "🟠 SHORT SELL", rr: "0", target: supportLow };
-  }
-
-  if (score >= 60) {
-    return { v: "🟡 WATCH", rr: "0", target: z.target };
-  }
-
-  return { v: "⚪ WAIT", rr: "0", target: z.target };
+  if(score>=82) return {v:"🟢 BUY", target:z.target};
+  if(score<=42) return {v:"🟠 SHORT SELL", target:supportLow};
+  if(score>=60) return {v:"🟡 WATCH", target:z.target};
+  return {v:"⚪ WAIT", target:z.target};
 }
 
 // ===============================
-// TRADE PLANS (GENERIC)
+// TRADE PLAN
 // ===============================
 function tradePlan(r){
-  const p = num(r.Price);
-  const verdict = r.Verdict;
-  const score = r.Score;
+  const p=num(r.Price);
 
-  if(verdict.startsWith("🟢")){
+  if(r.Verdict==="🟢 BUY"){
     return `
-🟢 ${r.Symbol} — Buy Plan | Score: ${score}
-Entry: ${r.Support} | Target: ${r.Target} | Support: ${r.Support} | R:R ≈ ${r.RR}
-At ₨${p}: BUY NOW if price is near support; otherwise WAIT for pullback.
+🟢 ${r.Symbol} — Buy Plan | Score: ${r.Score}
+Entry: ${r.Support}
+Target: ${r.Target}
+R:R ≈ ${r.RR}
+At ₨${p}: BUY near support; otherwise WAIT for pullback.
 `;
   }
 
-  if(verdict.startsWith("🟠")){
+  if(r.Verdict==="🟠 SHORT SELL"){
     return `
-🟠 ${r.Symbol} — Short Sale Plan | Score: ${score}
-Entry: ${r.Resistance} | Stop Loss: ${r.Target} | Target: ${r.Support} | R:R ≈ ${r.RR}
-At ₨${p}: SHORT NOW only if price is near resistance.
-`;
-  }
-
-  if(verdict.startsWith("🔴")){
-    return `
-🔴 ${r.Symbol} — Sell Plan | Score: ${score}
-Exit zone: ${r.Resistance}
-Reason: MACD bearish both timeframes / losing MAs
-At ₨${p}: EXIT NOW or TRIM.
+🟠 ${r.Symbol} — Short Sale Plan | Score: ${r.Score}
+Entry: ${r.Resistance}
+Target: ${r.Target}
+R:R ≈ ${r.RR}
+At ₨${p}: SHORT near resistance only.
 `;
   }
 
@@ -301,178 +233,102 @@ At ₨${p}: EXIT NOW or TRIM.
 // RENDER
 // ===============================
 function render(rows){
-  // Group order: BUY → WATCH → WAIT → SHORT SELL
-  const groupOrder = {
-    "🟢": 1,   // BUY
-    "🟡": 2,   // WATCH
-    "⚪": 3,   // WAIT
-    "🟠": 4    // SHORT SELL
+
+  const groupOrder={
+    "🟢 BUY":1,
+    "🟡 WATCH":2,
+    "⚪ WAIT":3,
+    "🟠 SHORT SELL":4
   };
 
-  rows.sort((a, b) => {
-  // Group order
-  const groupOrder = {
-    "🟢 BUY": 1,
-    "🟡 WATCH": 2,
-    "⚪ WAIT": 3,
-    "🟠 SHORT SELL": 4
-  };
+  rows.sort((a,b)=>{
+    const ga=groupOrder[a.Verdict]||99;
+    const gb=groupOrder[b.Verdict]||99;
+    if(ga!==gb) return ga-gb;
 
-  const ga = groupOrder[a.Verdict] || 99;
-  const gb = groupOrder[b.Verdict] || 99;
+    if(a.Verdict==="🟢 BUY") return b.Score-a.Score;
+    if(a.Verdict==="🟡 WATCH") return b.Score-a.Score;
+    if(a.Verdict==="⚪ WAIT") return b.Score-a.Score;
+    if(a.Verdict==="🟠 SHORT SELL") return a.Score-b.Score;
 
-  // First: sort by group
-  if (ga !== gb) return ga - gb;
+    return 0;
+  });
 
-  // Inside BUY → highest score first
-  if (a.Verdict === "🟢 BUY") {
-    return b.Score - a.Score;
-  }
-
-  // Inside WATCH → highest score first
-  if (a.Verdict === "🟡 WATCH") {
-    return b.Score - a.Score;
-  }
-
-  // Inside WAIT → highest score first
-  if (a.Verdict === "⚪ WAIT") {
-    return b.Score - a.Score;
-  }
-
-  // Inside SHORT SELL → lowest score last (ascending)
-  if (a.Verdict === "🟠 SHORT SELL") {
-    return a.Score - b.Score;
-  }
-
-  return 0;
-});
-
-  let html = "<table><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th></tr>";
+  let html="<table><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th></tr>";
 
   rows.forEach((r,i)=>{
-    html += `<tr>
-      <td>${i+1}</td>
-      <td>${r.Symbol}</td>
-      <td>${r.Price}</td>
-      <td>${r.Support}</td>
-      <td>${r.Resistance}</td>
-      <td>${r.Target}</td>
-      <td>${r.Score}</td>
-      <td>${r.Verdict}</td>
-    </tr>`;
+    html+=`
+<tr>
+<td>${i+1}</td>
+<td>${r.Symbol}</td>
+<td>${r.Price}</td>
+<td>${r.Support}</td>
+<td>${r.Resistance}</td>
+<td>${r.Target}</td>
+<td>${r.Score}</td>
+<td>${r.Verdict}</td>
+</tr>`;
   });
 
-  html += "</table>";
+  html+="</table>";
 
-  const buy   = rows.filter(r=>r.Verdict==="🟢").map(r=>r.Symbol).join(", ") || "—";
-  const watch = rows.filter(r=>r.Verdict==="🟡").map(r=>r.Symbol).join(", ") || "—";
-  const wait  = rows.filter(r=>r.Verdict==="⚪").map(r=>r.Symbol).join(", ") || "—";
-  const ss    = rows.filter(r=>r.Verdict==="🟠").map(r=>r.Symbol).join(", ") || "—";
+  html+="<h3>Trade Plans</h3><pre>";
+  rows.forEach(r=> html+= r.TradePlan + "\n");
+  html+="</pre>";
 
-  html += `
-<pre>
-─────────────────────────────────────
-📈 BUY       → ${buy}
-👀 WATCH     → ${watch}
-⏳ WAIT      → ${wait}
-📉 SHORT SELL→ ${ss}
-─────────────────────────────────────
-</pre>
-`;
-
-  document.getElementById("output").innerHTML = html;
-}
-
-// ===============================
-// ADD DATA FORM
-// ===============================
-function showAddForm(){ document.getElementById("addForm").style.display="block"; }
-function hideAddForm(){ document.getElementById("addForm").style.display="none"; }
-
-function addRow(){
-  const s = {
-    Symbol: fSymbol.value,
-    Price: fPrice.value,
-    "MA50-D": fMA50D.value,
-    "MA200-D": fMA200D.value,
-    "RSI-D": fRSID.value,
-    "MACD-H-D": fMACDDD.value,
-    "Signal-D": fSignalD.value,
-    "MA50-W": fMA50W.value,
-    "MA200-W": fMA200W.value,
-    "RSI-W": fRSIW.value,
-    "MACD-H-W": fMACDDW.value,
-    "Signal-W": fSignalW.value,
-    "Volume": fVolume.value,
-    "52W-High": fHigh52.value,
-    "52W-Low": fLow52.value
-  };
-  inMemoryData.push(s);
-  updateCSVOutput();
-  runAnalysis();
-}
-
-function updateCSVOutput(){
-  const headers = [
-    "Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
-    "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low"
-  ];
-  let lines = [headers.join(",")];
-  inMemoryData.forEach(r=>{
-    lines.push(headers.map(h=>r[h] ?? "").join(","));
-  });
-  csvOut.value = lines.join("\n");
+  document.getElementById("output").innerHTML=html;
 }
 
 // ===============================
 // RUN ANALYSIS
 // ===============================
 function runAnalysis(){
-  if(inMemoryData.length>0){
-    const rows = data.map(s => {
-  const z = zones(s);
-  const sc = score(s);
-  const v = verdict(s, sc, z);
 
-  return {
-    Symbol: s.Symbol,
-    Price: s.Price,
-    Support: z.support,
-    Resistance: z.resistance,
-    Target: z.target.toFixed(2),    // ← FIXED (use verdict target)
-    Score: sc,
-    Verdict: v.v
-  };
-});
+  const source = inMemoryData.length>0 ? inMemoryData : inMemoryData;
+
+  loadCSV().then(data=>{
+    inMemoryData=data;
+
+    const rows=data.map(s=>{
+      const z=zones(s);
+      const sc=score(s);
+      const v=verdict(s,sc,z);
+
+      const p=num(s.Price);
+      const supportLow=Number(z.support.split("–")[0]);
+      const reward=Math.abs(v.target-p);
+      const risk=Math.abs(p-supportLow);
+      const rr=risk===0?0:(reward/risk).toFixed(2);
+
+      return {
+        Symbol:s.Symbol,
+        Price:s.Price,
+        Support:z.support,
+        Resistance:z.resistance,
+        Target:v.target,
+        Score:sc,
+        Verdict:v.v,
+        RR:rr,
+        TradePlan:tradePlan({
+          Symbol:s.Symbol,
+          Price:s.Price,
+          Support:z.support,
+          Resistance:z.resistance,
+          Target:v.target,
+          RR:rr,
+          Verdict:v.v,
+          Score:sc
+        })
+      };
+    });
 
     render(rows);
-  } else {
-    loadCSV().then(data => {
-      inMemoryData = data;
-      updateCSVOutput();
-      const rows = data.map(s => {
-  const z = zones(s);
-  const sc = score(s);
-  const v = verdict(s, sc, z);
-
-  return {
-    Symbol: s.Symbol,
-    Price: s.Price,
-    Support: z.support,
-    Resistance: z.resistance,
-    Target: v.target,   // ← FIXED
-    Score: sc,
-    Verdict: v.v
-  };
-});
-
-      render(rows);
-    });
-  }
+  });
 }
 
 // initial run
 runAnalysis();
+
 </script>
 
 </body>
