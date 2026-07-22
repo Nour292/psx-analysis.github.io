@@ -439,7 +439,7 @@ function runAnalysis(){
     Price: s.Price,
     Support: z.support,
     Resistance: z.resistance,
-    Target: v.target,   // ← FIXED (use verdict target)
+    Target: z.target.toFixed(2),    // ← FIXED (use verdict target)
     Score: sc,
     Verdict: v.v
   };
@@ -450,20 +450,22 @@ function runAnalysis(){
     loadCSV().then(data => {
       inMemoryData = data;
       updateCSVOutput();
-      const rows=data.map(s=>{
-        const z=zones(s);
-        const sc=score(s);
-        const v=verdict(s,sc,z);
-        return {
-          Symbol:s.Symbol,
-          Price:s.Price,
-          Support:z.support,
-          Resistance:z.resistance,
-          Target:z.target.toFixed(2),
-          Score:sc,
-          Verdict:v.v
-        };
-      });
+      const rows = data.map(s => {
+  const z = zones(s);
+  const sc = score(s);
+  const v = verdict(s, sc, z);
+
+  return {
+    Symbol: s.Symbol,
+    Price: s.Price,
+    Support: z.support,
+    Resistance: z.resistance,
+    Target: v.target,   // ← FIXED
+    Score: sc,
+    Verdict: v.v
+  };
+});
+
       render(rows);
     });
   }
