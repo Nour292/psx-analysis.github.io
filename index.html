@@ -219,13 +219,31 @@ function score(s){
 // ===============================
 // VERDICT
 // ===============================
-function verdict(s,score,z){
-  const supportLow=Number(z.support.split("–")[0]);
+function verdict(s, score, z) {
 
-  if(score>=82) return {v:"🟢 BUY", target:z.target};
-  if(score<=42) return {v:"🟠 SHORT SELL", target:supportLow};
-  if(score>=60) return {v:"🟡 WATCH", target:z.target};
-  return {v:"⚪ WAIT", target:z.target};
+  const p = num(s.Price);
+  const ma50 = num(s["MA50-D"]);
+  const ma200 = num(s["MA200-D"]);
+  const supportLow = Number(z.support.split("–")[0]);
+
+  // NEW RULE: Price below both MAs + score > 42 → AVOID
+  if (p < ma50 && p < ma200 && score > 42) {
+    return { v: "🚫 AVOID", target: z.target };
+  }
+
+  if (score >= 82) {
+    return { v: "🟢 BUY", target: z.target };
+  }
+
+  if (score <= 42) {
+    return { v: "🟠 SHORT SELL", target: supportLow };
+  }
+
+  if (score >= 60) {
+    return { v: "🟡 WATCH", target: z.target };
+  }
+
+  return { v: "⚪ WAIT", target: z.target };
 }
 
 // ===============================
@@ -262,12 +280,13 @@ At ₨${p}: SHORT near resistance only.
 // ===============================
 function render(rows){
 
-  const groupOrder={
-    "🟢 BUY":1,
-    "🟡 WATCH":2,
-    "⚪ WAIT":3,
-    "🟠 SHORT SELL":4
-  };
+  const groupOrder = {
+  "🟢 BUY": 1,
+  "🟡 WATCH": 2,
+  "⚪ WAIT": 3,
+  "🚫 AVOID": 4,
+  "🟠 SHORT SELL": 5
+};
 
   rows.sort((a,b)=>{
     const ga=groupOrder[a.Verdict]||99;
@@ -299,12 +318,22 @@ function render(rows){
   });
 
   html+="</table>";
+const buy   = rows.filter(r => r.Verdict === "🟢 BUY").map(r => r.Symbol).join(", ") || "--";
+const watch = rows.filter(r => r.Verdict === "🟡 WATCH").map(r => r.Symbol).join(", ") || "--";
+const wait  = rows.filter(r => r.Verdict === "⚪ WAIT").map(r => r.Symbol).join(", ") || "--";
+const avoid = rows.filter(r => r.Verdict === "🚫 AVOID").map(r => r.Symbol).join(", ") || "--";
+const ss    = rows.filter(r => r.Verdict === "🟠 SHORT SELL").map(r => r.Symbol).join(", ") || "--";
 
-  html+="<h3>Trade Plans</h3><pre>";
-  rows.forEach(r=> html+= r.TradePlan + "\n");
-  html+="</pre>";
+html += `
+<pre>
+BUY = ${buy}
+WATCH = ${watch}
+WAIT = ${wait}
+AVOID = ${avoid}
+SHORT SELL = ${ss}
+</pre>
+`;
 
-  document.getElementById("output").innerHTML=html;
 }
 
 // ===============================
