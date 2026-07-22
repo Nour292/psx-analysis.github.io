@@ -242,52 +242,25 @@ function score(s){
 // ===============================
 // VERDICT (SKILL RULES)
 // ===============================
-function verdict(s,score,z){
-  const p = num(s.Price);
-  const ma50 = num(s["MA50-D"]);
-  const ma200 = num(s["MA200-D"]);
-  const ma50w = num(s["MA50-W"]);
-  const ma200w = num(s["MA200-W"]);
-  const rsid = num(s["RSI-D"]);
-  const macdD = num(s["MACD-H-D"]);
-  const macdW = num(s["MACD-H-W"]);
-  const signalD = num(s["Signal-D"]);
+function verdict(s, score, z) {
 
-  const [s1] = z.support.split("–").map(Number);
-  const reward = Math.abs(z.target - p);
-  const risk = Math.abs(p - s1);
-  const rr = risk === 0 ? 0 : reward / risk;
+  // BUY
+  if (score >= 82) {
+    return { v: "🟢 BUY", rr: "0" };
+  }
 
-  // Claude BUY logic
-  const macdTurningUp = (macdD < 0 && signalD > macdD);
+  // SHORT SELL
+  if (score <= 42) {
+    return { v: "🟠 SHORT SELL", rr: "0" };
+  }
 
-  let v = "⚪ WAIT";
+  // WATCH (mid‑range)
+  if (score >= 60 && score <= 81) {
+    return { v: "🟡 WATCH", rr: "0" };
+  }
 
-  const buyCond =
-    p > ma50 &&
-    p > ma200 &&
-    ma50 >= ma200 &&
-    ma50w > ma200w &&
-    (macdD > 0 || macdTurningUp) &&
-    rsid >= 40 && rsid <= 70 &&
-    rr >= 1.5;
-
-  const shortCond =
-    p < ma50 &&
-    p < ma200 &&
-    ma50 < ma200 &&
-    macdD < 0 &&
-    macdW < 0 &&
-    rsid < 50 &&
-    rr >= 1.5;
-
-  if(buyCond) v="🟢 BUY";
-  else if(shortCond) v="🟠 SHORT SALE";
-  else if(macdD < 0 && macdW < 0) v="🔴 SELL";
-  else if(score >= 45 && score < 60) v="🟡 WATCH";
-  else if(score < 45) v="⚫ AVOID";
-
-  return {v, rr: rr.toFixed(2)};
+  // WAIT (neutral)
+  return { v: "⚪ WAIT", rr: "0" };
 }
 
 // ===============================
@@ -330,7 +303,13 @@ At ₨${p}: EXIT NOW or TRIM.
 // RENDER
 // ===============================
 function render(rows){
-  const order = {"🟢":1,"🟡":2,"⚪":3,"🔴":4,"🟠":4,"⚫":5};
+  const order = {
+  "🟢": 1,   // BUY → top
+  "🟡": 2,   // WATCH
+  "⚪": 3,   // WAIT
+  "🟠": 4    // SHORT SELL → bottom
+};
+
   rows.sort((a,b)=>{
     const va = order[a.Verdict[0]] || 9;
     const vb = order[b.Verdict[0]] || 9;
