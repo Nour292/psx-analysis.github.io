@@ -1,16 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>PSX Analysis</title>
+<title>PSX Technical Analysis</title>
+<meta charset="UTF-8">
 </head>
-<body>
-  <h1>Welcome to PSX Technical Analysis</h1>
-  <p>Website is under construction.</p>
-  <script>
-// === CONFIG ===
-const csvFile = 'data.csv'; // source file you added
 
-// === CSV LOAD ===
+<body>
+<h2>PSX Technical Analysis</h2>
+
+<div id="output"></div>
+
+<script>
+// ===============================
+// CONFIG
+// ===============================
+const csvFile = "data.csv";
+
+// ===============================
+// LOAD CSV
+// ===============================
 async function loadCSV() {
   const res = await fetch(csvFile);
   const text = await res.text();
@@ -18,253 +26,157 @@ async function loadCSV() {
 }
 
 function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  const headers = lines[0].split(',');
+  const lines = text.trim().split("\n");
+  const headers = lines[0].split(",");
   return lines.slice(1).map(line => {
-    const cols = line.split(',');
+    const cols = line.split(",");
     const obj = {};
-    headers.forEach((h, i) => obj[h.trim()] = cols[i] ? cols[i].trim() : '');
+    headers.forEach((h, i) => obj[h.trim()] = cols[i] ? cols[i].trim() : "");
     return obj;
   });
 }
 
-// === GRADES ===
-const GRADES = {
-  MCB: 'A', UBL: 'A', MEBL: 'A', POL: 'A', FFC: 'A', HUBC: 'A,
-  OGDC: 'B', MTL: 'B', ENGROH: 'B', HBL: 'B', NBP: 'B', BAFL: 'B',
-  BOP: 'C', ISL: 'C', FCL: 'C', KAPCO: 'C'
-};
+// ===============================
+// HELPERS
+// ===============================
+function num(v){ return v==="" ? null : Number(v); }
 
-// === CORE FUNCTIONS ===
-function toNum(v) { return v === '' ? null : Number(v); }
-
-function zoneWidth(price) {
-  if (price <= 50) return 3;
-  if (price <= 150) return 5;
-  if (price <= 300) return 8;
-  if (price <= 500) return 12;
-  if (price <= 700) return 15;
+function zoneWidth(p){
+  if(p<=50) return 3;
+  if(p<=150) return 5;
+  if(p<=300) return 8;
+  if(p<=500) return 12;
+  if(p<=700) return 15;
   return 18;
 }
 
-function makeRange(center, w) {
-  const a = Math.round((center - w) * 100) / 100;
-  const b = Math.round((center + w) * 100) / 100;
-  return `${a}–${b}`;
+function range(center,w){
+  return `${(center-w).toFixed(2)}–${(center+w).toFixed(2)}`;
 }
 
-function supportResistance(symbol) {
-  const p = toNum(symbol.Price);
-  const ma50d = toNum(symbol['MA50-D']);
-  const ma200d = toNum(symbol['MA200-D']);
-  const high52 = toNum(symbol['52W-High']);
+// ===============================
+// SUPPORT / RESISTANCE
+// ===============================
+function zones(s){
+  const p=num(s.Price);
+  const ma50=num(s["MA50-D"]);
+  const ma200=num(s["MA200-D"]);
+  const high52=num(s["52W-High"]);
+  const w=zoneWidth(p);
 
-  const w = zoneWidth(p);
+  let anchors=[];
+  if(ma50 && ma50<p) anchors.push(ma50);
+  if(ma200 && ma200<p) anchors.push(ma200);
+  anchors.sort((a,b)=>Math.abs(p-a)-Math.abs(p-b));
 
-  // Support anchor
-  let anchors = [];
-  if (ma50d && ma50d < p) anchors.push(ma50d);
-  if (ma200d && ma200d < p) anchors.push(ma200d);
-  anchors.sort((a, b) => Math.abs(p - a) - Math.abs(p - b));
-  let supportZone = '';
-  if (anchors.length === 0) {
-    supportZone = makeRange(p - w, w);
-  } else if (anchors.length === 1 || Math.abs(anchors[0] - anchors[1]) <= w) {
-    supportZone = makeRange(anchors[0], w);
-  } else {
-    supportZone = makeRange(anchors[0], w);
-  }
+  let support="";
+  if(anchors.length===0) support=range(p-w,w);
+  else support=range(anchors[0],w);
 
-  // Resistance anchor
-  let anchorRes = Math.ceil(p / 10) * 10;
-  if (high52 && Math.abs(high52 - p) <= w) anchorRes = high52;
-  const resistanceZone = makeRange(anchorRes, w);
-  const target = anchorRes + w * 2;
+  let resAnchor=Math.ceil(p/10)*10;
+  if(high52 && Math.abs(high52-p)<=w) resAnchor=high52;
+  let resistance=range(resAnchor,w);
+  let target=resAnchor+w*2;
 
-  return { supportZone, resistanceZone, target: Math.round(target * 100) / 100 };
+  return {support,resistance,target};
 }
 
-function scoreSymbol(s) {
-  const price = toNum(s.Price);
-  const ma50d = toNum(s['MA50-D']);
-  const ma200d = toNum(s['MA200-D']);
-  const ma50w = toNum(s['MA50-W']);
-  const ma200w = toNum(s['MA200-W']);
-  const rsid = toNum(s['RSI-D']);
-  const rsiw = toNum(s['RSI-W']);
-  const macdhD = toNum(s['MACD-H-D']);
-  const macdhW = toNum(s['MACD-H-W']);
-  const vol = toNum(s['Volume-D'] || s['Volume-W']);
-  const high52 = toNum(s['52W-High']);
-  const low52 = toNum(s['52W-Low']);
+// ===============================
+// SCORING
+// ===============================
+function score(s){
+  let total=0, max=0;
 
-  let total = 0, max = 0;
+  const p=num(s.Price);
+  const ma50=num(s["MA50-D"]);
+  const ma200=num(s["MA200-D"]);
+  const ma50w=num(s["MA50-W"]);
+  const ma200w=num(s["MA200-W"]);
+  const rsid=num(s["RSI-D"]);
+  const rsiw=num(s["RSI-W"]);
+  const macdD=num(s["MACD-H-D"]);
+  const macdW=num(s["MACD-H-W"]);
+  const high52=num(s["52W-High"]);
+  const low52=num(s["52W-Low"]);
 
-  // Price vs MA50-D
-  if (ma50d) {
-    max += 10;
-    if (price > ma50d) total += 10;
-    else total += 5;
+  if(ma50){ max+=10; total+= p>ma50?10:5; }
+  if(ma200){ max+=10; total+= p>ma200?10:5; }
+  if(ma50&&ma200){ max+=8; total+= ma50>ma200?8:4; }
+  if(ma50w&&ma200w){ max+=8; total+= ma50w>ma200w?8:4; }
+
+  if(rsid){ max+=10; total+= (rsid>=40&&rsid<=70)?10:(rsid<50?5:0); }
+  if(rsiw){ max+=10; total+= (rsiw>=40&&rsiw<=70)?10:(rsiw<55?5:0); }
+
+  if(macdD!==null){ max+=12; total+= macdD>0?10:4; }
+  if(macdW!==null){ max+=12; total+= macdW>0?10:4; }
+
+  if(high52&&low52){
+    max+=7;
+    const distLow=(p-low52)/low52;
+    const distHigh=(high52-p)/high52;
+    if(distLow<=0.3) total+=7;
+    else if(distHigh<=0.05) total+=2;
+    else total+=4;
   }
 
-  // Price vs MA200-D
-  if (ma200d) {
-    max += 10;
-    if (price > ma200d) total += 10;
-    else total += 5;
+  let sc=max?(total/max)*100:0;
+
+  if(ma50&&ma200&&ma50w&&ma200w){
+    const dailyUp=p>ma50&&p>ma200&&ma50>=ma200;
+    const weeklyUp=ma50w>ma200w;
+    if(dailyUp&&weeklyUp) sc=Math.min(100,sc+5);
   }
 
-  // MA50-D vs MA200-D
-  if (ma50d && ma200d) {
-    max += 8;
-    if (ma50d > ma200d) total += 8;
-    else total += 4;
-  }
-
-  // MA50-W vs MA200-W
-  if (ma50w && ma200w) {
-    max += 8;
-    if (ma50w > ma200w) total += 8;
-    else total += 4;
-  }
-
-  // RSI-D
-  if (rsid) {
-    max += 10;
-    if (rsid >= 40 && rsid <= 70) total += 10;
-    else if (rsid < 50) total += 5;
-  }
-
-  // RSI-W
-  if (rsiw) {
-    max += 10;
-    if (rsiw >= 40 && rsiw <= 70) total += 10;
-    else if (rsiw < 55) total += 5;
-  }
-
-  // MACD Hist-D
-  if (macdhD !== null) {
-    max += 12;
-    if (macdhD > 0) total += 10;
-    else total += 4;
-  }
-
-  // MACD Hist-W
-  if (macdhW !== null) {
-    max += 12;
-    if (macdhW > 0) total += 10;
-    else total += 4;
-  }
-
-  // Volume (simple placeholder)
-  if (vol) {
-    max += 8;
-    total += 4;
-  }
-
-  // 52W position
-  if (high52 && low52) {
-    max += 7;
-    const distLow = (price - low52) / low52;
-    const distHigh = (high52 - price) / high52;
-    if (distLow <= 0.3) total += 7;
-    else if (distHigh <= 0.05) total += 2;
-    else total += 4;
-  }
-
-  // Rescale
-  let score = max ? (total / max) * 100 : 0;
-
-  // Dual timeframe bonus
-  if (ma50d && ma200d && ma50w && ma200w) {
-    const dailyUp = price > ma50d && price > ma200d && ma50d >= ma200d;
-    const weeklyUp = ma50w > ma200w;
-    if (dailyUp && weeklyUp) score = Math.min(100, score + 5);
-  }
-
-  return Math.round(score);
+  return Math.round(sc);
 }
 
-function verdictFor(symbol, score, zones) {
-  const price = toNum(symbol.Price);
-  const ma50d = toNum(symbol['MA50-D']);
-  const ma200d = toNum(symbol['MA200-D']);
-  const ma50w = toNum(symbol['MA50-W']);
-  const ma200w = toNum(symbol['MA200-W']);
-  const rsid = toNum(symbol['RSI-D']);
-  const macdhD = toNum(symbol['MACD-H-D']);
-  const macdhW = toNum(symbol['MACD-H-W']);
-  const high52 = toNum(symbol['52W-High']);
-  const low52 = toNum(symbol['52W-Low']);
+// ===============================
+// VERDICT
+// ===============================
+function verdict(s,score,z){
+  const p=num(s.Price);
+  const ma50=num(s["MA50-D"]);
+  const ma200=num(s["MA200-D"]);
+  const ma50w=num(s["MA50-W"]);
+  const ma200w=num(s["MA200-W"]);
+  const rsid=num(s["RSI-D"]);
+  const macdD=num(s["MACD-H-D"]);
+  const macdW=num(s["MACD-H-W"]);
+  const high52=num(s["52W-High"]);
 
-  const supportMid = zones.supportZone.split('–').map(Number).reduce((a, b) => (a + b) / 2);
-  const reward = Math.abs(zones.target - price);
-  const risk = Math.abs(price - supportMid);
-  const rr = risk === 0 ? 0 : reward / risk;
+  const [s1,s2]=z.support.split("–").map(Number);
+  const reward=Math.abs(z.target-p);
+  const risk=Math.abs(p-s1);
+  const rr=risk===0?0:(reward/risk);
 
-  let v = '⚪ WAIT';
+  const aboveMA = ma50&&ma200&&p>ma50&&p>ma200;
+  const goldenDaily = ma50&&ma200&&ma50>=ma200;
+  const goldenWeekly = ma50w&&ma200w&&ma50w>ma200w;
+  const rsiBuy = rsid>=40&&rsid<=70;
+  const macdBull = macdD>=0;
+  const macdBear = macdD<0 && macdW<0;
+  const belowMA = ma50&&ma200&&p<ma50&&p<ma200;
 
-  const aboveMAs = ma50d && ma200d && price > ma50d && price > ma200d;
-  const goldenDaily = ma50d && ma200d && ma50d >= ma200d;
-  const goldenWeekly = ma50w && ma200w && ma50w > ma200w;
-  const rsiBuyZone = rsid && rsid >= 40 && rsid <= 70;
-  const macdBull = macdhD !== null && macdhD >= 0;
-  const macdBear = macdhD !== null && macdhD < 0 && macdhW !== null && macdhW < 0;
-  const belowMAs = ma50d && ma200d && price < ma50d && price < ma200d;
+  let v="⚪ WAIT";
 
-  if (aboveMAs && goldenDaily && goldenWeekly && macdBull && rsiBuyZone && rr >= 1.5) {
-    v = '🟢 BUY';
-  } else if (macdBear || (high52 && price >= high52 * 0.95)) {
-    v = '🔴 SELL';
-  } else if (belowMAs && macdBear && rsid && rsid < 50 && rr >= 1.5) {
-    v = '🟠 SHORT SALE';
-  } else if (score >= 45 && score < 60) {
-    v = '🟡 WATCH';
-  } else if (score < 45) {
-    v = '⚫ AVOID';
-  }
+  if(aboveMA && goldenDaily && goldenWeekly && macdBull && rsiBuy && rr>=1.5) v="🟢 BUY";
+  else if(macdBear || (high52 && p>=high52*0.95)) v="🔴 SELL";
+  else if(belowMA && macdBear && rsid<50 && rr>=1.5) v="🟠 SHORT SALE";
+  else if(score>=45 && score<60) v="🟡 WATCH";
+  else if(score<45) v="⚫ AVOID";
 
-  // 52W high caution
-  if (high52 && price >= high52 * 0.95 && (v === '🔴 SELL' || v === '⚫ AVOID')) {
-    v += ' ⚠️ Near 52W High — trim existing position';
-  }
-
-  return { verdict: v, rr: rr.toFixed(2) };
+  return {v,rr:rr.toFixed(2)};
 }
 
-// === OUTPUT BUILD ===
-function buildOutput(symbols) {
-  const rows = symbols.map(s => {
-    const zones = supportResistance(s);
-    const score = scoreSymbol(s);
-    const v = verdictFor(s, score, zones);
+// ===============================
+// RENDER
+// ===============================
+function render(rows){
+  let html="<table border='1' cellpadding='5'><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Verdict</th></tr>";
 
-    return {
-      Symbol: s.Symbol,
-      Price: s.Price,
-      Support: zones.supportZone,
-      Resistance: zones.resistanceZone,
-      Target: zones.target,
-      Verdict: v.verdict,
-      Score: score,
-      RR: v.rr
-    };
-  });
-
-  // Sort: BUY → WATCH → WAIT → SELL/SHORT/AVOID
-  const order = ['🟢 BUY', '🟡 WATCH', '⚪ WAIT', '🔴 SELL', '🟠 SHORT SALE', '⚫ AVOID'];
-  rows.sort((a, b) => {
-    const ia = order.findIndex(o => a.Verdict.startsWith(o));
-    const ib = order.findIndex(o => b.Verdict.startsWith(o));
-    if (ia === ib) return b.Score - a.Score;
-    return ia - ib;
-  });
-
-  // Table
-  let html = '<table><thead><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Verdict</th></tr></thead><tbody>';
-  rows.forEach((r, i) => {
-    html += `<tr>
-      <td>${i + 1}</td>
+  rows.forEach((r,i)=>{
+    html+=`<tr>
+      <td>${i+1}</td>
       <td>${r.Symbol}</td>
       <td>${r.Price}</td>
       <td>${r.Support}</td>
@@ -273,76 +185,50 @@ function buildOutput(symbols) {
       <td>${r.Verdict}</td>
     </tr>`;
   });
-  html += '</tbody></table>';
 
-  // Signal summary
-  const buy = rows.filter(r => r.Verdict.startsWith('🟢')).map(r => r.Symbol).join(', ') || '—';
-  const watch = rows.filter(r => r.Verdict.startsWith('🟡')).map(r => r.Symbol).join(', ') || '—';
-  const wait = rows.filter(r => r.Verdict.startsWith('⚪')).map(r => r.Symbol).join(', ') || '—';
-  const sellShort = rows.filter(r => r.Verdict.startsWith('🔴') || r.Verdict.startsWith('🟠')).map(r => r.Symbol).join(', ') || '—';
+  html+="</table>";
 
-  html += `
+  const buy=rows.filter(r=>r.Verdict.startsWith("🟢")).map(r=>r.Symbol).join(", ")||"—";
+  const watch=rows.filter(r=>r.Verdict.startsWith("🟡")).map(r=>r.Symbol).join(", ")||"—";
+  const wait=rows.filter(r=>r.Verdict.startsWith("⚪")).map(r=>r.Symbol).join(", ")||"—";
+  const ss=rows.filter(r=>r.Verdict.startsWith("🔴")||r.Verdict.startsWith("🟠")).map(r=>r.Symbol).join(", ")||"—";
+
+  html+=`
 <pre>
 ─────────────────────────────────────
 📈 BUY       → ${buy}
 👀 WATCH     → ${watch}
 ⏳ WAIT      → ${wait}
-📉 SELL/SHORT→ ${sellShort}
+📉 SELL/SHORT→ ${ss}
 ─────────────────────────────────────
 </pre>
 `;
 
-  // Trade plans (BUY, SELL, SHORT only)
-  rows.forEach(r => {
-    const price = Number(r.Price);
-    const [sLow, sHigh] = r.Support.split('–').map(Number);
-    const rr = r.RR;
-    const grade = GRADES[r.Symbol] || 'C';
-
-    if (r.Verdict.startsWith('🟢')) {
-      const entry = r.Support;
-      const textAction = (price >= sLow && price <= sHigh)
-        ? 'BUY NOW — price is in entry zone'
-        : (price < sLow ? 'WAIT — price below entry zone, watch for reversal' : 'WAIT — price above entry zone, watch for pullback');
-      html += `
-<p><strong>🟢 ${r.Symbol} — Buy Plan | Score: ${r.Score}</strong><br>
-Entry: ${entry} | Target: ${r.Target} | Support: ${r.Support} | R:R ≈ ${rr}<br>
-At ₨${price}: ${textAction}</p>
-`;
-    } else if (r.Verdict.startsWith('🟠')) {
-      const entry = r.Resistance;
-      const stop = sHigh;
-      const textAction = (price >= sLow && price <= sHigh)
-        ? 'SHORT NOW — price at/near resistance'
-        : 'WAIT — price not yet at short entry zone';
-      html += `
-<p><strong>🟠 ${r.Symbol} — Short Sale Plan | Score: ${r.Score}</strong><br>
-Entry: ${entry} | Stop Loss: ${stop} | Target: ${r.Target} | R:R ≈ ${rr}<br>
-At ₨${price}: ${textAction}</p>
-`;
-    } else if (r.Verdict.startsWith('🔴')) {
-      const exitZone = r.Resistance;
-      const textAction = price >= Number(exitZone.split('–')[0])
-        ? 'EXIT NOW — price at/above exit zone'
-        : 'TRIM NOW — reduce position at current levels';
-      html += `
-<p><strong>🔴 ${r.Symbol} — Sell Plan | Score: ${r.Score}</strong><br>
-Exit zone: ${exitZone} | Reason: Trend weakening / overbought risk<br>
-At ₨${price}: ${textAction}</p>
-`;
-    }
-  });
-
-  document.getElementById('output').innerHTML = html;
+  document.getElementById("output").innerHTML=html;
 }
 
-// === RUN ===
-loadCSV().then(buildOutput).catch(err => {
-  document.getElementById('output').textContent = 'Error loading data.csv';
-  console.error(err);
+// ===============================
+// RUN
+// ===============================
+loadCSV().then(data=>{
+  const rows=data.map(s=>{
+    const z=zones(s);
+    const sc=score(s);
+    const v=verdict(s,sc,z);
+    return {
+      Symbol:s.Symbol,
+      Price:s.Price,
+      Support:z.support,
+      Resistance:z.resistance,
+      Target:z.target.toFixed(2),
+      Verdict:v.v,
+      Score:sc
+    };
+  });
+
+  render(rows);
 });
 </script>
-<div id="output"></div>
 
 </body>
 </html>
