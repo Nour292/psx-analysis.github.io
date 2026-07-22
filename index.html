@@ -210,8 +210,8 @@ function render(rows){
 // ===============================
 // RUN
 // ===============================
-loadCSV().then(data=>{
-  const rows=data.map(s=>{
+loadCSV().then(data.csv=>{
+  const rows=data.csv.map(s=>{
     const z=zones(s);
     const sc=score(s);
     const v=verdict(s,sc,z);
