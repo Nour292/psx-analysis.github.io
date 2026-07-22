@@ -312,25 +312,42 @@ function render(rows){
   };
 
   rows.sort((a, b) => {
-    const ga = groupOrder[a.Verdict] || 99;
-    const gb = groupOrder[b.Verdict] || 99;
+  // Group order
+  const groupOrder = {
+    "🟢 BUY": 1,
+    "🟡 WATCH": 2,
+    "⚪ WAIT": 3,
+    "🟠 SHORT SELL": 4
+  };
 
-    // First: sort by group (BUY top, SHORT bottom)
-    if (ga !== gb) return ga - gb;
+  const ga = groupOrder[a.Verdict] || 99;
+  const gb = groupOrder[b.Verdict] || 99;
 
-    // Inside each group:
-    // BUY / WATCH / WAIT → higher score first
-    if (a.Verdict === "🟢" || a.Verdict === "🟡" || a.Verdict === "⚪") {
-      return b.Score - a.Score; // descending
-    }
+  // First: sort by group
+  if (ga !== gb) return ga - gb;
 
-    // SHORT SELL → lower score last (ascending)
-    if (a.Verdict === "🟠") {
-      return a.Score - b.Score; // ascending
-    }
+  // Inside BUY → highest score first
+  if (a.Verdict === "🟢 BUY") {
+    return b.Score - a.Score;
+  }
 
-    return 0;
-  });
+  // Inside WATCH → highest score first
+  if (a.Verdict === "🟡 WATCH") {
+    return b.Score - a.Score;
+  }
+
+  // Inside WAIT → highest score first
+  if (a.Verdict === "⚪ WAIT") {
+    return b.Score - a.Score;
+  }
+
+  // Inside SHORT SELL → lowest score last (ascending)
+  if (a.Verdict === "🟠 SHORT SELL") {
+    return a.Score - b.Score;
+  }
+
+  return 0;
+});
 
   let html = "<table><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th></tr>";
 
