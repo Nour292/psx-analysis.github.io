@@ -246,30 +246,18 @@ function verdict(s, score, z) {
 
   const supportLow = Number(z.support.split("–")[0]);
 
-  // BUY
   if (score >= 82) {
-    return {
-      v: "🟢 BUY",
-      rr: "0",
-      target: z.target   // upside target
-    };
+    return { v: "🟢 BUY", rr: "0", target: z.target };
   }
 
-  // SHORT SELL
   if (score <= 42) {
-    return {
-      v: "🟠 SHORT SELL",
-      rr: "0",
-      target: supportLow  // downside target
-    };
+    return { v: "🟠 SHORT SELL", rr: "0", target: supportLow };
   }
 
-  // WATCH
   if (score >= 60) {
     return { v: "🟡 WATCH", rr: "0", target: z.target };
   }
 
-  // WAIT
   return { v: "⚪ WAIT", rr: "0", target: z.target };
 }
 
@@ -441,20 +429,22 @@ function updateCSVOutput(){
 // ===============================
 function runAnalysis(){
   if(inMemoryData.length>0){
-    const rows = inMemoryData.map(s=>{
-      const z=zones(s);
-      const sc=score(s);
-      const v=verdict(s,sc,z);
-      return {
-        Symbol:s.Symbol,
-        Price:s.Price,
-        Support:z.support,
-        Resistance:z.resistance,
-        Target:z.target.toFixed(2),
-        Score:sc,
-        Verdict:v.v
-      };
-    });
+    const rows = data.map(s => {
+  const z = zones(s);
+  const sc = score(s);
+  const v = verdict(s, sc, z);
+
+  return {
+    Symbol: s.Symbol,
+    Price: s.Price,
+    Support: z.support,
+    Resistance: z.resistance,
+    Target: v.target,   // ← FIXED (use verdict target)
+    Score: sc,
+    Verdict: v.v
+  };
+});
+
     render(rows);
   } else {
     loadCSV().then(data => {
