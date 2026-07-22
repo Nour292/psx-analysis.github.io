@@ -4,7 +4,7 @@
 <title>PSX Technical Analysis</title>
 <meta charset="UTF-8">
 <style>
-  body { font-family: Arial, sans-serif; }
+  body { font-family: Arial; }
   button { margin: 5px; padding: 6px 12px; }
   #addForm { margin-top: 10px; padding: 10px; border: 1px solid #ccc; display:none; }
   #addForm input { width: 90px; margin: 2px; }
@@ -17,13 +17,11 @@
 <body>
 <h2>PSX Technical Analysis</h2>
 
-<div>
-  <button onclick="showAddForm()">Add Data</button>
-  <button onclick="runAnalysis()">Technical Analysis</button>
-</div>
+<button onclick="showAddForm()">Add Data</button>
+<button onclick="runAnalysis()">Technical Analysis</button>
 
 <div id="addForm">
-  <h4>Add Row (will appear in analysis & CSV output)</h4>
+  <h4>Add Row</h4>
   <div>
     Symbol <input id="fSymbol">
     Price <input id="fPrice">
@@ -43,12 +41,11 @@
     52W-High <input id="fHigh52">
     52W-Low <input id="fLow52">
   </div>
-  <button onclick="addRow()">Add to in-memory data</button>
+  <button onclick="addRow()">Add</button>
   <button onclick="hideAddForm()">Close</button>
-  <div>
-    <p><b>Updated CSV (copy this into data.csv on GitHub):</b></p>
-    <textarea id="csvOut" rows="8" cols="120"></textarea>
-  </div>
+
+  <p><b>Updated CSV (copy into data.csv on GitHub):</b></p>
+  <textarea id="csvOut" rows="8" cols="120"></textarea>
 </div>
 
 <div id="output"></div>
@@ -57,8 +54,8 @@
 // ===============================
 // CONFIG
 // ===============================
-const csvFile = "data.csv";   // MUST match your file name
-let inMemoryData = [];        // parsed rows + added rows
+const csvFile = "data.csv";
+let inMemoryData = [];
 
 // ===============================
 // LOAD CSV
@@ -99,7 +96,7 @@ function range(center,w){
 }
 
 // ===============================
-// SUPPORT / RESISTANCE (SKILL)
+// SUPPORT / RESISTANCE
 // ===============================
 function zones(s){
   const p=num(s.Price);
@@ -126,7 +123,7 @@ function zones(s){
 }
 
 // ===============================
-// SKILL-BASED SCORING
+// SCORING (FULL SKILL)
 // ===============================
 function score(s){
   let pts = 0;
@@ -145,34 +142,19 @@ function score(s){
   const high52 = num(s["52W-High"]);
   const low52 = num(s["52W-Low"]);
 
-  // Price vs MA50-D
   if(ma50){ max+=10; pts += (p > ma50 ? 10 : 5); }
-
-  // Price vs MA200-D
   if(ma200){ max+=10; pts += (p > ma200 ? 10 : 5); }
-
-  // MA50-D vs MA200-D
   if(ma50 && ma200){ max+=8; pts += (ma50 >= ma200 ? 8 : 4); }
-
-  // Weekly MA cross
   if(ma50w && ma200w){ max+=8; pts += (ma50w >= ma200w ? 8 : 4); }
 
-  // RSI-D
   if(rsid){ max+=10; pts += (rsid>=40 && rsid<=70 ? 10 : (rsid<50 ? 5 : 0)); }
-
-  // RSI-W
   if(rsiw){ max+=10; pts += (rsiw>=40 && rsiw<=70 ? 10 : (rsiw<55 ? 5 : 0)); }
 
-  // MACD-H-D
   if(macdD !== null){ max+=12; pts += (macdD>0 ? 12 : 6); }
-
-  // MACD-H-W
   if(macdW !== null){ max+=12; pts += (macdW>0 ? 12 : 6); }
 
-  // Volume
   if(vol){ max+=8; pts += 6; }
 
-  // 52W position
   if(high52 && low52){
     max+=7;
     const distLow = (p - low52) / low52;
@@ -182,10 +164,8 @@ function score(s){
     else pts += 4;
   }
 
-  // Rescale
   let sc = max ? (pts/max)*100 : 0;
 
-  // Dual timeframe bonus
   if(ma50 && ma200 && ma50w && ma200w){
     const dailyUp = p>ma50 && p>ma200 && ma50>=ma200;
     const weeklyUp = ma50w>=ma200w;
@@ -196,7 +176,7 @@ function score(s){
 }
 
 // ===============================
-// VERDICT (SKILL RULES)
+// VERDICT (FULL SKILL)
 // ===============================
 function verdict(s,score,z){
   const p = num(s.Price);
@@ -241,10 +221,45 @@ function verdict(s,score,z){
 }
 
 // ===============================
+// TRADE PLANS (GENERIC A2)
+// ===============================
+function tradePlan(r){
+  const p = num(r.Price);
+  const verdict = r.Verdict;
+  const score = r.Score;
+
+  if(verdict.startsWith("🟢")){
+    return `
+🟢 ${r.Symbol} — Buy Plan | Score: ${score}
+Entry: ${r.Support} | Target: ${r.Target} | Support: ${r.Support} | R:R ≈ ${r.RR}
+At ₨${p}: BUY NOW if price is near support; otherwise WAIT for pullback.
+`;
+  }
+
+  if(verdict.startsWith("🟠")){
+    return `
+🟠 ${r.Symbol} — Short Sale Plan | Score: ${score}
+Entry: ${r.Resistance} | Stop Loss: ${r.Target} | Target: ${r.Support} | R:R ≈ ${r.RR}
+At ₨${p}: SHORT NOW only if price is near resistance.
+`;
+  }
+
+  if(verdict.startsWith("🔴")){
+    return `
+🔴 ${r.Symbol} — Sell Plan | Score: ${score}
+Exit zone: ${r.Resistance}
+Reason: MACD bearish both timeframes / losing MAs
+At ₨${p}: EXIT NOW or TRIM.
+`;
+  }
+
+  return "";
+}
+
+// ===============================
 // RENDER
 // ===============================
 function render(rows){
-  // sort: BUY → WATCH → WAIT → SELL/SHORT/AVOID
   const order = {"🟢":1,"🟡":2,"⚪":3,"🔴":4,"🟠":4,"⚫":5};
   rows.sort((a,b)=>{
     const va = order[a.Verdict[0]] || 9;
@@ -286,6 +301,14 @@ function render(rows){
 </pre>
 `;
 
+  html+=`<h3>Trade Plans</h3>`;
+  rows.forEach(r=>{
+    const z=zones(r);
+    const rr = (Math.abs(z.target - num(r.Price)) / Math.abs(num(r.Price) - Number(z.support.split("–")[0]))).toFixed(2);
+    r.RR = rr;
+    html+=`<pre>${tradePlan(r)}</pre>`;
+  });
+
   document.getElementById("output").innerHTML=html;
 }
 
@@ -297,25 +320,25 @@ function hideAddForm(){ document.getElementById("addForm").style.display="none";
 
 function addRow(){
   const s = {
-    Symbol: document.getElementById("fSymbol").value,
-    Price: document.getElementById("fPrice").value,
-    "MA50-D": document.getElementById("fMA50D").value,
-    "MA200-D": document.getElementById("fMA200D").value,
-    "RSI-D": document.getElementById("fRSID").value,
-    "MACD-H-D": document.getElementById("fMACDDD").value,
-    "Signal-D": document.getElementById("fSignalD").value,
-    "MA50-W": document.getElementById("fMA50W").value,
-    "MA200-W": document.getElementById("fMA200W").value,
-    "RSI-W": document.getElementById("fRSIW").value,
-    "MACD-H-W": document.getElementById("fMACDDW").value,
-    "Signal-W": document.getElementById("fSignalW").value,
-    "Volume": document.getElementById("fVolume").value,
-    "52W-High": document.getElementById("fHigh52").value,
-    "52W-Low": document.getElementById("fLow52").value
+    Symbol: fSymbol.value,
+    Price: fPrice.value,
+    "MA50-D": fMA50D.value,
+    "MA200-D": fMA200D.value,
+    "RSI-D": fRSID.value,
+    "MACD-H-D": fMACDDD.value,
+    "Signal-D": fSignalD.value,
+    "MA50-W": fMA50W.value,
+    "MA200-W": fMA200W.value,
+    "RSI-W": fRSIW.value,
+    "MACD-H-W": fMACDDW.value,
+    "Signal-W": fSignalW.value,
+    "Volume": fVolume.value,
+    "52W-High": fHigh52.value,
+    "52W-Low": fLow52.value
   };
   inMemoryData.push(s);
   updateCSVOutput();
-  runAnalysis(); // re-run with new row
+  runAnalysis();
 }
 
 function updateCSVOutput(){
@@ -327,11 +350,11 @@ function updateCSVOutput(){
   inMemoryData.forEach(r=>{
     lines.push(headers.map(h=>r[h] ?? "").join(","));
   });
-  document.getElementById("csvOut").value = lines.join("\n");
+  csvOut.value = lines.join("\n");
 }
 
 // ===============================
-// RUN TECHNICAL ANALYSIS
+// RUN ANALYSIS
 // ===============================
 function runAnalysis(){
   if(inMemoryData.length>0){
