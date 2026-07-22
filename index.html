@@ -251,34 +251,40 @@ function verdict(s,score,z){
   const rsid = num(s["RSI-D"]);
   const macdD = num(s["MACD-H-D"]);
   const macdW = num(s["MACD-H-W"]);
+  const signalD = num(s["Signal-D"]);
 
   const [s1] = z.support.split("–").map(Number);
   const reward = Math.abs(z.target - p);
   const risk = Math.abs(p - s1);
   const rr = risk === 0 ? 0 : reward / risk;
 
+  const macdTurningUp = (macdD < 0 && signalD > macdD);
+
   let v = "⚪ WAIT";
 
   const buyCond =
-    p>ma50 && p>ma200 &&
-    ma50>=ma200 &&
-    ma50w>=ma200w &&
-    macdD>=0 &&
-    rsid>=40 && rsid<=70 &&
-    rr>=1.5;
+    p > ma50 &&
+    p > ma200 &&
+    ma50 >= ma200 &&
+    ma50w > ma200w &&
+    (macdD > 0 || macdTurningUp) &&
+    rsid >= 40 && rsid <= 70 &&
+    rr >= 1.5;
 
   const shortCond =
-    p<ma50 && p<ma200 &&
-    ma50<ma200 &&
-    macdD<0 && macdW<0 &&
-    rsid<50 &&
-    rr>=1.5;
+    p < ma50 &&
+    p < ma200 &&
+    ma50 < ma200 &&
+    macdD < 0 &&
+    macdW < 0 &&
+    rsid < 50 &&
+    rr >= 1.5;
 
   if(buyCond) v="🟢 BUY";
   else if(shortCond) v="🟠 SHORT SALE";
-  else if(macdD<0 && macdW<0) v="🔴 SELL";
-  else if(score>=45 && score<60) v="🟡 WATCH";
-  else if(score<45) v="⚫ AVOID";
+  else if(macdD < 0 && macdW < 0) v="🔴 SELL";
+  else if(score >= 45 && score < 60) v="🟡 WATCH";
+  else if(score < 45) v="⚫ AVOID";
 
   return {v, rr: rr.toFixed(2)};
 }
