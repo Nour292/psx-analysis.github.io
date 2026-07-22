@@ -246,21 +246,30 @@ function verdict(s, score, z) {
 
   // BUY
   if (score >= 82) {
-    return { v: "🟢 BUY", rr: "0" };
+    return {
+      v: "🟢 BUY",
+      rr: "0",
+      target: z.target  // upside target
+    };
   }
 
   // SHORT SELL
   if (score <= 42) {
-    return { v: "🟠 SHORT SELL", rr: "0" };
+    const supportLow = Number(z.support.split("–")[0]);
+    return {
+      v: "🟠 SHORT SELL",
+      rr: "0",
+      target: supportLow  // downside target
+    };
   }
 
-  // WATCH (mid‑range)
-  if (score >= 60 && score <= 81) {
-    return { v: "🟡 WATCH", rr: "0" };
+  // WATCH
+  if (score >= 60) {
+    return { v: "🟡 WATCH", rr: "0", target: z.target };
   }
 
-  // WAIT (neutral)
-  return { v: "⚪ WAIT", rr: "0" };
+  // WAIT
+  return { v: "⚪ WAIT", rr: "0", target: z.target };
 }
 
 // ===============================
