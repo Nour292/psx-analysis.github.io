@@ -53,10 +53,9 @@
 // ===============================
 // CONFIG & STATE
 // ===============================
-const csvFile = "data.csv";   // MUST match your file name
+const csvFile = "data.csv";
 let globalCSVText = "";
 
-// Toggle Form Visibility
 function toggleAddForm() {
   const form = document.getElementById("form-container");
   form.style.display = form.style.display === "block" ? "none" : "block";
@@ -88,7 +87,6 @@ function parseCSV(text) {
   });
 }
 
-// Save Form Data directly appending to CSV format download (Static site limitation workaround)
 function saveDataRow(e) {
   e.preventDefault();
   const symbol = document.getElementById("inSymbol").value.trim().toUpperCase();
@@ -108,7 +106,6 @@ function saveDataRow(e) {
   const newRow = `\n${symbol},${price},${ma50d},${ma200d},${ma50w},${ma200w},${rsid},${rsiw},${macdd},${macdw},${volume},${high52},${low52}`;
   globalCSVText += newRow;
 
-  // Trigger download file for replacement update on github repo
   const blob = new Blob([globalCSVText], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -220,7 +217,7 @@ function score(s){
 }
 
 // ===============================
-// VERDICT (SKILL RULES)
+// VERDICT & SCORING-BASED BUY / SELL RULES
 // ===============================
 function verdict(s,scoreVal,z){
   const p = num(s.Price);
@@ -240,25 +237,30 @@ function verdict(s,scoreVal,z){
   let v = "⚪ WAIT";
 
   const buyCond =
-    p>ma50 && p>ma200 &&
-    ma50>=ma200 &&
-    ma50w>=ma200w &&
-    macdD>=0 &&
-    rsid>=40 && rsid<=70 &&
-    rr>=1.5;
+    scoreVal >= 70 &&
+    p > ma50 && p > ma200 &&
+    ma50 >= ma200 &&
+    ma50w >= ma200w &&
+    macdD >= 0 &&
+    rsid >= 40 && rsid <= 70 &&
+    rr >= 1.5;
+
+  const sellCond =
+    scoreVal < 45 ||
+    (macdD < 0 && macdW < 0) ||
+    p < ma200;
 
   const shortCond =
-    p<ma50 && p<ma200 &&
-    ma50<ma200 &&
-    macdD<0 && macdW<0 &&
-    rsid<50 &&
-    rr>=1.5;
+    p < ma50 && p < ma200 &&
+    ma50 < ma200 &&
+    macdD < 0 && macdW < 0 &&
+    rsid < 50 &&
+    rr >= 1.5;
 
-  if(buyCond) v="🟢 BUY";
-  else if(shortCond) v="🟠 SHORT SALE";
-  else if(macdD<0 && macdW<0) v="🔴 SELL";
-  else if(scoreVal>=45 && scoreVal<60) v="🟡 WATCH";
-  else if(scoreVal<45) v="⚫ AVOID";
+  if(buyCond) v = "🟢 BUY";
+  else if(sellCond) v = "🔴 SELL";
+  else if(shortCond) v = "🟠 SHORT SALE";
+  else if(scoreVal >= 45 && scoreVal < 70) v = "🟡 WATCH";
 
   return {v, rr: rr.toFixed(2)};
 }
@@ -287,7 +289,7 @@ function render(rows){
   const buy=rows.filter(r=>r.Verdict.startsWith("🟢")).map(r=>r.Symbol).join(", ")||"—";
   const watch=rows.filter(r=>r.Verdict.startsWith("🟡")).map(r=>r.Symbol).join(", ")||"—";
   const wait=rows.filter(r=>r.Verdict.startsWith("⚪")).map(r=>r.Symbol).join(", ")||"—";
-  const ss=rows.filter(r=>r.Verdict.startsWith("🔴")||r.Verdict.startsWith("🟠")).map(r=>r.Symbol).join(", ")||"—";
+  const sell=rows.filter(r=>r.Verdict.startsWith("🔴")||r.Verdict.startsWith("🟠")).map(r=>r.Symbol).join(", ")||"—";
 
   html+=`
 <pre>
@@ -295,7 +297,7 @@ function render(rows){
 📈 BUY       → ${buy}
 👀 WATCH     → ${watch}
 ⏳ WAIT      → ${wait}
-📉 SELL/SHORT→ ${ss}
+📉 SELL      → ${sell}
 ─────────────────────────────────────
 </pre>
 `;
@@ -328,7 +330,6 @@ async function runTechnicalAnalysis() {
   render(rows);
 }
 
-// Initial Load Execution on startup
 runTechnicalAnalysis();
 </script>
 
