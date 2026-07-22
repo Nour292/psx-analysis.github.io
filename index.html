@@ -14,7 +14,7 @@
 // ===============================
 // CONFIG
 // ===============================
-const csvFile = "data.csv";   // make sure your file name is EXACTLY data.csv
+const csvFile = "data.csv";   // MUST match your file name
 
 // ===============================
 // LOAD CSV
@@ -82,97 +82,125 @@ function zones(s){
 }
 
 // ===============================
-// SCORING
+// SKILL-BASED SCORING
 // ===============================
 function score(s){
-  let total=0, max=0;
+  let pts = 0;
+  let max = 0;
 
-  const p=num(s.Price);
-  const ma50=num(s["MA50-D"]);
-  const ma200=num(s["MA200-D"]);
-  const ma50w=num(s["MA50-W"]);
-  const ma200w=num(s["MA200-W"]);
-  const rsid=num(s["RSI-D"]);
-  const rsiw=num(s["RSI-W"]);
-  const macdD=num(s["MACD-H-D"]);
-  const macdW=num(s["MACD-H-W"]);
-  const high52=num(s["52W-High"]);
-  const low52=num(s["52W-Low"]);
+  const p = num(s.Price);
+  const ma50 = num(s["MA50-D"]);
+  const ma200 = num(s["MA200-D"]);
+  const ma50w = num(s["MA50-W"]);
+  const ma200w = num(s["MA200-W"]);
+  const rsid = num(s["RSI-D"]);
+  const rsiw = num(s["RSI-W"]);
+  const macdD = num(s["MACD-H-D"]);
+  const macdW = num(s["MACD-H-W"]);
+  const vol = num(s["Volume"]);
+  const high52 = num(s["52W-High"]);
+  const low52 = num(s["52W-Low"]);
 
-  if(ma50){ max+=10; total+= p>ma50?10:5; }
-  if(ma200){ max+=10; total+= p>ma200?10:5; }
-  if(ma50&&ma200){ max+=8; total+= ma50>ma200?8:4; }
-  if(ma50w&&ma200w){ max+=8; total+= ma50w>ma200w?8:4; }
+  // Price vs MA50-D
+  if(ma50){ max+=10; pts += (p > ma50 ? 10 : 5); }
 
-  if(rsid){ max+=10; total+= (rsid>=40&&rsid<=70)?10:(rsid<50?5:0); }
-  if(rsiw){ max+=10; total+= (rsiw>=40&&rsiw<=70)?10:(rsiw<55?5:0); }
+  // Price vs MA200-D
+  if(ma200){ max+=10; pts += (p > ma200 ? 10 : 5); }
 
-  if(macdD!==null){ max+=12; total+= macdD>0?10:4; }
-  if(macdW!==null){ max+=12; total+= macdW>0?10:4; }
+  // MA50-D vs MA200-D
+  if(ma50 && ma200){ max+=8; pts += (ma50 >= ma200 ? 8 : 4); }
 
-  if(high52&&low52){
+  // Weekly MA cross
+  if(ma50w && ma200w){ max+=8; pts += (ma50w >= ma200w ? 8 : 4); }
+
+  // RSI-D
+  if(rsid){ max+=10; pts += (rsid>=40 && rsid<=70 ? 10 : (rsid<50 ? 5 : 0)); }
+
+  // RSI-W
+  if(rsiw){ max+=10; pts += (rsiw>=40 && rsiw<=70 ? 10 : (rsiw<55 ? 5 : 0)); }
+
+  // MACD-H-D
+  if(macdD !== null){ max+=12; pts += (macdD>0 ? 12 : 6); }
+
+  // MACD-H-W
+  if(macdW !== null){ max+=12; pts += (macdW>0 ? 12 : 6); }
+
+  // Volume
+  if(vol){ max+=8; pts += 6; }
+
+  // 52W position
+  if(high52 && low52){
     max+=7;
-    const distLow=(p-low52)/low52;
-    const distHigh=(high52-p)/high52;
-    if(distLow<=0.3) total+=7;
-    else if(distHigh<=0.05) total+=2;
-    else total+=4;
+    const distLow = (p - low52) / low52;
+    const distHigh = (high52 - p) / high52;
+    if(distLow <= 0.10) pts += 7;
+    else if(distHigh <= 0.05) pts += 2;
+    else pts += 4;
   }
 
-  let sc=max?(total/max)*100:0;
+  // Rescale
+  let sc = max ? (pts/max)*100 : 0;
 
-  if(ma50&&ma200&&ma50w&&ma200w){
-    const dailyUp=p>ma50&&p>ma200&&ma50>=ma200;
-    const weeklyUp=ma50w>ma200w;
-    if(dailyUp&&weeklyUp) sc=Math.min(100,sc+5);
+  // Dual timeframe bonus
+  if(ma50 && ma200 && ma50w && ma200w){
+    const dailyUp = p>ma50 && p>ma200 && ma50>=ma200;
+    const weeklyUp = ma50w>=ma200w;
+    if(dailyUp && weeklyUp) sc += 5;
   }
 
-  return Math.round(sc);
+  return Math.round(Math.min(sc,100));
 }
 
 // ===============================
-// VERDICT
+// VERDICT (SKILL RULES)
 // ===============================
 function verdict(s,score,z){
-  const p=num(s.Price);
-  const ma50=num(s["MA50-D"]);
-  const ma200=num(s["MA200-D"]);
-  const ma50w=num(s["MA50-W"]);
-  const ma200w=num(s["MA200-W"]);
-  const rsid=num(s["RSI-D"]);
-  const macdD=num(s["MACD-H-D"]);
-  const macdW=num(s["MACD-H-W"]);
-  const high52=num(s["52W-High"]);
+  const p = num(s.Price);
+  const ma50 = num(s["MA50-D"]);
+  const ma200 = num(s["MA200-D"]);
+  const ma50w = num(s["MA50-W"]);
+  const ma200w = num(s["MA200-W"]);
+  const rsid = num(s["RSI-D"]);
+  const macdD = num(s["MACD-H-D"]);
+  const macdW = num(s["MACD-H-W"]);
+  const high52 = num(s["52W-High"]);
 
-  const [s1,s2]=z.support.split("–").map(Number);
-  const reward=Math.abs(z.target-p);
-  const risk=Math.abs(p-s1);
-  const rr=risk===0?0:(reward/risk);
+  const [s1] = z.support.split("–").map(Number);
+  const reward = Math.abs(z.target - p);
+  const risk = Math.abs(p - s1);
+  const rr = risk === 0 ? 0 : reward / risk;
 
-  const aboveMA = ma50&&ma200&&p>ma50&&p>ma200;
-  const goldenDaily = ma50&&ma200&&ma50>=ma200;
-  const goldenWeekly = ma50w&&ma200w&&ma50w>ma200w;
-  const rsiBuy = rsid>=40&&rsid<=70;
-  const macdBull = macdD>=0;
-  const macdBear = macdD<0 && macdW<0;
-  const belowMA = ma50&&ma200&&p<ma50&&p<ma200;
+  let v = "⚪ WAIT";
 
-  let v="⚪ WAIT";
+  const buyCond =
+    p>ma50 && p>ma200 &&
+    ma50>=ma200 &&
+    ma50w>=ma200w &&
+    macdD>=0 &&
+    rsid>=40 && rsid<=70 &&
+    rr>=1.5;
 
-  if(aboveMA && goldenDaily && goldenWeekly && macdBull && rsiBuy && rr>=1.5) v="🟢 BUY";
-  else if(macdBear || (high52 && p>=high52*0.95)) v="🔴 SELL";
-  else if(belowMA && macdBear && rsid<50 && rr>=1.5) v="🟠 SHORT SALE";
+  const shortCond =
+    p<ma50 && p<ma200 &&
+    ma50<ma200 &&
+    macdD<0 && macdW<0 &&
+    rsid<50 &&
+    rr>=1.5;
+
+  if(buyCond) v="🟢 BUY";
+  else if(shortCond) v="🟠 SHORT SALE";
+  else if(macdD<0 && macdW<0) v="🔴 SELL";
   else if(score>=45 && score<60) v="🟡 WATCH";
   else if(score<45) v="⚫ AVOID";
 
-  return {v,rr:rr.toFixed(2)};
+  return {v, rr: rr.toFixed(2)};
 }
 
 // ===============================
 // RENDER
 // ===============================
 function render(rows){
-  let html="<table border='1' cellpadding='5'><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Verdict</th></tr>";
+  let html="<table border='1' cellpadding='5'><tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th></tr>";
 
   rows.forEach((r,i)=>{
     html+=`<tr>
@@ -182,6 +210,7 @@ function render(rows){
       <td>${r.Support}</td>
       <td>${r.Resistance}</td>
       <td>${r.Target}</td>
+      <td>${r.Score}</td>
       <td>${r.Verdict}</td>
     </tr>`;
   });
@@ -221,8 +250,8 @@ loadCSV().then(data => {
       Support:z.support,
       Resistance:z.resistance,
       Target:z.target.toFixed(2),
-      Verdict:v.v,
-      Score:sc
+      Score:sc,
+      Verdict:v.v
     };
   });
 
