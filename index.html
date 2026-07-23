@@ -312,12 +312,12 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   border:1px solid #2e4060; margin-bottom:20px; width:100%;
 }
 .imp-tbl3 {
-  width:100%; border-collapse:collapse; table-layout:fixed;
+  width:100%; border-collapse:collapse;
 }
 .imp-th {
   background:#0d2a4a; color:#4fc3f7; font-size:14px; font-weight:700;
-  padding:16px 10px; text-align:center; border:1px solid #1e3050;
-  letter-spacing:.3px;
+  padding:18px 16px; text-align:center; border:1px solid #1e3050;
+  letter-spacing:.3px; min-width:100px;
 }
 .imp-th-label {
   background:#0a1a2e; color:#3a6a9a; font-size:12px; width:90px;
@@ -328,18 +328,18 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .imp-data-row:nth-child(2) .imp-cell,
 .imp-data-row:nth-child(2) .imp-row-lbl { background:#0a1520; }
 .imp-row-lbl {
-  padding:14px 8px; font-size:13px; font-weight:800; color:#4fc3f7;
+  padding:14px 12px; font-size:13px; font-weight:800; color:#4fc3f7;
   text-align:center; border:1px solid #1e3050; letter-spacing:.5px;
-  white-space:nowrap; background:#0d2240;
+  white-space:nowrap; background:#0d2240; min-width:90px;
 }
 .imp-cell {
-  padding:10px 8px; border:1px solid #1e3050; vertical-align:middle;
+  padding:12px 10px; border:1px solid #1e3050; vertical-align:middle; min-width:100px;
 }
 .imp-in3 {
   width:100%; background:#0f1923; color:#e0c060;
   border:1px solid #2a3f58; border-radius:5px;
-  padding:10px 6px; font-size:15px; font-weight:700; text-align:center;
-  transition:border-color .15s; box-sizing:border-box;
+  padding:12px 8px; font-size:15px; font-weight:700; text-align:center;
+  transition:border-color .15s; box-sizing:border-box; min-width:90px;
 }
 .imp-in3:focus { outline:none; border-color:#4fc3f7; background:#0a1520; color:#4fc3f7; }
 .imp-in3::placeholder { color:#2a3f58; font-weight:400; font-size:13px; }
@@ -450,12 +450,26 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
         </table>
       </div>
 
-      <div style="display:flex;gap:12px;align-items:center">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
         <button class="btn btn-weekly" onclick="addRow()" style="width:220px;height:46px;font-size:15px">
           💾 Save Row
         </button>
         <button class="btn btn-export" onclick="exportCSV()" style="width:220px;height:46px;font-size:15px">
           ⬇ Export CSV
+        </button>
+      </div>
+      <div id="csvSection" style="display:none">
+        <div style="font-size:13px;color:#7a9ab5;margin-bottom:6px">
+          📄 <b style="color:#a0c4e8">data.csv</b> — copy this into your GitHub repo:
+        </div>
+        <textarea id="csvOut" readonly style="
+          width:100%; height:120px; background:#0a1520; color:#4fc3f7;
+          border:1px solid #2e4060; border-radius:6px; padding:10px;
+          font-family:monospace; font-size:12px; resize:vertical;
+          box-sizing:border-box;
+        "></textarea>
+        <button onclick="copyCsv()" class="btn btn-action" style="margin-top:8px;width:180px;height:38px">
+          📋 Copy to Clipboard
         </button>
       </div>
     </div>
