@@ -259,22 +259,21 @@ function verdictFn(s, sc, z){
   const atMA        = distNearest !== null && distNearest >= -0.01 && distNearest <= 0.03;
   const weeklyUp    = ma50w !== null && ma200w !== null && ma50w > ma200w;
   const macdWposRis = macdW !== null && sigW !== null && macdW > 0 && macdW > sigW;
-  const rsiCool     = rsid  !== null && rsid >= 30 && rsid <= 53;
+  const rsiCool     = rsid  !== null && rsid >= 30 && rsid <= 57;
   const near52High  = high52 !== null && (high52 - p) / (high52||1) <= 0.05;
 
   // EXIT conditions
-  const belowMA50   = ma50d !== null && p < ma50d && distMA50 !== null && distMA50 >= -0.08;
-  const macdDneg    = macdD !== null && macdD < 0;
-  const rsiWeak     = rsid  !== null && rsid < 48;
-  const macdWweak   = macdW !== null && (macdW < 0 || (sigW !== null && macdW < sigW));
+  const belowBothMAs = ma50d !== null && ma200d !== null && p < ma50d && p < ma200d;
+  const macdDneg     = macdD !== null && macdD < 0;
+  const rsiWeak      = rsid  !== null && rsid < 50;
 
   // BUY — all 6
   if(atMA && weeklyUp && macdWposRis && rsiCool && sc >= 65 && !near52High){
     return {v:"🟢 BUY", verdict:"BUY", target:z.target};
   }
 
-  // EXIT SIGNAL — all 5
-  if(belowMA50 && macdDneg && rsiWeak && macdWweak && sc <= 58){
+  // EXIT SIGNAL — all 4 (price below BOTH MAs confirmed)
+  if(belowBothMAs && macdDneg && rsiWeak && sc <= 65){
     return {v:"🔴 EXIT SIGNAL", verdict:"EXIT", target:z.downsideTarget};
   }
 
