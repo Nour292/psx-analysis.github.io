@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>PSX Technical Analysis</title>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 12px; }
+h2 { margin: 0 0 10px; font-size: 18px; color: #222; }
+button { margin: 4px; padding: 6px 14px; cursor: pointer; border: 1px solid #aaa; border-radius: 4px; background: #fff; font-size: 13px; }
+button:hover { background: #e8e8e8; }
+
+/* ── Add/Update form — single row layout ── */
+#addForm {
+  margin-top: 10px; padding: 12px 14px; border: 1px solid #ccc;
+  background: #fff; border-radius: 6px; display: none;
+}
+#addForm h4 { margin: 0 0 10px; font-size: 13px; color: #333; }
+.form-row {
+  display: flex; flex-wrap: nowrap; gap: 8px; align-items: flex-end;
+  overflow-x: auto; padding-bottom: 4px;
+}
+.form-cell {
+  display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
+}
+.form-cell label {
+  font-size: 11px; color: #555; white-space: nowrap;
+  margin-bottom: 3px; text-align: center;
+}
+.form-cell input {
+  width: 72px; padding: 4px 5px; font-size: 12px;
+  border: 1px solid #bbb; border-radius: 3px; text-align: center;
+}
+.form-cell input:focus { outline: none; border-color: #2c3e50; }
+.form-actions { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+.form-actions textarea {
+  flex: 1; font-size: 11px; border: 1px solid #ccc;
+  border-radius: 4px; padding: 5px; resize: vertical; min-height: 56px;
+}
+
+/* ── Results table ── */
+table { border-collapse: collapse; margin-top: 10px; width: 100%; font-size: 13px; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+th { background: #2c3e50; color: #fff; padding: 7px 10px; text-align: left; font-weight: 600; }
+td { border-bottom: 1px solid #eee; padding: 6px 10px; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f0f4ff; }
+pre { font-size: 13px; white-space: pre-wrap; background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd; margin-top:10px; }
+.trade-plans { margin-top: 14px; }
+.plan-block { background: #fff; border-radius: 6px; border-left: 4px solid #ccc; padding: 10px 14px; margin-bottom: 10px; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.plan-block.buy   { border-color: #27ae60; }
+.plan-block.short { border-color: #e67e22; }
+.plan-block h4 { margin: 0 0 6px; font-size: 13px; }
+.plan-block code { display:block; background:#f7f7f7; padding:5px 8px; border-radius:4px; margin:4px 0; font-size:12px; }
+.plan-block p { margin: 4px 0 0; font-style: italic; color: #555; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h2>📊 PSX Technical Analysis</h2>
+<button onclick="runAnalysis()">▶ Run Analysis</button>
+<button onclick="showAddForm()">＋ Add / Update Row</button>
+<button onclick="exportCSV()">⬇ Export CSV</button>
+
+<div id="addForm">
+  <h4>Add / Update Row</h4>
+  <div class="form-row">
+    <div class="form-cell"><label>Symbol</label><input id="fSymbol" placeholder="MCB"></div>
+    <div class="form-cell"><label>Price</label><input id="fPrice" placeholder="403.86"></div>
+    <div class="form-cell"><label>MA50-D</label><input id="fMA50D"></div>
+    <div class="form-cell"><label>MA200-D</label><input id="fMA200D"></div>
+    <div class="form-cell"><label>RSI-D</label><input id="fRSID"></div>
+    <div class="form-cell"><label>MACD-H-D</label><input id="fMACDHD"></div>
+    <div class="form-cell"><label>Signal-D</label><input id="fSignalD"></div>
+    <div class="form-cell"><label>MA50-W</label><input id="fMA50W"></div>
+    <div class="form-cell"><label>MA200-W</label><input id="fMA200W"></div>
+    <div class="form-cell"><label>RSI-W</label><input id="fRSIW"></div>
+    <div class="form-cell"><label>MACD-H-W</label><input id="fMACDHW"></div>
+    <div class="form-cell"><label>Signal-W</label><input id="fSignalW"></div>
+    <div class="form-cell"><label>Volume</label><input id="fVolume"></div>
+    <div class="form-cell"><label>52W-High</label><input id="f52High"></div>
+    <div class="form-cell"><label>52W-Low</label><input id="f52Low"></div>
+    <div class="form-cell"><label>Swing-Low</label><input id="fSwingLow" placeholder="optional"></div>
+    <div class="form-cell"><label>Swing-High</label><input id="fSwingHigh" placeholder="optional"></div>
+  </div>
+  <div class="form-actions">
+    <button onclick="addRow()">💾 Save Row</button>
+    <button onclick="hideAddForm()">✕ Close</button>
+    <textarea id="csvOut" placeholder="Updated CSV will appear here after saving — copy into data.csv on GitHub"></textarea>
+  </div>
+</div>
+
+<div id="output"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────
+function num(v){ return (v===""||v===undefined||v===null)?null:Number(v); }
+function fmt(v){ const n=parseFloat(v); return isNaN(n)?v:parseFloat(n.toFixed(2)).toString(); }
+function fmtRange(lo,hi){ return `${Math.floor(lo)}–${Math.floor(hi)}`; }
+
+// ─────────────────────────────────────────────────────────
+// ZONE WIDTH
+// ─────────────────────────────────────────────────────────
+function zoneWidth(p){
+  if(p<=50)  return 3;
+  if(p<=150) return 5;
+  if(p<=300) return 8;
+  if(p<=500) return 8;
+  if(p<=700) return 10;
+  return 12;
+}
+
+// ─────────────────────────────────────────────────────────
+// SUPPORT & RESISTANCE
+// ─────────────────────────────────────────────────────────
+function computeZones(s){
+  const p      = num(s.Price);
+  const ma50   = num(s["MA50-D"]);
+  const ma200  = num(s["MA200-D"]);
+  const high52 = num(s["52W-High"]);
+  const low52  = num(s["52W-Low"]);
+  const swLow  = num(s["Swing-Low"]);
+  const swHigh = num(s["Swing-High"]);
+  const w      = zoneWidth(p);
+  const hw     = w/2;
+
+  // Support
+  let supportZone;
+  if(swLow!==null){
+    supportZone = fmtRange(swLow-hw, swLow+hw);
+  } else {
+    const ma200B = (ma200!==null&&ma200<p)?ma200:null;
+    const ma50B  = (ma50!==null&&ma50<p)?ma50:null;
+    if(ma200B!==null&&ma50B!==null){
+      const gap=Math.abs(ma50B-ma200B);
+      if(gap<=w){ const avg=(ma50B+ma200B)/2; supportZone=fmtRange(avg-hw,avg+hw); }
+      else       { supportZone=fmtRange(ma200B-hw,ma200B+hw); }
+    } else if(ma200B!==null){ supportZone=fmtRange(ma200B-hw,ma200B+hw); }
+    else if(ma50B!==null)   { supportZone=fmtRange(ma50B-hw,ma50B+hw); }
+    else                    { supportZone=fmtRange(p-w*2,p-w); }
+  }
+
+  // Resistance
+  let resLo,resHi;
+  if(swHigh!==null){ resLo=swHigh-hw; resHi=swHigh+hw; }
+  else {
+    resLo=p+w; resHi=p+2*w;
+    if(high52!==null&&high52>=resLo&&high52<=resHi+w){ resLo=high52-hw; resHi=high52+hw; }
+  }
+  const resistanceZone=fmtRange(resLo,resHi);
+
+  // Target (upside)
+  let target;
+  if(high52!==null&&high52>resHi) target=high52;
+  else target=Math.ceil(resHi/10)*10+10;
+
+  // Downside target (for SHORT SALE)
+  const downsideTarget=(low52!==null)?low52:parseFloat(supportZone.split("–")[0])-w;
+
+  return {supportZone,resistanceZone,target,downsideTarget,w,hw};
+}
+
+// ─────────────────────────────────────────────────────────
+// LOCKED SCORING TABLE
+// Verified: MEBL=75, MTL=82, UBL=76
+// ─────────────────────────────────────────────────────────
+function scoreRow(s){
+  let pts=0,max=0;
+  const p=num(s.Price),ma50d=num(s["MA50-D"]),ma200d=num(s["MA200-D"]);
+  const ma50w=num(s["MA50-W"]),ma200w=num(s["MA200-W"]);
+  const rsid=num(s["RSI-D"]),rsiw=num(s["RSI-W"]);
+  const macdD=num(s["MACD-H-D"]),sigD=num(s["Signal-D"]);
+  const macdW=num(s["MACD-H-W"]),sigW=num(s["Signal-W"]);
+  const vol=num(s.Volume),high52=num(s["52W-High"]),low52=num(s["52W-Low"]);
+
+  if(ma50d!==null){max+=10;pts+=(p>ma50d)?10:3;}
+  if(ma200d!==null){max+=10;pts+=(p>ma200d)?10:3;}
+  if(ma50d!==null&&ma200d!==null){max+=8;pts+=(ma50d>=ma200d)?8:2;}
+  if(ma50w!==null&&ma200w!==null){max+=8;pts+=(ma50w>ma200w)?8:2;}
+  if(rsid!==null){max+=10;pts+=(rsid>=40&&rsid<=70)?8:(rsid<40)?8:2;}
+  if(rsiw!==null){max+=10;pts+=(rsiw>=40&&rsiw<=70)?8:(rsiw<40)?8:2;}
+  if(macdD!==null){max+=12;const pos=macdD>0,ris=sigD!==null?macdD>sigD:false;pts+=pos?(ris?12:6):(ris?4:2);}
+  if(macdW!==null){max+=12;const pos=macdW>0,ris=sigW!==null?macdW>sigW:false;pts+=pos?(ris?12:6):(ris?4:2);}
+  if(vol!==null){max+=8;pts+=6;}
+  if(high52!==null&&low52!==null){
+    max+=7;
+    const dL=(p-low52)/(low52||1),dH=(high52-p)/(high52||1);
+    pts+=dL<=0.10?7:dH<=0.05?1:dH<=0.09?2:5;
+  }
+  if(ma50d!==null||ma200d!==null){
+    max+=5;
+    const avail=[ma50d,ma200d].filter(x=>x!==null);
+    const cl=avail.reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b);
+    const pct=Math.abs(p-cl)/p;
+    pts+=pct<=0.02?5:pct<=0.05?4:pct<=0.10?2:0;
+  }
+  let sc=max>0?(pts/max)*100:0;
+  const dB=ma50d!==null&&ma200d!==null&&p>ma50d&&p>ma200d&&ma50d>=ma200d&&macdD!==null&&macdD>0;
+  const wB=ma50w!==null&&ma200w!==null&&ma50w>ma200w&&macdW!==null&&macdW>0;
+  if(dB&&wB) sc+=5;
+  return Math.round(Math.min(Math.max(sc,0),100));
+}
+
+// ─────────────────────────────────────────────────────────
+// VERDICT RULES — tight professional filters
+//
+// BUY (all 6 must be true):
+//   1. Price > MA50-D AND > MA200-D      (uptrend confirmed)
+//   2. Score >= 70                        (quality gate)
+//   3. MACD-H-W > 0                      (weekly momentum positive)
+//   4. RSI-D between 35–65               (not overbought, not crashed)
+//   5. NOT within 5% of 52W High         (not extended to top)
+//   6. Price within 10% above support    (near entry, not chasing)
+//
+// SHORT SALE (all 7 must be true — for closing held positions only):
+//   1. Price < MA50-D AND < MA200-D      (downtrend confirmed)
+//   2. MA50-D < MA200-D                  (death cross)
+//   3. Score >= 70
+//   4. RSI-D < 45                        (clearly weak)
+//   5. MACD-H-D negative AND falling     (hist < signal)
+//   6. MACD-H-W < 0                      (weekly also bearish)
+//   7. NOT within 10% of 52W Low         (not at bottom/oversold)
+//   Target = 52W-Low (downside)
+//
+// WATCH: score 50–69, or BUY criteria met but price extended
+// WAIT : score 40–49
+// AVOID: score < 40
+function verdictFn(s, sc, z){
+  const p      = num(s.Price);
+  const ma50d  = num(s["MA50-D"]);
+  const ma200d = num(s["MA200-D"]);
+  const rsid   = num(s["RSI-D"]);
+  const macdD  = num(s["MACD-H-D"]);
+  const sigD   = num(s["Signal-D"]);
+  const macdW  = num(s["MACD-H-W"]);
+  const high52 = num(s["52W-High"]);
+  const low52  = num(s["52W-Low"]);
+
+  const aboveBothMAs = ma50d!==null && ma200d!==null && p>ma50d && p>ma200d;
+  const belowBothMAs = ma50d!==null && ma200d!==null && p<ma50d && p<ma200d;
+  const deathCross   = ma50d!==null && ma200d!==null && ma50d < ma200d;
+
+  // BUY filters
+  const near52High  = high52!==null && (high52-p)/(high52||1) <= 0.05;
+  const macdWpos    = macdW!==null  && macdW > 0;
+  const rsiOk       = rsid!==null   && rsid >= 35 && rsid <= 65;
+  const supParts    = z.supportZone.split("–");
+  const supMid      = (parseFloat(supParts[0]) + parseFloat(supParts[1])) / 2;
+  const nearSupport = supMid > 0 ? (p - supMid) / supMid <= 0.10 : false;
+
+  // SHORT filters
+  const near52Low   = low52!==null  && (p-low52)/(low52||1) <= 0.10;
+  const macdNeg     = macdD!==null  && macdD < 0;
+  const macdFalling = macdD!==null  && sigD!==null && macdD < sigD;
+  const rsiWeak     = rsid!==null   && rsid < 45;
+  const macdWneg    = macdW!==null  && macdW < 0;
+
+  // BUY — all 6 conditions
+  if(aboveBothMAs && sc>=70 && macdWpos && rsiOk && !near52High && nearSupport){
+    return {v:"🟢 BUY", verdict:"BUY", target:z.target};
+  }
+
+  // Above MAs + score ok but price extended → WATCH with flag
+  if(aboveBothMAs && sc>=70 && (!nearSupport || near52High)){
+    return {v:"🟡 WATCH ⚠️", verdict:"WATCH", target:z.target};
+  }
+
+  // SHORT SALE — all 7 conditions
+  if(belowBothMAs && deathCross && sc>=70 && rsiWeak && macdNeg && macdFalling && macdWneg && !near52Low){
+    return {v:"🟠 SHORT SALE", verdict:"SHORT SALE", target:z.downsideTarget};
+  }
+
+  // WATCH — forming setup
+  if(sc>=50) return {v:"🟡 WATCH", verdict:"WATCH", target:z.target};
+
+  // WAIT
+  if(sc>=40) return {v:"⚪ WAIT", verdict:"WAIT", target:z.target};
+
+  // AVOID
+  return {v:"🚫 AVOID", verdict:"AVOID", target:z.target};
+}
+
+// TRADE PLANS
+function tradePlan(r){
+  const p     = parseFloat(r.Price);
+  const supLo = parseFloat(r.Support.split("–")[0]);
+  const supHi = parseFloat(r.Support.split("–")[1]);
+
+  if(r.Verdict==="BUY"){
+    const inZone = p <= supHi * 1.02;
+    const action = inZone
+      ? "BUY NOW — price is in/near support zone"
+      : `WAIT — watch for pullback to ${r.Support}`;
+    return {cls:"buy",
+      header:`🟢 ${r.Symbol} — Buy Plan | Score: ${r.Score}`,
+      code:`Entry: ${r.Support} | Target: ₨${fmt(r.Target)} | R:R ≈ ${r.RR}`,
+      note:`At ₨${p}: ${action}`};
+  }
+
+  if(r.Verdict==="SHORT SALE"){
+    return {cls:"short",
+      header:`🟠 ${r.Symbol} — Close Position / Short Signal | Score: ${r.Score}`,
+      code:`Signal at: ₨${fmt(r.Price)} | Downside Target: ₨${fmt(r.Target)}`,
+      note:`⚠️ If holding ${r.Symbol} — consider closing position. Downside target ₨${fmt(r.Target)}.`};
+  }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────────────────
+function render(rows){
+  const order={"BUY":1,"WATCH":2,"WAIT":3,"SHORT SALE":4,"AVOID":5};
+  rows.sort((a,b)=>{
+    const ga=order[a.Verdict]||9,gb=order[b.Verdict]||9;
+    if(ga!==gb) return ga-gb;
+    return b.Score-a.Score;
+  });
+
+  // R:R calculation for display
+  rows.forEach(r=>{
+    const p=parseFloat(r.Price);
+    const supLo=parseFloat(r.Support.split("–")[0]);
+    const reward=Math.abs(r.Target-p);
+    const risk=Math.abs(p-supLo)||1;
+    r.RR=(reward/risk).toFixed(2);
+  });
+
+  // Table — no S2 column
+  let html=`<table><tr>
+    <th>#</th><th>Symbol</th><th>Price</th>
+    <th>Support</th><th>Resistance</th><th>Target</th>
+    <th>Score</th><th>Verdict</th>
+  </tr>`;
+  rows.forEach((r,i)=>{
+    html+=`<tr>
+      <td>${i+1}</td>
+      <td><b>${r.Symbol}</b></td>
+      <td>${fmt(r.Price)}</td>
+      <td>${r.Support}</td>
+      <td>${r.Resistance}</td>
+      <td>${fmt(r.Target)}</td>
+      <td><b>${r.Score}</b></td>
+      <td>${r.VLabel}</td>
+    </tr>`;
+  });
+  html+=`</table>`;
+
+  // Signal summary
+  const g=v=>rows.filter(r=>r.Verdict===v).map(r=>r.Symbol).join(", ")||"—";
+  html+=`<pre>
+─────────────────────────────────────
+📈 BUY        → ${g("BUY")}
+👀 WATCH      → ${g("WATCH")}
+⏳ WAIT       → ${g("WAIT")}
+📉 SHORT SALE → ${g("SHORT SALE")}
+🚫 AVOID      → ${g("AVOID")}
+─────────────────────────────────────</pre>`;
+
+  // Trade plans
+  const planRows=rows.filter(r=>["BUY","SHORT SALE"].includes(r.Verdict));
+  if(planRows.length){
+    html+=`<div class="trade-plans">`;
+    planRows.forEach(r=>{
+      const plan=tradePlan(r);
+      if(!plan) return;
+      html+=`<div class="plan-block ${plan.cls}">
+        <h4>${plan.header}</h4>
+        <code>${plan.code}</code>
+        <p>${plan.note}</p>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  document.getElementById("output").innerHTML=html;
+}
+
+// ─────────────────────────────────────────────────────────
+// MAIN
+// ─────────────────────────────────────────────────────────
+let _rawData=[];
+
+async function runAnalysis(){
+  document.getElementById("output").innerHTML="<p>Running analysis…</p>";
+  try{
+    const res=await fetch("data.csv?"+Date.now());
+    const text=await res.text();
+    const bom=text.charCodeAt(0)===0xFEFF?text.slice(1):text;
+    const lines=bom.trim().split(/\r?\n/);
+    const headers=lines[0].split(",").map(h=>h.trim());
+    _rawData=lines.slice(1).filter(l=>l.trim()).map(line=>{
+      const cols=line.split(",");
+      const obj={};
+      headers.forEach((h,i)=>obj[h]=(cols[i]||"").trim());
+      return obj;
+    });
+  }catch(e){
+    document.getElementById("output").innerHTML=`<p style="color:red">Could not load data.csv: ${e.message}</p>`;
+    return;
+  }
+  const rows=_rawData.map(s=>{
+    const z=computeZones(s);
+    const sc=scoreRow(s);
+    const vr=verdictFn(s,sc,z);
+    return {
+      Symbol:s.Symbol, Price:s.Price,
+      Support:z.supportZone, Resistance:z.resistanceZone,
+      Target:vr.target, Score:sc, VLabel:vr.v, Verdict:vr.verdict, RR:"0"
+    };
+  });
+  render(rows);
+}
+
+// ─────────────────────────────────────────────────────────
+// ADD / UPDATE ROW
+// ─────────────────────────────────────────────────────────
+function addRow(){
+  const fields=["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
+                "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low",
+                "Swing-Low","Swing-High"];
+  const ids=["fSymbol","fPrice","fMA50D","fMA200D","fRSID","fMACDHD","fSignalD",
+             "fMA50W","fMA200W","fRSIW","fMACDHW","fSignalW","fVolume","f52High","f52Low",
+             "fSwingLow","fSwingHigh"];
+  const newRow={};
+  fields.forEach((f,i)=>newRow[f]=(document.getElementById(ids[i]).value||"").trim());
+  if(!newRow.Symbol||!newRow.Price){alert("Symbol and Price are required.");return;}
+  _rawData=_rawData.filter(r=>r.Symbol.toUpperCase()!==newRow.Symbol.toUpperCase());
+  _rawData.push(newRow);
+  exportToTextarea();
+  runAnalysis();
+  hideAddForm();
+}
+
+function exportToTextarea(){
+  const headers=["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
+                 "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low",
+                 "Swing-Low","Swing-High"];
+  const lines=[headers.join(",")];
+  _rawData.forEach(r=>lines.push(headers.map(h=>r[h]||"").join(",")));
+  document.getElementById("csvOut").value=lines.join("\n");
+}
+
+function exportCSV(){
+  const headers=["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
+                 "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low",
+                 "Swing-Low","Swing-High"];
+  const lines=[headers.join(",")];
+  _rawData.forEach(r=>lines.push(headers.map(h=>r[h]||"").join(",")));
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="data.csv";a.click();
+}
+
+function showAddForm(){ document.getElementById("addForm").style.display="block"; }
+function hideAddForm(){ document.getElementById("addForm").style.display="none"; }
+
+runAnalysis();
+</script>
+</body>
+</html>
