@@ -192,19 +192,43 @@ function computeZones(s){
   const hw     = w/2;
 
   // Support
-  let supportZone;
+  let supportZone, s2Zone = null;
+
   if(swLow!==null){
     supportZone = fmtRange(swLow-hw, swLow+hw);
+    // S2 = round-10 below swing low support
+    const s2a = Math.floor((swLow-hw)/10)*10 - 10;
+    s2Zone = fmtRange(s2a-hw, s2a+hw);
   } else {
     const ma200B = (ma200!==null&&ma200<p)?ma200:null;
     const ma50B  = (ma50!==null&&ma50<p)?ma50:null;
-    if(ma200B!==null&&ma50B!==null){
-      const gap=Math.abs(ma50B-ma200B);
-      if(gap<=w){ const avg=(ma50B+ma200B)/2; supportZone=fmtRange(avg-hw,avg+hw); }
-      else       { supportZone=fmtRange(ma200B-hw,ma200B+hw); }
-    } else if(ma200B!==null){ supportZone=fmtRange(ma200B-hw,ma200B+hw); }
-    else if(ma50B!==null)   { supportZone=fmtRange(ma50B-hw,ma50B+hw); }
-    else                    { supportZone=fmtRange(p-w*2,p-w); }
+    if(ma200B!==null && ma50B!==null){
+      const gap = Math.abs(ma50B-ma200B);
+      if(gap<=w){
+        // MAs merged — S1=merged zone, S2=round-10 below
+        const avg=(ma50B+ma200B)/2;
+        supportZone=fmtRange(avg-hw,avg+hw);
+        const s2a=Math.floor((avg-hw)/10)*10-10;
+        s2Zone=fmtRange(s2a-hw, s2a+hw);
+      } else {
+        // MAs separate — S1=closest below price, S2=deeper below price
+        const closer = Math.abs(p-ma50B)<Math.abs(p-ma200B)?ma50B:ma200B;
+        const deeper = closer===ma50B?ma200B:ma50B;
+        supportZone=fmtRange(closer-hw,closer+hw);
+        s2Zone=fmtRange(deeper-hw,deeper+hw);
+      }
+    } else if(ma200B!==null){
+      supportZone=fmtRange(ma200B-hw,ma200B+hw);
+      const s2a=Math.floor((ma200B-hw)/10)*10-10;
+      s2Zone=fmtRange(s2a-hw,s2a+hw);
+    } else if(ma50B!==null){
+      supportZone=fmtRange(ma50B-hw,ma50B+hw);
+      const s2a=Math.floor((ma50B-hw)/10)*10-10;
+      s2Zone=fmtRange(s2a-hw,s2a+hw);
+    } else {
+      supportZone=fmtRange(p-w*2,p-w);
+      s2Zone=null;
+    }
   }
 
   // Resistance
@@ -224,7 +248,7 @@ function computeZones(s){
   // Downside target (for EXIT SIGNAL)
   const downsideTarget=parseFloat(supportZone.split("–")[0]);  // support zone low — realistic exit level
 
-  return {supportZone,resistanceZone,target,downsideTarget,w,hw};
+  return {supportZone,s2Zone,resistanceZone,target,downsideTarget,w,hw};
 }
 
 // ─────────────────────────────────────────────────────────
@@ -440,7 +464,7 @@ function render(rows){
   // Table — no S2 column
   let html=`<table><tr>
     <th>#</th><th>Symbol</th><th>Price</th>
-    <th>Support</th><th>Resistance</th><th>Target</th>
+    <th>Support</th><th>Support 2</th><th>Resistance</th><th>Target</th>
     <th>Score</th><th>Verdict</th><th>Momentum</th>
   </tr>`;
   rows.forEach((r,i)=>{
@@ -449,6 +473,7 @@ function render(rows){
       <td><b>${r.Symbol}</b></td>
       <td>${fmt(r.Price)}</td>
       <td>${r.Support}</td>
+      <td>${r.S2||"—"}</td>
       <td>${r.Resistance}</td>
       <td>${fmt(r.Target)}</td>
       <td><b>${r.Score}</b></td>
@@ -522,7 +547,7 @@ function runAnalysisFromData(){
     const vr=verdictFn(s,sc,z);
     return {
       Symbol:s.Symbol, Price:s.Price,
-      Support:z.supportZone, Resistance:z.resistanceZone,
+      Support:z.supportZone, S2:z.s2Zone, Resistance:z.resistanceZone,
       Target:vr.target, Score:sc, VLabel:vr.v, Verdict:vr.verdict, Momentum:momentumLabel(s,vr.verdict), RR:"0"
     };
   });
