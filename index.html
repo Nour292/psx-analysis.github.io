@@ -7,6 +7,7 @@
 * { box-sizing: border-box; }
 body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 12px; }
 h2 { margin: 0 0 10px; font-size: 18px; color: #222; }
+function fmtNum(v){ const n = parseFloat(v); return Number.isInteger(n) ? n.toString() : n.toFixed(2); }
 button { margin: 4px; padding: 6px 14px; cursor: pointer; border: 1px solid #aaa; border-radius: 4px; background: #fff; font-size: 13px; }
 button:hover { background: #e8e8e8; }
 #addForm { margin-top: 10px; padding: 10px; border: 1px solid #ccc; background: #fff; border-radius: 6px; display:none; }
@@ -87,7 +88,7 @@ function zoneWidth(p){
 }
 
 function fmtRange(lo, hi){
-  return `${lo.toFixed(2)}–${hi.toFixed(2)}`;
+  return `${fmtNum(lo)}–${fmtNum(hi)}`;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -441,7 +442,7 @@ function render(rows){
       <td>${r.Support}</td>
       <td>${r.S2 || "—"}</td>
       <td>${r.Resistance}</td>
-      <td>₨${r.Target}</td>
+      <td>₨${fmtNum(r.Target)}</td>
       <td><b>${r.Score}</b></td>
       <td>${r.VLabel}</td>
     </tr>`;
