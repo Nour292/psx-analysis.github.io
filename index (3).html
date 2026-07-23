@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>PSX Technical Analysis</title>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 12px; }
+h2 { margin: 0 0 10px; font-size: 18px; color: #222; }
+button { margin: 4px; padding: 6px 14px; cursor: pointer; border: 1px solid #aaa; border-radius: 4px; background: #fff; font-size: 13px; }
+button:hover { background: #e8e8e8; }
+#addForm { margin-top: 10px; padding: 10px; border: 1px solid #ccc; background: #fff; border-radius: 6px; display:none; }
+#addForm label { font-size: 12px; color: #555; }
+#addForm input { width: 88px; margin: 2px 4px 2px 0; padding: 3px 5px; font-size: 12px; border: 1px solid #bbb; border-radius: 3px; }
+table { border-collapse: collapse; margin-top: 10px; width: 100%; font-size: 13px; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+th { background: #2c3e50; color: #fff; padding: 7px 10px; text-align: left; font-weight: 600; }
+td { border-bottom: 1px solid #eee; padding: 6px 10px; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f0f4ff; }
+pre { font-size: 13px; white-space: pre-wrap; background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd; margin-top:10px; }
+.trade-plans { margin-top: 14px; }
+.plan-block { background: #fff; border-radius: 6px; border-left: 4px solid #ccc; padding: 10px 14px; margin-bottom: 10px; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.plan-block.buy { border-color: #27ae60; }
+.plan-block.sell { border-color: #e74c3c; }
+.plan-block.short { border-color: #e67e22; }
+.plan-block h4 { margin: 0 0 6px; font-size: 13px; }
+.plan-block code { display:block; background:#f7f7f7; padding:5px 8px; border-radius:4px; margin:4px 0; font-size:12px; }
+.plan-block p { margin: 4px 0 0; font-style: italic; color: #555; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h2>📊 PSX Technical Analysis</h2>
+<button onclick="runAnalysis()">▶ Run Analysis</button>
+<button onclick="showAddForm()">＋ Add / Edit Row</button>
+<button onclick="exportCSV()">⬇ Export CSV</button>
+
+<div id="addForm">
+  <h4>Add / Update Row</h4>
+  <div>
+    <label>Symbol</label><input id="fSymbol" placeholder="e.g. MCB">
+    <label>Price</label><input id="fPrice" placeholder="403.86">
+    <label>MA50-D</label><input id="fMA50D">
+    <label>MA200-D</label><input id="fMA200D">
+    <label>RSI-D</label><input id="fRSID">
+    <label>MACD-H-D</label><input id="fMACDHD">
+    <label>Signal-D</label><input id="fSignalD">
+  </div>
+  <div style="margin-top:6px">
+    <label>MA50-W</label><input id="fMA50W">
+    <label>MA200-W</label><input id="fMA200W">
+    <label>RSI-W</label><input id="fRSIW">
+    <label>MACD-H-W</label><input id="fMACDHW">
+    <label>Signal-W</label><input id="fSignalW">
+    <label>Volume</label><input id="fVolume">
+    <label>52W-High</label><input id="f52High">
+    <label>52W-Low</label><input id="f52Low">
+    <label>Swing-Low</label><input id="fSwingLow" placeholder="optional">
+    <label>Swing-High</label><input id="fSwingHigh" placeholder="optional">
+  </div>
+  <div style="margin-top:8px">
+    <button onclick="addRow()">Save Row</button>
+    <button onclick="hideAddForm()">Close</button>
+  </div>
+  <p style="margin-top:8px"><b>Updated CSV (copy into data.csv on GitHub):</b></p>
+  <textarea id="csvOut" rows="8" style="width:100%;font-size:12px;border:1px solid #ccc;border-radius:4px;padding:6px;"></textarea>
+</div>
+
+<div id="output"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────
+function num(v){ return (v === "" || v === undefined || v === null) ? null : Number(v); }
+
+// ─────────────────────────────────────────────────────────
+// ZONE WIDTH — 2% of price, mapped to range table (SKILL)
+// ─────────────────────────────────────────────────────────
+function zoneWidth(p){
+  if(p <= 50)  return 2.5;   // 2–3 pts
+  if(p <= 150) return 4;     // 3–5 pts
+  if(p <= 300) return 6;     // 5–8 pts
+  if(p <= 500) return 10;    // 8–12 pts
+  if(p <= 700) return 12;    // 10–15 pts
+  return 15;                  // 12–18 pts
+}
+
+function fmtRange(lo, hi){
+  return `${lo.toFixed(2)}–${hi.toFixed(2)}`;
+}
+
+// ─────────────────────────────────────────────────────────
+// SUPPORT & RESISTANCE (SKILL-ALIGNED)
+// Rules:
+//   Support anchor = MA200-D or MA50-D (closer below price)
+//     If both MAs within one zone-width → merge into one zone
+//     If MAs far apart → S1 (closer) and S2 (deeper) — store S1
+//   Resistance = nearest round-10 above price;
+//     override with 52W-High if within one zone-width
+//   Target = next round-10 above resistance zone
+//   Optional: Swing-Low / Swing-High override the MA anchor
+// ─────────────────────────────────────────────────────────
+function computeZones(s){
+  const p      = num(s.Price);
+  const ma50   = num(s["MA50-D"]);
+  const ma200  = num(s["MA200-D"]);
+  const high52 = num(s["52W-High"]);
+  const low52  = num(s["52W-Low"]);
+  const swLow  = num(s["Swing-Low"]);
+  const swHigh = num(s["Swing-High"]);
+  const w      = zoneWidth(p);
+
+  // ── SUPPORT ──────────────────────────────────────────
+  let supportZone, s2Zone = null;
+
+  if(swLow !== null){
+    // Optional enhancement: swing-low overrides MA anchor
+    supportZone = fmtRange(swLow - w, swLow + w);
+  } else {
+    const anchors = [];
+    if(ma50  !== null && ma50  < p) anchors.push(ma50);
+    if(ma200 !== null && ma200 < p) anchors.push(ma200);
+    anchors.sort((a,b) => Math.abs(p-a) - Math.abs(p-b)); // closest first
+
+    if(anchors.length === 0){
+      // Fallback: estimate support below current price
+      supportZone = fmtRange(p - w*2, p - w);
+    } else if(anchors.length === 2 && Math.abs(anchors[0]-anchors[1]) <= w){
+      // Merge: both MAs within one zone-width
+      const avg = (anchors[0]+anchors[1])/2;
+      supportZone = fmtRange(avg - w, avg + w);
+    } else {
+      // S1 = closest, S2 = deeper (if 2 anchors far apart)
+      supportZone = fmtRange(anchors[0] - w, anchors[0] + w);
+      if(anchors.length === 2){
+        s2Zone = fmtRange(anchors[1] - w, anchors[1] + w);
+      }
+    }
+  }
+
+  // ── RESISTANCE ───────────────────────────────────────
+  let resAnchor;
+  if(swHigh !== null){
+    resAnchor = swHigh;
+  } else {
+    resAnchor = Math.ceil(p / 10) * 10;
+    if(high52 !== null && Math.abs(high52 - resAnchor) <= w){
+      resAnchor = high52; // snap to 52W High if within one zone-width
+    }
+  }
+  const resistanceZone = fmtRange(resAnchor - w, resAnchor + w);
+
+  // ── TARGET ───────────────────────────────────────────
+  // Next round-10 above resistance zone top
+  const resTop = resAnchor + w;
+  const target = Math.ceil(resTop / 10) * 10 + 10;
+
+  // ── DOWNSIDE TARGET (for SHORT/SELL plans) ────────────
+  let downsideTarget;
+  if(low52 !== null){
+    downsideTarget = low52;
+  } else {
+    const sLow = parseFloat(supportZone.split("–")[0]);
+    downsideTarget = sLow - w;
+  }
+
+  return { supportZone, s2Zone, resistanceZone, target, downsideTarget, w };
+}
+
+// ─────────────────────────────────────────────────────────
+// SCORING — /100 with dual-timeframe bonus (SKILL-ALIGNED)
+// ─────────────────────────────────────────────────────────
+function scoreRow(s){
+  let pts = 0, max = 0;
+
+  const p      = num(s.Price);
+  const ma50d  = num(s["MA50-D"]);
+  const ma200d = num(s["MA200-D"]);
+  const ma50w  = num(s["MA50-W"]);
+  const ma200w = num(s["MA200-W"]);
+  const rsid   = num(s["RSI-D"]);
+  const rsiw   = num(s["RSI-W"]);
+  const macdD  = num(s["MACD-H-D"]);
+  const sigD   = num(s["Signal-D"]);
+  const macdW  = num(s["MACD-H-W"]);
+  const sigW   = num(s["Signal-W"]);
+  const vol    = num(s.Volume);
+  const high52 = num(s["52W-High"]);
+  const low52  = num(s["52W-Low"]);
+
+  // ── Price vs MA50-D (10) ──────────────────────────────
+  if(ma50d !== null){ max += 10; pts += (p > ma50d) ? 10 : 3; }
+
+  // ── Price vs MA200-D (10) ─────────────────────────────
+  if(ma200d !== null){ max += 10; pts += (p > ma200d) ? 10 : 3; }
+
+  // ── MA50-D vs MA200-D — Golden/Death cross (8) ────────
+  if(ma50d !== null && ma200d !== null){
+    max += 8;
+    pts += (ma50d >= ma200d) ? 8 : 2; // golden = 8, death = 2
+  }
+
+  // ── MA50-W vs MA200-W — Weekly cross (8) ──────────────
+  if(ma50w !== null && ma200w !== null){
+    max += 8;
+    pts += (ma50w > ma200w) ? 8 : 2;
+  }
+
+  // ── RSI-D (10) ────────────────────────────────────────
+  if(rsid !== null){
+    max += 10;
+    if(rsid >= 40 && rsid <= 70)  pts += 8;   // ideal zone
+    else if(rsid < 40)             pts += 6;   // oversold — buy zone
+    else if(rsid > 70)             pts += 2;   // overbought — caution
+    else                           pts += 4;
+  }
+
+  // ── RSI-W (10) ────────────────────────────────────────
+  if(rsiw !== null){
+    max += 10;
+    if(rsiw >= 40 && rsiw <= 70)  pts += 8;
+    else if(rsiw < 40)             pts += 6;
+    else if(rsiw > 70)             pts += 2;
+    else                           pts += 4;
+  }
+
+  // ── MACD Histogram-D (12): positive+rising = full ─────
+  if(macdD !== null && sigD !== null){
+    max += 12;
+    const posHist = macdD > 0;
+    const rising  = macdD > sigD;   // hist > signal implies momentum
+    if(posHist && rising)      pts += 12;
+    else if(posHist)           pts += 8;
+    else if(rising)            pts += 5; // negative but turning up
+    else                       pts += 2;
+  } else if(macdD !== null){
+    max += 12;
+    pts += (macdD > 0) ? 8 : 2;
+  }
+
+  // ── MACD Histogram-W (12) ─────────────────────────────
+  if(macdW !== null && sigW !== null){
+    max += 12;
+    const posHistW = macdW > 0;
+    const risingW  = macdW > sigW;
+    if(posHistW && risingW)    pts += 12;
+    else if(posHistW)          pts += 8;
+    else if(risingW)           pts += 5;
+    else                       pts += 2;
+  } else if(macdW !== null){
+    max += 12;
+    pts += (macdW > 0) ? 8 : 2;
+  }
+
+  // ── Volume (8) ────────────────────────────────────────
+  if(vol !== null){
+    max += 8;
+    pts += 6; // can't compute avg without history — give baseline credit
+  }
+
+  // ── 52W Position (7) ──────────────────────────────────
+  if(high52 !== null && low52 !== null){
+    max += 7;
+    const distLow  = (p - low52)  / (low52  || 1);
+    const distHigh = (high52 - p) / (high52 || 1);
+    if(distLow  <= 0.10) pts += 7;      // within 10% of 52W Low → BUY zone
+    else if(distHigh <= 0.05) pts += 1; // within 5% of 52W High → caution
+    else                 pts += 4;
+  }
+
+  // ── S/R Location (5) ──────────────────────────────────
+  if(ma50d !== null || ma200d !== null){
+    max += 5;
+    const available = [ma50d, ma200d].filter(x => x !== null);
+    const closest = available.reduce((a,b) => Math.abs(p-a)<Math.abs(p-b)?a:b);
+    if(Math.abs(p - closest) / p <= 0.02) pts += 5;
+    else pts += 2;
+  }
+
+  // ── Rescale to /100 ───────────────────────────────────
+  let sc = max > 0 ? (pts / max) * 100 : 0;
+
+  // ── Dual Timeframe Bonus (+5 if 1D & 1W agree) ────────
+  if(ma50d !== null && ma200d !== null && ma50w !== null && ma200w !== null){
+    const dailyUp  = p > ma50d && p > ma200d && ma50d >= ma200d;
+    const weeklyUp = ma50w > ma200w;
+    if(dailyUp && weeklyUp) sc += 5;
+
+    const dailyDown  = p < ma50d && p < ma200d && ma50d <= ma200d;
+    const weeklyDown = ma50w < ma200w;
+    if(dailyDown && weeklyDown) sc -= 3; // dual downtrend penalty
+  }
+
+  return Math.round(Math.min(Math.max(sc, 0), 100));
+}
+
+// ─────────────────────────────────────────────────────────
+// VERDICT — R:R gate applied silently (SKILL-ALIGNED)
+// ─────────────────────────────────────────────────────────
+function verdictFn(s, sc, z){
+  const p        = num(s.Price);
+  const ma50d    = num(s["MA50-D"]);
+  const ma200d   = num(s["MA200-D"]);
+  const ma50w    = num(s["MA50-W"]);
+  const ma200w   = num(s["MA200-W"]);
+  const rsid     = num(s["RSI-D"]);
+  const macdD    = num(s["MACD-H-D"]);
+  const high52   = num(s["52W-High"]);
+  const low52    = num(s["52W-Low"]);
+
+  const supLo    = parseFloat(z.supportZone.split("–")[0]);
+  const resHi    = parseFloat(z.resistanceZone.split("–")[1]);
+  const reward   = Math.abs(z.target - p);
+  const risk     = Math.abs(p - supLo) || 1;
+  const rr       = reward / risk;
+
+  // ── 52W position flags ────────────────────────────────
+  const near52High = high52 !== null && (high52 - p) / high52 <= 0.05;
+  const near52Low  = low52  !== null && (p - low52)  / (low52||1) <= 0.10;
+
+  // ── SHORT SALE conditions ─────────────────────────────
+  const deathCross    = ma50d !== null && ma200d !== null && ma50d < ma200d;
+  const belowBothMAs  = ma50d !== null && ma200d !== null && p < ma50d && p < ma200d;
+  const weeklyBearish = ma50w !== null && ma200w !== null && ma50w < ma200w;
+  const macdBearish   = macdD !== null && macdD < 0;
+  const rsiWeak       = rsid  !== null && rsid < 50;
+
+  if(belowBothMAs && deathCross && weeklyBearish && macdBearish && rsiWeak && sc <= 42){
+    return { v: "🟠 SHORT SALE", verdict: "SHORT SALE", target: z.downsideTarget, rr: rr.toFixed(2) };
+  }
+
+  // ── SELL: existing long losing support ────────────────
+  if(belowBothMAs && macdBearish && sc >= 43 && sc <= 52){
+    return { v: "🔴 SELL", verdict: "SELL", target: z.downsideTarget, rr: rr.toFixed(2) };
+  }
+
+  // ── R:R gate — downgrade one level if < 1.5:1 ─────────
+  let effectiveSc = sc;
+  if(rr < 1.5) effectiveSc = Math.max(sc - 15, 0);
+
+  // ── BUY ───────────────────────────────────────────────
+  const buyConditions = [
+    ma50d  !== null && p > ma50d,
+    ma200d !== null && p > ma200d,
+    ma50d  !== null && ma200d !== null && ma50d >= ma200d,
+    ma50w  !== null && ma200w !== null && ma50w > ma200w,
+    macdD  !== null && macdD > 0,
+    rsid   !== null && rsid >= 40 && rsid <= 70,
+  ].filter(Boolean).length;
+
+  if(effectiveSc >= 75 && buyConditions >= 4){
+    let vLabel = near52High ? "🟢 BUY ⚠️" : "🟢 BUY";
+    return { v: vLabel, verdict: "BUY", target: z.target, rr: rr.toFixed(2) };
+  }
+
+  if(effectiveSc >= 60 && buyConditions >= 3){
+    return { v: "🟢 BUY", verdict: "BUY", target: z.target, rr: rr.toFixed(2) };
+  }
+
+  // ── AVOID (mixed but above-MA) ────────────────────────
+  if(belowBothMAs && effectiveSc > 42){
+    return { v: "🚫 AVOID", verdict: "AVOID", target: z.target, rr: rr.toFixed(2) };
+  }
+
+  // ── WATCH ─────────────────────────────────────────────
+  if(effectiveSc >= 50){
+    return { v: "🟡 WATCH", verdict: "WATCH", target: z.target, rr: rr.toFixed(2) };
+  }
+
+  // ── WAIT ──────────────────────────────────────────────
+  if(effectiveSc >= 40){
+    return { v: "⚪ WAIT", verdict: "WAIT", target: z.target, rr: rr.toFixed(2) };
+  }
+
+  return { v: "🚫 AVOID", verdict: "AVOID", target: z.target, rr: rr.toFixed(2) };
+}
+
+// ─────────────────────────────────────────────────────────
+// TRADE PLANS (SKILL-ALIGNED)
+// ─────────────────────────────────────────────────────────
+function tradePlan(r){
+  const p = parseFloat(r.Price);
+  const supLo = parseFloat(r.Support.split("–")[0]);
+  const supHi = parseFloat(r.Support.split("–")[1]);
+
+  if(r.Verdict === "BUY"){
+    const inZone = p >= supLo && p <= supHi + (supHi-supLo)*0.5;
+    const action = inZone
+      ? `BUY NOW — price is in/near entry zone`
+      : `WAIT — price above entry zone; watch for pullback to ${r.Support}`;
+    return { cls: "buy", header: `🟢 ${r.Symbol} — Buy Plan | Score: ${r.Score}`,
+      code: `Entry: ${r.Support} | Target: ₨${r.Target} | Support: ${r.Support} | R:R ≈ ${r.RR}`,
+      note: `At ₨${p}: ${action}` };
+  }
+
+  if(r.Verdict === "SHORT SALE"){
+    return { cls: "short", header: `🟠 ${r.Symbol} — Short Sale Plan | Score: ${r.Score}`,
+      code: `Entry: ${r.Resistance} | Stop Loss: ${r.Resistance.split("–")[1]} | Target: ₨${r.Target} | R:R ≈ ${r.RR}`,
+      note: `At ₨${p}: SHORT near resistance only. Downside target ₨${r.Target}.` };
+  }
+
+  if(r.Verdict === "SELL"){
+    return { cls: "sell", header: `🔴 ${r.Symbol} — Sell Plan | Score: ${r.Score}`,
+      code: `Exit zone: ${r.Resistance} | Reason: Price losing MA support, MACD bearish`,
+      note: `At ₨${p}: TRIM NOW — reduce position at current levels` };
+  }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────────────────
+function render(rows){
+  const order = { "BUY":1, "WATCH":2, "WAIT":3, "SELL":4, "SHORT SALE":5, "AVOID":6 };
+
+  rows.sort((a,b) => {
+    const ga = order[a.Verdict] || 9;
+    const gb = order[b.Verdict] || 9;
+    if(ga !== gb) return ga - gb;
+    if(["BUY","WATCH","WAIT"].includes(a.Verdict)) return b.Score - a.Score;
+    if(a.Verdict === "SHORT SALE") return a.Score - b.Score;
+    return 0;
+  });
+
+  // ── Verdict table ─────────────────────────────────────
+  let html = `<table>
+    <tr>
+      <th>#</th><th>Symbol</th><th>Price</th>
+      <th>Support (S1)</th><th>S2</th>
+      <th>Resistance</th><th>Target</th>
+      <th>Score</th><th>Verdict</th>
+    </tr>`;
+
+  rows.forEach((r, i) => {
+    html += `<tr>
+      <td>${i+1}</td>
+      <td><b>${r.Symbol}</b></td>
+      <td>₨${r.Price}</td>
+      <td>${r.Support}</td>
+      <td>${r.S2 || "—"}</td>
+      <td>${r.Resistance}</td>
+      <td>₨${r.Target}</td>
+      <td><b>${r.Score}</b></td>
+      <td>${r.VLabel}</td>
+    </tr>`;
+  });
+  html += "</table>";
+
+  // ── Signal summary ────────────────────────────────────
+  const g = v => rows.filter(r => r.Verdict === v).map(r => r.Symbol).join(", ") || "—";
+  html += `<pre>
+─────────────────────────────────────
+📈 BUY        → ${g("BUY")}
+👀 WATCH      → ${g("WATCH")}
+⏳ WAIT       → ${g("WAIT")}
+📉 SELL/SHORT → ${g("SELL")}, ${g("SHORT SALE")}
+🚫 AVOID      → ${g("AVOID")}
+─────────────────────────────────────</pre>`;
+
+  // ── Trade plans ───────────────────────────────────────
+  const planRows = rows.filter(r => ["BUY","SELL","SHORT SALE"].includes(r.Verdict));
+  if(planRows.length){
+    html += `<div class="trade-plans">`;
+    planRows.forEach(r => {
+      const plan = tradePlan(r);
+      if(!plan) return;
+      html += `<div class="plan-block ${plan.cls}">
+        <h4>${plan.header}</h4>
+        <code>${plan.code}</code>
+        <p>${plan.note}</p>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById("output").innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────
+// MAIN — parse CSV → analyze → render
+// ─────────────────────────────────────────────────────────
+let _rawData = [];
+
+async function runAnalysis(){
+  document.getElementById("output").innerHTML = "<p>Running analysis…</p>";
+  try {
+    const res  = await fetch("data.csv?" + Date.now());
+    const text = await res.text();
+    const bom  = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+    const lines = bom.trim().split(/\r?\n/);
+    const headers = lines[0].split(",").map(h => h.trim());
+    _rawData = lines.slice(1).filter(l => l.trim()).map(line => {
+      const cols = line.split(",");
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = (cols[i] || "").trim());
+      return obj;
+    });
+  } catch(e){
+    document.getElementById("output").innerHTML = `<p style="color:red">Could not load data.csv: ${e.message}</p>`;
+    return;
+  }
+
+  const rows = _rawData.map(s => {
+    const z  = computeZones(s);
+    const sc = scoreRow(s);
+    const vr = verdictFn(s, sc, z);
+
+    return {
+      Symbol:     s.Symbol,
+      Price:      s.Price,
+      Support:    z.supportZone,
+      S2:         z.s2Zone,
+      Resistance: z.resistanceZone,
+      Target:     vr.target.toFixed ? vr.target.toFixed(2) : vr.target,
+      Score:      sc,
+      VLabel:     vr.v,
+      Verdict:    vr.verdict,
+      RR:         vr.rr,
+    };
+  });
+
+  render(rows);
+}
+
+// ─────────────────────────────────────────────────────────
+// ADD ROW
+// ─────────────────────────────────────────────────────────
+function addRow(){
+  const fields = ["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
+                  "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low",
+                  "Swing-Low","Swing-High"];
+  const ids    = ["fSymbol","fPrice","fMA50D","fMA200D","fRSID","fMACDHD","fSignalD",
+                  "fMA50W","fMA200W","fRSIW","fMACDHW","fSignalW","fVolume","f52High","f52Low",
+                  "fSwingLow","fSwingHigh"];
+
+  const newRow = {};
+  fields.forEach((f, i) => newRow[f] = (document.getElementById(ids[i]).value || "").trim());
+
+  if(!newRow.Symbol || !newRow.Price){ alert("Symbol and Price are required."); return; }
+
+  // remove existing row with same symbol (case-insensitive)
+  _rawData = _rawData.filter(r => r.Symbol.toUpperCase() !== newRow.Symbol.toUpperCase());
+  _rawData.push(newRow);
+
+  exportToTextarea();
+  runAnalysis();
+  hideAddForm();
+}
+
+function exportToTextarea(){
+  const headers = ["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
+                   "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low",
+                   "Swing-Low","Swing-High"];
+  const lines = [headers.join(",")];
+  _rawData.forEach(r => lines.push(headers.map(h => r[h] || "").join(",")));
+  document.getElementById("csvOut").value = lines.join("\n");
+}
+
+function exportCSV(){
+  const headers = ["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
+                   "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low",
+                   "Swing-Low","Swing-High"];
+  const lines = [headers.join(",")];
+  _rawData.forEach(r => lines.push(headers.map(h => r[h] || "").join(",")));
+  const blob = new Blob([lines.join("\n")], {type:"text/csv"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = "data.csv"; a.click();
+}
+
+function showAddForm(){ document.getElementById("addForm").style.display="block"; }
+function hideAddForm(){ document.getElementById("addForm").style.display="none"; }
+
+// auto-run on load
+runAnalysis();
+</script>
+</body>
+</html>
