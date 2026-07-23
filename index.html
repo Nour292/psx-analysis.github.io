@@ -38,11 +38,22 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .btn-import { background:#2e7d32; color:#fff; }
 .btn-import:hover { background:#388e3c; }
 /* Equal-width nav buttons for landing page */
-.btn-nav {
-  width:190px; text-align:center;
-  background:#1a2f4a; color:#c8ddf0; border:1px solid #2e4060;
+.btn-nav, .btn-home, .btn-weekly, .btn-single, .btn-import {
+  width:200px; min-width:200px; height:40px;
+  text-align:center; font-size:13px; font-weight:600;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:6px; cursor:pointer; transition:all .15s;
 }
-.btn-nav:hover { background:#1e3a5a; color:#fff; border-color:#4fc3f7; }
+.btn-nav    { background:#1a2f4a; color:#c8ddf0; border:1px solid #2e4060; }
+.btn-nav:hover    { background:#1e3a5a; color:#fff; border-color:#4fc3f7; }
+.btn-home   { background:#2e4060; color:#a0c4e8; border:1px solid #3a5070; }
+.btn-home:hover   { background:#3a5070; color:#fff; }
+.btn-weekly { background:#1565c0; color:#fff; border:1px solid #1976d2; }
+.btn-weekly:hover { background:#1976d2; }
+.btn-single { background:#6a1b9a; color:#fff; border:1px solid #7b1fa2; }
+.btn-single:hover { background:#7b1fa2; }
+.btn-import { background:#2e7d32; color:#fff; border:1px solid #388e3c; }
+.btn-import:hover { background:#388e3c; }
 .btn-export { background:#4a4a00; color:#e8e800; }
 .btn-export:hover { background:#5a5a00; }
 .btn-action { background:#e65100; color:#fff; }
@@ -166,8 +177,8 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 }
 .input-table td input:focus{ outline:none; border-color:#4fc3f7; }
 .analyse-btn{
-  width:100%; padding:14px; background:#0d47a1; color:#fff;
-  border:none; font-size:16px; font-weight:700; cursor:pointer;
+  width:100%; padding:10px; background:#0d47a1; color:#fff;
+  border:none; font-size:14px; font-weight:700; cursor:pointer;
   letter-spacing:.5px; transition:background .15s;
 }
 .analyse-btn:hover{ background:#1565c0; }
@@ -280,20 +291,40 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 /* Trade plans */
 .plans-section{ margin-top:20px; }
 .plan-block{
-  background:#1a2535; border-radius:6px; padding:7px 10px;
-  margin-bottom:6px; border-left:3px solid #2e4060;
-  flex:0 0 auto; width:calc(50% - 4px);
+  background:#1a2535; border-radius:8px; padding:14px 18px;
+  margin-bottom:10px; border-left:4px solid #2e4060;
+  flex:0 0 auto; width:calc(50% - 6px);
 }
 .plan-block.buy  { border-color:#4caf50; }
 .plan-block.exit { border-color:#ef5350; }
-.plan-block h4   { font-size:12px; font-weight:700; margin-bottom:4px; }
+.plan-block h4   { font-size:14px; font-weight:700; margin-bottom:8px; line-height:1.4; }
 .plan-block code {
-  display:block; background:#0f1923; padding:4px 8px; border-radius:4px;
-  font-size:11px; color:#4fc3f7; margin-bottom:3px; font-family:monospace;
+  display:block; background:#0f1923; padding:8px 12px; border-radius:5px;
+  font-size:13px; color:#4fc3f7; margin-bottom:6px; font-family:monospace; line-height:1.6;
 }
-.plan-block p    { font-size:11px; color:#a0c4e8; font-style:italic; }
+.plan-block p    { font-size:13px; color:#a0c4e8; font-style:italic; line-height:1.5; }
 
 .table-wrap{ overflow-x:auto; }
+
+/* Import table */
+.import-tbl { font-size:15px; }
+.itbl-th {
+  background:#0d2a4a; color:#4fc3f7; font-size:13px; font-weight:700;
+  padding:10px 12px; text-align:center; border:1px solid #2e4060;
+}
+.itbl-lbl {
+  background:#1a2535; color:#a0c4e8; font-size:15px; font-weight:700;
+  padding:12px 14px; border:1px solid #1e3050; white-space:nowrap;
+}
+.itbl-val {
+  background:#0f1923; padding:8px 10px; border:1px solid #1e3050;
+}
+.itbl-in {
+  width:100%; background:#0f1923; color:#4fc3f7;
+  border:1px solid #2e4060; border-radius:4px;
+  padding:8px 10px; font-size:15px; font-weight:600; text-align:center;
+}
+.itbl-in:focus { outline:none; border-color:#4fc3f7; }
 </style>
 </head>
 <body>
@@ -356,43 +387,59 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <p class="hint" style="margin-bottom:16px">Paste your Pine Script CSV label output, or enter manually symbol by symbol.</p>
 
     <div id="manualTab">
-      <p class="hint" style="margin-bottom:10px">Enter values for one symbol. All fields fit the page width.</p>
-      <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px">
-        <div class="form-cell" style="align-items:flex-start"><label>Symbol</label><input id="fSymbol" placeholder="MCB" style="width:100%"></div>
-        <div class="form-cell" style="align-items:flex-start"><label>Price</label><input id="fPrice" placeholder="403.86" style="width:100%"></div>
-        <div class="form-cell" style="align-items:flex-start"><label>Volume</label><input id="fVolume" style="width:100%"></div>
-        <div class="form-cell" style="align-items:flex-start"><label>52W-High</label><input id="f52High" style="width:100%"></div>
-        <div class="form-cell" style="align-items:flex-start"><label>52W-Low</label><input id="f52Low" style="width:100%"></div>
-      </div>
-      <div style="display:grid; grid-template-columns:120px repeat(2,1fr) repeat(2,1fr) repeat(2,1fr); gap:8px; margin-bottom:14px">
-        <div style="font-size:11px;color:#4fc3f7;font-weight:700;padding-top:20px"></div>
-        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1D</div>
-        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1W</div>
-        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1D</div>
-        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1W</div>
-        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1D</div>
-        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1W</div>
-
-        <div class="form-cell" style="align-items:flex-start"><label>MA50</label></div>
-        <div><input id="fMA50D" style="width:100%" placeholder="401.2"></div>
-        <div><input id="fMA50W" style="width:100%" placeholder="399.1"></div>
-        <div class="form-cell" style="align-items:flex-start;padding-top:0"><label>MA200</label></div>
-        <div><input id="fMA200D" style="width:100%" placeholder="385.5"></div>
-        <div><input id="fMA200W" style="width:100%" placeholder="280.4"></div>
-
-        <div class="form-cell" style="align-items:flex-start"><label>RSI</label></div>
-        <div><input id="fRSID" style="width:100%" placeholder="52.1"></div>
-        <div><input id="fRSIW" style="width:100%" placeholder="58.3"></div>
-        <div class="form-cell" style="align-items:flex-start"><label>MACD-H</label></div>
-        <div><input id="fMACDHD" style="width:100%" placeholder="-1.2"></div>
-        <div><input id="fMACDHW" style="width:100%" placeholder="4.2"></div>
-
-        <div class="form-cell" style="align-items:flex-start"><label>Signal</label></div>
-        <div><input id="fSignalD" style="width:100%" placeholder="0.8"></div>
-        <div><input id="fSignalW" style="width:100%" placeholder="3.1"></div>
-        <div></div><div></div><div></div><div></div>
-      </div>
-      <button class="btn btn-weekly" onclick="addRow()">💾 Save Row</button>
+      <table class="import-tbl" style="width:100%;border-collapse:collapse;margin-bottom:16px">
+        <!-- ROW 1: HEADER -->
+        <thead>
+          <tr>
+            <th class="itbl-th" style="width:14%">INDICATOR</th>
+            <th class="itbl-th">1D VALUE</th>
+            <th class="itbl-th">1W VALUE</th>
+            <th class="itbl-th" style="width:14%">INDICATOR</th>
+            <th class="itbl-th">1D VALUE</th>
+            <th class="itbl-th">1W VALUE</th>
+            <th class="itbl-th" style="width:14%">INDICATOR</th>
+            <th class="itbl-th">1D VALUE</th>
+            <th class="itbl-th">1W VALUE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- ROW 2: Symbol / Price / Volume -->
+          <tr>
+            <td class="itbl-lbl">Symbol</td>
+            <td class="itbl-val" colspan="2"><input id="fSymbol" class="itbl-in" placeholder="MCB"></td>
+            <td class="itbl-lbl">Price</td>
+            <td class="itbl-val" colspan="2"><input id="fPrice" class="itbl-in" placeholder="403.86"></td>
+            <td class="itbl-lbl">Volume</td>
+            <td class="itbl-val"><input id="fVolume" class="itbl-in" placeholder="1D vol"></td>
+            <td class="itbl-val"><input id="fVolumeW" class="itbl-in" placeholder="1W vol"></td>
+          </tr>
+          <!-- ROW 3: MA50 / MA200 / RSI -->
+          <tr>
+            <td class="itbl-lbl">MA50</td>
+            <td class="itbl-val"><input id="fMA50D" class="itbl-in" placeholder="1D"></td>
+            <td class="itbl-val"><input id="fMA50W" class="itbl-in" placeholder="1W"></td>
+            <td class="itbl-lbl">MA200</td>
+            <td class="itbl-val"><input id="fMA200D" class="itbl-in" placeholder="1D"></td>
+            <td class="itbl-val"><input id="fMA200W" class="itbl-in" placeholder="1W"></td>
+            <td class="itbl-lbl">RSI</td>
+            <td class="itbl-val"><input id="fRSID" class="itbl-in" placeholder="1D"></td>
+            <td class="itbl-val"><input id="fRSIW" class="itbl-in" placeholder="1W"></td>
+          </tr>
+          <!-- ROW 4: MACD-H / Signal / 52W -->
+          <tr>
+            <td class="itbl-lbl">MACD-H</td>
+            <td class="itbl-val"><input id="fMACDHD" class="itbl-in" placeholder="1D"></td>
+            <td class="itbl-val"><input id="fMACDHW" class="itbl-in" placeholder="1W"></td>
+            <td class="itbl-lbl">Signal</td>
+            <td class="itbl-val"><input id="fSignalD" class="itbl-in" placeholder="1D"></td>
+            <td class="itbl-val"><input id="fSignalW" class="itbl-in" placeholder="1W"></td>
+            <td class="itbl-lbl">52W High/Low</td>
+            <td class="itbl-val"><input id="f52High" class="itbl-in" placeholder="High"></td>
+            <td class="itbl-val"><input id="f52Low" class="itbl-in" placeholder="Low"></td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="btn btn-weekly" onclick="addRow()" style="width:200px">💾 Save Row</button>
     </div>
 
     <div class="csv-box" id="csvSection" style="display:none;margin-top:20px">
@@ -434,7 +481,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
         <tr><td>RSI</td>      <td><input id="sRSID"   placeholder="52.1"></td> <td><input id="sRSIW"   placeholder="58.3"></td></tr>
         <tr><td>MACD-H</td>   <td><input id="sMACDHD" placeholder="-1.2"></td> <td><input id="sMACDHW" placeholder="4.2"></td></tr>
         <tr><td>Signal</td>   <td><input id="sSignalD" placeholder="0.8"></td> <td><input id="sSignalW" placeholder="3.1"></td></tr>
-        <tr><td>Volume</td>   <td colspan="2"><input id="sVolume"  placeholder="1250000" style="width:100%"></td></tr>
+        <tr><td>Volume</td>   <td><input id="sVolume"   placeholder="1D vol"></td><td><input id="sVolumeW" placeholder="1W vol"></td></tr>
         <tr><td>52W-High</td> <td colspan="2"><input id="s52High"  placeholder="452" style="width:100%"></td></tr>
         <tr><td>52W-Low</td>  <td colspan="2"><input id="s52Low"   placeholder="280" style="width:100%"></td></tr>
       </table>
@@ -581,18 +628,18 @@ function momentumLabel(s,verdict){
   const macdD=num(s['MACD-H-D']),macdW=num(s['MACD-H-W']),sigW=num(s['Signal-W']),rsid=num(s['RSI-D']);
   if(verdict==='BUY'){
     const wR=macdW!==null&&sigW!==null&&macdW>sigW;
-    if(macdW!==null&&macdW>3&&wR) return '💚 Strong ↑';
-    if(macdW!==null&&macdW>0&&wR) return '🟢 Moderate ↑';
-    return '🟡 Forming ↑';
+    if(macdW!==null&&macdW>3&&wR) return '<b style="color:#4caf50">Strong ↑</b>';
+    if(macdW!==null&&macdW>0&&wR) return '<b style="color:#81c784">Moderate ↑</b>';
+    return '<b style="color:#a5d6a7">Forming ↑</b>';
   }
   if(verdict==='EXIT'){
-    if(rsid!==null&&rsid<35&&macdD!==null&&macdD<-1.5) return '🔴 Strong ↓';
-    if(rsid!==null&&rsid<42&&macdD!==null&&macdD<-0.5) return '🟠 Moderate ↓';
-    return '🟡 Mild ↓';
+    if(rsid!==null&&rsid<35&&macdD!==null&&macdD<-1.5) return '<b style="color:#ef5350">Strong ↓</b>';
+    if(rsid!==null&&rsid<42&&macdD!==null&&macdD<-0.5) return '<b style="color:#ef9a9a">Moderate ↓</b>';
+    return '<b style="color:#ffb74d">Mild ↓</b>';
   }
   if(macdW!==null){
     const wR=sigW!==null&&macdW>sigW;
-    return macdW>0&&wR?'MACD-W ▲ Building':macdW>0?'MACD-W ▲ Slowing':'MACD-W ▼ Weak';
+    return macdW>0&&wR?'<span style="color:#4fc3f7">MACD-W ▲ Building</span>':macdW>0?'<span style="color:#78909c">MACD-W ▲ Slowing</span>':'<span style="color:#ef5350">MACD-W ▼ Weak</span>';
   }
   return '—';
 }
