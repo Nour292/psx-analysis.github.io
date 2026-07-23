@@ -11,32 +11,62 @@ button { margin: 4px; padding: 6px 14px; cursor: pointer; border: 1px solid #aaa
 button:hover { background: #e8e8e8; }
 
 /* ── Add/Update form — single row layout ── */
+/* ── Data Import Panel ── */
 #addForm {
-  margin-top: 10px; padding: 12px 14px; border: 1px solid #ccc;
+  margin-top: 10px; padding: 14px 16px; border: 1px solid #ccc;
   background: #fff; border-radius: 6px; display: none;
 }
-#addForm h4 { margin: 0 0 10px; font-size: 13px; color: #333; }
+#addForm h4 { margin: 0 0 4px; font-size: 14px; color: #2c3e50; font-weight: 700; }
+#addForm .subtitle { font-size: 12px; color: #777; margin: 0 0 10px; }
+.tab-bar { display:flex; gap:4px; margin-bottom:12px; }
+.tab-btn {
+  padding:5px 14px; font-size:12px; border:1px solid #bbb;
+  border-radius:4px; background:#f4f6f9; cursor:pointer; color:#555;
+}
+.tab-btn.active { background:#2c3e50; color:#fff; border-color:#2c3e50; }
+/* Paste tab */
+#pasteTab textarea {
+  width:100%; height:140px; font-size:12px; font-family:monospace;
+  border:1px solid #bbb; border-radius:4px; padding:8px; resize:vertical;
+  box-sizing:border-box;
+}
+#pasteTab .hint {
+  font-size:11px; color:#888; margin:6px 0 10px;
+  line-height:1.5;
+}
+#pastePreview {
+  margin-top:10px; font-size:12px; overflow-x:auto;
+}
+#pastePreview table { border-collapse:collapse; width:100%; }
+#pastePreview th { background:#2c3e50; color:#fff; padding:4px 8px; font-size:11px; }
+#pastePreview td { border-bottom:1px solid #eee; padding:4px 8px; font-size:11px; }
+#pastePreview tr:hover td { background:#f0f4ff; }
+/* Manual tab */
 .form-row {
-  display: flex; flex-wrap: nowrap; gap: 8px; align-items: flex-end;
-  overflow-x: auto; padding-bottom: 4px;
+  display:flex; flex-wrap:nowrap; gap:6px; align-items:flex-end;
+  overflow-x:auto; padding-bottom:4px;
 }
-.form-cell {
-  display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
-}
-.form-cell label {
-  font-size: 11px; color: #555; white-space: nowrap;
-  margin-bottom: 3px; text-align: center;
-}
+.form-cell { display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
+.form-cell label { font-size:11px; color:#555; white-space:nowrap; margin-bottom:3px; text-align:center; }
 .form-cell input {
-  width: 72px; padding: 4px 5px; font-size: 12px;
-  border: 1px solid #bbb; border-radius: 3px; text-align: center;
+  width:72px; padding:4px 5px; font-size:12px;
+  border:1px solid #bbb; border-radius:3px; text-align:center;
 }
-.form-cell input:focus { outline: none; border-color: #2c3e50; }
-.form-actions { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
-.form-actions textarea {
-  flex: 1; font-size: 11px; border: 1px solid #ccc;
-  border-radius: 4px; padding: 5px; resize: vertical; min-height: 56px;
+.form-cell input:focus { outline:none; border-color:#2c3e50; }
+/* CSV output */
+#csvSection { margin-top:12px; }
+#csvSection label { font-size:11px; color:#555; display:block; margin-bottom:4px; }
+#csvOut {
+  width:100%; height:90px; font-size:11px; font-family:monospace;
+  border:1px solid #ccc; border-radius:4px; padding:6px;
+  box-sizing:border-box; resize:vertical;
 }
+.form-actions { margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.btn-primary { background:#27ae60; color:#fff; border:none; border-radius:4px; padding:6px 16px; font-size:13px; cursor:pointer; }
+.btn-primary:hover { background:#219150; }
+.btn-secondary { background:#fff; border:1px solid #aaa; border-radius:4px; padding:6px 14px; font-size:13px; cursor:pointer; }
+.btn-secondary:hover { background:#eee; }
+#importStatus { font-size:12px; color:#27ae60; font-weight:600; }
 
 /* ── Results table ── */
 table { border-collapse: collapse; margin-top: 10px; width: 100%; font-size: 13px; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
@@ -62,30 +92,66 @@ pre { font-size: 13px; white-space: pre-wrap; background:#fff; padding:10px; bor
 <button onclick="exportCSV()">⬇ Export CSV</button>
 
 <div id="addForm">
-  <h4>Add / Update Row</h4>
-  <div class="form-row">
-    <div class="form-cell"><label>Symbol</label><input id="fSymbol" placeholder="MCB"></div>
-    <div class="form-cell"><label>Price</label><input id="fPrice" placeholder="403.86"></div>
-    <div class="form-cell"><label>MA50-D</label><input id="fMA50D"></div>
-    <div class="form-cell"><label>MA200-D</label><input id="fMA200D"></div>
-    <div class="form-cell"><label>RSI-D</label><input id="fRSID"></div>
-    <div class="form-cell"><label>MACD-H-D</label><input id="fMACDHD"></div>
-    <div class="form-cell"><label>Signal-D</label><input id="fSignalD"></div>
-    <div class="form-cell"><label>MA50-W</label><input id="fMA50W"></div>
-    <div class="form-cell"><label>MA200-W</label><input id="fMA200W"></div>
-    <div class="form-cell"><label>RSI-W</label><input id="fRSIW"></div>
-    <div class="form-cell"><label>MACD-H-W</label><input id="fMACDHW"></div>
-    <div class="form-cell"><label>Signal-W</label><input id="fSignalW"></div>
-    <div class="form-cell"><label>Volume</label><input id="fVolume"></div>
-    <div class="form-cell"><label>52W-High</label><input id="f52High"></div>
-    <div class="form-cell"><label>52W-Low</label><input id="f52Low"></div>
-    <div class="form-cell"><label>Swing-Low</label><input id="fSwingLow" placeholder="optional"></div>
-    <div class="form-cell"><label>Swing-High</label><input id="fSwingHigh" placeholder="optional"></div>
+  <h4>📥 Data Import</h4>
+  <p class="subtitle">Paste your Pine Script table output — all symbols imported at once</p>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('paste')">📋 Paste from Pine Script</button>
+    <button class="tab-btn" onclick="switchTab('manual')">✏️ Manual Entry</button>
   </div>
-  <div class="form-actions">
-    <button onclick="addRow()">💾 Save Row</button>
-    <button onclick="hideAddForm()">✕ Close</button>
-    <textarea id="csvOut" placeholder="Updated CSV will appear here after saving — copy into data.csv on GitHub"></textarea>
+
+  <!-- PASTE TAB -->
+  <div id="pasteTab">
+    <p class="hint">
+      Copy the full table from your Pine Script (TradingView) and paste below.<br>
+      Expected columns: <b>Symbol, Price, MA50-D, MA200-D, RSI-D, MACD-H-D, Signal-D, MA50-W, MA200-W, RSI-W, MACD-H-W, Signal-W, Volume, 52W-High, 52W-Low</b><br>
+      Separator: tab <kbd>⇥</kbd> or comma. Header row optional.
+    </p>
+    <textarea id="pasteInput" placeholder="MCB	403.86	401.2	385.5	52.1	-1.2	0.8	399.1	280.4	58.3	4.2	3.1	1250000	452	280&#10;UBL	476.11	431.07	414.11	61.03	-2.93	14.63	407.2	192.86	62.78	8.23	8.14	2297136	517	293.25&#10;..."></textarea>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="parsePaste()">⚡ Parse & Preview</button>
+      <button class="btn-primary" onclick="importParsed()">✅ Import All</button>
+      <button class="btn-secondary" onclick="hideAddForm()">✕ Close</button>
+      <span id="importStatus"></span>
+    </div>
+    <div id="pastePreview"></div>
+  </div>
+
+  <!-- MANUAL TAB -->
+  <div id="manualTab" style="display:none">
+    <div class="form-row">
+      <div class="form-cell"><label>Symbol</label><input id="fSymbol" placeholder="MCB"></div>
+      <div class="form-cell"><label>Price</label><input id="fPrice" placeholder="403.86"></div>
+      <div class="form-cell"><label>MA50-D</label><input id="fMA50D"></div>
+      <div class="form-cell"><label>MA200-D</label><input id="fMA200D"></div>
+      <div class="form-cell"><label>RSI-D</label><input id="fRSID"></div>
+      <div class="form-cell"><label>MACD-H-D</label><input id="fMACDHD"></div>
+      <div class="form-cell"><label>Signal-D</label><input id="fSignalD"></div>
+      <div class="form-cell"><label>MA50-W</label><input id="fMA50W"></div>
+      <div class="form-cell"><label>MA200-W</label><input id="fMA200W"></div>
+      <div class="form-cell"><label>RSI-W</label><input id="fRSIW"></div>
+      <div class="form-cell"><label>MACD-H-W</label><input id="fMACDHW"></div>
+      <div class="form-cell"><label>Signal-W</label><input id="fSignalW"></div>
+      <div class="form-cell"><label>Volume</label><input id="fVolume"></div>
+      <div class="form-cell"><label>52W-High</label><input id="f52High"></div>
+      <div class="form-cell"><label>52W-Low</label><input id="f52Low"></div>
+      <div class="form-cell"><label>Swing-Low</label><input id="fSwingLow" placeholder="opt"></div>
+      <div class="form-cell"><label>Swing-High</label><input id="fSwingHigh" placeholder="opt"></div>
+    </div>
+    <div class="form-actions" style="margin-top:10px">
+      <button class="btn-primary" onclick="addRow()">💾 Save Row</button>
+      <button class="btn-secondary" onclick="hideAddForm()">✕ Close</button>
+    </div>
+  </div>
+
+  <!-- CSV OUTPUT -->
+  <div id="csvSection" style="display:none">
+    <label>📄 Updated CSV — copy this into <b>data.csv</b> on GitHub:</label>
+    <textarea id="csvOut" readonly></textarea>
+    <div class="form-actions">
+      <button class="btn-primary" onclick="copyCsv()">📋 Copy CSV</button>
+      <button class="btn-secondary" onclick="document.getElementById('csvSection').style.display='none'">Hide</button>
+    </div>
   </div>
 </div>
 
@@ -445,6 +511,11 @@ async function runAnalysis(){
     document.getElementById("output").innerHTML=`<p style="color:red">Could not load data.csv: ${e.message}</p>`;
     return;
   }
+  runAnalysisFromData();
+}
+
+function runAnalysisFromData(){
+  document.getElementById("output").innerHTML="<p>Running analysis…</p>";
   const rows=_rawData.map(s=>{
     const z=computeZones(s);
     const sc=scoreRow(s);
@@ -459,47 +530,158 @@ async function runAnalysis(){
 }
 
 // ─────────────────────────────────────────────────────────
-// ADD / UPDATE ROW
+// TAB SWITCHING
 // ─────────────────────────────────────────────────────────
-function addRow(){
-  const fields=["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
+function switchTab(tab){
+  document.getElementById('pasteTab').style.display   = tab==='paste'  ? 'block' : 'none';
+  document.getElementById('manualTab').style.display  = tab==='manual' ? 'block' : 'none';
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active', (i===0&&tab==='paste')||(i===1&&tab==='manual'));
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// PASTE & PARSE — reads tab or comma separated Pine Script output
+// Accepts with or without header row
+// ─────────────────────────────────────────────────────────
+const FIELDS = ["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
                 "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low",
                 "Swing-Low","Swing-High"];
+
+const KNOWN_HEADERS = ["symbol","price","ma50","ma200","rsi","macd","signal","volume","high","low",
+                       "ma50-d","ma200-d","rsi-d","macd-h-d","signal-d","ma50-w","ma200-w",
+                       "rsi-w","macd-h-w","signal-w","52w-high","52w-low","52whigh","52wlow"];
+
+let _parsedRows = [];
+
+function parsePaste(){
+  const raw = document.getElementById('pasteInput').value.trim();
+  if(!raw){ alert('Please paste your data first.'); return; }
+
+  const lines = raw.split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length){ alert('No data found.'); return; }
+
+  // Detect separator: tab or comma
+  const sep = lines[0].includes('	') ? '	' : ',';
+
+  // Detect if first row is a header
+  const firstCols = lines[0].split(sep).map(c=>c.trim().toLowerCase());
+  const isHeader  = KNOWN_HEADERS.some(h => firstCols.includes(h)) ||
+                    isNaN(parseFloat(firstCols[1]));
+  const dataLines = isHeader ? lines.slice(1) : lines;
+
+  _parsedRows = [];
+  const errors = [];
+
+  dataLines.forEach((line,i)=>{
+    if(!line.trim()) return;
+    const cols = line.split(sep).map(c=>c.trim().replace(/,/g,''));
+    if(cols.length < 2){ errors.push(`Row ${i+1}: too few columns`); return; }
+
+    const row = {};
+    FIELDS.forEach((f,fi)=>{ row[f] = cols[fi] || ''; });
+
+    if(!row.Symbol){ errors.push(`Row ${i+1}: missing symbol`); return; }
+    _parsedRows.push(row);
+  });
+
+  // Show preview table
+  if(_parsedRows.length === 0){
+    document.getElementById('pastePreview').innerHTML =
+      '<p style="color:red">No valid rows found. Check your data format.</p>';
+    return;
+  }
+
+  let html = `<p style="color:#27ae60;font-weight:600;margin:8px 0 4px">
+    ✅ ${_parsedRows.length} symbol${_parsedRows.length>1?'s':''} parsed
+    ${errors.length ? '<span style="color:#e74c3c"> · '+errors.length+' error(s)</span>' : ''}
+  </p>
+  <div style="overflow-x:auto"><table>
+  <tr><th>#</th><th>Symbol</th><th>Price</th><th>MA50-D</th><th>MA200-D</th>
+  <th>RSI-D</th><th>MACD-H-D</th><th>Signal-D</th><th>MA50-W</th><th>MA200-W</th>
+  <th>RSI-W</th><th>MACD-H-W</th><th>Signal-W</th><th>Volume</th><th>52W-High</th><th>52W-Low</th></tr>`;
+
+  _parsedRows.forEach((r,i)=>{
+    html += `<tr><td>${i+1}</td><td><b>${r.Symbol}</b></td>
+      <td>${r.Price}</td><td>${r['MA50-D']}</td><td>${r['MA200-D']}</td>
+      <td>${r['RSI-D']}</td><td>${r['MACD-H-D']}</td><td>${r['Signal-D']}</td>
+      <td>${r['MA50-W']}</td><td>${r['MA200-W']}</td><td>${r['RSI-W']}</td>
+      <td>${r['MACD-H-W']}</td><td>${r['Signal-W']}</td><td>${r.Volume}</td>
+      <td>${r['52W-High']}</td><td>${r['52W-Low']}</td></tr>`;
+  });
+  html += '</table></div>';
+  if(errors.length) html += '<p style="color:#e74c3c;font-size:11px">Errors: '+errors.join(' | ')+'</p>';
+
+  document.getElementById('pastePreview').innerHTML = html;
+  document.getElementById('importStatus').textContent = '';
+}
+
+function importParsed(){
+  if(!_parsedRows.length){ alert('Parse data first.'); return; }
+
+  // Merge into _rawData (replace existing symbols, keep others)
+  _parsedRows.forEach(newRow=>{
+    _rawData = _rawData.filter(r=>r.Symbol.toUpperCase()!==newRow.Symbol.toUpperCase());
+    _rawData.push(newRow);
+  });
+
+  document.getElementById('importStatus').textContent =
+    '✅ ' + _parsedRows.length + ' symbol(s) imported!';
+
+  // Show CSV output
+  exportToTextarea();
+  document.getElementById('csvSection').style.display = 'block';
+
+  // Run analysis
+  runAnalysisFromData();
+  setTimeout(()=>{ document.getElementById('importStatus').textContent=''; }, 4000);
+}
+
+// ─────────────────────────────────────────────────────────
+// MANUAL ADD ROW
+// ─────────────────────────────────────────────────────────
+function addRow(){
   const ids=["fSymbol","fPrice","fMA50D","fMA200D","fRSID","fMACDHD","fSignalD",
              "fMA50W","fMA200W","fRSIW","fMACDHW","fSignalW","fVolume","f52High","f52Low",
              "fSwingLow","fSwingHigh"];
   const newRow={};
-  fields.forEach((f,i)=>newRow[f]=(document.getElementById(ids[i]).value||"").trim());
-  if(!newRow.Symbol||!newRow.Price){alert("Symbol and Price are required.");return;}
+  FIELDS.forEach((f,i)=>newRow[f]=(document.getElementById(ids[i]).value||'').trim());
+  if(!newRow.Symbol||!newRow.Price){ alert('Symbol and Price are required.'); return; }
   _rawData=_rawData.filter(r=>r.Symbol.toUpperCase()!==newRow.Symbol.toUpperCase());
   _rawData.push(newRow);
   exportToTextarea();
-  runAnalysis();
-  hideAddForm();
+  document.getElementById('csvSection').style.display='block';
+  runAnalysisFromData();
 }
 
 function exportToTextarea(){
-  const headers=["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
-                 "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low",
-                 "Swing-Low","Swing-High"];
-  const lines=[headers.join(",")];
-  _rawData.forEach(r=>lines.push(headers.map(h=>r[h]||"").join(",")));
-  document.getElementById("csvOut").value=lines.join("\n");
+  const lines=[FIELDS.join(',')];
+  _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(',')));
+  document.getElementById('csvOut').value=lines.join('\n');
+}
+
+function copyCsv(){
+  const ta=document.getElementById('csvOut');
+  ta.select(); document.execCommand('copy');
+  alert('CSV copied to clipboard — paste into data.csv on GitHub');
 }
 
 function exportCSV(){
-  const headers=["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
-                 "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low",
-                 "Swing-Low","Swing-High"];
-  const lines=[headers.join(",")];
-  _rawData.forEach(r=>lines.push(headers.map(h=>r[h]||"").join(",")));
-  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
-  a.download="data.csv";a.click();
+  const lines=[FIELDS.join(',')];
+  _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(',')));
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='data.csv';a.click();
 }
 
-function showAddForm(){ document.getElementById("addForm").style.display="block"; }
-function hideAddForm(){ document.getElementById("addForm").style.display="none"; }
+function showAddForm(){
+  document.getElementById('addForm').style.display='block';
+  document.getElementById('pastePreview').innerHTML='';
+  document.getElementById('importStatus').textContent='';
+  switchTab('paste');
+}
+function hideAddForm(){ document.getElementById('addForm').style.display='none'; }
+
 
 runAnalysis();
 </script>
