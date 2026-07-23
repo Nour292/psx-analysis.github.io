@@ -452,7 +452,7 @@ async function runAnalysis(){
     return {
       Symbol:s.Symbol, Price:s.Price,
       Support:z.supportZone, Resistance:z.resistanceZone,
-      Target:vr.target, Score:sc, VLabel:vr.v, Verdict:vr.verdict, RR:"0"
+      Target:vr.target, Score:sc, VLabel:vr.v, Verdict:vr.verdict, Momentum:momentumLabel(s,vr.verdict), RR:"0"
     };
   });
   render(rows);
