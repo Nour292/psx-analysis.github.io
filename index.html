@@ -302,7 +302,7 @@ function verdictFn(s, sc, z){
   const rsiWeak      = rsid  !== null && rsid < 50;
 
   // BUY — all 6
-  if(atMA && weeklyUp && macdWposRis && rsiCool && sc >= 65 && !near52High){
+  if(atMA && weeklyUp && macdWposRis && rsiCool && sc >= 70 && !near52High){
     return {v:"🟢 BUY", verdict:"BUY", target:z.target};
   }
 
