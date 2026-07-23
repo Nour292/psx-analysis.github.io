@@ -1,269 +1,550 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>PSX Technical Analysis</title>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSX Technical Analysis</title>
 <style>
-* { box-sizing: border-box; }
-body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 12px; }
-h2 { margin: 0 0 10px; font-size: 18px; color: #222; }
-button { margin: 4px; padding: 6px 14px; cursor: pointer; border: 1px solid #aaa; border-radius: 4px; background: #fff; font-size: 13px; }
-button:hover { background: #e8e8e8; }
+/* ═══════════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════════ */
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed; min-height:100vh; }
 
-/* ── Add/Update form — single row layout ── */
-/* ── Data Import Panel ── */
-#addForm {
-  margin-top: 10px; padding: 14px 16px; border: 1px solid #ccc;
-  background: #fff; border-radius: 6px; display: none;
+/* ═══════════════════════════════════════════════
+   PAGE SYSTEM — only one page visible at a time
+═══════════════════════════════════════════════ */
+.page{ display:none; min-height:100vh; }
+.page.active{ display:block; }
+
+/* ═══════════════════════════════════════════════
+   NAV BAR
+═══════════════════════════════════════════════ */
+.nav{
+  background:#1a2535; border-bottom:2px solid #2e4060;
+  padding:10px 20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
 }
-#addForm h4 { margin: 0 0 4px; font-size: 14px; color: #2c3e50; font-weight: 700; }
-#addForm .subtitle { font-size: 12px; color: #777; margin: 0 0 10px; }
-.tab-bar { display:flex; gap:4px; margin-bottom:12px; }
-.tab-btn {
-  padding:5px 14px; font-size:12px; border:1px solid #bbb;
-  border-radius:4px; background:#f4f6f9; cursor:pointer; color:#555;
+.nav-logo{ font-size:18px; font-weight:700; color:#4fc3f7; margin-right:10px; }
+.btn{
+  padding:8px 18px; border:none; border-radius:6px; font-size:13px;
+  font-weight:600; cursor:pointer; transition:all .15s; letter-spacing:.3px;
 }
-.tab-btn.active { background:#2c3e50; color:#fff; border-color:#2c3e50; }
-/* Paste tab */
-#pasteTab textarea {
-  width:100%; height:140px; font-size:12px; font-family:monospace;
-  border:1px solid #bbb; border-radius:4px; padding:8px; resize:vertical;
-  box-sizing:border-box;
+.btn-home   { background:#2e4060; color:#a0c4e8; }
+.btn-home:hover { background:#3a5070; }
+.btn-weekly { background:#1565c0; color:#fff; }
+.btn-weekly:hover { background:#1976d2; }
+.btn-single { background:#6a1b9a; color:#fff; }
+.btn-single:hover { background:#7b1fa2; }
+.btn-import { background:#2e7d32; color:#fff; }
+.btn-import:hover { background:#388e3c; }
+/* Equal-width nav buttons for landing page */
+.btn-nav {
+  width:190px; text-align:center;
+  background:#1a2f4a; color:#c8ddf0; border:1px solid #2e4060;
 }
-#pasteTab .hint {
-  font-size:11px; color:#888; margin:6px 0 10px;
-  line-height:1.5;
+.btn-nav:hover { background:#1e3a5a; color:#fff; border-color:#4fc3f7; }
+.btn-export { background:#4a4a00; color:#e8e800; }
+.btn-export:hover { background:#5a5a00; }
+.btn-action { background:#e65100; color:#fff; }
+.btn-action:hover { background:#f57c00; }
+.btn-run    { background:#0d47a1; color:#fff; font-size:14px; padding:10px 24px; }
+.btn-run:hover{ background:#1565c0; }
+
+/* ═══════════════════════════════════════════════
+   PAGE 1 — HOME (landing page)
+═══════════════════════════════════════════════ */
+#pgHome .hero{
+  padding:30px 24px 16px;
 }
-#pastePreview {
-  margin-top:10px; font-size:12px; overflow-x:auto;
+#pgHome h1{ font-size:26px; color:#4fc3f7; margin-bottom:4px; }
+#pgHome .sub{ color:#7a9ab5; font-size:14px; margin-bottom:20px; }
+
+/* Summary cards */
+.summary-bar{
+  display:flex; gap:14px; flex-wrap:wrap; padding:0 24px 20px;
 }
-#pastePreview table { border-collapse:collapse; width:100%; }
-#pastePreview th { background:#2c3e50; color:#fff; padding:4px 8px; font-size:11px; }
-#pastePreview td { border-bottom:1px solid #eee; padding:4px 8px; font-size:11px; }
-#pastePreview tr:hover td { background:#f0f4ff; }
-/* Manual tab */
-.form-row {
-  display:flex; flex-wrap:nowrap; gap:6px; align-items:flex-end;
-  overflow-x:auto; padding-bottom:4px;
+.card{
+  background:#1a2535; border-radius:10px; padding:14px 20px;
+  min-width:130px; text-align:center; border:1px solid #2e4060;
 }
-.form-cell { display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
-.form-cell label { font-size:11px; color:#555; white-space:nowrap; margin-bottom:3px; text-align:center; }
-.form-cell input {
-  width:72px; padding:4px 5px; font-size:12px;
-  border:1px solid #bbb; border-radius:3px; text-align:center;
+.card .num{ font-size:32px; font-weight:700; line-height:1; }
+.card .lbl{ font-size:12px; color:#7a9ab5; margin-top:4px; }
+.card.buy .num{ color:#4caf50; }
+.card.exit .num{ color:#ef5350; }
+.card.watch .num{ color:#ffc107; }
+.card.total .num{ color:#4fc3f7; }
+
+/* Home candidates table */
+.home-section{ padding:0 24px 30px; }
+.home-section h2{ font-size:16px; color:#a0c4e8; margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid #2e4060; }
+
+/* ═══════════════════════════════════════════════
+   PAGE 2 — FULL ANALYSIS
+═══════════════════════════════════════════════ */
+#pgAnalysis .page-header{
+  background:#1a2535; padding:14px 24px;
+  border-bottom:1px solid #2e4060;
+  display:flex; align-items:center; gap:10px;
 }
-.form-cell input:focus { outline:none; border-color:#2c3e50; }
+#pgAnalysis .page-header h2{ font-size:16px; color:#4fc3f7; flex:1; }
+#pgAnalysis .content{ padding:20px 24px; }
+
+/* ═══════════════════════════════════════════════
+   PAGE 3 — IMPORT DATA
+═══════════════════════════════════════════════ */
+#pgImport .page-header{
+  background:#1a2535; padding:14px 24px;
+  border-bottom:1px solid #2e4060;
+  display:flex; align-items:center; gap:10px;
+}
+#pgImport .page-header h2{ font-size:16px; color:#4fc3f7; flex:1; }
+#pgImport .content{ padding:20px 24px; max-width:1100px; }
+
+.tab-bar{ display:flex; gap:6px; margin-bottom:16px; }
+.tab-btn{ padding:7px 18px; font-size:13px; border:1px solid #2e4060; border-radius:5px; background:#1a2535; color:#7a9ab5; cursor:pointer; font-weight:600; }
+.tab-btn.active{ background:#1565c0; color:#fff; border-color:#1565c0; }
+
+#pasteTab textarea, #pgImport textarea{
+  width:100%; height:150px; background:#0f1923; color:#e0e6ed;
+  border:1px solid #2e4060; border-radius:6px; padding:10px;
+  font-family:monospace; font-size:12px; resize:vertical;
+}
+.hint{ font-size:12px; color:#7a9ab5; margin:6px 0 12px; line-height:1.6; }
+.hint b{ color:#a0c4e8; }
+.hint kbd{ background:#2e4060; padding:1px 5px; border-radius:3px; font-size:11px; }
+
+/* Form rows */
+.form-row{ display:flex; flex-wrap:nowrap; gap:8px; overflow-x:auto; padding-bottom:6px; }
+.form-cell{ display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
+.form-cell label{ font-size:11px; color:#7a9ab5; white-space:nowrap; margin-bottom:3px; }
+.form-cell input{
+  width:76px; padding:5px 4px; font-size:12px; text-align:center;
+  background:#0f1923; color:#e0e6ed; border:1px solid #2e4060; border-radius:4px;
+}
+.form-cell input:focus{ outline:none; border-color:#4fc3f7; }
+
 /* CSV output */
-#csvSection { margin-top:12px; }
-#csvSection label { font-size:11px; color:#555; display:block; margin-bottom:4px; }
-#csvOut {
-  width:100%; height:90px; font-size:11px; font-family:monospace;
-  border:1px solid #ccc; border-radius:4px; padding:6px;
-  box-sizing:border-box; resize:vertical;
+.csv-box{ margin-top:16px; }
+.csv-box label{ font-size:12px; color:#7a9ab5; display:block; margin-bottom:6px; }
+.csv-box textarea{
+  width:100%; height:100px; background:#0f1923; color:#a0c4e8;
+  border:1px solid #2e4060; border-radius:6px; padding:8px;
+  font-family:monospace; font-size:11px; resize:vertical;
 }
-.form-actions { margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-.btn-primary { background:#27ae60; color:#fff; border:none; border-radius:4px; padding:6px 16px; font-size:13px; cursor:pointer; }
-.btn-primary:hover { background:#219150; }
-.btn-secondary { background:#fff; border:1px solid #aaa; border-radius:4px; padding:6px 14px; font-size:13px; cursor:pointer; }
-.btn-secondary:hover { background:#eee; }
-#importStatus { font-size:12px; color:#27ae60; font-weight:600; }
 
-/* ── Results table ── */
-table { border-collapse: collapse; margin-top: 10px; width: 100%; font-size: 13px; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
-th { background: #2c3e50; color: #fff; padding: 7px 10px; text-align: left; font-weight: 600; }
-td { border-bottom: 1px solid #eee; padding: 6px 10px; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: #f0f4ff; }
-pre { font-size: 13px; white-space: pre-wrap; background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd; margin-top:10px; }
-.trade-plans { margin-top: 14px; }
-.plan-block { background: #fff; border-radius: 6px; border-left: 4px solid #ccc; padding: 10px 14px; margin-bottom: 10px; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-.plan-block.buy   { border-color: #27ae60; }
-.plan-block.exit  { border-color: #e74c3c; }
-.plan-block h4 { margin: 0 0 6px; font-size: 13px; }
-.plan-block code { display:block; background:#f7f7f7; padding:5px 8px; border-radius:4px; margin:4px 0; font-size:12px; }
-.plan-block p { margin: 4px 0 0; font-style: italic; color: #555; font-size: 12px; }
+/* Preview table inside import */
+#pastePreview{ margin-top:12px; overflow-x:auto; }
+#pastePreview table{ border-collapse:collapse; width:100%; font-size:11px; }
+#pastePreview th{ background:#1565c0; color:#fff; padding:5px 8px; }
+#pastePreview td{ border-bottom:1px solid #1a2535; padding:4px 8px; color:#c0d4e8; }
+#pastePreview tr:hover td{ background:#1a2535; }
+
+#importStatus{ font-size:13px; font-weight:600; color:#4caf50; }
+
+/* ═══════════════════════════════════════════════
+   PAGE 4 — SINGLE TICKER ANALYSIS
+═══════════════════════════════════════════════ */
+#pgSingle .page-header{
+  background:#1a2535; padding:14px 24px;
+  border-bottom:1px solid #2e4060;
+  display:flex; align-items:center; gap:10px;
+}
+#pgSingle .page-header h2{ font-size:16px; color:#4fc3f7; flex:1; }
+#pgSingle .content{
+  padding:24px; display:grid;
+  grid-template-columns:320px 1fr; gap:28px; align-items:start;
+}
+@media(max-width:900px){ #pgSingle .content{ grid-template-columns:1fr; } }
+
+/* Input table — left side */
+.input-panel{
+  background:#1a2535; border-radius:10px; border:1px solid #2e4060;
+  overflow:hidden;
+}
+.input-panel .panel-hdr{
+  background:#0d47a1; padding:14px 18px;
+  font-size:15px; font-weight:700; color:#fff; letter-spacing:.5px;
+}
+.input-table{ width:100%; border-collapse:collapse; }
+.input-table td{
+  padding:10px 14px; border-bottom:1px solid #1e3050; font-size:15px;
+}
+.input-table tr:last-child td{ border-bottom:none; }
+.input-table td:first-child{ color:#a0c4e8; font-weight:600; width:55%; }
+.input-table td:last-child input{
+  width:100%; background:#0f1923; color:#4fc3f7; border:1px solid #2e4060;
+  border-radius:5px; padding:7px 10px; font-size:15px; font-weight:600;
+  text-align:right;
+}
+.input-table td:last-child input:focus{ outline:none; border-color:#4fc3f7; }
+.analyse-btn{
+  width:100%; padding:14px; background:#0d47a1; color:#fff;
+  border:none; font-size:16px; font-weight:700; cursor:pointer;
+  letter-spacing:.5px; transition:background .15s;
+}
+.analyse-btn:hover{ background:#1565c0; }
+
+/* Result panel — right side */
+.result-panel{ background:#1a2535; border-radius:10px; border:1px solid #2e4060; overflow:hidden; }
+.result-panel .panel-hdr{ background:#1b5e20; padding:14px 18px; font-size:15px; font-weight:700; color:#fff; }
+.result-panel .empty{ padding:40px; text-align:center; color:#4a6a8a; font-size:15px; }
+
+/* Verdict block */
+.verdict-block{ padding:20px 22px; }
+.verdict-main{
+  font-size:36px; font-weight:800; margin-bottom:6px; line-height:1;
+}
+.verdict-score{ font-size:18px; color:#a0c4e8; margin-bottom:18px; }
+.verdict-buy  .verdict-main{ color:#4caf50; }
+.verdict-exit .verdict-main{ color:#ef5350; }
+.verdict-watch .verdict-main{ color:#ffc107; }
+.verdict-wait  .verdict-main{ color:#78909c; }
+.verdict-avoid .verdict-main{ color:#b71c1c; }
+
+/* Zone grid */
+.zone-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;
+}
+.zone-card{
+  background:#0f1923; border-radius:8px; padding:12px 14px;
+  border-left:3px solid #2e4060;
+}
+.zone-card.sup  { border-color:#4caf50; }
+.zone-card.sup2 { border-color:#ff9800; }
+.zone-card.res  { border-color:#ef5350; }
+.zone-card.tgt  { border-color:#4fc3f7; }
+.zone-card .zlbl{ font-size:12px; color:#7a9ab5; margin-bottom:4px; }
+.zone-card .zval{ font-size:20px; font-weight:700; color:#e0e6ed; }
+
+/* Trade plan */
+.trade-plan{
+  background:#0f1923; border-radius:8px; padding:14px 16px;
+  margin-bottom:14px; border-left:4px solid #2e4060;
+}
+.trade-plan.buy  { border-color:#4caf50; }
+.trade-plan.exit { border-color:#ef5350; }
+.trade-plan .tp-head{ font-size:15px; font-weight:700; margin-bottom:8px; }
+.trade-plan .tp-code{
+  font-family:monospace; font-size:14px; background:#1a2535;
+  padding:8px 12px; border-radius:5px; color:#4fc3f7; margin-bottom:6px;
+}
+.trade-plan .tp-note{ font-size:13px; color:#a0c4e8; font-style:italic; }
+
+/* Indicator breakdown */
+.indicator-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px;
+}
+.ind-row{
+  background:#0f1923; border-radius:6px; padding:8px 12px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.ind-row .ind-name{ font-size:13px; color:#7a9ab5; }
+.ind-row .ind-val { font-size:14px; font-weight:700; }
+.ind-val.bull{ color:#4caf50; }
+.ind-val.bear{ color:#ef5350; }
+.ind-val.neut{ color:#ffc107; }
+
+/* Momentum badge */
+.momentum-badge{
+  display:inline-block; padding:6px 14px; border-radius:20px;
+  font-size:14px; font-weight:700; margin-bottom:16px;
+}
+.mbadge-strong-up  { background:#1b5e20; color:#4caf50; }
+.mbadge-mod-up     { background:#1a3a1a; color:#81c784; }
+.mbadge-form-up    { background:#1a2a1a; color:#a5d6a7; }
+.mbadge-strong-dn  { background:#4a1010; color:#ef5350; }
+.mbadge-mod-dn     { background:#3a1010; color:#ef9a9a; }
+.mbadge-mild-dn    { background:#2a1a10; color:#ffb74d; }
+.mbadge-watch      { background:#1a1a00; color:#ffc107; }
+
+/* ═══════════════════════════════════════════════
+   SHARED TABLE STYLES
+═══════════════════════════════════════════════ */
+.data-table{ width:100%; border-collapse:collapse; font-size:13px; }
+.data-table th{
+  background:#1e3050; color:#a0c4e8; padding:9px 12px;
+  text-align:left; font-weight:600; white-space:nowrap;
+  position:sticky; top:0;
+}
+.data-table td{ border-bottom:1px solid #1a2535; padding:8px 12px; }
+.data-table tr:hover td{ background:#1a2535; }
+.data-table tr.buy-row td{ border-left:3px solid #4caf50; }
+.data-table tr.exit-row td{ border-left:3px solid #ef5350; }
+.data-table tr.watch-row td{ border-left:3px solid #ffc107; }
+
+.badge-buy  { color:#4caf50; font-weight:700; }
+.badge-exit { color:#ef5350; font-weight:700; }
+.badge-watch{ color:#ffc107; font-weight:600; }
+.badge-wait { color:#78909c; }
+.badge-avoid{ color:#b71c1c; }
+
+/* Signal summary */
+.signal-summary{
+  display:flex; gap:14px; flex-wrap:wrap; margin-bottom:20px;
+}
+.sig-pill{
+  background:#1a2535; border-radius:20px; padding:6px 16px;
+  font-size:13px; border:1px solid #2e4060;
+}
+.sig-pill .s-label{ color:#7a9ab5; }
+.sig-pill .s-val  { font-weight:700; margin-left:6px; }
+
+/* Trade plans */
+.plans-section{ margin-top:20px; }
+.plan-block{
+  background:#1a2535; border-radius:8px; padding:14px 16px;
+  margin-bottom:12px; border-left:4px solid #2e4060;
+}
+.plan-block.buy  { border-color:#4caf50; }
+.plan-block.exit { border-color:#ef5350; }
+.plan-block h4   { font-size:14px; font-weight:700; margin-bottom:8px; }
+.plan-block code {
+  display:block; background:#0f1923; padding:7px 10px; border-radius:5px;
+  font-size:12px; color:#4fc3f7; margin-bottom:5px; font-family:monospace;
+}
+.plan-block p    { font-size:12px; color:#a0c4e8; font-style:italic; }
+
+.table-wrap{ overflow-x:auto; }
 </style>
 </head>
 <body>
 
-<h2>📊 PSX Technical Analysis</h2>
-<button onclick="runAnalysis()">▶ Run Analysis</button>
-<button onclick="showAddForm()">＋ Add / Update Row</button>
-<button onclick="exportCSV()">⬇ Export CSV</button>
-
-<div id="addForm">
-  <h4>📥 Data Import</h4>
-  <p class="subtitle">Paste your Pine Script table output — all symbols imported at once</p>
-
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('paste')">📋 Paste from Pine Script</button>
-    <button class="tab-btn" onclick="switchTab('manual')">✏️ Manual Entry</button>
+<!-- ═══════════════════════════════════════════════
+     PAGE 1 — HOME (landing: BUY + EXIT only)
+═══════════════════════════════════════════════ -->
+<div id="pgHome" class="page active">
+  <div class="nav">
+    <span class="nav-logo">📊 PSX TA</span>
+    <button class="btn btn-nav" onclick="goHome()">🏠 Home</button>
+    <button class="btn btn-nav" onclick="goAnalysis()">▶ Run Analysis — Weekly</button>
+    <button class="btn btn-nav" onclick="goSingle()">🔍 Analysis One Ticker</button>
+    <button class="btn btn-nav" onclick="goImport()">＋ Add / Update Row</button>
   </div>
-
-  <!-- PASTE TAB -->
-  <div id="pasteTab">
-    <p class="hint">
-      Copy the full table from your Pine Script (TradingView) and paste below.<br>
-      Expected columns: <b>Symbol, Price, MA50-D, MA200-D, RSI-D, MACD-H-D, Signal-D, MA50-W, MA200-W, RSI-W, MACD-H-W, Signal-W, Volume, 52W-High, 52W-Low</b><br>
-      Separator: tab <kbd>⇥</kbd> or comma. Header row optional.
-    </p>
-    <textarea id="pasteInput" placeholder="MCB	403.86	401.2	385.5	52.1	-1.2	0.8	399.1	280.4	58.3	4.2	3.1	1250000	452	280&#10;UBL	476.11	431.07	414.11	61.03	-2.93	14.63	407.2	192.86	62.78	8.23	8.14	2297136	517	293.25&#10;..."></textarea>
-    <div class="form-actions">
-      <button class="btn-primary" onclick="parsePaste()">⚡ Parse & Preview</button>
-      <button class="btn-primary" onclick="importParsed()">✅ Import All</button>
-      <button class="btn-secondary" onclick="hideAddForm()">✕ Close</button>
-      <span id="importStatus"></span>
-    </div>
-    <div id="pastePreview"></div>
+  <div class="hero">
+    <h1>PSX Technical Analysis</h1>
+    <p class="sub">Showing BUY candidates and EXIT signals only — run weekly analysis for full table</p>
   </div>
-
-  <!-- MANUAL TAB -->
-  <div id="manualTab" style="display:none">
-    <div class="form-row">
-      <div class="form-cell"><label>Symbol</label><input id="fSymbol" placeholder="MCB"></div>
-      <div class="form-cell"><label>Price</label><input id="fPrice" placeholder="403.86"></div>
-      <div class="form-cell"><label>MA50-D</label><input id="fMA50D"></div>
-      <div class="form-cell"><label>MA200-D</label><input id="fMA200D"></div>
-      <div class="form-cell"><label>RSI-D</label><input id="fRSID"></div>
-      <div class="form-cell"><label>MACD-H-D</label><input id="fMACDHD"></div>
-      <div class="form-cell"><label>Signal-D</label><input id="fSignalD"></div>
-      <div class="form-cell"><label>MA50-W</label><input id="fMA50W"></div>
-      <div class="form-cell"><label>MA200-W</label><input id="fMA200W"></div>
-      <div class="form-cell"><label>RSI-W</label><input id="fRSIW"></div>
-      <div class="form-cell"><label>MACD-H-W</label><input id="fMACDHW"></div>
-      <div class="form-cell"><label>Signal-W</label><input id="fSignalW"></div>
-      <div class="form-cell"><label>Volume</label><input id="fVolume"></div>
-      <div class="form-cell"><label>52W-High</label><input id="f52High"></div>
-      <div class="form-cell"><label>52W-Low</label><input id="f52Low"></div>
-      <div class="form-cell"><label>Swing-Low</label><input id="fSwingLow" placeholder="opt"></div>
-      <div class="form-cell"><label>Swing-High</label><input id="fSwingHigh" placeholder="opt"></div>
-    </div>
-    <div class="form-actions" style="margin-top:10px">
-      <button class="btn-primary" onclick="addRow()">💾 Save Row</button>
-      <button class="btn-secondary" onclick="hideAddForm()">✕ Close</button>
-    </div>
+  <div class="summary-bar" id="homeCards"></div>
+  <div class="home-section">
+    <h2>🟢 BUY Candidates</h2>
+    <div class="table-wrap"><table class="data-table" id="homeBuyTable"></table></div>
   </div>
+  <div class="home-section" style="margin-top:10px">
+    <h2>🔴 EXIT Signals</h2>
+    <div class="table-wrap"><table class="data-table" id="homeExitTable"></table></div>
+  </div>
+</div>
 
-  <!-- CSV OUTPUT -->
-  <div id="csvSection" style="display:none">
-    <label>📄 Updated CSV — copy this into <b>data.csv</b> on GitHub:</label>
-    <textarea id="csvOut" readonly></textarea>
-    <div class="form-actions">
-      <button class="btn-primary" onclick="copyCsv()">📋 Copy CSV</button>
-      <button class="btn-secondary" onclick="document.getElementById('csvSection').style.display='none'">Hide</button>
+<!-- ═══════════════════════════════════════════════
+     PAGE 2 — FULL WEEKLY ANALYSIS
+═══════════════════════════════════════════════ -->
+<div id="pgAnalysis" class="page">
+  <div class="nav">
+    <span class="nav-logo">📊 PSX TA</span>
+    <button class="btn btn-home" onclick="goHome()">🏠 Home</button>
+    <button class="btn btn-weekly" onclick="runWeekly()">▶ Run Analysis — Weekly</button>
+    <button class="btn btn-single" onclick="goSingle()">🔍 Analysis One Ticker</button>
+    <button class="btn btn-import" onclick="goImport()">＋ Add / Update Row</button>
+  </div>
+  <div class="content" style="padding:20px 24px">
+    <div class="signal-summary" id="signalSummary"></div>
+    <div class="table-wrap"><table class="data-table" id="fullTable"></table></div>
+    <div class="plans-section" id="tradePlans"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 3 — IMPORT DATA
+═══════════════════════════════════════════════ -->
+<div id="pgImport" class="page">
+  <div class="nav">
+    <span class="nav-logo">📊 PSX TA</span>
+    <button class="btn btn-home" onclick="goHome()">🏠 Home</button>
+    <button class="btn btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+  </div>
+  <div class="content" style="padding:24px; max-width:1100px">
+    <h2 style="color:#4fc3f7; margin-bottom:4px">📥 Data Import</h2>
+    <p class="hint" style="margin-bottom:16px">Paste your Pine Script CSV label output, or enter manually symbol by symbol.</p>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('paste')">📋 Paste from Pine Script</button>
+      <button class="tab-btn" onclick="switchTab('manual')">✏️ Manual Entry</button>
+    </div>
+
+    <div id="pasteTab">
+      <p class="hint">
+        Copy the CSV label from your TradingView chart and paste below (one row per symbol).<br>
+        Expected: <b>Symbol, Price, MA50-D, MA200-D, RSI-D, MACD-H-D, Signal-D, MA50-W, MA200-W, RSI-W, MACD-H-W, Signal-W, Volume, 52W-High, 52W-Low</b><br>
+        Separator: tab <kbd>⇥</kbd> or comma. Header row optional.
+      </p>
+      <textarea id="pasteInput" placeholder="MCB,403.86,401.2,385.5,52.1,-1.2,0.8,399.1,280.4,58.3,4.2,3.1,1250000,452,280&#10;UBL,476.11,431.07,414.11,61.03,-2.93,14.63,407.2,192.86,62.78,8.23,8.14,2297136,517,293.25"></textarea>
+      <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-action" onclick="parsePaste()">⚡ Parse & Preview</button>
+        <button class="btn btn-weekly" onclick="importParsed()">✅ Import All</button>
+        <span id="importStatus"></span>
+      </div>
+      <div id="pastePreview"></div>
+    </div>
+
+    <div id="manualTab" style="display:none">
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-cell"><label>Symbol</label><input id="fSymbol" placeholder="MCB"></div>
+        <div class="form-cell"><label>Price</label><input id="fPrice" placeholder="403.86"></div>
+        <div class="form-cell"><label>MA50-D</label><input id="fMA50D"></div>
+        <div class="form-cell"><label>MA200-D</label><input id="fMA200D"></div>
+        <div class="form-cell"><label>RSI-D</label><input id="fRSID"></div>
+        <div class="form-cell"><label>MACD-H-D</label><input id="fMACDHD"></div>
+        <div class="form-cell"><label>Signal-D</label><input id="fSignalD"></div>
+        <div class="form-cell"><label>MA50-W</label><input id="fMA50W"></div>
+        <div class="form-cell"><label>MA200-W</label><input id="fMA200W"></div>
+        <div class="form-cell"><label>RSI-W</label><input id="fRSIW"></div>
+        <div class="form-cell"><label>MACD-H-W</label><input id="fMACDHW"></div>
+        <div class="form-cell"><label>Signal-W</label><input id="fSignalW"></div>
+        <div class="form-cell"><label>Volume</label><input id="fVolume"></div>
+        <div class="form-cell"><label>52W-High</label><input id="f52High"></div>
+        <div class="form-cell"><label>52W-Low</label><input id="f52Low"></div>
+        <div class="form-cell"><label>Swing-Low</label><input id="fSwingLow" placeholder="opt"></div>
+        <div class="form-cell"><label>Swing-High</label><input id="fSwingHigh" placeholder="opt"></div>
+      </div>
+      <button class="btn btn-weekly" onclick="addRow()">💾 Save Row</button>
+    </div>
+
+    <div class="csv-box" id="csvSection" style="display:none;margin-top:20px">
+      <label>📄 Updated CSV — copy into <b>data.csv</b> on GitHub:</label>
+      <textarea id="csvOut" readonly></textarea>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn btn-action" onclick="copyCsv()">📋 Copy CSV</button>
+        <button class="btn btn-import" onclick="goHome()">🏠 Go to Home</button>
+      </div>
     </div>
   </div>
 </div>
 
-<div id="output"></div>
+<!-- ═══════════════════════════════════════════════
+     PAGE 4 — SINGLE TICKER ANALYSIS
+═══════════════════════════════════════════════ -->
+<div id="pgSingle" class="page">
+  <div class="nav">
+    <span class="nav-logo">📊 PSX TA</span>
+    <button class="btn btn-home" onclick="goHome()">🏠 Home</button>
+    <button class="btn btn-weekly" onclick="goAnalysis()">▶ Weekly Analysis</button>
+    <button class="btn btn-import" onclick="goImport()">＋ Add / Update Row</button>
+  </div>
+  <div class="content" style="padding:24px; display:grid; grid-template-columns:320px 1fr; gap:28px; align-items:start;">
 
+    <!-- LEFT: INPUT TABLE -->
+    <div class="input-panel">
+      <div class="panel-hdr">📋 Enter Indicators</div>
+      <table class="input-table">
+        <tr><td>Symbol</td>        <td><input id="sSymbol"   placeholder="MCB"></td></tr>
+        <tr><td>Price</td>         <td><input id="sPrice"    placeholder="403.86"></td></tr>
+        <tr><td>MA50-D</td>        <td><input id="sMA50D"    placeholder="401.2"></td></tr>
+        <tr><td>MA200-D</td>       <td><input id="sMA200D"   placeholder="385.5"></td></tr>
+        <tr><td>RSI-D</td>         <td><input id="sRSID"     placeholder="52.1"></td></tr>
+        <tr><td>MACD-H-D</td>      <td><input id="sMACDHD"   placeholder="-1.2"></td></tr>
+        <tr><td>Signal-D</td>      <td><input id="sSignalD"  placeholder="0.8"></td></tr>
+        <tr><td>MA50-W</td>        <td><input id="sMA50W"    placeholder="399.1"></td></tr>
+        <tr><td>MA200-W</td>       <td><input id="sMA200W"   placeholder="280.4"></td></tr>
+        <tr><td>RSI-W</td>         <td><input id="sRSIW"     placeholder="58.3"></td></tr>
+        <tr><td>MACD-H-W</td>      <td><input id="sMACDHW"   placeholder="4.2"></td></tr>
+        <tr><td>Signal-W</td>      <td><input id="sSignalW"  placeholder="3.1"></td></tr>
+        <tr><td>Volume</td>        <td><input id="sVolume"   placeholder="1250000"></td></tr>
+        <tr><td>52W-High</td>      <td><input id="s52High"   placeholder="452"></td></tr>
+        <tr><td>52W-Low</td>       <td><input id="s52Low"    placeholder="280"></td></tr>
+      </table>
+      <button class="analyse-btn" onclick="analyseSingle()">🔍 Analyse Symbol</button>
+    </div>
+
+    <!-- RIGHT: RESULT PANEL -->
+    <div class="result-panel" id="singleResult">
+      <div class="panel-hdr">📈 Analysis Result</div>
+      <div class="empty">Enter indicator values on the left and click<br><b>Analyse Symbol</b></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     CORE ENGINE (shared JS)
+═══════════════════════════════════════════════ -->
 <script>
-// ─────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────
-function num(v){ return (v===""||v===undefined||v===null)?null:Number(v); }
-function fmt(v){ const n=parseFloat(v); return isNaN(n)?v:parseFloat(n.toFixed(2)).toString(); }
-function fmtRange(lo,hi){ return `${Math.floor(lo)}–${Math.floor(hi)}`; }
+// ─── HELPERS ───────────────────────────────────
+function num(v){ return(v===''||v===undefined||v===null)?null:Number(v); }
+function fmt(v){ const n=parseFloat(v);return isNaN(n)?v:parseFloat(n.toFixed(2)).toString(); }
+function fmtRange(lo,hi){ return `${Math.floor(lo)}\u2013${Math.floor(hi)}`; }
 
-// ─────────────────────────────────────────────────────────
-// ZONE WIDTH
-// ─────────────────────────────────────────────────────────
-function zoneWidth(p){
-  if(p<=50)  return 3;
-  if(p<=150) return 5;
-  if(p<=300) return 8;
-  if(p<=500) return 8;
-  if(p<=700) return 10;
-  return 12;
+// ─── NAVIGATION ────────────────────────────────
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
 }
+function goHome()    { showPage('pgHome');     renderHome(); }
+function goAnalysis(){ showPage('pgAnalysis'); runWeekly(); }
+function goImport()  { showPage('pgImport'); }
+function goSingle()  { showPage('pgSingle'); }
 
-// ─────────────────────────────────────────────────────────
-// SUPPORT & RESISTANCE
-// ─────────────────────────────────────────────────────────
+// ─── ZONE WIDTH ────────────────────────────────
+function zoneWidth(p){ return p<=50?3:p<=150?5:p<=300?8:p<=500?8:p<=700?10:12; }
+
+// ─── COMPUTE ZONES ────────────────────────────
 function computeZones(s){
-  const p      = num(s.Price);
-  const ma50   = num(s["MA50-D"]);
-  const ma200  = num(s["MA200-D"]);
-  const high52 = num(s["52W-High"]);
-  const low52  = num(s["52W-Low"]);
-  const swLow  = num(s["Swing-Low"]);
-  const swHigh = num(s["Swing-High"]);
-  const w      = zoneWidth(p);
-  const hw     = w/2;
+  const p=num(s.Price),ma50=num(s['MA50-D']),ma200=num(s['MA200-D']);
+  const high52=num(s['52W-High']),low52=num(s['52W-Low']);
+  const swLow=num(s['Swing-Low']),swHigh=num(s['Swing-High']);
+  const w=zoneWidth(p),hw=w/2;
 
-  // Support
-  let supportZone, s2Zone = null;
-
+  let supportZone,s2Zone=null;
   if(swLow!==null){
-    supportZone = fmtRange(swLow-hw, swLow+hw);
-    // S2 = round-10 below swing low support
-    const s2a = Math.floor((swLow-hw)/10)*10 - 10;
-    s2Zone = fmtRange(s2a-hw, s2a+hw);
+    supportZone=fmtRange(swLow-hw,swLow+hw);
+    const a=Math.floor((swLow-hw)/10)*10-10;
+    s2Zone=fmtRange(a-hw,a+hw);
   } else {
-    const ma200B = (ma200!==null&&ma200<p)?ma200:null;
-    const ma50B  = (ma50!==null&&ma50<p)?ma50:null;
-    if(ma200B!==null && ma50B!==null){
-      const gap = Math.abs(ma50B-ma200B);
+    const ma200B=(ma200!==null&&ma200<p)?ma200:null;
+    const ma50B =(ma50!==null&&ma50<p)?ma50:null;
+    if(ma200B!==null&&ma50B!==null){
+      const gap=Math.abs(ma50B-ma200B);
       if(gap<=w){
-        // MAs merged — S1=merged zone, S2=round-10 below
         const avg=(ma50B+ma200B)/2;
         supportZone=fmtRange(avg-hw,avg+hw);
-        const s2a=Math.floor((avg-hw)/10)*10-10;
-        s2Zone=fmtRange(s2a-hw, s2a+hw);
+        const a=Math.floor((avg-hw)/10)*10-10;
+        s2Zone=fmtRange(a-hw,a+hw);
       } else {
-        // MAs separate — S1=closest below price, S2=deeper below price
-        const closer = Math.abs(p-ma50B)<Math.abs(p-ma200B)?ma50B:ma200B;
-        const deeper = closer===ma50B?ma200B:ma50B;
+        const closer=Math.abs(p-ma50B)<Math.abs(p-ma200B)?ma50B:ma200B;
+        const deeper=closer===ma50B?ma200B:ma50B;
         supportZone=fmtRange(closer-hw,closer+hw);
         s2Zone=fmtRange(deeper-hw,deeper+hw);
       }
     } else if(ma200B!==null){
       supportZone=fmtRange(ma200B-hw,ma200B+hw);
-      const s2a=Math.floor((ma200B-hw)/10)*10-10;
-      s2Zone=fmtRange(s2a-hw,s2a+hw);
+      const a=Math.floor((ma200B-hw)/10)*10-10;
+      s2Zone=fmtRange(a-hw,a+hw);
     } else if(ma50B!==null){
       supportZone=fmtRange(ma50B-hw,ma50B+hw);
-      const s2a=Math.floor((ma50B-hw)/10)*10-10;
-      s2Zone=fmtRange(s2a-hw,s2a+hw);
+      const a=Math.floor((ma50B-hw)/10)*10-10;
+      s2Zone=fmtRange(a-hw,a+hw);
     } else {
       supportZone=fmtRange(p-w*2,p-w);
-      s2Zone=null;
     }
   }
-
-  // Resistance
-  let resLo,resHi;
-  if(swHigh!==null){ resLo=swHigh-hw; resHi=swHigh+hw; }
-  else {
-    resLo=p+w; resHi=p+2*w;
-    if(high52!==null&&high52>=resLo&&high52<=resHi+w){ resLo=high52-hw; resHi=high52+hw; }
-  }
+  let resLo=p+w,resHi=p+2*w;
+  if(swHigh!==null){resLo=swHigh-hw;resHi=swHigh+hw;}
+  else if(high52!==null&&high52>=resLo&&high52<=resHi+w){resLo=high52-hw;resHi=high52+hw;}
   const resistanceZone=fmtRange(resLo,resHi);
-
-  // Target (upside)
-  let target;
-  if(high52!==null&&high52>resHi) target=high52;
-  else target=Math.ceil(resHi/10)*10+10;
-
-  // Downside target (for EXIT SIGNAL)
-  const downsideTarget=parseFloat(supportZone.split("–")[0]);  // support zone low — realistic exit level
-
+  const target=high52!==null&&high52>resHi?high52:Math.ceil(resHi/10)*10+10;
+  const downsideTarget=parseFloat(supportZone.split('\u2013')[0]);
   return {supportZone,s2Zone,resistanceZone,target,downsideTarget,w,hw};
 }
 
-// ─────────────────────────────────────────────────────────
-// LOCKED SCORING TABLE
-// Verified: MEBL=75, MTL=82, UBL=76
-// ─────────────────────────────────────────────────────────
+// ─── SCORING ───────────────────────────────────
 function scoreRow(s){
   let pts=0,max=0;
-  const p=num(s.Price),ma50d=num(s["MA50-D"]),ma200d=num(s["MA200-D"]);
-  const ma50w=num(s["MA50-W"]),ma200w=num(s["MA200-W"]);
-  const rsid=num(s["RSI-D"]),rsiw=num(s["RSI-W"]);
-  const macdD=num(s["MACD-H-D"]),sigD=num(s["Signal-D"]);
-  const macdW=num(s["MACD-H-W"]),sigW=num(s["Signal-W"]);
-  const vol=num(s.Volume),high52=num(s["52W-High"]),low52=num(s["52W-Low"]);
-
+  const p=num(s.Price),ma50d=num(s['MA50-D']),ma200d=num(s['MA200-D']);
+  const ma50w=num(s['MA50-W']),ma200w=num(s['MA200-W']);
+  const rsid=num(s['RSI-D']),rsiw=num(s['RSI-W']);
+  const macdD=num(s['MACD-H-D']),sigD=num(s['Signal-D']);
+  const macdW=num(s['MACD-H-W']),sigW=num(s['Signal-W']);
+  const vol=num(s.Volume),high52=num(s['52W-High']),low52=num(s['52W-Low']);
   if(ma50d!==null){max+=10;pts+=(p>ma50d)?10:3;}
   if(ma200d!==null){max+=10;pts+=(p>ma200d)?10:3;}
   if(ma50d!==null&&ma200d!==null){max+=8;pts+=(ma50d>=ma200d)?8:2;}
@@ -273,18 +554,8 @@ function scoreRow(s){
   if(macdD!==null){max+=12;const pos=macdD>0,ris=sigD!==null?macdD>sigD:false;pts+=pos?(ris?12:6):(ris?4:2);}
   if(macdW!==null){max+=12;const pos=macdW>0,ris=sigW!==null?macdW>sigW:false;pts+=pos?(ris?12:6):(ris?4:2);}
   if(vol!==null){max+=8;pts+=6;}
-  if(high52!==null&&low52!==null){
-    max+=7;
-    const dL=(p-low52)/(low52||1),dH=(high52-p)/(high52||1);
-    pts+=dL<=0.10?7:dH<=0.05?1:dH<=0.09?2:5;
-  }
-  if(ma50d!==null||ma200d!==null){
-    max+=5;
-    const avail=[ma50d,ma200d].filter(x=>x!==null);
-    const cl=avail.reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b);
-    const pct=Math.abs(p-cl)/p;
-    pts+=pct<=0.02?5:pct<=0.05?4:pct<=0.10?2:0;
-  }
+  if(high52!==null&&low52!==null){max+=7;const dL=(p-low52)/(low52||1),dH=(high52-p)/(high52||1);pts+=dL<=0.10?7:dH<=0.05?1:dH<=0.09?2:5;}
+  if(ma50d!==null||ma200d!==null){max+=5;const avail=[ma50d,ma200d].filter(x=>x!==null);const cl=avail.reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b);const pct=Math.abs(p-cl)/p;pts+=pct<=0.02?5:pct<=0.05?4:pct<=0.10?2:0;}
   let sc=max>0?(pts/max)*100:0;
   const dB=ma50d!==null&&ma200d!==null&&p>ma50d&&p>ma200d&&ma50d>=ma200d&&macdD!==null&&macdD>0;
   const wB=ma50w!==null&&ma200w!==null&&ma50w>ma200w&&macdW!==null&&macdW>0;
@@ -292,391 +563,312 @@ function scoreRow(s){
   return Math.round(Math.min(Math.max(sc,0),100));
 }
 
-// ─────────────────────────────────────────────────────────
-
-// MOMENTUM — compact label for BUY and EXIT rows
-function momentumLabel(s, verdict){
-  const macdD = num(s["MACD-H-D"]);
-  const macdW = num(s["MACD-H-W"]);
-  const sigW  = num(s["Signal-W"]);
-  const rsid  = num(s["RSI-D"]);
-
-  if(verdict === "BUY"){
-    const wRising = macdW !== null && sigW !== null && macdW > sigW;
-    if(macdW !== null && macdW > 3 && wRising)  return "💚 Strong ↑";
-    if(macdW !== null && macdW > 0 && wRising)  return "🟢 Moderate ↑";
-    return "🟡 Forming ↑";
-  }
-
-  if(verdict === "EXIT"){
-    const rsiLow  = rsid  !== null && rsid  < 35;
-    const macdStr = macdD !== null && macdD < -1.5;
-    const rsiMid  = rsid  !== null && rsid  < 42;
-    const macdMid = macdD !== null && macdD < -0.5;
-    if(rsiLow && macdStr) return "🔴 Strong ↓";
-    if(rsiMid && macdMid) return "🟠 Moderate ↓";
-    return "🟡 Mild ↓";
-  }
-
-  // WATCH/WAIT/AVOID — brief MACD-W direction
-  if(macdW !== null){
-    const wRising = sigW !== null && macdW > sigW;
-    const dir = (macdW > 0 && wRising) ? "▲ Building" : macdW > 0 ? "▲ Slowing" : "▼ Weak";
-    return "MACD-W " + dir;
-  }
-  return "—";
+// ─── VERDICT ───────────────────────────────────
+function verdictFn(s,sc,z){
+  const p=num(s.Price),ma50d=num(s['MA50-D']),ma200d=num(s['MA200-D']);
+  const ma50w=num(s['MA50-W']),ma200w=num(s['MA200-W']);
+  const rsid=num(s['RSI-D']),macdD=num(s['MACD-H-D']),sigD=num(s['Signal-D']);
+  const macdW=num(s['MACD-H-W']),sigW=num(s['Signal-W']),high52=num(s['52W-High']);
+  const avail=[ma50d,ma200d].filter(x=>x!==null);
+  const nearestMA=avail.length?avail.reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b):null;
+  const distNearest=nearestMA!==null?(p-nearestMA)/p:null;
+  const distMA50=ma50d!==null?(p-ma50d)/p:null;
+  const atMA=distNearest!==null&&distNearest>=-0.01&&distNearest<=0.03;
+  const weeklyUp=ma50w!==null&&ma200w!==null&&ma50w>ma200w;
+  const macdWposRis=macdW!==null&&sigW!==null&&macdW>0&&macdW>sigW;
+  const rsiCool=rsid!==null&&rsid>=30&&rsid<=53;
+  const near52High=high52!==null&&(high52-p)/(high52||1)<=0.05;
+  const belowBothMAs=ma50d!==null&&ma200d!==null&&p<ma50d&&p<ma200d;
+  const macdDneg=macdD!==null&&macdD<0;
+  const rsiWeak=rsid!==null&&rsid<50;
+  if(atMA&&weeklyUp&&macdWposRis&&rsiCool&&sc>=70&&!near52High)
+    return {v:'🟢 BUY',verdict:'BUY',target:z.target};
+  if(belowBothMAs&&macdDneg&&rsiWeak&&sc<=65)
+    return {v:'🔴 EXIT SIGNAL',verdict:'EXIT',target:z.downsideTarget};
+  if(sc>=50) return {v:'🟡 WATCH',verdict:'WATCH',target:z.target};
+  if(sc>=40) return {v:'⚪ WAIT',verdict:'WAIT',target:z.target};
+  return {v:'🚫 AVOID',verdict:'AVOID',target:z.target};
 }
 
-// VERDICT RULES — TIGHT PULLBACK-BASED LOGIC
-//
-// ═══════════════════════════════════════════════════════
-// BUY SIGNAL — price pulling back TO its MA support
-// All 6 conditions must be true:
-//
-//   1. Price within -1% to +3% of nearest MA        ← AT the MA, not above it
-//      (MA50-D or MA200-D, whichever is closer)
-//   2. MA50-W > MA200-W                              ← weekly uptrend intact
-//   3. MACD-H-W positive AND rising (hist > signal)  ← weekly momentum building
-//   4. RSI-D between 30–57                           ← cooling off, not hot
-//   5. Score >= 65                                    ← quality gate
-//   6. NOT within 5% of 52W High                     ← not near the top
-//
-// Logic: fires when a good stock dips back to its MA — 
-// the right entry point, not after it has already moved up.
-// ═══════════════════════════════════════════════════════
-//
-// EXIT SIGNAL — price breaking below MA50-D
-// All 5 conditions must be true:
-//
-//   1. Price below MA50-D, within 8% below           ← fresh break, caught early
-//   2. MACD-H-D < 0                                  ← daily momentum turned bearish
-//   3. RSI-D < 48                                     ← below midline = selling pressure
-//   4. MACD-H-W < 0 OR MACD-H-W < Signal-W          ← weekly momentum also weakening
-//   5. Score <= 58                                    ← overall reading is weak
-//
-// Purpose: CLOSE existing holdings early — before big loss.
-// Target shown = 52W-Low (worst case downside level).
-// ═══════════════════════════════════════════════════════
-//
-// WATCH: score 50–64, or good setup but one filter missing
-// WAIT : score 40–49
-// AVOID: score < 40
-function verdictFn(s, sc, z){
-  const p      = num(s.Price);
-  const ma50d  = num(s["MA50-D"]);
-  const ma200d = num(s["MA200-D"]);
-  const ma50w  = num(s["MA50-W"]);
-  const ma200w = num(s["MA200-W"]);
-  const rsid   = num(s["RSI-D"]);
-  const macdD  = num(s["MACD-H-D"]);
-  const macdW  = num(s["MACD-H-W"]);
-  const sigW   = num(s["Signal-W"]);
-  const high52 = num(s["52W-High"]);
-
-  // Nearest MA distance
-  const avail      = [ma50d, ma200d].filter(x => x !== null);
-  const nearestMA  = avail.length ? avail.reduce((a,b) => Math.abs(p-a)<Math.abs(p-b)?a:b) : null;
-  const distNearest= nearestMA !== null ? (p - nearestMA) / p : null;
-  const distMA50   = ma50d !== null ? (p - ma50d) / p : null;
-
-  // BUY conditions
-  const atMA        = distNearest !== null && distNearest >= -0.01 && distNearest <= 0.03;
-  const weeklyUp    = ma50w !== null && ma200w !== null && ma50w > ma200w;
-  const macdWposRis = macdW !== null && sigW !== null && macdW > 0 && macdW > sigW;
-  const rsiCool     = rsid  !== null && rsid >= 30 && rsid <= 57;
-  const near52High  = high52 !== null && (high52 - p) / (high52||1) <= 0.05;
-
-  // EXIT conditions
-  const belowBothMAs = ma50d !== null && ma200d !== null && p < ma50d && p < ma200d;
-  const macdDneg     = macdD !== null && macdD < 0;
-  const rsiWeak      = rsid  !== null && rsid < 50;
-
-  // BUY — all 6
-  if(atMA && weeklyUp && macdWposRis && rsiCool && sc >= 70 && !near52High){
-    return {v:"🟢 BUY", verdict:"BUY", target:z.target};
+// ─── MOMENTUM ──────────────────────────────────
+function momentumLabel(s,verdict){
+  const macdD=num(s['MACD-H-D']),macdW=num(s['MACD-H-W']),sigW=num(s['Signal-W']),rsid=num(s['RSI-D']);
+  if(verdict==='BUY'){
+    const wR=macdW!==null&&sigW!==null&&macdW>sigW;
+    if(macdW!==null&&macdW>3&&wR) return '💚 Strong ↑';
+    if(macdW!==null&&macdW>0&&wR) return '🟢 Moderate ↑';
+    return '🟡 Forming ↑';
   }
-
-  // EXIT SIGNAL — all 4 (price below BOTH MAs confirmed)
-  if(belowBothMAs && macdDneg && rsiWeak && sc <= 65){
-    return {v:"🔴 EXIT SIGNAL", verdict:"EXIT", target:z.downsideTarget};
+  if(verdict==='EXIT'){
+    if(rsid!==null&&rsid<35&&macdD!==null&&macdD<-1.5) return '🔴 Strong ↓';
+    if(rsid!==null&&rsid<42&&macdD!==null&&macdD<-0.5) return '🟠 Moderate ↓';
+    return '🟡 Mild ↓';
   }
-
-  // WATCH
-  if(sc >= 50) return {v:"🟡 WATCH", verdict:"WATCH", target:z.target};
-
-  // WAIT
-  if(sc >= 40) return {v:"⚪ WAIT", verdict:"WAIT", target:z.target};
-
-  // AVOID
-  return {v:"🚫 AVOID", verdict:"AVOID", target:z.target};
+  if(macdW!==null){
+    const wR=sigW!==null&&macdW>sigW;
+    return macdW>0&&wR?'MACD-W ▲ Building':macdW>0?'MACD-W ▲ Slowing':'MACD-W ▼ Weak';
+  }
+  return '—';
 }
 
-// TRADE PLANS
-function tradePlan(r){
-  const p = parseFloat(r.Price);
-  const supParts = r.Support.split("–");
-  const supHi = parseFloat(supParts[1]);
-
-  if(r.Verdict === "BUY"){
-    const action = p <= supHi * 1.02
-      ? "BUY NOW — price is at MA support zone"
-      : "WAIT — watch for further pullback to " + r.Support;
+// ─── PROCESS ALL ROWS ──────────────────────────
+function processAll(){
+  return _rawData.map(s=>{
+    const z=computeZones(s),sc=scoreRow(s),vr=verdictFn(s,sc,z);
     return {
-      cls:    "buy",
-      header: "🟢 " + r.Symbol + " — Buy Plan | Score: " + r.Score,
-      code:   "Entry: " + r.Support + " | Target: ₨" + fmt(r.Target) + " | R:R ≈ " + r.RR,
-      note:   "At ₨" + p + ": " + action
+      Symbol:s.Symbol,Price:s.Price,
+      Support:z.supportZone,S2:z.s2Zone,
+      Resistance:z.resistanceZone,Target:vr.target,
+      Score:sc,VLabel:vr.v,Verdict:vr.verdict,
+      Momentum:momentumLabel(s,vr.verdict),RR:'0'
     };
-  }
-
-  if(r.Verdict === "EXIT"){
-    return {
-      cls:    "exit",
-      header: "🔴 " + r.Symbol + " — EXIT SIGNAL | Score: " + r.Score,
-      code:   "Current: ₨" + fmt(r.Price) + " | Downside Risk: ₨" + fmt(r.Target),
-      note:   "⚠️ MA50 support broken. If holding " + r.Symbol + " — consider closing to avoid further loss."
-    };
-  }
-
-  return null;
+  }).map(r=>{
+    const p=parseFloat(r.Price),supLo=parseFloat(r.Support.split('\u2013')[0]);
+    r.RR=((Math.abs(r.Target-p))/(Math.abs(p-supLo)||1)).toFixed(2);
+    return r;
+  }).sort((a,b)=>{
+    const o={BUY:1,WATCH:2,WAIT:3,EXIT:4,AVOID:5};
+    return (o[a.Verdict]||9)-(o[b.Verdict]||9)||b.Score-a.Score;
+  });
 }
 
-// ─────────────────────────────────────────────────────────
-// RENDER
-// ─────────────────────────────────────────────────────────
-function render(rows){
-  const order={"BUY":1,"WATCH":2,"WAIT":3,"EXIT":4,"AVOID":5};
-  rows.sort((a,b)=>{
-    const ga=order[a.Verdict]||9,gb=order[b.Verdict]||9;
-    if(ga!==gb) return ga-gb;
-    return b.Score-a.Score;
-  });
-
-  // R:R calculation for display
-  rows.forEach(r=>{
-    const p=parseFloat(r.Price);
-    const supLo=parseFloat(r.Support.split("–")[0]);
-    const reward=Math.abs(r.Target-p);
-    const risk=Math.abs(p-supLo)||1;
-    r.RR=(reward/risk).toFixed(2);
-  });
-
-  // Table — no S2 column
-  let html=`<table><tr>
-    <th>#</th><th>Symbol</th><th>Price</th>
-    <th>Support</th><th>Support 2</th><th>Resistance</th><th>Target</th>
-    <th>Score</th><th>Verdict</th><th>Momentum</th>
+// ─── TABLE HEADER/ROW HELPERS ──────────────────
+function tableHeader(){
+  return `<tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Support 2</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th><th>Momentum</th></tr>`;
+}
+function tableRow(r,i){
+  const cls=r.Verdict==='BUY'?'buy-row':r.Verdict==='EXIT'?'exit-row':r.Verdict==='WATCH'?'watch-row':'';
+  const vcls=r.Verdict==='BUY'?'badge-buy':r.Verdict==='EXIT'?'badge-exit':r.Verdict==='WATCH'?'badge-watch':r.Verdict==='WAIT'?'badge-wait':'badge-avoid';
+  return `<tr class="${cls}">
+    <td>${i+1}</td><td><b>${r.Symbol}</b></td><td>${fmt(r.Price)}</td>
+    <td>${r.Support}</td><td>${r.S2||'—'}</td><td>${r.Resistance}</td>
+    <td>${fmt(r.Target)}</td><td><b>${r.Score}</b></td>
+    <td class="${vcls}">${r.VLabel}</td><td>${r.Momentum}</td>
   </tr>`;
-  rows.forEach((r,i)=>{
-    html+=`<tr>
-      <td>${i+1}</td>
-      <td><b>${r.Symbol}</b></td>
-      <td>${fmt(r.Price)}</td>
-      <td>${r.Support}</td>
-      <td>${r.S2||"—"}</td>
-      <td>${r.Resistance}</td>
-      <td>${fmt(r.Target)}</td>
-      <td><b>${r.Score}</b></td>
-      <td>${r.VLabel}</td>
-      <td>${r.Momentum||"—"}</td>
-    </tr>`;
-  });
-  html+=`</table>`;
+}
 
-  // Signal summary
-  const g=v=>rows.filter(r=>r.Verdict===v).map(r=>r.Symbol).join(", ")||"—";
-  html+=`<pre>
-─────────────────────────────────────
-📈 BUY        → ${g("BUY")}
-👀 WATCH      → ${g("WATCH")}
-⏳ WAIT       → ${g("WAIT")}
-🔴 EXIT SIGNAL → ${g("EXIT")}
-🚫 AVOID      → ${g("AVOID")}
-─────────────────────────────────────</pre>`;
+// ─── HOME PAGE RENDER ──────────────────────────
+function renderHome(){
+  if(!_rawData.length) return;
+  const rows=processAll();
+  const buys=rows.filter(r=>r.Verdict==='BUY');
+  const exits=rows.filter(r=>r.Verdict==='EXIT');
+  const watches=rows.filter(r=>r.Verdict==='WATCH');
+
+  // Cards
+  document.getElementById('homeCards').innerHTML=`
+    <div class="card buy"><div class="num">${buys.length}</div><div class="lbl">BUY</div></div>
+    <div class="card exit"><div class="num">${exits.length}</div><div class="lbl">EXIT SIGNAL</div></div>
+    <div class="card watch"><div class="num">${watches.length}</div><div class="lbl">WATCH</div></div>
+    <div class="card total"><div class="num">${rows.length}</div><div class="lbl">Total Symbols</div></div>`;
+
+  // BUY table
+  const bt=document.getElementById('homeBuyTable');
+  if(buys.length){
+    bt.innerHTML=tableHeader()+buys.map((r,i)=>tableRow(r,i)).join('');
+  } else {
+    bt.innerHTML='<tr><td colspan="10" style="padding:16px;color:#4a6a8a;text-align:center">No BUY candidates this week</td></tr>';
+  }
+
+  // EXIT table
+  const et=document.getElementById('homeExitTable');
+  if(exits.length){
+    et.innerHTML=tableHeader()+exits.map((r,i)=>tableRow(r,i)).join('');
+  } else {
+    et.innerHTML='<tr><td colspan="10" style="padding:16px;color:#4a6a8a;text-align:center">No EXIT signals this week</td></tr>';
+  }
+}
+
+// ─── FULL WEEKLY ANALYSIS ──────────────────────
+function runWeekly(){
+  showPage('pgAnalysis');
+  if(!_rawData.length){ document.getElementById('fullTable').innerHTML='<tr><td style="padding:20px;color:#4a6a8a">No data loaded. Go to Add / Update Row to import data.</td></tr>'; return; }
+  const rows=processAll();
+  const g=v=>rows.filter(r=>r.Verdict===v).map(r=>r.Symbol).join(', ')||'—';
+
+  document.getElementById('signalSummary').innerHTML=`
+    <div class="sig-pill"><span class="s-label">📈 BUY</span><span class="s-val" style="color:#4caf50">${g('BUY')}</span></div>
+    <div class="sig-pill"><span class="s-label">👀 WATCH</span><span class="s-val" style="color:#ffc107">${g('WATCH')}</span></div>
+    <div class="sig-pill"><span class="s-label">⏳ WAIT</span><span class="s-val" style="color:#78909c">${g('WAIT')}</span></div>
+    <div class="sig-pill"><span class="s-label">🔴 EXIT</span><span class="s-val" style="color:#ef5350">${g('EXIT')}</span></div>`;
+
+  document.getElementById('fullTable').innerHTML=tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('');
 
   // Trade plans
-  const planRows=rows.filter(r=>["BUY","EXIT"].includes(r.Verdict));
-  if(planRows.length){
-    html+=`<div class="trade-plans">`;
-    planRows.forEach(r=>{
-      const plan=tradePlan(r);
-      if(!plan) return;
-      html+=`<div class="plan-block ${plan.cls}">
-        <h4>${plan.header}</h4>
-        <code>${plan.code}</code>
-        <p>${plan.note}</p>
-      </div>`;
-    });
-    html+=`</div>`;
-  }
-
-  document.getElementById("output").innerHTML=html;
+  const planRows=rows.filter(r=>['BUY','EXIT'].includes(r.Verdict));
+  let plansHtml='';
+  planRows.forEach(r=>{
+    const p=parseFloat(r.Price),supLo=parseFloat(r.Support.split('\u2013')[0]),supHi=parseFloat(r.Support.split('\u2013')[1]);
+    if(r.Verdict==='BUY'){
+      const action=p<=supHi*1.02?'BUY NOW — price is at MA support zone':'WAIT — watch for pullback to '+r.Support;
+      plansHtml+=`<div class="plan-block buy"><h4>🟢 ${r.Symbol} — Buy Plan | Score: ${r.Score}</h4>
+        <code>Entry: ${r.Support} | Target: ₨${fmt(r.Target)} | R:R ≈ ${r.RR}</code>
+        <p>At ₨${p}: ${action}</p></div>`;
+    } else {
+      plansHtml+=`<div class="plan-block exit"><h4>🔴 ${r.Symbol} — EXIT SIGNAL | Score: ${r.Score}</h4>
+        <code>Current: ₨${fmt(r.Price)} | Downside Risk: ₨${fmt(r.Target)}</code>
+        <p>⚠️ MA50 support broken. If holding ${r.Symbol} — consider closing position.</p></div>`;
+    }
+  });
+  document.getElementById('tradePlans').innerHTML=plansHtml?`<h3 style="color:#a0c4e8;margin:20px 0 12px">Trade Plans</h3>`+plansHtml:'';
 }
 
-// ─────────────────────────────────────────────────────────
-// MAIN
-// ─────────────────────────────────────────────────────────
+// ─── SINGLE TICKER ANALYSIS ────────────────────
+function analyseSingle(){
+  const ids=['sSymbol','sPrice','sMA50D','sMA200D','sRSID','sMACDHD','sSignalD',
+             'sMA50W','sMA200W','sRSIW','sMACDHW','sSignalW','sVolume','s52High','s52Low'];
+  const keys=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D',
+              'MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume','52W-High','52W-Low'];
+  const s={};
+  ids.forEach((id,i)=>s[keys[i]]=(document.getElementById(id).value||'').trim());
+  if(!s.Symbol||!s.Price){ alert('Symbol and Price are required.'); return; }
+
+  const z=computeZones(s),sc=scoreRow(s),vr=verdictFn(s,sc,z);
+  const p=parseFloat(s.Price);
+  const mom=momentumLabel(s,vr.verdict);
+  const supLo=parseFloat(z.supportZone.split('\u2013')[0]);
+  const rr=((Math.abs(vr.target-p))/(Math.abs(p-supLo)||1)).toFixed(2);
+
+  // Momentum badge class
+  const mbcls=mom.includes('Strong ↑')?'mbadge-strong-up':mom.includes('Moderate ↑')?'mbadge-mod-up':
+    mom.includes('Forming')?'mbadge-form-up':mom.includes('Strong ↓')?'mbadge-strong-dn':
+    mom.includes('Moderate ↓')?'mbadge-mod-dn':mom.includes('Mild ↓')?'mbadge-mild-dn':'mbadge-watch';
+
+  const vcls=vr.verdict==='BUY'?'verdict-buy':vr.verdict==='EXIT'?'verdict-exit':
+    vr.verdict==='WATCH'?'verdict-watch':vr.verdict==='WAIT'?'verdict-wait':'verdict-avoid';
+
+  // Indicator signals
+  const ma50d=num(s['MA50-D']),ma200d=num(s['MA200-D']);
+  const rsid=num(s['RSI-D']),macdD=num(s['MACD-H-D']),sigD=num(s['Signal-D']);
+  const macdW=num(s['MACD-H-W']),sigW=num(s['Signal-W']);
+  const ma50w=num(s['MA50-W']),ma200w=num(s['MA200-W']);
+
+  function ic(cond){ return cond?'bull':'bear'; }
+  function iv(v,bull,bear){ return `<span class="ind-val ${v?'bull':'bear'}">${v?bull:bear}</span>`; }
+
+  // Trade plan
+  let planHtml='';
+  if(vr.verdict==='BUY'){
+    const supHi=parseFloat(z.supportZone.split('\u2013')[1]);
+    const action=p<=supHi*1.02?'BUY NOW — price is at MA support':'WAIT — watch for pullback to '+z.supportZone;
+    planHtml=`<div class="trade-plan buy">
+      <div class="tp-head">🟢 Buy Plan</div>
+      <div class="tp-code">Entry: ${z.supportZone} | Target: ₨${fmt(vr.target)} | R:R ≈ ${rr}</div>
+      <div class="tp-note">At ₨${p}: ${action}</div></div>`;
+  } else if(vr.verdict==='EXIT'){
+    planHtml=`<div class="trade-plan exit">
+      <div class="tp-head">🔴 Exit Signal</div>
+      <div class="tp-code">Current: ₨${fmt(p)} | Downside Risk: ₨${fmt(vr.target)}</div>
+      <div class="tp-note">⚠️ MA50 support broken. Consider closing position to avoid further loss.</div></div>`;
+  }
+
+  document.getElementById('singleResult').innerHTML=`
+    <div class="panel-hdr">📈 ${s.Symbol} — Analysis Result</div>
+    <div class="verdict-block">
+      <div class="${vcls}">
+        <div class="verdict-main">${vr.v}</div>
+        <div class="verdict-score">Score: ${sc} / 100</div>
+      </div>
+      <span class="momentum-badge ${mbcls}">${mom}</span>
+
+      <div class="zone-grid">
+        <div class="zone-card sup"><div class="zlbl">Support (S1)</div><div class="zval">${z.supportZone}</div></div>
+        <div class="zone-card sup2"><div class="zlbl">Support 2 (S2)</div><div class="zval">${z.s2Zone||'—'}</div></div>
+        <div class="zone-card res"><div class="zlbl">Resistance</div><div class="zval">${z.resistanceZone}</div></div>
+        <div class="zone-card tgt"><div class="zlbl">${vr.verdict==='EXIT'?'Downside Risk':'Target'}</div><div class="zval">₨${fmt(vr.target)}</div></div>
+      </div>
+
+      ${planHtml}
+
+      <div style="font-size:13px;color:#7a9ab5;margin:16px 0 8px;font-weight:600">INDICATOR SIGNALS</div>
+      <div class="indicator-grid">
+        <div class="ind-row"><span class="ind-name">Price vs MA50-D</span>${iv(ma50d!==null&&p>ma50d,'Above ✓','Below ✗')}</div>
+        <div class="ind-row"><span class="ind-name">Price vs MA200-D</span>${iv(ma200d!==null&&p>ma200d,'Above ✓','Below ✗')}</div>
+        <div class="ind-row"><span class="ind-name">MA50-D vs MA200-D</span>${iv(ma50d!==null&&ma200d!==null&&ma50d>=ma200d,'Golden ✓','Death ✗')}</div>
+        <div class="ind-row"><span class="ind-name">MA50-W vs MA200-W</span>${iv(ma50w!==null&&ma200w!==null&&ma50w>ma200w,'Golden ✓','Death ✗')}</div>
+        <div class="ind-row"><span class="ind-name">RSI-D (${rsid||'—'})</span><span class="ind-val ${rsid!==null&&rsid>=30&&rsid<=53?'bull':rsid!==null&&rsid>70?'bear':'neut'}">${rsid!==null?(rsid<30?'Oversold':rsid<=53?'Cool Zone':rsid<=70?'Rising':'Overbought'):'—'}</span></div>
+        <div class="ind-row"><span class="ind-name">MACD-D</span><span class="ind-val ${macdD!==null&&macdD>0?'bull':'bear'}">${macdD!==null?(macdD>0&&sigD!==null&&macdD>sigD?'Pos + Rising':macdD>0?'Pos':'Neg'+(sigD!==null&&macdD>sigD?' Turning':' Falling')):'—'}</span></div>
+        <div class="ind-row"><span class="ind-name">MACD-W</span><span class="ind-val ${macdW!==null&&macdW>0?'bull':'bear'}">${macdW!==null?(macdW>0&&sigW!==null&&macdW>sigW?'Pos + Rising':macdW>0?'Pos':'Neg'+(sigW!==null&&macdW>sigW?' Turning':' Falling')):'—'}</span></div>
+        <div class="ind-row"><span class="ind-name">R:R Ratio</span><span class="ind-val ${parseFloat(rr)>=2?'bull':parseFloat(rr)>=1.5?'neut':'bear'}">${rr}:1</span></div>
+      </div>
+    </div>`;
+}
+
+// ─── DATA & CSV FUNCTIONS ──────────────────────
+const FIELDS=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D',
+              'MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume','52W-High','52W-Low',
+              'Swing-Low','Swing-High'];
 let _rawData=[];
+let _parsedRows=[];
 
-async function runAnalysis(){
-  document.getElementById("output").innerHTML="<p>Running analysis…</p>";
-  try{
-    const res=await fetch("data.csv?"+Date.now());
-    const text=await res.text();
-    const bom=text.charCodeAt(0)===0xFEFF?text.slice(1):text;
-    const lines=bom.trim().split(/\r?\n/);
-    const headers=lines[0].split(",").map(h=>h.trim());
-    _rawData=lines.slice(1).filter(l=>l.trim()).map(line=>{
-      const cols=line.split(",");
-      const obj={};
-      headers.forEach((h,i)=>obj[h]=(cols[i]||"").trim());
-      return obj;
-    });
-  }catch(e){
-    document.getElementById("output").innerHTML=`<p style="color:red">Could not load data.csv: ${e.message}</p>`;
-    return;
-  }
-  runAnalysisFromData();
-}
+const KNOWN_HDR=['symbol','price','ma50','ma200','rsi','macd','signal','volume','high','low',
+                 'ma50-d','ma200-d','rsi-d','macd-h-d','signal-d','ma50-w','ma200-w',
+                 'rsi-w','macd-h-w','signal-w','52w-high','52w-low'];
 
-function runAnalysisFromData(){
-  document.getElementById("output").innerHTML="<p>Running analysis…</p>";
-  const rows=_rawData.map(s=>{
-    const z=computeZones(s);
-    const sc=scoreRow(s);
-    const vr=verdictFn(s,sc,z);
-    return {
-      Symbol:s.Symbol, Price:s.Price,
-      Support:z.supportZone, S2:z.s2Zone, Resistance:z.resistanceZone,
-      Target:vr.target, Score:sc, VLabel:vr.v, Verdict:vr.verdict, Momentum:momentumLabel(s,vr.verdict), RR:"0"
-    };
-  });
-  render(rows);
-}
-
-// ─────────────────────────────────────────────────────────
-// TAB SWITCHING
-// ─────────────────────────────────────────────────────────
 function switchTab(tab){
-  document.getElementById('pasteTab').style.display   = tab==='paste'  ? 'block' : 'none';
-  document.getElementById('manualTab').style.display  = tab==='manual' ? 'block' : 'none';
+  document.getElementById('pasteTab').style.display=tab==='paste'?'block':'none';
+  document.getElementById('manualTab').style.display=tab==='manual'?'block':'none';
   document.querySelectorAll('.tab-btn').forEach((b,i)=>{
-    b.classList.toggle('active', (i===0&&tab==='paste')||(i===1&&tab==='manual'));
+    b.classList.toggle('active',(i===0&&tab==='paste')||(i===1&&tab==='manual'));
   });
 }
-
-// ─────────────────────────────────────────────────────────
-// PASTE & PARSE — reads tab or comma separated Pine Script output
-// Accepts with or without header row
-// ─────────────────────────────────────────────────────────
-const FIELDS = ["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D",
-                "MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume","52W-High","52W-Low",
-                "Swing-Low","Swing-High"];
-
-const KNOWN_HEADERS = ["symbol","price","ma50","ma200","rsi","macd","signal","volume","high","low",
-                       "ma50-d","ma200-d","rsi-d","macd-h-d","signal-d","ma50-w","ma200-w",
-                       "rsi-w","macd-h-w","signal-w","52w-high","52w-low","52whigh","52wlow"];
-
-let _parsedRows = [];
 
 function parsePaste(){
-  const raw = document.getElementById('pasteInput').value.trim();
+  const raw=document.getElementById('pasteInput').value.trim();
   if(!raw){ alert('Please paste your data first.'); return; }
-
-  const lines = raw.split(/\r?\n/).filter(l=>l.trim());
+  const lines=raw.split(/\r?\n/).filter(l=>l.trim());
   if(!lines.length){ alert('No data found.'); return; }
-
-  // Detect separator: tab or comma
-  const sep = lines[0].includes('	') ? '	' : ',';
-
-  // Detect if first row is a header
-  const firstCols = lines[0].split(sep).map(c=>c.trim().toLowerCase());
-  const isHeader  = KNOWN_HEADERS.some(h => firstCols.includes(h)) ||
-                    isNaN(parseFloat(firstCols[1]));
-  const dataLines = isHeader ? lines.slice(1) : lines;
-
-  _parsedRows = [];
-  const errors = [];
-
+  const sep=lines[0].includes('\t')?'\t':',';
+  const firstCols=lines[0].split(sep).map(c=>c.trim().toLowerCase());
+  const isHeader=KNOWN_HDR.some(h=>firstCols.includes(h))||isNaN(parseFloat(firstCols[1]));
+  const dataLines=isHeader?lines.slice(1):lines;
+  _parsedRows=[];
+  const errors=[];
   dataLines.forEach((line,i)=>{
     if(!line.trim()) return;
-    const cols = line.split(sep).map(c=>c.trim().replace(/,/g,''));
-    if(cols.length < 2){ errors.push(`Row ${i+1}: too few columns`); return; }
-
-    const row = {};
-    FIELDS.forEach((f,fi)=>{ row[f] = cols[fi] || ''; });
-
+    const cols=line.split(sep).map(c=>c.trim().replace(/,/g,''));
+    if(cols.length<2){ errors.push(`Row ${i+1}: too few columns`); return; }
+    const row={};
+    FIELDS.forEach((f,fi)=>{ row[f]=cols[fi]||''; });
     if(!row.Symbol){ errors.push(`Row ${i+1}: missing symbol`); return; }
     _parsedRows.push(row);
   });
-
-  // Show preview table
-  if(_parsedRows.length === 0){
-    document.getElementById('pastePreview').innerHTML =
-      '<p style="color:red">No valid rows found. Check your data format.</p>';
-    return;
-  }
-
-  let html = `<p style="color:#27ae60;font-weight:600;margin:8px 0 4px">
-    ✅ ${_parsedRows.length} symbol${_parsedRows.length>1?'s':''} parsed
-    ${errors.length ? '<span style="color:#e74c3c"> · '+errors.length+' error(s)</span>' : ''}
-  </p>
-  <div style="overflow-x:auto"><table>
-  <tr><th>#</th><th>Symbol</th><th>Price</th><th>MA50-D</th><th>MA200-D</th>
-  <th>RSI-D</th><th>MACD-H-D</th><th>Signal-D</th><th>MA50-W</th><th>MA200-W</th>
-  <th>RSI-W</th><th>MACD-H-W</th><th>Signal-W</th><th>Volume</th><th>52W-High</th><th>52W-Low</th></tr>`;
-
+  if(!_parsedRows.length){ document.getElementById('pastePreview').innerHTML='<p style="color:#ef5350;margin-top:10px">No valid rows found.</p>'; return; }
+  let html=`<p style="color:#4caf50;font-weight:600;margin:10px 0 6px">✅ ${_parsedRows.length} symbol(s) parsed ${errors.length?'<span style="color:#ef5350">· '+errors.length+' error(s)</span>':''}</p>
+    <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:11px">
+    <tr style="background:#1e3050">${['#','Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Sig-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Sig-W','Volume','52H','52L'].map(h=>`<th style="padding:4px 8px;color:#a0c4e8">${h}</th>`).join('')}</tr>`;
   _parsedRows.forEach((r,i)=>{
-    html += `<tr><td>${i+1}</td><td><b>${r.Symbol}</b></td>
-      <td>${r.Price}</td><td>${r['MA50-D']}</td><td>${r['MA200-D']}</td>
-      <td>${r['RSI-D']}</td><td>${r['MACD-H-D']}</td><td>${r['Signal-D']}</td>
-      <td>${r['MA50-W']}</td><td>${r['MA200-W']}</td><td>${r['RSI-W']}</td>
-      <td>${r['MACD-H-W']}</td><td>${r['Signal-W']}</td><td>${r.Volume}</td>
-      <td>${r['52W-High']}</td><td>${r['52W-Low']}</td></tr>`;
+    html+=`<tr style="border-bottom:1px solid #1a2535"><td style="padding:4px 8px;color:#7a9ab5">${i+1}</td><td style="padding:4px 8px;font-weight:700">${r.Symbol}</td><td style="padding:4px 8px">${r.Price}</td><td style="padding:4px 8px">${r['MA50-D']}</td><td style="padding:4px 8px">${r['MA200-D']}</td><td style="padding:4px 8px">${r['RSI-D']}</td><td style="padding:4px 8px">${r['MACD-H-D']}</td><td style="padding:4px 8px">${r['Signal-D']}</td><td style="padding:4px 8px">${r['MA50-W']}</td><td style="padding:4px 8px">${r['MA200-W']}</td><td style="padding:4px 8px">${r['RSI-W']}</td><td style="padding:4px 8px">${r['MACD-H-W']}</td><td style="padding:4px 8px">${r['Signal-W']}</td><td style="padding:4px 8px">${r.Volume}</td><td style="padding:4px 8px">${r['52W-High']}</td><td style="padding:4px 8px">${r['52W-Low']}</td></tr>`;
   });
-  html += '</table></div>';
-  if(errors.length) html += '<p style="color:#e74c3c;font-size:11px">Errors: '+errors.join(' | ')+'</p>';
-
-  document.getElementById('pastePreview').innerHTML = html;
-  document.getElementById('importStatus').textContent = '';
+  html+='</table></div>';
+  document.getElementById('pastePreview').innerHTML=html;
 }
 
 function importParsed(){
   if(!_parsedRows.length){ alert('Parse data first.'); return; }
-
-  // Merge into _rawData (replace existing symbols, keep others)
-  _parsedRows.forEach(newRow=>{
-    _rawData = _rawData.filter(r=>r.Symbol.toUpperCase()!==newRow.Symbol.toUpperCase());
-    _rawData.push(newRow);
+  _parsedRows.forEach(nr=>{
+    _rawData=_rawData.filter(r=>r.Symbol.toUpperCase()!==nr.Symbol.toUpperCase());
+    _rawData.push(nr);
   });
-
-  document.getElementById('importStatus').textContent =
-    '✅ ' + _parsedRows.length + ' symbol(s) imported!';
-
-  // Show CSV output
-  exportToTextarea();
-  document.getElementById('csvSection').style.display = 'block';
-
-  // Run analysis
-  runAnalysisFromData();
-  setTimeout(()=>{ document.getElementById('importStatus').textContent=''; }, 4000);
-}
-
-// ─────────────────────────────────────────────────────────
-// MANUAL ADD ROW
-// ─────────────────────────────────────────────────────────
-function addRow(){
-  const ids=["fSymbol","fPrice","fMA50D","fMA200D","fRSID","fMACDHD","fSignalD",
-             "fMA50W","fMA200W","fRSIW","fMACDHW","fSignalW","fVolume","f52High","f52Low",
-             "fSwingLow","fSwingHigh"];
-  const newRow={};
-  FIELDS.forEach((f,i)=>newRow[f]=(document.getElementById(ids[i]).value||'').trim());
-  if(!newRow.Symbol||!newRow.Price){ alert('Symbol and Price are required.'); return; }
-  _rawData=_rawData.filter(r=>r.Symbol.toUpperCase()!==newRow.Symbol.toUpperCase());
-  _rawData.push(newRow);
+  document.getElementById('importStatus').textContent='✅ '+_parsedRows.length+' symbol(s) imported!';
   exportToTextarea();
   document.getElementById('csvSection').style.display='block';
-  runAnalysisFromData();
+  renderHome();
+  setTimeout(()=>{ document.getElementById('importStatus').textContent=''; },4000);
+}
+
+function addRow(){
+  const ids=['fSymbol','fPrice','fMA50D','fMA200D','fRSID','fMACDHD','fSignalD',
+             'fMA50W','fMA200W','fRSIW','fMACDHW','fSignalW','fVolume','f52High','f52Low',
+             'fSwingLow','fSwingHigh'];
+  const nr={};
+  FIELDS.forEach((f,i)=>nr[f]=(document.getElementById(ids[i]).value||'').trim());
+  if(!nr.Symbol||!nr.Price){ alert('Symbol and Price are required.'); return; }
+  _rawData=_rawData.filter(r=>r.Symbol.toUpperCase()!==nr.Symbol.toUpperCase());
+  _rawData.push(nr);
+  exportToTextarea();
+  document.getElementById('csvSection').style.display='block';
+  renderHome();
 }
 
 function exportToTextarea(){
@@ -695,20 +887,30 @@ function exportCSV(){
   const lines=[FIELDS.join(',')];
   _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(',')));
   const blob=new Blob([lines.join('\n')],{type:'text/csv'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='data.csv';a.click();
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='data.csv'; a.click();
 }
 
-function showAddForm(){
-  document.getElementById('addForm').style.display='block';
-  document.getElementById('pastePreview').innerHTML='';
-  document.getElementById('importStatus').textContent='';
-  switchTab('paste');
+// ─── LOAD CSV ON START ─────────────────────────
+async function loadCSV(){
+  try{
+    const res=await fetch('data.csv?'+Date.now());
+    const text=await res.text();
+    const bom=text.charCodeAt(0)===0xFEFF?text.slice(1):text;
+    const lines=bom.trim().split(/\r?\n/);
+    const headers=lines[0].split(',').map(h=>h.trim());
+    _rawData=lines.slice(1).filter(l=>l.trim()).map(line=>{
+      const cols=line.split(','); const obj={};
+      headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+      return obj;
+    });
+    renderHome();
+  } catch(e){
+    console.log('CSV not loaded:',e.message);
+  }
 }
-function hideAddForm(){ document.getElementById('addForm').style.display='none'; }
 
-
-runAnalysis();
+loadCSV();
 </script>
 </body>
 </html>
