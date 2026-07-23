@@ -312,15 +312,15 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   border:1px solid #2e4060; margin-bottom:20px; width:100%;
 }
 .imp-tbl3 {
-  width:100%; border-collapse:collapse;
+  width:100%; border-collapse:collapse; table-layout:fixed;
 }
 .imp-th {
-  background:#0d2a4a; color:#4fc3f7; font-size:14px; font-weight:700;
-  padding:18px 16px; text-align:center; border:1px solid #1e3050;
-  letter-spacing:.3px; min-width:100px;
+  background:#0d2a4a; color:#4fc3f7; font-size:12px; font-weight:700;
+  padding:14px 4px; text-align:center; border:1px solid #1e3050;
+  letter-spacing:0; word-break:break-word;
 }
 .imp-th-label {
-  background:#0a1a2e; color:#3a6a9a; font-size:12px; width:90px;
+  background:#0a1a2e; color:#3a6a9a; font-size:11px; width:70px;
 }
 .imp-hdr-row th { border-bottom:2px solid #1565c0; }
 .imp-data-row:nth-child(1) .imp-cell,
@@ -328,18 +328,18 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .imp-data-row:nth-child(2) .imp-cell,
 .imp-data-row:nth-child(2) .imp-row-lbl { background:#0a1520; }
 .imp-row-lbl {
-  padding:14px 12px; font-size:13px; font-weight:800; color:#4fc3f7;
-  text-align:center; border:1px solid #1e3050; letter-spacing:.5px;
-  white-space:nowrap; background:#0d2240; min-width:90px;
+  padding:14px 4px; font-size:12px; font-weight:800; color:#4fc3f7;
+  text-align:center; border:1px solid #1e3050; letter-spacing:0;
+  white-space:nowrap; background:#0d2240; width:70px;
 }
 .imp-cell {
-  padding:12px 10px; border:1px solid #1e3050; vertical-align:middle; min-width:100px;
+  padding:10px 4px; border:1px solid #1e3050; vertical-align:middle;
 }
 .imp-in3 {
   width:100%; background:#0f1923; color:#e0c060;
-  border:1px solid #2a3f58; border-radius:5px;
-  padding:12px 8px; font-size:15px; font-weight:700; text-align:center;
-  transition:border-color .15s; box-sizing:border-box; min-width:90px;
+  border:1px solid #2a3f58; border-radius:4px;
+  padding:10px 2px; font-size:13px; font-weight:700; text-align:center;
+  transition:border-color .15s; box-sizing:border-box;
 }
 .imp-in3:focus { outline:none; border-color:#4fc3f7; background:#0a1520; color:#4fc3f7; }
 .imp-in3::placeholder { color:#2a3f58; font-weight:400; font-size:13px; }
@@ -399,7 +399,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <span class="nav-logo">📊 PSX TA</span>
     <button class="btn btn-home" onclick="goHome()">🏠 Home</button>
   </div>
-  <div class="content" style="padding:24px">
+  <div class="content" style="padding:24px;">
     <div id="manualTab">
       <div class="imp-wrap">
         <table class="imp-tbl3">
