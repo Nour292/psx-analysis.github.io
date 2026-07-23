@@ -156,7 +156,7 @@ function computeZones(s){
   else target=Math.ceil(resHi/10)*10+10;
 
   // Downside target (for EXIT SIGNAL)
-  const downsideTarget=(low52!==null)?low52:parseFloat(supportZone.split("–")[0])-w;
+  const downsideTarget=parseFloat(supportZone.split("–")[0]);  // support zone low — realistic exit level
 
   return {supportZone,resistanceZone,target,downsideTarget,w,hw};
 }
@@ -203,6 +203,40 @@ function scoreRow(s){
 }
 
 // ─────────────────────────────────────────────────────────
+
+// MOMENTUM — compact label for BUY and EXIT rows
+function momentumLabel(s, verdict){
+  const macdD = num(s["MACD-H-D"]);
+  const macdW = num(s["MACD-H-W"]);
+  const sigW  = num(s["Signal-W"]);
+  const rsid  = num(s["RSI-D"]);
+
+  if(verdict === "BUY"){
+    const wRising = macdW !== null && sigW !== null && macdW > sigW;
+    if(macdW !== null && macdW > 3 && wRising)  return "💚 Strong ↑";
+    if(macdW !== null && macdW > 0 && wRising)  return "🟢 Moderate ↑";
+    return "🟡 Forming ↑";
+  }
+
+  if(verdict === "EXIT"){
+    const rsiLow  = rsid  !== null && rsid  < 35;
+    const macdStr = macdD !== null && macdD < -1.5;
+    const rsiMid  = rsid  !== null && rsid  < 42;
+    const macdMid = macdD !== null && macdD < -0.5;
+    if(rsiLow && macdStr) return "🔴 Strong ↓";
+    if(rsiMid && macdMid) return "🟠 Moderate ↓";
+    return "🟡 Mild ↓";
+  }
+
+  // WATCH/WAIT/AVOID — brief MACD-W direction
+  if(macdW !== null){
+    const wRising = sigW !== null && macdW > sigW;
+    const dir = (macdW > 0 && wRising) ? "▲ Building" : macdW > 0 ? "▲ Slowing" : "▼ Weak";
+    return "MACD-W " + dir;
+  }
+  return "—";
+}
+
 // VERDICT RULES — TIGHT PULLBACK-BASED LOGIC
 //
 // ═══════════════════════════════════════════════════════
@@ -341,7 +375,7 @@ function render(rows){
   let html=`<table><tr>
     <th>#</th><th>Symbol</th><th>Price</th>
     <th>Support</th><th>Resistance</th><th>Target</th>
-    <th>Score</th><th>Verdict</th>
+    <th>Score</th><th>Verdict</th><th>Momentum</th>
   </tr>`;
   rows.forEach((r,i)=>{
     html+=`<tr>
@@ -353,6 +387,7 @@ function render(rows){
       <td>${fmt(r.Target)}</td>
       <td><b>${r.Score}</b></td>
       <td>${r.VLabel}</td>
+      <td>${r.Momentum||"—"}</td>
     </tr>`;
   });
   html+=`</table>`;
