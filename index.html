@@ -306,25 +306,58 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
 .table-wrap{ overflow-x:auto; }
 
-/* Import table */
-.import-tbl { font-size:15px; }
-.itbl-th {
-  background:#0d2a4a; color:#4fc3f7; font-size:13px; font-weight:700;
-  padding:10px 12px; text-align:center; border:1px solid #2e4060;
+/* ── Data Import Table ── */
+.imp-wrap {
+  background:#1a2535; border-radius:12px; overflow:hidden;
+  border:1px solid #2e4060; margin-bottom:18px;
 }
-.itbl-lbl {
-  background:#1a2535; color:#a0c4e8; font-size:15px; font-weight:700;
-  padding:12px 14px; border:1px solid #1e3050; white-space:nowrap;
+.imp-title {
+  background:#0d2a4a; padding:12px 20px;
+  font-size:15px; font-weight:700; color:#4fc3f7;
+  letter-spacing:.5px; border-bottom:2px solid #1565c0;
 }
-.itbl-val {
-  background:#0f1923; padding:8px 10px; border:1px solid #1e3050;
+.imp-grid {
+  display:grid;
+  grid-template-columns: 160px 1fr 1fr;
+  border-top:none;
 }
-.itbl-in {
-  width:100%; background:#0f1923; color:#4fc3f7;
-  border:1px solid #2e4060; border-radius:4px;
-  padding:8px 10px; font-size:15px; font-weight:600; text-align:center;
+.imp-col-hdr {
+  background:#0d1f35; color:#7ab3d4; font-size:12px;
+  font-weight:700; text-transform:uppercase; letter-spacing:.8px;
+  padding:8px 16px; text-align:center; border-bottom:1px solid #2e4060;
 }
-.itbl-in:focus { outline:none; border-color:#4fc3f7; }
+.imp-col-hdr.label-col { text-align:left; color:#4fc3f7; }
+.imp-row {
+  display:contents;
+}
+.imp-row:nth-child(even) .imp-lbl,
+.imp-row:nth-child(even) .imp-val { background:#131f2e; }
+.imp-lbl {
+  padding:11px 16px; font-size:14px; font-weight:700; color:#a0c4e8;
+  background:#172030; border-bottom:1px solid #1e3050;
+  display:flex; align-items:center;
+}
+.imp-val {
+  padding:7px 12px; background:#0f1923;
+  border-bottom:1px solid #1e3050; border-left:1px solid #1e3050;
+  display:flex; align-items:center;
+}
+.imp-in {
+  width:100%; background:transparent; color:#4fc3f7;
+  border:1px solid #2a3f58; border-radius:5px;
+  padding:9px 12px; font-size:15px; font-weight:700; text-align:center;
+  transition:border-color .15s;
+}
+.imp-in:focus { outline:none; border-color:#4fc3f7; background:#0a1520; }
+.imp-in::placeholder { color:#2e4a60; font-weight:400; font-size:13px; }
+/* Span both D+W for single-value fields */
+.imp-val.span2 { grid-column:span 2; border-left:1px solid #1e3050; }
+.imp-divider {
+  grid-column:1/-1; background:#0d2a4a;
+  padding:6px 16px; font-size:11px; font-weight:700;
+  color:#3a6a9a; letter-spacing:1px; text-transform:uppercase;
+  border-bottom:1px solid #1e3050;
+}
 </style>
 </head>
 <body>
@@ -387,59 +420,81 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <p class="hint" style="margin-bottom:16px">Paste your Pine Script CSV label output, or enter manually symbol by symbol.</p>
 
     <div id="manualTab">
-      <table class="import-tbl" style="width:100%;border-collapse:collapse;margin-bottom:16px">
-        <!-- ROW 1: HEADER -->
-        <thead>
-          <tr>
-            <th class="itbl-th" style="width:14%">INDICATOR</th>
-            <th class="itbl-th">1D VALUE</th>
-            <th class="itbl-th">1W VALUE</th>
-            <th class="itbl-th" style="width:14%">INDICATOR</th>
-            <th class="itbl-th">1D VALUE</th>
-            <th class="itbl-th">1W VALUE</th>
-            <th class="itbl-th" style="width:14%">INDICATOR</th>
-            <th class="itbl-th">1D VALUE</th>
-            <th class="itbl-th">1W VALUE</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- ROW 2: Symbol / Price / Volume -->
-          <tr>
-            <td class="itbl-lbl">Symbol</td>
-            <td class="itbl-val" colspan="2"><input id="fSymbol" class="itbl-in" placeholder="MCB"></td>
-            <td class="itbl-lbl">Price</td>
-            <td class="itbl-val" colspan="2"><input id="fPrice" class="itbl-in" placeholder="403.86"></td>
-            <td class="itbl-lbl">Volume</td>
-            <td class="itbl-val"><input id="fVolume" class="itbl-in" placeholder="1D vol"></td>
-            <td class="itbl-val"><input id="fVolumeW" class="itbl-in" placeholder="1W vol"></td>
-          </tr>
-          <!-- ROW 3: MA50 / MA200 / RSI -->
-          <tr>
-            <td class="itbl-lbl">MA50</td>
-            <td class="itbl-val"><input id="fMA50D" class="itbl-in" placeholder="1D"></td>
-            <td class="itbl-val"><input id="fMA50W" class="itbl-in" placeholder="1W"></td>
-            <td class="itbl-lbl">MA200</td>
-            <td class="itbl-val"><input id="fMA200D" class="itbl-in" placeholder="1D"></td>
-            <td class="itbl-val"><input id="fMA200W" class="itbl-in" placeholder="1W"></td>
-            <td class="itbl-lbl">RSI</td>
-            <td class="itbl-val"><input id="fRSID" class="itbl-in" placeholder="1D"></td>
-            <td class="itbl-val"><input id="fRSIW" class="itbl-in" placeholder="1W"></td>
-          </tr>
-          <!-- ROW 4: MACD-H / Signal / 52W -->
-          <tr>
-            <td class="itbl-lbl">MACD-H</td>
-            <td class="itbl-val"><input id="fMACDHD" class="itbl-in" placeholder="1D"></td>
-            <td class="itbl-val"><input id="fMACDHW" class="itbl-in" placeholder="1W"></td>
-            <td class="itbl-lbl">Signal</td>
-            <td class="itbl-val"><input id="fSignalD" class="itbl-in" placeholder="1D"></td>
-            <td class="itbl-val"><input id="fSignalW" class="itbl-in" placeholder="1W"></td>
-            <td class="itbl-lbl">52W High/Low</td>
-            <td class="itbl-val"><input id="f52High" class="itbl-in" placeholder="High"></td>
-            <td class="itbl-val"><input id="f52Low" class="itbl-in" placeholder="Low"></td>
-          </tr>
-        </tbody>
-      </table>
-      <button class="btn btn-weekly" onclick="addRow()" style="width:200px">💾 Save Row</button>
+      <div class="imp-wrap">
+        <div class="imp-title">📋 Enter Symbol Data</div>
+
+        <!-- Column headers -->
+        <div class="imp-grid">
+          <div class="imp-col-hdr label-col">INDICATOR</div>
+          <div class="imp-col-hdr">1D &nbsp;(Daily)</div>
+          <div class="imp-col-hdr">1W &nbsp;(Weekly)</div>
+
+          <!-- ── SYMBOL / PRICE ── -->
+          <div class="imp-divider">General</div>
+
+          <div class="imp-lbl">Symbol</div>
+          <div class="imp-val span2">
+            <input id="fSymbol" class="imp-in" placeholder="e.g. MCB" style="max-width:220px">
+          </div>
+
+          <div class="imp-lbl">Price</div>
+          <div class="imp-val span2">
+            <input id="fPrice" class="imp-in" placeholder="e.g. 403.86" style="max-width:220px">
+          </div>
+
+          <!-- ── MOVING AVERAGES ── -->
+          <div class="imp-divider">Moving Averages</div>
+
+          <div class="imp-lbl">MA 50</div>
+          <div class="imp-val"><input id="fMA50D"  class="imp-in" placeholder="Daily value"></div>
+          <div class="imp-val"><input id="fMA50W"  class="imp-in" placeholder="Weekly value"></div>
+
+          <div class="imp-lbl">MA 200</div>
+          <div class="imp-val"><input id="fMA200D" class="imp-in" placeholder="Daily value"></div>
+          <div class="imp-val"><input id="fMA200W" class="imp-in" placeholder="Weekly value"></div>
+
+          <!-- ── MOMENTUM ── -->
+          <div class="imp-divider">Momentum</div>
+
+          <div class="imp-lbl">RSI (14)</div>
+          <div class="imp-val"><input id="fRSID"   class="imp-in" placeholder="Daily value"></div>
+          <div class="imp-val"><input id="fRSIW"   class="imp-in" placeholder="Weekly value"></div>
+
+          <div class="imp-lbl">MACD Hist</div>
+          <div class="imp-val"><input id="fMACDHD" class="imp-in" placeholder="Daily value"></div>
+          <div class="imp-val"><input id="fMACDHW" class="imp-in" placeholder="Weekly value"></div>
+
+          <div class="imp-lbl">Signal</div>
+          <div class="imp-val"><input id="fSignalD" class="imp-in" placeholder="Daily value"></div>
+          <div class="imp-val"><input id="fSignalW" class="imp-in" placeholder="Weekly value"></div>
+
+          <!-- ── VOLUME & 52W ── -->
+          <div class="imp-divider">Volume &amp; 52-Week Range</div>
+
+          <div class="imp-lbl">Volume</div>
+          <div class="imp-val"><input id="fVolume"  class="imp-in" placeholder="Daily volume"></div>
+          <div class="imp-val"><input id="fVolumeW" class="imp-in" placeholder="Weekly volume"></div>
+
+          <div class="imp-lbl">52W High</div>
+          <div class="imp-val span2">
+            <input id="f52High" class="imp-in" placeholder="e.g. 529.5" style="max-width:220px">
+          </div>
+
+          <div class="imp-lbl">52W Low</div>
+          <div class="imp-val span2">
+            <input id="f52Low"  class="imp-in" placeholder="e.g. 293.25" style="max-width:220px">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;align-items:center">
+        <button class="btn btn-weekly" onclick="addRow()" style="width:220px;height:46px;font-size:15px">
+          💾 Save Row
+        </button>
+        <button class="btn btn-export" onclick="exportCSV()" style="width:220px;height:46px;font-size:15px">
+          ⬇ Export CSV
+        </button>
+      </div>
     </div>
 
     <div class="csv-box" id="csvSection" style="display:none;margin-top:20px">
