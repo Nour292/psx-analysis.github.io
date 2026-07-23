@@ -60,19 +60,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 #pgHome .sub{ color:#7a9ab5; font-size:14px; margin-bottom:20px; }
 
 /* Summary cards */
-.summary-bar{
-  display:flex; gap:14px; flex-wrap:wrap; padding:0 24px 20px;
-}
-.card{
-  background:#1a2535; border-radius:10px; padding:14px 20px;
-  min-width:130px; text-align:center; border:1px solid #2e4060;
-}
-.card .num{ font-size:32px; font-weight:700; line-height:1; }
-.card .lbl{ font-size:12px; color:#7a9ab5; margin-top:4px; }
-.card.buy .num{ color:#4caf50; }
-.card.exit .num{ color:#ef5350; }
-.card.watch .num{ color:#ffc107; }
-.card.total .num{ color:#4fc3f7; }
+
 
 /* Home candidates table */
 .home-section{ padding:0 24px 30px; }
@@ -167,16 +155,16 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 }
 .input-table{ width:100%; border-collapse:collapse; }
 .input-table td{
-  padding:10px 14px; border-bottom:1px solid #1e3050; font-size:15px;
+  padding:5px 10px; border-bottom:1px solid #1e3050; font-size:13px;
 }
 .input-table tr:last-child td{ border-bottom:none; }
-.input-table td:first-child{ color:#a0c4e8; font-weight:600; width:55%; }
-.input-table td:last-child input{
+.input-table td:first-child{ color:#a0c4e8; font-weight:600; width:35%; }
+.input-table td input{
   width:100%; background:#0f1923; color:#4fc3f7; border:1px solid #2e4060;
-  border-radius:5px; padding:7px 10px; font-size:15px; font-weight:600;
+  border-radius:4px; padding:4px 8px; font-size:13px; font-weight:600;
   text-align:right;
 }
-.input-table td:last-child input:focus{ outline:none; border-color:#4fc3f7; }
+.input-table td input:focus{ outline:none; border-color:#4fc3f7; }
 .analyse-btn{
   width:100%; padding:14px; background:#0d47a1; color:#fff;
   border:none; font-size:16px; font-weight:700; cursor:pointer;
@@ -190,11 +178,11 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .result-panel .empty{ padding:40px; text-align:center; color:#4a6a8a; font-size:15px; }
 
 /* Verdict block */
-.verdict-block{ padding:20px 22px; }
+.verdict-block{ padding:12px 16px; }
 .verdict-main{
-  font-size:36px; font-weight:800; margin-bottom:6px; line-height:1;
+  font-size:26px; font-weight:800; margin-bottom:3px; line-height:1;
 }
-.verdict-score{ font-size:18px; color:#a0c4e8; margin-bottom:18px; }
+.verdict-score{ font-size:14px; color:#a0c4e8; margin-bottom:10px; }
 .verdict-buy  .verdict-main{ color:#4caf50; }
 .verdict-exit .verdict-main{ color:#ef5350; }
 .verdict-watch .verdict-main{ color:#ffc107; }
@@ -203,43 +191,43 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
 /* Zone grid */
 .zone-grid{
-  display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;
+  display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px;
 }
 .zone-card{
-  background:#0f1923; border-radius:8px; padding:12px 14px;
+  background:#0f1923; border-radius:6px; padding:7px 10px;
   border-left:3px solid #2e4060;
 }
 .zone-card.sup  { border-color:#4caf50; }
 .zone-card.sup2 { border-color:#ff9800; }
 .zone-card.res  { border-color:#ef5350; }
 .zone-card.tgt  { border-color:#4fc3f7; }
-.zone-card .zlbl{ font-size:12px; color:#7a9ab5; margin-bottom:4px; }
-.zone-card .zval{ font-size:20px; font-weight:700; color:#e0e6ed; }
+.zone-card .zlbl{ font-size:11px; color:#7a9ab5; margin-bottom:2px; }
+.zone-card .zval{ font-size:15px; font-weight:700; color:#e0e6ed; }
 
 /* Trade plan */
 .trade-plan{
-  background:#0f1923; border-radius:8px; padding:14px 16px;
-  margin-bottom:14px; border-left:4px solid #2e4060;
+  background:#0f1923; border-radius:6px; padding:8px 12px;
+  margin-bottom:8px; border-left:3px solid #2e4060;
 }
 .trade-plan.buy  { border-color:#4caf50; }
 .trade-plan.exit { border-color:#ef5350; }
-.trade-plan .tp-head{ font-size:15px; font-weight:700; margin-bottom:8px; }
+.trade-plan .tp-head{ font-size:13px; font-weight:700; margin-bottom:4px; }
 .trade-plan .tp-code{
-  font-family:monospace; font-size:14px; background:#1a2535;
-  padding:8px 12px; border-radius:5px; color:#4fc3f7; margin-bottom:6px;
+  font-family:monospace; font-size:12px; background:#1a2535;
+  padding:5px 10px; border-radius:4px; color:#4fc3f7; margin-bottom:4px;
 }
-.trade-plan .tp-note{ font-size:13px; color:#a0c4e8; font-style:italic; }
+.trade-plan .tp-note{ font-size:11px; color:#a0c4e8; font-style:italic; }
 
 /* Indicator breakdown */
 .indicator-grid{
-  display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px;
+  display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:10px;
 }
 .ind-row{
-  background:#0f1923; border-radius:6px; padding:8px 12px;
+  background:#0f1923; border-radius:5px; padding:5px 8px;
   display:flex; justify-content:space-between; align-items:center;
 }
-.ind-row .ind-name{ font-size:13px; color:#7a9ab5; }
-.ind-row .ind-val { font-size:14px; font-weight:700; }
+.ind-row .ind-name{ font-size:12px; color:#7a9ab5; }
+.ind-row .ind-val { font-size:12px; font-weight:700; }
 .ind-val.bull{ color:#4caf50; }
 .ind-val.bear{ color:#ef5350; }
 .ind-val.neut{ color:#ffc107; }
@@ -292,17 +280,18 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 /* Trade plans */
 .plans-section{ margin-top:20px; }
 .plan-block{
-  background:#1a2535; border-radius:8px; padding:14px 16px;
-  margin-bottom:12px; border-left:4px solid #2e4060;
+  background:#1a2535; border-radius:6px; padding:7px 10px;
+  margin-bottom:6px; border-left:3px solid #2e4060;
+  flex:0 0 auto; width:calc(50% - 4px);
 }
 .plan-block.buy  { border-color:#4caf50; }
 .plan-block.exit { border-color:#ef5350; }
-.plan-block h4   { font-size:14px; font-weight:700; margin-bottom:8px; }
+.plan-block h4   { font-size:12px; font-weight:700; margin-bottom:4px; }
 .plan-block code {
-  display:block; background:#0f1923; padding:7px 10px; border-radius:5px;
-  font-size:12px; color:#4fc3f7; margin-bottom:5px; font-family:monospace;
+  display:block; background:#0f1923; padding:4px 8px; border-radius:4px;
+  font-size:11px; color:#4fc3f7; margin-bottom:3px; font-family:monospace;
 }
-.plan-block p    { font-size:12px; color:#a0c4e8; font-style:italic; }
+.plan-block p    { font-size:11px; color:#a0c4e8; font-style:italic; }
 
 .table-wrap{ overflow-x:auto; }
 </style>
@@ -324,7 +313,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <h1>PSX Technical Analysis</h1>
     <p class="sub">Showing BUY candidates and EXIT signals only — run weekly analysis for full table</p>
   </div>
-  <div class="summary-bar" id="homeCards"></div>
+
   <div class="home-section">
     <h2>🟢 BUY Candidates</h2>
     <div class="table-wrap"><table class="data-table" id="homeBuyTable"></table></div>
@@ -366,45 +355,42 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <h2 style="color:#4fc3f7; margin-bottom:4px">📥 Data Import</h2>
     <p class="hint" style="margin-bottom:16px">Paste your Pine Script CSV label output, or enter manually symbol by symbol.</p>
 
-    <div class="tab-bar">
-      <button class="tab-btn active" onclick="switchTab('paste')">📋 Paste from Pine Script</button>
-      <button class="tab-btn" onclick="switchTab('manual')">✏️ Manual Entry</button>
-    </div>
-
-    <div id="pasteTab">
-      <p class="hint">
-        Copy the CSV label from your TradingView chart and paste below (one row per symbol).<br>
-        Expected: <b>Symbol, Price, MA50-D, MA200-D, RSI-D, MACD-H-D, Signal-D, MA50-W, MA200-W, RSI-W, MACD-H-W, Signal-W, Volume, 52W-High, 52W-Low</b><br>
-        Separator: tab <kbd>⇥</kbd> or comma. Header row optional.
-      </p>
-      <textarea id="pasteInput" placeholder="MCB,403.86,401.2,385.5,52.1,-1.2,0.8,399.1,280.4,58.3,4.2,3.1,1250000,452,280&#10;UBL,476.11,431.07,414.11,61.03,-2.93,14.63,407.2,192.86,62.78,8.23,8.14,2297136,517,293.25"></textarea>
-      <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-action" onclick="parsePaste()">⚡ Parse & Preview</button>
-        <button class="btn btn-weekly" onclick="importParsed()">✅ Import All</button>
-        <span id="importStatus"></span>
+    <div id="manualTab">
+      <p class="hint" style="margin-bottom:10px">Enter values for one symbol. All fields fit the page width.</p>
+      <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px">
+        <div class="form-cell" style="align-items:flex-start"><label>Symbol</label><input id="fSymbol" placeholder="MCB" style="width:100%"></div>
+        <div class="form-cell" style="align-items:flex-start"><label>Price</label><input id="fPrice" placeholder="403.86" style="width:100%"></div>
+        <div class="form-cell" style="align-items:flex-start"><label>Volume</label><input id="fVolume" style="width:100%"></div>
+        <div class="form-cell" style="align-items:flex-start"><label>52W-High</label><input id="f52High" style="width:100%"></div>
+        <div class="form-cell" style="align-items:flex-start"><label>52W-Low</label><input id="f52Low" style="width:100%"></div>
       </div>
-      <div id="pastePreview"></div>
-    </div>
+      <div style="display:grid; grid-template-columns:120px repeat(2,1fr) repeat(2,1fr) repeat(2,1fr); gap:8px; margin-bottom:14px">
+        <div style="font-size:11px;color:#4fc3f7;font-weight:700;padding-top:20px"></div>
+        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1D</div>
+        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1W</div>
+        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1D</div>
+        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1W</div>
+        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1D</div>
+        <div style="font-size:11px;color:#a0c4e8;font-weight:700;text-align:center">1W</div>
 
-    <div id="manualTab" style="display:none">
-      <div class="form-row" style="margin-bottom:12px">
-        <div class="form-cell"><label>Symbol</label><input id="fSymbol" placeholder="MCB"></div>
-        <div class="form-cell"><label>Price</label><input id="fPrice" placeholder="403.86"></div>
-        <div class="form-cell"><label>MA50-D</label><input id="fMA50D"></div>
-        <div class="form-cell"><label>MA200-D</label><input id="fMA200D"></div>
-        <div class="form-cell"><label>RSI-D</label><input id="fRSID"></div>
-        <div class="form-cell"><label>MACD-H-D</label><input id="fMACDHD"></div>
-        <div class="form-cell"><label>Signal-D</label><input id="fSignalD"></div>
-        <div class="form-cell"><label>MA50-W</label><input id="fMA50W"></div>
-        <div class="form-cell"><label>MA200-W</label><input id="fMA200W"></div>
-        <div class="form-cell"><label>RSI-W</label><input id="fRSIW"></div>
-        <div class="form-cell"><label>MACD-H-W</label><input id="fMACDHW"></div>
-        <div class="form-cell"><label>Signal-W</label><input id="fSignalW"></div>
-        <div class="form-cell"><label>Volume</label><input id="fVolume"></div>
-        <div class="form-cell"><label>52W-High</label><input id="f52High"></div>
-        <div class="form-cell"><label>52W-Low</label><input id="f52Low"></div>
-        <div class="form-cell"><label>Swing-Low</label><input id="fSwingLow" placeholder="opt"></div>
-        <div class="form-cell"><label>Swing-High</label><input id="fSwingHigh" placeholder="opt"></div>
+        <div class="form-cell" style="align-items:flex-start"><label>MA50</label></div>
+        <div><input id="fMA50D" style="width:100%" placeholder="401.2"></div>
+        <div><input id="fMA50W" style="width:100%" placeholder="399.1"></div>
+        <div class="form-cell" style="align-items:flex-start;padding-top:0"><label>MA200</label></div>
+        <div><input id="fMA200D" style="width:100%" placeholder="385.5"></div>
+        <div><input id="fMA200W" style="width:100%" placeholder="280.4"></div>
+
+        <div class="form-cell" style="align-items:flex-start"><label>RSI</label></div>
+        <div><input id="fRSID" style="width:100%" placeholder="52.1"></div>
+        <div><input id="fRSIW" style="width:100%" placeholder="58.3"></div>
+        <div class="form-cell" style="align-items:flex-start"><label>MACD-H</label></div>
+        <div><input id="fMACDHD" style="width:100%" placeholder="-1.2"></div>
+        <div><input id="fMACDHW" style="width:100%" placeholder="4.2"></div>
+
+        <div class="form-cell" style="align-items:flex-start"><label>Signal</label></div>
+        <div><input id="fSignalD" style="width:100%" placeholder="0.8"></div>
+        <div><input id="fSignalW" style="width:100%" placeholder="3.1"></div>
+        <div></div><div></div><div></div><div></div>
       </div>
       <button class="btn btn-weekly" onclick="addRow()">💾 Save Row</button>
     </div>
@@ -432,25 +418,25 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   </div>
   <div class="content" style="padding:24px; display:grid; grid-template-columns:320px 1fr; gap:28px; align-items:start;">
 
-    <!-- LEFT: INPUT TABLE -->
+    <!-- LEFT: INPUT TABLE — 3 columns -->
     <div class="input-panel">
       <div class="panel-hdr">📋 Enter Indicators</div>
       <table class="input-table">
-        <tr><td>Symbol</td>        <td><input id="sSymbol"   placeholder="MCB"></td></tr>
-        <tr><td>Price</td>         <td><input id="sPrice"    placeholder="403.86"></td></tr>
-        <tr><td>MA50-D</td>        <td><input id="sMA50D"    placeholder="401.2"></td></tr>
-        <tr><td>MA200-D</td>       <td><input id="sMA200D"   placeholder="385.5"></td></tr>
-        <tr><td>RSI-D</td>         <td><input id="sRSID"     placeholder="52.1"></td></tr>
-        <tr><td>MACD-H-D</td>      <td><input id="sMACDHD"   placeholder="-1.2"></td></tr>
-        <tr><td>Signal-D</td>      <td><input id="sSignalD"  placeholder="0.8"></td></tr>
-        <tr><td>MA50-W</td>        <td><input id="sMA50W"    placeholder="399.1"></td></tr>
-        <tr><td>MA200-W</td>       <td><input id="sMA200W"   placeholder="280.4"></td></tr>
-        <tr><td>RSI-W</td>         <td><input id="sRSIW"     placeholder="58.3"></td></tr>
-        <tr><td>MACD-H-W</td>      <td><input id="sMACDHW"   placeholder="4.2"></td></tr>
-        <tr><td>Signal-W</td>      <td><input id="sSignalW"  placeholder="3.1"></td></tr>
-        <tr><td>Volume</td>        <td><input id="sVolume"   placeholder="1250000"></td></tr>
-        <tr><td>52W-High</td>      <td><input id="s52High"   placeholder="452"></td></tr>
-        <tr><td>52W-Low</td>       <td><input id="s52Low"    placeholder="280"></td></tr>
+        <tr style="background:#0d2a4a">
+          <td style="font-size:11px;color:#4fc3f7;font-weight:700;padding:5px 10px">INDICATOR</td>
+          <td style="font-size:11px;color:#4fc3f7;font-weight:700;padding:5px 10px;text-align:right">1D VALUE</td>
+          <td style="font-size:11px;color:#4fc3f7;font-weight:700;padding:5px 10px;text-align:right">1W VALUE</td>
+        </tr>
+        <tr><td>Symbol</td>   <td colspan="2"><input id="sSymbol"  placeholder="MCB" style="width:100%"></td></tr>
+        <tr><td>Price</td>    <td colspan="2"><input id="sPrice"   placeholder="403.86" style="width:100%"></td></tr>
+        <tr><td>MA50</td>     <td><input id="sMA50D"  placeholder="401.2"></td><td><input id="sMA50W"  placeholder="399.1"></td></tr>
+        <tr><td>MA200</td>    <td><input id="sMA200D" placeholder="385.5"></td><td><input id="sMA200W" placeholder="280.4"></td></tr>
+        <tr><td>RSI</td>      <td><input id="sRSID"   placeholder="52.1"></td> <td><input id="sRSIW"   placeholder="58.3"></td></tr>
+        <tr><td>MACD-H</td>   <td><input id="sMACDHD" placeholder="-1.2"></td> <td><input id="sMACDHW" placeholder="4.2"></td></tr>
+        <tr><td>Signal</td>   <td><input id="sSignalD" placeholder="0.8"></td> <td><input id="sSignalW" placeholder="3.1"></td></tr>
+        <tr><td>Volume</td>   <td colspan="2"><input id="sVolume"  placeholder="1250000" style="width:100%"></td></tr>
+        <tr><td>52W-High</td> <td colspan="2"><input id="s52High"  placeholder="452" style="width:100%"></td></tr>
+        <tr><td>52W-Low</td>  <td colspan="2"><input id="s52Low"   placeholder="280" style="width:100%"></td></tr>
       </table>
       <button class="analyse-btn" onclick="analyseSingle()">🔍 Analyse Symbol</button>
     </div>
@@ -655,12 +641,7 @@ function renderHome(){
   const exits=rows.filter(r=>r.Verdict==='EXIT');
   const watches=rows.filter(r=>r.Verdict==='WATCH');
 
-  // Cards
-  document.getElementById('homeCards').innerHTML=`
-    <div class="card buy"><div class="num">${buys.length}</div><div class="lbl">BUY</div></div>
-    <div class="card exit"><div class="num">${exits.length}</div><div class="lbl">EXIT SIGNAL</div></div>
-    <div class="card watch"><div class="num">${watches.length}</div><div class="lbl">WATCH</div></div>
-    <div class="card total"><div class="num">${rows.length}</div><div class="lbl">Total Symbols</div></div>`;
+
 
   // BUY table
   const bt=document.getElementById('homeBuyTable');
@@ -710,7 +691,7 @@ function runWeekly(){
         <p>⚠️ MA50 support broken. If holding ${r.Symbol} — consider closing position.</p></div>`;
     }
   });
-  document.getElementById('tradePlans').innerHTML=plansHtml?`<h3 style="color:#a0c4e8;margin:20px 0 12px">Trade Plans</h3>`+plansHtml:'';
+  document.getElementById('tradePlans').innerHTML=plansHtml?`<h3 style="color:#a0c4e8;margin:20px 0 10px;font-size:13px">Trade Plans</h3><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start">`+plansHtml+`</div>`:'';
 }
 
 // ─── SINGLE TICKER ANALYSIS ────────────────────
@@ -859,10 +840,11 @@ function importParsed(){
 
 function addRow(){
   const ids=['fSymbol','fPrice','fMA50D','fMA200D','fRSID','fMACDHD','fSignalD',
-             'fMA50W','fMA200W','fRSIW','fMACDHW','fSignalW','fVolume','f52High','f52Low',
-             'fSwingLow','fSwingHigh'];
-  const nr={};
-  FIELDS.forEach((f,i)=>nr[f]=(document.getElementById(ids[i]).value||'').trim());
+             'fMA50W','fMA200W','fRSIW','fMACDHW','fSignalW','fVolume','f52High','f52Low'];
+  const keys=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D',
+              'MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume','52W-High','52W-Low'];
+  const nr={'Swing-Low':'','Swing-High':''};
+  keys.forEach((f,i)=>nr[f]=(document.getElementById(ids[i]).value||'').trim());
   if(!nr.Symbol||!nr.Price){ alert('Symbol and Price are required.'); return; }
   _rawData=_rawData.filter(r=>r.Symbol.toUpperCase()!==nr.Symbol.toUpperCase());
   _rawData.push(nr);
