@@ -343,6 +343,9 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 }
 .imp-in3:focus { outline:none; border-color:#4fc3f7; background:#0a1520; color:#4fc3f7; }
 .imp-in3::placeholder { color:#2a3f58; font-weight:400; font-size:13px; }
+
+.data-table tr.caution-row td{ border-left:3px solid #ff9800; }
+.badge-caution{ color:#ff9800; font-weight:700; }
 </style>
 </head>
 <body>
@@ -361,6 +364,9 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <div class="hero">
     <h1>PSX Technical Analysis</h1>
     <p class="sub">Showing BUY candidates and EXIT signals only — run weekly analysis for full table</p>
+    <p id="homeDataDate" style="font-size:13px;color:#4fc3f7;margin-top:4px;display:none">
+      📅 Data as of: <b id="homeDataDateVal"></b>
+    </p>
   </div>
 
   <div class="home-section">
@@ -368,7 +374,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <div class="table-wrap"><table class="data-table" id="homeBuyTable"></table></div>
   </div>
   <div class="home-section" style="margin-top:10px">
-    <h2>🔴 EXIT Signals</h2>
+    <h2>🔴 EXIT Signals &amp; ⚠️ Caution</h2>
     <div class="table-wrap"><table class="data-table" id="homeExitTable"></table></div>
   </div>
 </div>
@@ -385,7 +391,10 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <button class="btn btn-import" onclick="goImport()">＋ Add / Update Row</button>
   </div>
   <div class="content" style="padding:20px 24px">
-    <div class="signal-summary" id="signalSummary"></div>
+    <div id="analysisDataDate" style="font-size:13px;color:#4fc3f7;margin-bottom:10px;display:none">
+      📅 Data as of: <b id="analysisDataDateVal"></b>
+    </div>
+  <div class="signal-summary" id="signalSummary"></div>
     <div class="table-wrap"><table class="data-table" id="fullTable"></table></div>
     <div class="plans-section" id="tradePlans"></div>
   </div>
@@ -618,7 +627,19 @@ function scoreRow(s){
   if(rsiw!==null){max+=10;pts+=(rsiw>=40&&rsiw<=70)?8:(rsiw<40)?8:2;}
   if(macdD!==null){max+=12;const pos=macdD>0,ris=sigD!==null?macdD>sigD:false;pts+=pos?(ris?12:6):(ris?4:2);}
   if(macdW!==null){max+=12;const pos=macdW>0,ris=sigW!==null?macdW>sigW:false;pts+=pos?(ris?12:6):(ris?4:2);}
-  if(vol!==null){max+=8;pts+=6;}
+  // Volume: compare Daily vs Weekly — confirms or weakens signal
+  if(vol!==null){
+    max+=8;
+    const volW=num(s['Volume-W'])||num(s['VolumeW']);
+    if(volW!==null){
+      const ratio=vol/volW;
+      if(ratio>=1.0) pts+=8;       // above weekly avg → strong confirmation
+      else if(ratio>=0.5) pts+=5;  // average volume
+      else pts+=3;                  // low volume → weak signal
+    } else {
+      pts+=5; // no weekly vol available → neutral baseline
+    }
+  }
   if(high52!==null&&low52!==null){max+=7;const dL=(p-low52)/(low52||1),dH=(high52-p)/(high52||1);pts+=dL<=0.10?7:dH<=0.05?1:dH<=0.09?2:5;}
   if(ma50d!==null||ma200d!==null){max+=5;const avail=[ma50d,ma200d].filter(x=>x!==null);const cl=avail.reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b);const pct=Math.abs(p-cl)/p;pts+=pct<=0.02?5:pct<=0.05?4:pct<=0.10?2:0;}
   let sc=max>0?(pts/max)*100:0;
@@ -669,6 +690,9 @@ function momentumLabel(s,verdict){
     if(rsid!==null&&rsid<42&&macdD!==null&&macdD<-0.5) return '<b style="color:#ef9a9a">Moderate ↓</b>';
     return '<b style="color:#ffb74d">Mild ↓</b>';
   }
+  if(verdict==='CAUTION'){
+    return '<b style="color:#ff9800">⚠️ MA50 Broken</b>';
+  }
   if(macdW!==null){
     const wR=sigW!==null&&macdW>sigW;
     return macdW>0&&wR?'<span style="color:#4fc3f7">MACD-W ▲ Building</span>':macdW>0?'<span style="color:#78909c">MACD-W ▲ Slowing</span>':'<span style="color:#ef5350">MACD-W ▼ Weak</span>';
@@ -692,7 +716,7 @@ function processAll(){
     r.RR=((Math.abs(r.Target-p))/(Math.abs(p-supLo)||1)).toFixed(2);
     return r;
   }).sort((a,b)=>{
-    const o={BUY:1,WATCH:2,WAIT:3,EXIT:4,AVOID:5};
+    const o={BUY:1,WATCH:2,CAUTION:3,WAIT:4,EXIT:5,AVOID:6};
     return (o[a.Verdict]||9)-(o[b.Verdict]||9)||b.Score-a.Score;
   });
 }
@@ -702,8 +726,8 @@ function tableHeader(){
   return `<tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Support 2</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th><th>Momentum</th></tr>`;
 }
 function tableRow(r,i){
-  const cls=r.Verdict==='BUY'?'buy-row':r.Verdict==='EXIT'?'exit-row':r.Verdict==='WATCH'?'watch-row':'';
-  const vcls=r.Verdict==='BUY'?'badge-buy':r.Verdict==='EXIT'?'badge-exit':r.Verdict==='WATCH'?'badge-watch':r.Verdict==='WAIT'?'badge-wait':'badge-avoid';
+  const cls=r.Verdict==='BUY'?'buy-row':r.Verdict==='EXIT'?'exit-row':r.Verdict==='CAUTION'?'caution-row':r.Verdict==='WATCH'?'watch-row':'';
+  const vcls=r.Verdict==='BUY'?'badge-buy':r.Verdict==='EXIT'?'badge-exit':r.Verdict==='CAUTION'?'badge-caution':r.Verdict==='WATCH'?'badge-watch':r.Verdict==='WAIT'?'badge-wait':'badge-avoid';
   return `<tr class="${cls}">
     <td>${i+1}</td><td><b>${r.Symbol}</b></td><td>${fmt(r.Price)}</td>
     <td>${r.Support}</td><td>${r.S2||'—'}</td><td>${r.Resistance}</td>
@@ -717,7 +741,7 @@ function renderHome(){
   if(!_rawData.length) return;
   const rows=processAll();
   const buys=rows.filter(r=>r.Verdict==='BUY');
-  const exits=rows.filter(r=>r.Verdict==='EXIT');
+  const exits=rows.filter(r=>r.Verdict==='EXIT'||r.Verdict==='CAUTION');
   const watches=rows.filter(r=>r.Verdict==='WATCH');
 
 
@@ -749,13 +773,14 @@ function runWeekly(){
   document.getElementById('signalSummary').innerHTML=`
     <div class="sig-pill"><span class="s-label">📈 BUY</span><span class="s-val" style="color:#4caf50">${g('BUY')}</span></div>
     <div class="sig-pill"><span class="s-label">👀 WATCH</span><span class="s-val" style="color:#ffc107">${g('WATCH')}</span></div>
+    <div class="sig-pill"><span class="s-label">⚠️ CAUTION</span><span class="s-val" style="color:#ff9800">${g('CAUTION')}</span></div>
     <div class="sig-pill"><span class="s-label">⏳ WAIT</span><span class="s-val" style="color:#78909c">${g('WAIT')}</span></div>
     <div class="sig-pill"><span class="s-label">🔴 EXIT</span><span class="s-val" style="color:#ef5350">${g('EXIT')}</span></div>`;
 
   document.getElementById('fullTable').innerHTML=tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('');
 
   // Trade plans
-  const planRows=rows.filter(r=>['BUY','EXIT'].includes(r.Verdict));
+  const planRows=rows.filter(r=>['BUY','EXIT','CAUTION'].includes(r.Verdict));
   let plansHtml='';
   planRows.forEach(r=>{
     const p=parseFloat(r.Price),supLo=parseFloat(r.Support.split('\u2013')[0]),supHi=parseFloat(r.Support.split('\u2013')[1]);
@@ -764,6 +789,10 @@ function runWeekly(){
       plansHtml+=`<div class="plan-block buy"><h4>🟢 ${r.Symbol} — Buy Plan | Score: ${r.Score}</h4>
         <code>Entry: ${r.Support} | Target: ₨${fmt(r.Target)} | R:R ≈ ${r.RR}</code>
         <p>At ₨${p}: ${action}</p></div>`;
+    } else if(r.Verdict==='CAUTION'){
+      plansHtml+=`<div class="plan-block" style="border-color:#ff9800"><h4>⚠️ ${r.Symbol} — CAUTION | Score: ${r.Score}</h4>
+        <code>Current: ₨${fmt(r.Price)} | Watch level: ₨${fmt(r.Target)}</code>
+        <p>Price broke below MA50. Monitor closely — if MA200 also breaks, exit position.</p></div>`;
     } else {
       plansHtml+=`<div class="plan-block exit"><h4>🔴 ${r.Symbol} — EXIT SIGNAL | Score: ${r.Score}</h4>
         <code>Current: ₨${fmt(r.Price)} | Downside Risk: ₨${fmt(r.Target)}</code>
@@ -911,6 +940,8 @@ function importParsed(){
     _rawData.push(nr);
   });
   document.getElementById('importStatus').textContent='✅ '+_parsedRows.length+' symbol(s) imported!';
+  const dateEl=document.getElementById('fDataDate');
+  if(dateEl&&dateEl.value) setDataDate(dateEl.value);
   exportToTextarea();
   document.getElementById('csvSection').style.display='block';
   renderHome();
@@ -927,6 +958,9 @@ function addRow(){
   if(!nr.Symbol||!nr.Price){ alert('Symbol and Price are required.'); return; }
   _rawData=_rawData.filter(r=>r.Symbol.toUpperCase()!==nr.Symbol.toUpperCase());
   _rawData.push(nr);
+  // Save data date if provided
+  const dateEl=document.getElementById('fDataDate');
+  if(dateEl&&dateEl.value) setDataDate(dateEl.value);
   exportToTextarea();
   document.getElementById('csvSection').style.display='block';
   renderHome();
