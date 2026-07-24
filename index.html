@@ -293,7 +293,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .plan-block{
   background:#1a2535; border-radius:8px; padding:14px 18px;
   margin-bottom:10px; border-left:4px solid #2e4060;
-  flex:0 0 auto; width:calc(50% - 6px);
+  width:100%; box-sizing:border-box;
 }
 .plan-block.buy  { border-color:#4caf50; }
 .plan-block.exit { border-color:#ef5350; }
@@ -1236,13 +1236,19 @@ function runWeekly(){
 
   document.getElementById('tradePlans').innerHTML = planRows.length ? `
     <h3 style="color:#a0c4e8;margin:20px 0 10px;font-size:13px">Trade Plans</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
-      <div>
-        <div style="font-size:11px;color:#7a9ab5;font-weight:700;margin-bottom:8px;letter-spacing:.8px">EXIT / CAUTION</div>
+    <div style="display:flex;gap:0;align-items:flex-start">
+      <div style="width:50%;padding-right:10px;box-sizing:border-box">
+        <div style="font-size:12px;color:#ef5350;font-weight:800;margin-bottom:10px;
+                    letter-spacing:.8px;border-bottom:2px solid #ef5350;padding-bottom:6px">
+          🔴 EXIT / CAUTION
+        </div>
         ${leftHtml}
       </div>
-      <div>
-        <div style="font-size:11px;color:#4caf50;font-weight:700;margin-bottom:8px;letter-spacing:.8px">BUY SIGNALS</div>
+      <div style="width:50%;padding-left:10px;box-sizing:border-box;border-left:1px solid #2e4060">
+        <div style="font-size:12px;color:#4caf50;font-weight:800;margin-bottom:10px;
+                    letter-spacing:.8px;border-bottom:2px solid #4caf50;padding-bottom:6px">
+          🟢 BUY SIGNALS
+        </div>
         ${rightHtml}
       </div>
     </div>` : '';
