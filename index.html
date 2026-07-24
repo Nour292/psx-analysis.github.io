@@ -346,6 +346,41 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
 .data-table tr.caution-row td{ border-left:3px solid #ff9800; }
 .badge-caution{ color:#ff9800; font-weight:700; }
+
+/* ── Big import table ── */
+.big-tbl { border-collapse:collapse; font-size:13px; min-width:900px; }
+.th-section {
+  background:#0d2a4a; color:#4fc3f7; font-size:12px; font-weight:700;
+  padding:10px 10px; text-align:left; border:1px solid #1e3050;
+  white-space:nowrap; width:90px;
+}
+.th-col {
+  background:#0d2a4a; color:#a0c4e8; font-size:11px; font-weight:700;
+  padding:10px 6px; text-align:center; border:1px solid #1e3050;
+  white-space:nowrap;
+}
+.sym-hdr-row .sym-hdr {
+  background:#1565c0; color:#fff; font-size:13px; font-weight:800;
+  padding:8px 14px; border:1px solid #1e3050; letter-spacing:.5px;
+}
+.ind-row .ind-section {
+  background:#0d2240; color:#4fc3f7; font-size:12px; font-weight:700;
+  padding:7px 10px; border:1px solid #1e3050; white-space:nowrap;
+  text-align:center;
+}
+.w-row .ind-section { background:#0a1a2e; color:#7ab3d4; }
+.ind-cell {
+  background:#0f1923; padding:5px 4px; border:1px solid #1e3050;
+}
+.w-row .ind-cell { background:#0a1520; }
+.ind-in {
+  width:100%; background:transparent; color:#e0c060;
+  border:1px solid #2a3f58; border-radius:4px;
+  padding:6px 4px; font-size:13px; font-weight:600; text-align:center;
+  box-sizing:border-box; min-width:70px;
+}
+.ind-in:focus { outline:none; border-color:#4fc3f7; color:#4fc3f7; background:#0a1520; }
+.ind-in::placeholder { color:#1e3a50; font-size:10px; font-weight:400; }
 </style>
 </head>
 <body>
@@ -408,87 +443,198 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <span class="nav-logo">📊 PSX TA</span>
     <button class="btn btn-home" onclick="goHome()">🏠 Home</button>
   </div>
-  <div class="content" style="padding:24px;">
-    <div id="manualTab">
-      <div class="imp-wrap">
-        <table class="imp-tbl3">
-          <!-- ROW 1: HEADER — all indicator names -->
-          <thead>
-            <tr class="imp-hdr-row">
-              <th class="imp-th imp-th-label">—</th>
-              <th class="imp-th">Symbol</th>
-              <th class="imp-th">Price</th>
-              <th class="imp-th">MA 50</th>
-              <th class="imp-th">MA 200</th>
-              <th class="imp-th">RSI (14)</th>
-              <th class="imp-th">MACD Hist</th>
-              <th class="imp-th">Signal</th>
-              <th class="imp-th">Volume</th>
-              <th class="imp-th">52W High</th>
-              <th class="imp-th">52W Low</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- ROW 2: 1D values -->
-            <tr class="imp-data-row">
-              <td class="imp-row-lbl">1D &nbsp; Daily</td>
-              <td class="imp-cell"><input id="fSymbol"  class="imp-in3" placeholder="MCB"></td>
-              <td class="imp-cell"><input id="fPrice"   class="imp-in3" placeholder="403.86"></td>
-              <td class="imp-cell"><input id="fMA50D"   class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="fMA200D"  class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="fRSID"    class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="fMACDHD"  class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="fSignalD" class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="fVolume"  class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="f52High"  class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="f52Low"   class="imp-in3" placeholder="—"></td>
-            </tr>
-            <!-- ROW 3: 1W values -->
-            <tr class="imp-data-row">
-              <td class="imp-row-lbl">1W &nbsp; Weekly</td>
-              <td class="imp-cell" colspan="2" style="color:#3a6a8a;font-size:13px;text-align:center;vertical-align:middle">Same as 1D</td>
-              <td class="imp-cell"><input id="fMA50W"   class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="fMA200W"  class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="fRSIW"    class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="fMACDHW"  class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="fSignalW" class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell"><input id="fVolumeW" class="imp-in3" placeholder="—"></td>
-              <td class="imp-cell" colspan="2" style="color:#3a6a8a;font-size:13px;text-align:center;vertical-align:middle">Same as 1D</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+  <div style="padding:20px 24px">
 
-      <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
-        <button class="btn btn-weekly" onclick="addRow()" style="width:220px;height:46px;font-size:15px">
-          💾 Save Row
-        </button>
-        <button class="btn btn-export" onclick="exportCSV()" style="width:220px;height:46px;font-size:15px">
-          ⬇ Export CSV
-        </button>
-      </div>
-      <div id="csvSection" style="display:none">
-        <div style="font-size:13px;color:#7a9ab5;margin-bottom:6px">
-          📄 <b style="color:#a0c4e8">data.csv</b> — copy this into your GitHub repo:
-        </div>
-        <textarea id="csvOut" readonly style="
-          width:100%; height:120px; background:#0a1520; color:#4fc3f7;
-          border:1px solid #2e4060; border-radius:6px; padding:10px;
-          font-family:monospace; font-size:12px; resize:vertical;
-          box-sizing:border-box;
-        "></textarea>
-        <button onclick="copyCsv()" class="btn btn-action" style="margin-top:8px;width:180px;height:38px">
-          📋 Copy to Clipboard
-        </button>
-      </div>
+    <!-- Date + Save bar -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+      <span style="font-size:15px;color:#4fc3f7;font-weight:700">📅 Data as of:</span>
+      <input type="date" id="fDataDate" style="
+        background:#1a2535;color:#4fc3f7;border:1px solid #2e4060;
+        border-radius:6px;padding:7px 12px;font-size:14px;cursor:pointer">
+      <button class="btn btn-weekly" onclick="saveAllData()" style="height:40px;width:200px;font-size:14px">
+        💾 Save All to CSV
+      </button>
+      <button class="btn btn-export" onclick="exportCSV()" style="height:40px;width:180px;font-size:14px">
+        ⬇ Export CSV
+      </button>
+      <span id="saveStatus" style="font-size:13px;color:#4caf50;font-weight:700"></span>
     </div>
 
-    <div class="csv-box" id="csvSection" style="display:none;margin-top:20px">
-      <label>📄 Updated CSV — copy into <b>data.csv</b> on GitHub:</label>
-      <textarea id="csvOut" readonly></textarea>
-      <div style="margin-top:8px;display:flex;gap:8px">
-        <button class="btn btn-action" onclick="copyCsv()">📋 Copy CSV</button>
-        <button class="btn btn-import" onclick="goHome()">🏠 Go to Home</button>
+    <!-- Big table -->
+    <div style="overflow-x:auto">
+      <table class="big-tbl">
+        <thead>
+          <tr>
+            <th class="th-section">Timeframe</th><th class="th-col">Price</th><th class="th-col">MA50</th><th class="th-col">MA200</th><th class="th-col">RSI</th><th class="th-col">MACD-H</th><th class="th-col">Signal</th><th class="th-col">Volume</th><th class="th-col">52W-High</th><th class="th-col">52W-Low</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 ABL</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_ABL_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_ABL_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_ABL_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_ABL_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_ABL_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_ABL_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_ABL_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_ABL_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_ABL_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_ABL_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_ABL_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_ABL_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_ABL_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_ABL_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_ABL_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 BAFL</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_BAFL_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_BAFL_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_BAFL_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_BAFL_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_BAFL_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_BAFL_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_BAFL_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_BAFL_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_BAFL_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_BAFL_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_BAFL_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_BAFL_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_BAFL_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_BAFL_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_BAFL_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 BOP</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_BOP_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_BOP_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_BOP_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_BOP_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_BOP_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_BOP_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_BOP_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_BOP_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_BOP_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_BOP_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_BOP_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_BOP_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_BOP_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_BOP_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_BOP_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 EFERT</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_EFERT_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_EFERT_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_EFERT_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_EFERT_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_EFERT_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_EFERT_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_EFERT_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_EFERT_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_EFERT_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_EFERT_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_EFERT_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_EFERT_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_EFERT_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_EFERT_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_EFERT_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 ENGROH</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_ENGROH_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_ENGROH_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_ENGROH_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_ENGROH_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_ENGROH_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_ENGROH_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_ENGROH_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_ENGROH_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_ENGROH_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_ENGROH_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_ENGROH_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_ENGROH_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_ENGROH_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_ENGROH_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_ENGROH_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 FCL</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_FCL_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_FCL_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_FCL_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_FCL_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_FCL_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_FCL_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_FCL_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_FCL_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_FCL_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_FCL_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_FCL_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_FCL_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_FCL_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_FCL_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_FCL_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 FFC</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_FFC_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_FFC_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_FFC_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_FFC_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_FFC_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_FFC_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_FFC_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_FFC_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_FFC_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_FFC_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_FFC_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_FFC_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_FFC_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_FFC_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_FFC_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 HBL</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_HBL_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_HBL_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_HBL_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_HBL_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_HBL_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_HBL_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_HBL_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_HBL_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_HBL_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_HBL_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_HBL_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_HBL_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_HBL_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_HBL_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_HBL_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 HUBC</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_HUBC_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_HUBC_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_HUBC_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_HUBC_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_HUBC_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_HUBC_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_HUBC_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_HUBC_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_HUBC_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_HUBC_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_HUBC_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_HUBC_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_HUBC_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_HUBC_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_HUBC_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 ISL</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_ISL_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_ISL_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_ISL_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_ISL_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_ISL_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_ISL_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_ISL_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_ISL_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_ISL_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_ISL_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_ISL_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_ISL_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_ISL_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_ISL_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_ISL_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 KAPCO</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_KAPCO_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_KAPCO_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_KAPCO_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_KAPCO_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_KAPCO_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_KAPCO_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_KAPCO_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_KAPCO_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_KAPCO_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_KAPCO_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_KAPCO_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_KAPCO_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_KAPCO_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_KAPCO_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_KAPCO_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 LUCK</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_LUCK_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_LUCK_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_LUCK_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_LUCK_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_LUCK_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_LUCK_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_LUCK_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_LUCK_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_LUCK_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_LUCK_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_LUCK_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_LUCK_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_LUCK_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_LUCK_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_LUCK_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 MCB</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_MCB_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_MCB_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_MCB_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_MCB_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_MCB_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_MCB_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_MCB_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_MCB_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_MCB_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_MCB_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_MCB_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_MCB_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_MCB_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_MCB_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_MCB_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 MEBL</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_MEBL_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_MEBL_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_MEBL_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_MEBL_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_MEBL_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_MEBL_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_MEBL_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_MEBL_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_MEBL_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_MEBL_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_MEBL_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_MEBL_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_MEBL_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_MEBL_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_MEBL_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 MTL</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_MTL_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_MTL_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_MTL_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_MTL_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_MTL_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_MTL_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_MTL_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_MTL_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_MTL_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_MTL_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_MTL_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_MTL_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_MTL_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_MTL_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_MTL_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 NBP</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_NBP_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_NBP_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_NBP_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_NBP_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_NBP_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_NBP_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_NBP_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_NBP_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_NBP_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_NBP_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_NBP_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_NBP_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_NBP_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_NBP_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_NBP_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 OGDC</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_OGDC_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_OGDC_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_OGDC_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_OGDC_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_OGDC_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_OGDC_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_OGDC_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_OGDC_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_OGDC_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_OGDC_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_OGDC_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_OGDC_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_OGDC_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_OGDC_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_OGDC_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 POL</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_POL_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_POL_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_POL_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_POL_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_POL_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_POL_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_POL_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_POL_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_POL_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_POL_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_POL_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_POL_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_POL_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_POL_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_POL_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 PPL</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_PPL_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_PPL_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_PPL_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_PPL_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_PPL_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_PPL_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_PPL_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_PPL_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_PPL_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_PPL_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_PPL_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_PPL_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_PPL_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_PPL_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_PPL_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 SYS</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_SYS_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_SYS_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_SYS_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_SYS_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_SYS_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_SYS_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_SYS_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_SYS_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_SYS_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_SYS_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_SYS_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_SYS_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_SYS_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_SYS_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_SYS_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+          <tr class="sym-hdr-row">
+            <td class="sym-hdr" colspan="15">📌 UBL</td>
+          </tr>
+          <tr class="ind-row">
+            <td class="ind-section">1D Daily</td><td class="ind-cell"><input id="i_UBL_Price" class="ind-in" placeholder="Price"></td><td class="ind-cell"><input id="i_UBL_MA50_D" class="ind-in" placeholder="MA50-D"></td><td class="ind-cell"><input id="i_UBL_MA200_D" class="ind-in" placeholder="MA200-D"></td><td class="ind-cell"><input id="i_UBL_RSI_D" class="ind-in" placeholder="RSI-D"></td><td class="ind-cell"><input id="i_UBL_MACD_H_D" class="ind-in" placeholder="MACD-H-D"></td><td class="ind-cell"><input id="i_UBL_Signal_D" class="ind-in" placeholder="Signal-D"></td><td class="ind-cell"><input id="i_UBL_Volume_D" class="ind-in" placeholder="Volume-D"></td><td class="ind-cell"><input id="i_UBL_52W_High" class="ind-in" placeholder="52W-High"></td><td class="ind-cell"><input id="i_UBL_52W_Low" class="ind-in" placeholder="52W-Low"></td></tr>
+          <tr class="ind-row w-row"><td class="ind-section">1W Weekly</td><td class="ind-cell"><input id="i_UBL_MA50_W" class="ind-in" placeholder="MA50-W"></td><td class="ind-cell"><input id="i_UBL_MA200_W" class="ind-in" placeholder="MA200-W"></td><td class="ind-cell"><input id="i_UBL_RSI_W" class="ind-in" placeholder="RSI-W"></td><td class="ind-cell"><input id="i_UBL_MACD_H_W" class="ind-in" placeholder="MACD-H-W"></td><td class="ind-cell"><input id="i_UBL_Signal_W" class="ind-in" placeholder="Signal-W"></td><td class="ind-cell"><input id="i_UBL_Volume_W" class="ind-in" placeholder="Volume-W"></td><td class="ind-cell" colspan="2" style="background:#0a1018;border-color:#111;"></td></tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CSV output -->
+    <div id="csvSection" style="display:none;margin-top:16px">
+      <div style="font-size:13px;color:#7a9ab5;margin-bottom:6px">
+        📄 <b style="color:#a0c4e8">data.csv</b> — copy into your GitHub repo:
+      </div>
+      <textarea id="csvOut" readonly style="
+        width:100%;height:120px;background:#0a1520;color:#4fc3f7;
+        border:1px solid #2e4060;border-radius:6px;padding:10px;
+        font-family:monospace;font-size:12px;resize:vertical;box-sizing:border-box;
+      "></textarea>
+      <div style="margin-top:8px;display:flex;gap:10px">
+        <button onclick="copyCsv()" class="btn btn-action" style="width:200px;height:38px">
+          📋 Copy to Clipboard
+        </button>
       </div>
     </div>
   </div>
@@ -555,7 +701,7 @@ function showPage(id){
 }
 function goHome()    { showPage('pgHome');     renderHome(); }
 function goAnalysis(){ showPage('pgAnalysis'); runWeekly(); }
-function goImport()  { showPage('pgImport'); }
+function goImport()  { showPage('pgImport'); setTimeout(loadIntoForm,50); }
 function goSingle()  { showPage('pgSingle'); }
 
 // ─── ZONE WIDTH ────────────────────────────────
@@ -1000,6 +1146,77 @@ function exportCSV(){
   const blob=new Blob([lines.join('\n')],{type:'text/csv'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='data.csv'; a.click();
+}
+
+
+// ─── SAVE ALL DATA FROM BIG TABLE ──────────────
+const ALL_SYMBOLS = ["ABL", "BAFL", "BOP", "EFERT", "ENGROH", "FCL", "FFC", "HBL", "HUBC", "ISL", "KAPCO", "LUCK", "MCB", "MEBL", "MTL", "NBP", "OGDC", "POL", "PPL", "SYS", "UBL"];
+const D_FIELDS    = ["Price", "MA50-D", "MA200-D", "RSI-D", "MACD-H-D", "Signal-D", "Volume-D"];
+const W_FIELDS    = ["MA50-W", "MA200-W", "RSI-W", "MACD-H-W", "Signal-W", "Volume-W"];
+
+function inputId(sym, field){
+  return 'i_'+sym+'_'+field.replace(/-/g,'_');
+}
+
+function getVal(sym, field){
+  const el = document.getElementById(inputId(sym,field));
+  return el ? el.value.trim() : '';
+}
+
+function saveAllData(){
+  const rows = ALL_SYMBOLS.map(sym => {
+    const row = { Symbol:sym };
+    D_FIELDS.forEach(f => row[f] = getVal(sym,f));
+    W_FIELDS.forEach(f => row[f] = getVal(sym,f));
+    row['52W-High'] = getVal(sym,'52W-High');
+    row['52W-Low']  = getVal(sym,'52W-Low');
+    return row;
+  });
+
+  // Update _rawData with new values
+  _rawData = rows;
+
+  // Save date
+  const dateEl = document.getElementById('fDataDate');
+  if(dateEl && dateEl.value) setDataDate(dateEl.value);
+
+  // Generate CSV
+  const headers = ['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D',
+                   'Volume-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W',
+                   '52W-High','52W-Low'];
+  const lines = [headers.join(',')];
+  rows.forEach(r => lines.push(headers.map(h => r[h]||'').join(',')));
+  const csv = lines.join('\n');
+
+  document.getElementById('csvOut').value = csv;
+  document.getElementById('csvSection').style.display = 'block';
+
+  const st = document.getElementById('saveStatus');
+  st.textContent = '✅ Saved — copy CSV to GitHub';
+  setTimeout(()=>{ st.textContent=''; }, 5000);
+
+  renderHome();
+}
+
+function loadIntoForm(){
+  // Pre-fill form from _rawData when navigating to import page
+  if(!_rawData.length) return;
+  _rawData.forEach(r => {
+    const sym = r.Symbol;
+    if(!sym) return;
+    D_FIELDS.forEach(f => {
+      const el=document.getElementById(inputId(sym,f));
+      if(el && r[f]) el.value=r[f];
+    });
+    W_FIELDS.forEach(f => {
+      const el=document.getElementById(inputId(sym,f));
+      if(el && r[f]) el.value=r[f];
+    });
+    ['52W-High','52W-Low'].forEach(f => {
+      const el=document.getElementById(inputId(sym,f));
+      if(el && r[f]) el.value=r[f];
+    });
+  });
 }
 
 // ─── DATE STAMP ────────────────────────────────
