@@ -667,10 +667,26 @@ function verdictFn(s,sc,z){
   const belowBothMAs=ma50d!==null&&ma200d!==null&&p<ma50d&&p<ma200d;
   const macdDneg=macdD!==null&&macdD<0;
   const rsiWeak=rsid!==null&&rsid<50;
+  // PULLBACK BUY — price touching MA support
   if(atMA&&weeklyUp&&macdWposRis&&rsiCool&&sc>=70&&!near52High)
     return {v:'🟢 BUY',verdict:'BUY',target:z.target};
+
+  // BREAKOUT BUY — fresh golden cross, above both MAs
+  const aboveBothMAs=ma50d!==null&&ma200d!==null&&p>ma50d&&p>ma200d;
+  const goldenFresh=ma50d!==null&&ma200d!==null&&ma50d>=ma200d&&((ma50d-ma200d)/p)<0.08;
+  const rsiNotHot=rsid!==null&&rsid<65;
+  if(aboveBothMAs&&goldenFresh&&macdWposRis&&rsiNotHot&&sc>=70&&!near52High)
+    return {v:'🟢 BUY ⚡',verdict:'BUY',target:z.target};
+
+  // CAUTION — price below MA50 only (early warning before full EXIT)
+  const belowMA50only=ma50d!==null&&p<ma50d&&(ma200d===null||p>=ma200d);
+  if(belowMA50only&&macdDneg&&sc<65)
+    return {v:'⚠️ CAUTION',verdict:'CAUTION',target:z.downsideTarget};
+
+  // EXIT SIGNAL — price below BOTH MAs
   if(belowBothMAs&&macdDneg&&rsiWeak&&sc<=65)
     return {v:'🔴 EXIT SIGNAL',verdict:'EXIT',target:z.downsideTarget};
+
   if(sc>=50) return {v:'🟡 WATCH',verdict:'WATCH',target:z.target};
   if(sc>=40) return {v:'⚪ WAIT',verdict:'WAIT',target:z.target};
   return {v:'🚫 AVOID',verdict:'AVOID',target:z.target};
