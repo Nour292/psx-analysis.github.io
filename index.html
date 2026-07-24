@@ -1002,6 +1002,24 @@ function exportCSV(){
   a.download='data.csv'; a.click();
 }
 
+// ─── DATE STAMP ────────────────────────────────
+let _dataAsOf = '';
+function setDataDate(d){
+  _dataAsOf = d;
+  try{ localStorage.setItem('psx_dataAsOf',d); }catch(e){}
+  showDataDate();
+}
+function showDataDate(){
+  if(!_dataAsOf) return;
+  const dt=new Date(_dataAsOf+'T00:00:00');
+  const nice=dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'});
+  ['homeDataDate','analysisDataDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});
+  const hv=document.getElementById('homeDataDateVal');
+  const av=document.getElementById('analysisDataDateVal');
+  if(hv) hv.textContent=nice;
+  if(av) av.textContent=nice;
+}
+
 // ─── LOAD CSV ON START ─────────────────────────
 async function loadCSV(){
   try{
@@ -1015,6 +1033,7 @@ async function loadCSV(){
       headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
       return obj;
     });
+    try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){}
     renderHome();
   } catch(e){
     console.log('CSV not loaded:',e.message);
