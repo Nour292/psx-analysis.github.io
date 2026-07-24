@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PSX Portfolio — Dividend Dashboard</title>
+<style>
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed; min-height:100vh; }
+
+/* NAV */
+.nav{ background:#1a2535; border-bottom:2px solid #2e4060; padding:10px 20px;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.nav-logo{ font-size:18px; font-weight:700; color:#4fc3f7; margin-right:6px; }
+.btn{ padding:8px 18px; border:none; border-radius:6px; font-size:13px; font-weight:600;
+  cursor:pointer; transition:all .15s; width:180px; height:38px;
+  display:inline-flex; align-items:center; justify-content:center; }
+.btn-ta   { background:#1565c0; color:#fff; }
+.btn-ta:hover{ background:#1976d2; }
+.btn-home { background:#2e4060; color:#a0c4e8; }
+.btn-home:hover{ background:#3a5070; }
+.btn-load { background:#2e7d32; color:#fff; }
+.btn-load:hover{ background:#388e3c; }
+
+/* KPI TILES */
+.kpi-bar{ display:flex; gap:12px; padding:16px 24px; flex-wrap:wrap; }
+.kpi{ background:#1a2535; border-radius:10px; padding:14px 20px; flex:1; min-width:160px;
+  border:1px solid #2e4060; text-align:center; }
+.kpi .k-val{ font-size:22px; font-weight:800; line-height:1.2; }
+.kpi .k-lbl{ font-size:11px; color:#7a9ab5; margin-top:4px; letter-spacing:.5px; text-transform:uppercase; }
+.kpi.invested .k-val{ color:#4fc3f7; }
+.kpi.divvy   .k-val{ color:#4caf50; }
+.kpi.worth   .k-val{ color:#ffc107; }
+.kpi.prog    .k-val{ color:#ff9800; }
+
+/* PROGRESS BAR */
+.prog-wrap{ padding:0 24px 16px; }
+.prog-label{ font-size:12px; color:#7a9ab5; margin-bottom:6px; }
+.prog-bar{ background:#1a2535; border-radius:20px; height:14px; overflow:hidden; border:1px solid #2e4060; }
+.prog-fill{ background:linear-gradient(90deg,#2e7d32,#4caf50); height:100%; border-radius:20px;
+  transition:width .8s ease; display:flex; align-items:center; justify-content:flex-end; padding-right:6px; }
+.prog-pct{ font-size:10px; font-weight:700; color:#fff; }
+
+/* TABS */
+.tab-bar{ display:flex; gap:0; padding:0 24px; border-bottom:2px solid #2e4060; margin-bottom:0; }
+.tab-btn{ padding:10px 24px; font-size:13px; font-weight:600; border:none; background:none;
+  color:#7a9ab5; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px;
+  transition:all .15s; }
+.tab-btn.active{ color:#4fc3f7; border-bottom-color:#4fc3f7; }
+.tab-btn:hover:not(.active){ color:#a0c4e8; }
+
+/* TAB CONTENT */
+.tab-pane{ display:none; padding:20px 24px; }
+.tab-pane.active{ display:block; }
+
+/* TABLES */
+.ptbl{ width:100%; border-collapse:collapse; font-size:13px; }
+.ptbl th{ background:#1e3050; color:#a0c4e8; padding:9px 12px; text-align:left;
+  font-weight:600; white-space:nowrap; border-bottom:2px solid #2e4060; }
+.ptbl td{ border-bottom:1px solid #1a2535; padding:8px 12px; }
+.ptbl tr:hover td{ background:#1a2535; }
+.ptbl tr.buy-row  td{ border-left:3px solid #4caf50; }
+.ptbl tr.sell-row td{ border-left:3px solid #ef5350; }
+.ptbl tr.watch-row td{ border-left:3px solid #ffc107; }
+.ptbl tr.wait-row td{ border-left:3px solid #78909c; }
+
+/* BADGES */
+.badge{ display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+.badge-buy  { background:#1b5e20; color:#4caf50; }
+.badge-watch{ background:#1a1a00; color:#ffc107; }
+.badge-wait { background:#1a1a2e; color:#78909c; }
+.badge-sell { background:#4a1010; color:#ef5350; }
+
+/* ACTION CARDS */
+.action-grid{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+.action-card{
+  background:#1a2535; border-radius:10px; padding:14px 18px;
+  border-left:4px solid #2e4060; min-width:200px; flex:1; max-width:260px;
+}
+.action-card.buy  { border-color:#4caf50; }
+.action-card.watch{ border-color:#ffc107; }
+.action-card.wait { border-color:#78909c; }
+.action-card .ac-sym{ font-size:18px; font-weight:800; color:#e0e6ed; margin-bottom:4px; }
+.action-card .ac-action{ font-size:12px; font-weight:700; margin-bottom:8px; }
+.action-card.buy  .ac-action{ color:#4caf50; }
+.action-card.watch .ac-action{ color:#ffc107; }
+.action-card.wait  .ac-action{ color:#78909c; }
+.action-card .ac-line{ font-size:12px; color:#7a9ab5; }
+.action-card .ac-val { font-size:12px; color:#e0e6ed; font-weight:600; }
+
+/* SECTOR BARS */
+.sector-row{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.sector-lbl{ width:100px; font-size:13px; color:#a0c4e8; font-weight:600; }
+.sector-bar-wrap{ flex:1; background:#1a2535; border-radius:6px; height:24px;
+  overflow:hidden; border:1px solid #2e4060; position:relative; }
+.sector-bar-fill{ height:100%; border-radius:6px; display:flex; align-items:center;
+  padding:0 8px; font-size:11px; font-weight:700; color:#fff; transition:width .8s; }
+.sector-bar-fill.ok  { background:#1565c0; }
+.sector-bar-fill.over{ background:#b71c1c; }
+.sector-bar-fill.under{ background:#1b5e20; }
+.sector-target{ position:absolute; top:0; bottom:0; width:2px; background:#ffc107; opacity:.7; }
+.sector-pct{ width:50px; font-size:13px; font-weight:700; text-align:right; }
+
+/* DIV TABLE */
+.div-total{ background:#1b5e20; border-radius:8px; padding:12px 18px; margin-top:16px;
+  display:flex; justify-content:space-between; align-items:center; }
+.div-total .dt-lbl{ font-size:13px; color:#a5d6a7; }
+.div-total .dt-val{ font-size:22px; font-weight:800; color:#4caf50; }
+
+/* LOADING / STATUS */
+.status-msg{ padding:30px; text-align:center; color:#4a6a8a; font-size:14px; }
+.asof-badge{ font-size:12px; color:#4fc3f7; background:#0d2a4a; padding:4px 12px;
+  border-radius:12px; margin-left:auto; }
+
+/* UPLOAD SECTION */
+.upload-box{ background:#1a2535; border-radius:10px; padding:20px 24px;
+  border:2px dashed #2e4060; margin:16px 24px; text-align:center; }
+.upload-box p{ color:#7a9ab5; font-size:13px; margin-bottom:12px; }
+.upload-box input[type=file]{ display:none; }
+.upload-label{ display:inline-block; padding:8px 24px; background:#1565c0; color:#fff;
+  border-radius:6px; cursor:pointer; font-size:13px; font-weight:600; }
+.upload-label:hover{ background:#1976d2; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <span class="nav-logo">📈 PSX Portfolio</span>
+  <button class="btn btn-ta"   onclick="window.open('index.html','_self')">📊 Technical Analysis</button>
+  <button class="btn btn-load" onclick="document.getElementById('csvUpload').click()">📂 Load Holdings</button>
+  <input type="file" id="csvUpload" accept=".csv" onchange="loadCSV(event)" style="display:none">
+  <span class="asof-badge" id="asofBadge" style="display:none">📅 As of: <b id="asofVal"></b></span>
+</div>
+
+<!-- KPI -->
+<div class="kpi-bar" id="kpiBar">
+  <div class="kpi invested"><div class="k-val" id="kInvested">—</div><div class="k-lbl">Invested Capital</div></div>
+  <div class="kpi divvy">  <div class="k-val" id="kDivIncome">—</div><div class="k-lbl">Annual Dividend</div></div>
+  <div class="kpi worth">  <div class="k-val" id="kWorth">—</div><div class="k-lbl">Portfolio Worth</div></div>
+  <div class="kpi prog">   <div class="k-val" id="kProgress">—</div><div class="k-lbl">To ₨1M Target</div></div>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="prog-wrap">
+  <div class="prog-label">Dividend Income Progress → ₨1,000,000 / year</div>
+  <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"><span class="prog-pct" id="progPct"></span></div></div>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('action')">🎯 Action Plan</button>
+  <button class="tab-btn"        onclick="switchTab('portfolio')">📋 Portfolio</button>
+  <button class="tab-btn"        onclick="switchTab('dividend')">💰 Dividend Income</button>
+  <button class="tab-btn"        onclick="switchTab('sector')">⚖️ Sector Balance</button>
+</div>
+
+<!-- TAB: ACTION PLAN -->
+<div id="tab-action" class="tab-pane active">
+  <div id="actionContent" class="status-msg">
+    Load your holdings.csv to see your action plan
+  </div>
+</div>
+
+<!-- TAB: PORTFOLIO -->
+<div id="tab-portfolio" class="tab-pane">
+  <div id="portfolioContent" class="status-msg">Load holdings.csv to view portfolio</div>
+</div>
+
+<!-- TAB: DIVIDEND -->
+<div id="tab-dividend" class="tab-pane">
+  <div id="dividendContent" class="status-msg">Load holdings.csv to view dividend income</div>
+</div>
+
+<!-- TAB: SECTOR -->
+<div id="tab-sector" class="tab-pane">
+  <div id="sectorContent" class="status-msg">Load holdings.csv to view sector balance</div>
+</div>
+
+<script>
+// ─── FIXED DATA ────────────────────────────────
+const DPS = {
+  HUBC:20, POL:75, UBL:40, FFC:34, MCB:36,
+  OGDC:14.50, MTL:17.50, EFERT:13, BAFL:3, MEBL:30, HBL:22
+};
+// HBL pending confirmation — included but flagged
+const HBL_PENDING = true;
+
+const SECTOR = {
+  MCB:'Banking', UBL:'Banking', HBL:'Banking', MEBL:'Banking', BAFL:'Banking', NBP:'Banking',
+  POL:'E&P', OGDC:'E&P',
+  FFC:'Fertilizer', EFERT:'Fertilizer', ENGROH:'Fertilizer',
+  HUBC:'Power', KAPCO:'Power',
+  MTL:'Auto', ISL:'Auto',
+  FCL:'Other', LUCK:'Other', SYS:'Other'
+};
+const SECTOR_TARGET = 20; // % each
+const EXCLUDE_SECTOR = ['ENGROH','FCL'];
+
+// Live prices — fetched or manually set
+let _livePrices = {};
+let _holdings   = [];
+
+// ─── FORMAT HELPERS ────────────────────────────
+function fmtPKR(n){ return '₨'+n.toLocaleString('en-PK',{maximumFractionDigits:0}); }
+function fmt2(n)  { return parseFloat(n).toFixed(2); }
+
+// ─── TAB SWITCHING ─────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── LOAD CSV ──────────────────────────────────
+function loadCSV(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const text = ev.target.result.replace(/^\uFEFF/,'');
+    parseHoldings(text);
+  };
+  reader.readAsText(file);
+}
+
+function parseHoldings(text){
+  const lines = text.trim().split(/\r?\n/);
+  const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
+  const rows = lines.slice(1).map(line=>{
+    const cols = line.split(',');
+    const obj = {};
+    headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+    return obj;
+  }).filter(r=>r.symbol);
+
+  // Calculate holdings from trade log
+  const map = {};
+  rows.forEach(r=>{
+    const sym    = r.symbol.toUpperCase();
+    const units  = parseFloat(r.units)||0;
+    const rate   = parseFloat(r.rate)||0;
+    const action = (r.action||'').toLowerCase();
+    if(!map[sym]) map[sym]={qty:0,cost:0};
+    if(action==='buy'){
+      const oq=map[sym].qty, oc=map[sym].cost;
+      const nq=oq+units;
+      map[sym].cost = nq>0?((oc*oq)+(rate*units))/nq:0;
+      map[sym].qty  = nq;
+    } else if(action==='sell'){
+      map[sym].qty = Math.max(0,map[sym].qty-units);
+    }
+  });
+
+  _holdings = Object.entries(map)
+    .filter(([,d])=>d.qty>0)
+    .map(([sym,d])=>({
+      symbol:sym,
+      qty:Math.round(d.qty),
+      avg:parseFloat(d.cost.toFixed(2)),
+      dps:DPS[sym]||0,
+      sector:SECTOR[sym]||'Other'
+    }))
+    .sort((a,b)=>a.symbol.localeCompare(b.symbol));
+
+  // Find latest date
+  const dates = rows.map(r=>r.date).filter(Boolean);
+  const lastDate = dates[dates.length-1]||'';
+  if(lastDate){
+    document.getElementById('asofBadge').style.display='inline-block';
+    document.getElementById('asofVal').textContent=lastDate;
+  }
+
+  buildDashboard();
+}
+
+// ─── BUILD DASHBOARD ───────────────────────────
+function buildDashboard(){
+  if(!_holdings.length) return;
+
+  const totalInvested = _holdings.reduce((s,h)=>s+h.qty*h.avg,0);
+  const totalDiv      = _holdings.reduce((s,h)=>s+h.qty*h.dps,0);
+  const pct           = Math.min((totalDiv/1000000)*100,100);
+
+  // KPI
+  document.getElementById('kInvested').textContent  = fmtPKR(totalInvested);
+  document.getElementById('kDivIncome').textContent = fmtPKR(totalDiv);
+  document.getElementById('kWorth').textContent     = '—'; // needs live price
+  document.getElementById('kProgress').textContent  = pct.toFixed(1)+'%';
+
+  // Progress bar
+  document.getElementById('progFill').style.width = pct+'%';
+  document.getElementById('progPct').textContent  = pct.toFixed(1)+'%';
+
+  buildAction();
+  buildPortfolio();
+  buildDividend();
+  buildSector();
+}
+
+// ─── ACTION PLAN ───────────────────────────────
+function buildAction(){
+  // Simple rule-based action based on avg cost vs DPS yield
+  const cards = _holdings.map(h=>{
+    const yoc = h.avg>0?(h.dps/h.avg)*100:0;
+    let action,cls;
+    if(yoc>=8)       { action='BUY — Add more';  cls='buy'; }
+    else if(yoc>=5)  { action='WATCH — Good yield'; cls='watch'; }
+    else             { action='WAIT — Monitor';   cls='wait'; }
+    return {h,action,cls,yoc};
+  });
+
+  // Sort: BUY first, then WATCH, then WAIT
+  const order={buy:1,watch:2,wait:3};
+  cards.sort((a,b)=>order[a.cls]-order[b.cls]);
+
+  let html='<div class="action-grid">';
+  cards.forEach(({h,action,cls,yoc})=>{
+    const invested=h.qty*h.avg;
+    const annDiv=h.qty*h.dps;
+    html+=`<div class="action-card ${cls}">
+      <div class="ac-sym">${h.symbol}</div>
+      <div class="ac-action">${action}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px">
+        <span class="ac-line">Units</span><span class="ac-val">${h.qty.toLocaleString()}</span>
+        <span class="ac-line">Avg Cost</span><span class="ac-val">₨${fmt2(h.avg)}</span>
+        <span class="ac-line">DPS</span><span class="ac-val">₨${h.dps||'—'}</span>
+        <span class="ac-line">Yield on Cost</span><span class="ac-val">${yoc.toFixed(1)}%</span>
+        <span class="ac-line">Annual Div</span><span class="ac-val">${fmtPKR(annDiv)}</span>
+        <span class="ac-line">Invested</span><span class="ac-val">${fmtPKR(invested)}</span>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+
+  // Alerts
+  if(HBL_PENDING){
+    html+=`<div style="background:#1a1a00;border:1px solid #ffc107;border-radius:8px;
+      padding:10px 16px;font-size:13px;color:#ffc107;margin-top:8px">
+      ⚠️ <b>HBL</b> — DPS pending confirmation. Excluded from dividend roadmap until confirmed.
+    </div>`;
+  }
+  document.getElementById('actionContent').innerHTML=html;
+}
+
+// ─── PORTFOLIO TABLE ───────────────────────────
+function buildPortfolio(){
+  const sorted = [..._holdings].sort((a,b)=>{
+    const yocA=a.avg>0?(a.dps/a.avg)*100:0;
+    const yocB=b.avg>0?(b.dps/b.avg)*100:0;
+    return yocB-yocA;
+  });
+
+  let html=`<div style="overflow-x:auto"><table class="ptbl">
+    <tr>
+      <th>#</th><th>Symbol</th><th>Sector</th><th>Units</th>
+      <th>Avg Cost</th><th>Invested</th><th>DPS</th>
+      <th>Yield on Cost</th><th>Annual Div</th>
+    </tr>`;
+  sorted.forEach((h,i)=>{
+    const inv=h.qty*h.avg;
+    const yoc=h.avg>0?(h.dps/h.avg)*100:0;
+    const ann=h.qty*h.dps;
+    const cls=yoc>=8?'buy-row':yoc>=5?'watch-row':'wait-row';
+    html+=`<tr class="${cls}">
+      <td>${i+1}</td>
+      <td><b>${h.symbol}</b></td>
+      <td>${h.sector}</td>
+      <td>${h.qty.toLocaleString()}</td>
+      <td>₨${fmt2(h.avg)}</td>
+      <td>${fmtPKR(inv)}</td>
+      <td>${h.dps?'₨'+h.dps:'—'}</td>
+      <td><b>${yoc.toFixed(1)}%</b></td>
+      <td>${h.dps?fmtPKR(ann):'—'}</td>
+    </tr>`;
+  });
+  const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
+  const totalDiv=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);
+  html+=`<tr style="background:#1e3050;font-weight:700">
+    <td colspan="5">TOTAL</td>
+    <td>${fmtPKR(totalInv)}</td>
+    <td></td><td></td>
+    <td>${fmtPKR(totalDiv)}</td>
+  </tr>`;
+  html+=`</table></div>`;
+  document.getElementById('portfolioContent').innerHTML=html;
+}
+
+// ─── DIVIDEND INCOME ───────────────────────────
+function buildDividend(){
+  const withDps = _holdings.filter(h=>h.dps>0&&h.symbol!=='HBL');
+  const hbl     = _holdings.find(h=>h.symbol==='HBL');
+  withDps.sort((a,b)=>b.qty*b.dps - a.qty*a.dps);
+
+  let html=`<div style="overflow-x:auto"><table class="ptbl">
+    <tr>
+      <th>#</th><th>Symbol</th><th>Units</th>
+      <th>Annual DPS</th><th>Annual Income</th><th>Yield on Cost</th>
+    </tr>`;
+  let total=0;
+  withDps.forEach((h,i)=>{
+    const ann=h.qty*h.dps;
+    total+=ann;
+    const yoc=h.avg>0?(h.dps/h.avg)*100:0;
+    html+=`<tr>
+      <td>${i+1}</td><td><b>${h.symbol}</b></td>
+      <td>${h.qty.toLocaleString()}</td>
+      <td>₨${h.dps}</td>
+      <td><b>${fmtPKR(ann)}</b></td>
+      <td>${yoc.toFixed(1)}%</td>
+    </tr>`;
+  });
+  if(hbl){
+    html+=`<tr style="color:#ffc107">
+      <td>—</td><td><b>HBL</b></td>
+      <td>${hbl.qty.toLocaleString()}</td>
+      <td colspan="3" style="color:#ffc107">⏳ DPS pending — excluded from total</td>
+    </tr>`;
+  }
+  html+=`</table></div>
+  <div class="div-total">
+    <div>
+      <div class="dt-lbl">Total Annual Dividend Income</div>
+      <div style="font-size:12px;color:#7a9ab5;margin-top:2px">HBL excluded (DPS unconfirmed)</div>
+    </div>
+    <div class="dt-val">${fmtPKR(total)}</div>
+  </div>
+  <div style="margin-top:12px;background:#1a2535;border-radius:8px;padding:12px 18px">
+    <div style="font-size:13px;color:#7a9ab5;margin-bottom:8px">Progress to ₨1,000,000 target</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+      <span style="color:#4caf50">Current: ${fmtPKR(total)}</span>
+      <span style="color:#7a9ab5">Remaining: ${fmtPKR(1000000-total)}</span>
+      <span style="color:#ff9800">Target: ₨1,000,000</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${Math.min(total/10000,100)}%">
+      <span class="prog-pct">${(total/10000).toFixed(1)}%</span>
+    </div></div>
+  </div>`;
+  document.getElementById('dividendContent').innerHTML=html;
+}
+
+// ─── SECTOR BALANCE ────────────────────────────
+function buildSector(){
+  const sectorMap = {};
+  const totalInv  = _holdings.reduce((s,h)=>s+h.qty*h.avg,0);
+
+  _holdings.filter(h=>!EXCLUDE_SECTOR.includes(h.symbol)).forEach(h=>{
+    const sec=h.sector||'Other';
+    const inv=h.qty*h.avg;
+    sectorMap[sec]=(sectorMap[sec]||0)+inv;
+  });
+
+  const sectors = Object.entries(sectorMap)
+    .map(([sec,inv])=>({sec,inv,pct:totalInv>0?(inv/totalInv)*100:0}))
+    .sort((a,b)=>b.pct-a.pct);
+
+  const totalForSector=Object.values(sectorMap).reduce((s,v)=>s+v,0);
+
+  let html='<div style="max-width:700px">';
+  sectors.forEach(({sec,inv,pct})=>{
+    const isOver  = pct>22;
+    const isUnder = pct<18;
+    const cls     = isOver?'over':isUnder?'under':'ok';
+    const flag    = isOver?'🔴 Over':isUnder?'🟡 Under':'✅';
+    html+=`<div class="sector-row">
+      <div class="sector-lbl">${sec}</div>
+      <div class="sector-bar-wrap">
+        <div class="sector-bar-fill ${cls}" style="width:${Math.min(pct*3,100)}%">
+          ${pct.toFixed(1)}%
+        </div>
+        <div class="sector-target" style="left:${Math.min(SECTOR_TARGET*3,100)}%"></div>
+      </div>
+      <div class="sector-pct" style="color:${isOver?'#ef5350':isUnder?'#ffc107':'#4caf50'}">${flag}</div>
+    </div>
+    <div style="font-size:11px;color:#4a6a8a;margin:-8px 0 10px 112px">${fmtPKR(inv)}</div>`;
+  });
+  html+=`<div style="font-size:12px;color:#7a9ab5;margin-top:12px;padding:10px;
+    background:#1a2535;border-radius:6px;border-left:3px solid #ffc107">
+    🎯 Target: 20% per sector | 🔴 Flag if &gt;22% or &lt;18% | ENGROH &amp; FCL excluded
+  </div></div>`;
+  document.getElementById('sectorContent').innerHTML=html;
+}
+
+// ─── AUTO-LOAD from GitHub on page open ────────
+async function autoLoad(){
+  try{
+    const res  = await fetch('holdings.csv?'+Date.now());
+    if(!res.ok) return;
+    const text = await res.text();
+    parseHoldings(text.replace(/^\uFEFF/,''));
+  }catch(e){ console.log('Auto-load:',e.message); }
+}
+
+autoLoad();
+</script>
+</body>
+</html>
