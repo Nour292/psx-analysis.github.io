@@ -149,10 +149,10 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
 <!-- TABS -->
 <div class="tab-bar">
-  <button class="tab-btn active" onclick="switchTab('action')">🎯 Action Plan</button>
-  <button class="tab-btn"        onclick="switchTab('portfolio')">📋 Portfolio</button>
-  <button class="tab-btn"        onclick="switchTab('dividend')">💰 Dividend Income</button>
-  <button class="tab-btn"        onclick="switchTab('sector')">⚖️ Sector Balance</button>
+  <button class="tab-btn active" onclick="switchTab('action',this)">🎯 Action Plan</button>
+  <button class="tab-btn"        onclick="switchTab('portfolio',this)">📋 Portfolio</button>
+  <button class="tab-btn"        onclick="switchTab('dividend',this)">💰 Dividend Income</button>
+  <button class="tab-btn"        onclick="switchTab('sector',this)">⚖️ Sector Balance</button>
 </div>
 
 <!-- TAB: ACTION PLAN -->
@@ -202,15 +202,15 @@ let _livePrices = {};
 let _holdings   = [];
 
 // ─── FORMAT HELPERS ────────────────────────────
-function fmtPKR(n){ return '₨'+n.toLocaleString('en-PK',{maximumFractionDigits:0}); }
+function fmtPKR(n){ return '₨'+Math.round(n).toLocaleString('en-US'); }
 function fmt2(n)  { return parseFloat(n).toFixed(2); }
 
 // ─── TAB SWITCHING ─────────────────────────────
-function switchTab(name){
+function switchTab(name,btn){
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  event.target.classList.add('active');
+  if(btn) btn.classList.add('active');
 }
 
 // ─── LOAD CSV ──────────────────────────────────
