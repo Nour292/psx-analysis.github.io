@@ -1516,7 +1516,6 @@ async function loadDividendsCSV(){
 }
 
 function renderDividends(){
-  // Sort: Waiting first, then Paid — newest X date on top
   const sorted=[..._dividends].sort((a,b)=>{
     if(a.Status==='Waiting'&&b.Status!=='Waiting') return -1;
     if(b.Status==='Waiting'&&a.Status!=='Waiting') return 1;
@@ -1538,18 +1537,50 @@ function renderDividends(){
   setEl('dvTax',    'PKR '+Math.round(totalTax).toLocaleString());
   setEl('dvCount',  sorted.length+' records');
 
+  // ── Table with "+ Add Record" button top right ──
+  let html=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-size:15px;font-weight:700;color:#4fc3f7">
+      📋 Dividend Records
+      <span style="font-size:12px;color:#7a9ab5;font-weight:400;margin-left:8px">
+        ${sorted.length} records · ${waiting.length} waiting · ${paid.length} paid
+      </span>
+    </div>
+    <button onclick="showDvForm()" style="
+      background:#2e7d32;color:#fff;border:none;border-radius:7px;
+      padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;
+      display:flex;align-items:center;gap:6px">
+      ➕ New Dividend Record
+    </button>
+  </div>`;
+
   if(!sorted.length){
-    document.getElementById('dvTableWrap').innerHTML=
-      '<p style="color:#4a6a8a;padding:30px;text-align:center">No dividend records yet. Add your first record above.</p>';
+    html+=`<div style="background:#1a2535;border-radius:10px;padding:40px;
+      text-align:center;color:#4a6a8a;font-size:14px;border:1px solid #2e4060">
+      No dividend records yet.<br>
+      <span style="font-size:12px;color:#2e4060;margin-top:6px;display:block">
+        Click "New Dividend Record" above to add your first entry.
+      </span>
+    </div>`;
+    document.getElementById('dvTableWrap').innerHTML=html;
     return;
   }
 
-  let html=`<div style="overflow-x:auto"><table class="dv-tbl">
+  html+=`<div style="overflow-x:auto;background:#1a2535;border-radius:10px;border:1px solid #2e4060">
+  <table class="dv-tbl" style="margin:0">
     <tr>
-      <th>#</th><th>Symbol</th><th>Units</th><th>DPS</th>
-      <th>Ann. Date</th><th>X Date</th>
-      <th>Gross Amount</th><th>Tax (15%)</th><th>Net Amount</th>
-      <th>Status</th><th>Pay Date</th><th>Action</th>
+      <th>#</th>
+      <th>Symbol</th>
+      <th>Units</th>
+      <th>DPS</th>
+      <th>Ann. Date</th>
+      <th>X Date</th>
+      <th>Gross</th>
+      <th>Tax 15%</th>
+      <th>Net Amount</th>
+      <th>Status</th>
+      <th>Pay Date</th>
+      <th>Action</th>
     </tr>`;
 
   sorted.forEach((r,i)=>{
@@ -1559,34 +1590,51 @@ function renderDividends(){
     const tax    = parseFloat(r.TaxAmount||0);
     const net    = parseFloat(r.NetAmount||0);
     html+=`<tr class="${rcls}">
-      <td class="c-gray">${i+1}</td>
+      <td class="c-gray" style="width:36px">${i+1}</td>
       <td class="sym">${r.Symbol}</td>
-      <td>${parseInt(r.Units||0).toLocaleString()}</td>
+      <td style="color:#e0e6ed">${parseInt(r.Units||0).toLocaleString()}</td>
       <td class="c-gold bold">${r.DPS}</td>
       <td style="color:#a0c4e8;white-space:nowrap">${r.AnnouncementDate||'—'}</td>
-      <td style="color:#4fc3f7;white-space:nowrap">${r.XDate||'—'}</td>
-      <td class="c-blue bold">${Math.round(gross).toLocaleString()}</td>
+      <td style="color:#4fc3f7;white-space:nowrap;font-weight:600">${r.XDate||'—'}</td>
+      <td class="c-blue">${Math.round(gross).toLocaleString()}</td>
       <td class="c-red">${Math.round(tax).toLocaleString()}</td>
-      <td class="c-green bold">${Math.round(net).toLocaleString()}</td>
-      <td><span class="${isPaid?'badge-paid':'badge-wait'}">${isPaid?'✅ Paid':'⏳ Waiting'}</span></td>
-      <td style="color:#7a9ab5">${r.PayDate||'—'}</td>
-      <td>${!isPaid?`<button class="pay-btn" onclick="markPaid(${i})">✅ Mark Paid</button>`:''}</td>
+      <td class="c-green bold" style="font-size:14px">${Math.round(net).toLocaleString()}</td>
+      <td style="white-space:nowrap">
+        <span class="${isPaid?'badge-paid':'badge-wait'}">${isPaid?'✅ Paid':'⏳ Waiting'}</span>
+      </td>
+      <td style="color:#7a9ab5;white-space:nowrap">${r.PayDate||'—'}</td>
+      <td>${!isPaid?`<button class="pay-btn" onclick="markPaid(${i})">✅ Mark Paid</button>`:
+        '<span style="color:#4a6a8a;font-size:12px">Done</span>'}</td>
     </tr>`;
   });
 
-  // Totals row
+  // Totals
   const tGross=sorted.reduce((s,r)=>s+parseFloat(r.GrossAmount||0),0);
   const tTax  =sorted.reduce((s,r)=>s+parseFloat(r.TaxAmount||0),0);
   const tNet  =sorted.reduce((s,r)=>s+parseFloat(r.NetAmount||0),0);
-  html+=`<tr style="background:#1e3050;font-weight:700">
-    <td colspan="6">TOTAL</td>
-    <td class="c-blue">${Math.round(tGross).toLocaleString()}</td>
-    <td class="c-red">${Math.round(tTax).toLocaleString()}</td>
-    <td class="c-green">${Math.round(tNet).toLocaleString()}</td>
-    <td colspan="3"></td>
-  </tr></table></div>`;
+  const tNetP =paid.reduce((s,r)=>s+parseFloat(r.NetAmount||0),0);
+  const tNetW =waiting.reduce((s,r)=>s+parseFloat(r.NetAmount||0),0);
+
+  html+=`<tr style="background:#0d2240;font-weight:700;font-size:13px">
+    <td colspan="6" style="color:#7ab3d4;padding:10px 12px">TOTAL</td>
+    <td class="c-blue" style="padding:10px 12px">${Math.round(tGross).toLocaleString()}</td>
+    <td class="c-red"  style="padding:10px 12px">${Math.round(tTax).toLocaleString()}</td>
+    <td class="c-green" style="padding:10px 12px;font-size:15px">${Math.round(tNet).toLocaleString()}</td>
+    <td colspan="3" style="padding:10px 12px">
+      <span class="c-green">✅ ${Math.round(tNetP).toLocaleString()}</span>
+      &nbsp;/&nbsp;
+      <span class="c-gold">⏳ ${Math.round(tNetW).toLocaleString()}</span>
+    </td>
+  </tr>
+  </table></div>`;
 
   document.getElementById('dvTableWrap').innerHTML=html;
+}
+
+// Toggle Add form
+function showDvForm(){
+  const f=document.getElementById('dvFormBox');
+  if(f) f.style.display=f.style.display==='none'?'block':'none';
 }
 
 async function addDividend(){
@@ -1811,7 +1859,7 @@ autoLoad();
     </div>
 
     <!-- Add form -->
-    <div class="dv-form">
+    <div id="dvFormBox" style="display:none"><div class="dv-form">
       <div class="dv-form-title">➕ Add Dividend Record</div>
       <div class="dv-grid">
         <div class="dv-field">
@@ -1864,6 +1912,7 @@ autoLoad();
     </div>
 
     <!-- Records table -->
+    </div><!-- end dvFormBox -->
     <div id="dvTableWrap">
       <p style="color:#4a6a8a;padding:20px;text-align:center">Loading dividend records...</p>
     </div>
