@@ -450,8 +450,9 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <button class="btn btn-import" onclick="goImport()">＋ Add / Update Row</button>
   </div>
   <div class="content" style="padding:20px 24px">
-    <div id="analysisDataDate" style="font-size:13px;color:#4fc3f7;margin-bottom:10px;display:none">
+    <div id="analysisDataDate" style="font-size:13px;color:#4fc3f7;margin-bottom:6px;display:none">
       📅 Data as of: <b id="analysisDataDateVal"></b>
+      <span id="analysisPrevDate" style="color:#4a6a8a;margin-left:12px;font-size:12px"></span>
     </div>
   <div class="signal-summary" id="signalSummary"></div>
     <div class="table-wrap"><table class="data-table" id="fullTable"></table></div>
@@ -505,6 +506,32 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
         ⬇ Export CSV
       </button>
       <span id="saveStatus" style="font-size:13px;color:#4caf50;font-weight:700"></span>
+    </div>
+
+    <!-- Archive loader -->
+    <div id="archiveWrap" style="display:none;align-items:center;gap:12px;
+      margin-bottom:16px;background:#1a2535;border-radius:8px;padding:10px 16px;
+      border:1px solid #2e4060;flex-wrap:wrap">
+      <span style="font-size:13px;color:#7a9ab5;font-weight:600;white-space:nowrap">
+        🗂️ Past Fridays:
+      </span>
+      <select id="archiveSelect" style="
+        flex:1;min-width:200px;background:#0f1923;color:#4fc3f7;
+        border:1px solid #2e4060;border-radius:6px;padding:8px 12px;
+        font-size:13px;outline:none">
+        <option value="">📅 Load past Friday...</option>
+      </select>
+      <button onclick="loadArchive()" style="
+        background:#6a1b9a;color:#fff;border:none;border-radius:6px;
+        padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;
+        white-space:nowrap">
+        📊 View Analysis
+      </button>
+      <button onclick="clearArchive()" style="
+        background:#2e4060;color:#a0c4e8;border:none;border-radius:6px;
+        padding:8px 12px;font-size:13px;cursor:pointer;white-space:nowrap">
+        ✕ Back to Current
+      </button>
     </div>
 
     <!-- Big table -->
@@ -999,7 +1026,7 @@ function showPage(id){
 }
 function goHome()    { showPage('pgHome');     renderHome(); }
 function goAnalysis(){ showPage('pgAnalysis'); runWeekly(); }
-function goImport()  { showImportPage(); }
+function goImport()  { showImportPage(); setTimeout(loadArchiveList, 500); }
 function goSingle()  { showPage('pgSingle'); }
 
 // ─── ZONE WIDTH ────────────────────────────────
@@ -1062,34 +1089,43 @@ function scoreRow(s){
   const rsid=num(s['RSI-D']),rsiw=num(s['RSI-W']);
   const macdD=num(s['MACD-H-D']),sigD=num(s['Signal-D']);
   const macdW=num(s['MACD-H-W']),sigW=num(s['Signal-W']);
-  const vol=num(s.Volume),high52=num(s['52W-High']),low52=num(s['52W-Low']);
-  if(ma50d!==null){max+=10;pts+=(p>ma50d)?10:3;}
-  if(ma200d!==null){max+=10;pts+=(p>ma200d)?10:3;}
-  if(ma50d!==null&&ma200d!==null){max+=8;pts+=(ma50d>=ma200d)?8:2;}
-  if(ma50w!==null&&ma200w!==null){max+=8;pts+=(ma50w>ma200w)?8:2;}
-  if(rsid!==null){max+=10;pts+=(rsid>=40&&rsid<=70)?8:(rsid<40)?8:2;}
-  if(rsiw!==null){max+=10;pts+=(rsiw>=40&&rsiw<=70)?8:(rsiw<40)?8:2;}
-  if(macdD!==null){max+=12;const pos=macdD>0,ris=sigD!==null?macdD>sigD:false;pts+=pos?(ris?12:6):(ris?4:2);}
-  if(macdW!==null){max+=12;const pos=macdW>0,ris=sigW!==null?macdW>sigW:false;pts+=pos?(ris?12:6):(ris?4:2);}
-  // Volume: compare Daily vs Weekly — confirms or weakens signal
-  if(vol!==null){
-    max+=8;
-    const volW=num(s['Volume-W'])||num(s['VolumeW']);
-    if(volW!==null){
-      const ratio=vol/volW;
-      if(ratio>=1.0) pts+=8;       // above weekly avg → strong confirmation
-      else if(ratio>=0.5) pts+=5;  // average volume
-      else pts+=3;                  // low volume → weak signal
-    } else {
-      pts+=5; // no weekly vol available → neutral baseline
-    }
-  }
-  if(high52!==null&&low52!==null){max+=7;const dL=(p-low52)/(low52||1),dH=(high52-p)/(high52||1);pts+=dL<=0.10?7:dH<=0.05?1:dH<=0.09?2:5;}
-  if(ma50d!==null||ma200d!==null){max+=5;const avail=[ma50d,ma200d].filter(x=>x!==null);const cl=avail.reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b);const pct=Math.abs(p-cl)/p;pts+=pct<=0.02?5:pct<=0.05?4:pct<=0.10?2:0;}
+  const high52=num(s['52W-High']),low52=num(s['52W-Low']);
+
+  // Price vs MA50-D (10)
+  if(ma50d!==null){max+=10; pts+=(p>ma50d)?10:3;}
+  // Price vs MA200-D (10)
+  if(ma200d!==null){max+=10; pts+=(p>ma200d)?10:3;}
+  // MA50-D vs MA200-D golden/death cross (8)
+  if(ma50d!==null&&ma200d!==null){max+=8; pts+=(ma50d>=ma200d)?8:2;}
+  // MA50-W vs MA200-W weekly trend (8) — most important
+  if(ma50w!==null&&ma200w!==null){max+=8; pts+=(ma50w>ma200w)?8:2;}
+  // RSI-D (10)
+  if(rsid!==null){max+=10; pts+=(rsid>=40&&rsid<=70)?8:(rsid<40)?8:2;}
+  // RSI-W (10)
+  if(rsiw!==null){max+=10; pts+=(rsiw>=40&&rsiw<=70)?8:(rsiw<40)?8:2;}
+  // MACD-D (12)
+  if(macdD!==null){max+=12; const pos=macdD>0,ris=sigD!==null?macdD>sigD:false;
+    pts+=pos?(ris?12:6):(ris?4:2);}
+  // MACD-W (16) — increased from 12, volume points redistributed here
+  if(macdW!==null){max+=16; const pos=macdW>0,ris=sigW!==null?macdW>sigW:false;
+    pts+=pos?(ris?16:8):(ris?5:2);}
+  // 52W Position (7)
+  if(high52!==null&&low52!==null){max+=7;
+    const dL=(p-low52)/(low52||1),dH=(high52-p)/(high52||1);
+    pts+=dL<=0.10?7:dH<=0.05?1:dH<=0.09?2:5;}
+  // S/R Location (5)
+  if(ma50d!==null||ma200d!==null){max+=5;
+    const avail=[ma50d,ma200d].filter(x=>x!==null);
+    const cl=avail.reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b);
+    const pct=Math.abs(p-cl)/p;
+    pts+=pct<=0.02?5:pct<=0.05?4:pct<=0.10?2:0;}
+
+  // Dual timeframe bonus (+5)
   let sc=max>0?(pts/max)*100:0;
   const dB=ma50d!==null&&ma200d!==null&&p>ma50d&&p>ma200d&&ma50d>=ma200d&&macdD!==null&&macdD>0;
   const wB=ma50w!==null&&ma200w!==null&&ma50w>ma200w&&macdW!==null&&macdW>0;
   if(dB&&wB) sc+=5;
+
   return Math.round(Math.min(Math.max(sc,0),100));
 }
 
@@ -1163,36 +1199,171 @@ function momentumLabel(s,verdict){
 // ─── PROCESS ALL ROWS ──────────────────────────
 function processAll(){
   return _rawData.map(s=>{
-    const z=computeZones(s),sc=scoreRow(s),vr=verdictFn(s,sc,z);
-    return {
-      Symbol:s.Symbol,Price:s.Price,
-      Support:z.supportZone,S2:z.s2Zone,
-      Resistance:z.resistanceZone,Target:vr.target,
-      Score:sc,VLabel:vr.v,Verdict:vr.verdict,
-      Momentum:momentumLabel(s,vr.verdict),RR:'0'
+    const sym = s.Symbol;
+    const z   = computeZones(s);
+    const sc  = scoreRow(s);
+    const p   = parseFloat(s.Price)||0;
+
+    // ── 4-week score history ──
+    const sc1 = archiveScore(sym,0); // 1 week ago
+    const sc2 = archiveScore(sym,1); // 2 weeks ago
+    const sc3 = archiveScore(sym,2); // 3 weeks ago
+    const sc4 = archiveScore(sym,3); // 4 weeks ago
+
+    // Score delta vs last week
+    const scoreDelta = sc1!==null ? sc-sc1 : null;
+
+    // 4-week trend: fit a slope to available scores
+    const hist = [sc4,sc3,sc2,sc1,sc].filter(x=>x!==null);
+    let trendSlope = 0;
+    if(hist.length>=3){
+      // Simple linear slope over available weeks
+      const n=hist.length;
+      const xm=(n-1)/2;
+      let num=0,den=0;
+      hist.forEach((v,i)=>{ num+=(i-xm)*v; den+=(i-xm)*(i-xm); });
+      trendSlope = den>0?num/den:0;
+    }
+
+    // 4-week sustained trend classification
+    let trendClass = 'neutral';
+    if(hist.length>=3){
+      const rising  = hist.every((v,i)=>i===0||v>=hist[i-1]-2); // consistently rising (allow 2pt dip)
+      const falling = hist.every((v,i)=>i===0||v<=hist[i-1]+2); // consistently falling
+      if(rising&&trendSlope>1.5)  trendClass='sustained-up';
+      else if(falling&&trendSlope<-1.5) trendClass='sustained-down';
+      else if(trendSlope>1)  trendClass='improving';
+      else if(trendSlope<-1) trendClass='weakening';
+    }
+
+    // Price change vs last week
+    const prev1  = _archiveWeeks[0]?.data[sym]||null;
+    const prevP  = prev1?parseFloat(prev1.Price)||0:0;
+    const priceChg = prevP>0?((p-prevP)/prevP)*100:null;
+
+    // MACD and RSI comparison
+    const currMacdW = parseFloat(s['MACD-H-W'])||null;
+    const prevMacdW = prev1?parseFloat(prev1['MACD-H-W'])||null:null;
+    const macdImproving = prevMacdW!==null&&currMacdW!==null&&currMacdW>prevMacdW;
+
+    const currRsi = parseFloat(s['RSI-D'])||null;
+    const prevRsi = prev1?parseFloat(prev1['RSI-D'])||null:null;
+    const rsiImproving = prevRsi!==null&&currRsi!==null&&currRsi>prevRsi&&currRsi<55;
+
+    // ── Enhanced verdict using 4-week context ──
+    const vr = verdictFnEnhanced(s, sc, z, scoreDelta, macdImproving, rsiImproving, priceChg, trendClass, trendSlope);
+
+    // Trend arrow based on 4-week slope
+    let trend='';
+    if(hist.length<2) trend='—';
+    else if(trendClass==='sustained-up')   trend='⬆️';
+    else if(trendClass==='improving')      trend='↗️';
+    else if(trendClass==='sustained-down') trend='⬇️';
+    else if(trendClass==='weakening')      trend='↘️';
+    else trend='→';
+
+    // Score sparkline: show last 4 weeks
+    const sparkScores = [sc4,sc3,sc2,sc1,sc].map((v,i)=>v!==null?v:'?');
+
+    const row = {
+      Symbol:sym, Price:s.Price,
+      Support:z.supportZone, S2:z.s2Zone,
+      Resistance:z.resistanceZone, Target:vr.target,
+      Score:sc, ScoreDelta:scoreDelta, Trend:trend,
+      TrendClass:trendClass, Sparkline:sparkScores,
+      VLabel:vr.v, Verdict:vr.verdict,
+      Momentum:momentumLabel(s,vr.verdict), RR:'0',
+      PriceChg:priceChg
     };
-  }).map(r=>{
-    const p=parseFloat(r.Price),supLo=parseFloat(r.Support.split('\u2013')[0]);
-    r.RR=((Math.abs(r.Target-p))/(Math.abs(p-supLo)||1)).toFixed(2);
-    return r;
+    const supLo=parseFloat(z.supportZone.split('\u2013')[0]);
+    row.RR=((Math.abs(vr.target-p))/(Math.abs(p-supLo)||1)).toFixed(2);
+    return row;
   }).sort((a,b)=>{
     const o={BUY:1,WATCH:2,CAUTION:3,WAIT:4,EXIT:5,AVOID:6};
     return (o[a.Verdict]||9)-(o[b.Verdict]||9)||b.Score-a.Score;
   });
 }
 
+// ── Enhanced verdict — uses 4-week trend context ──
+function verdictFnEnhanced(s, sc, z, scoreDelta, macdImproving, rsiImproving, priceChg, trendClass, trendSlope){
+  const base = verdictFn(s, sc, z);
+
+  // ── STRONGEST BUY: sustained 4-week uptrend + BUY signal ──
+  if(base.verdict==='BUY' && trendClass==='sustained-up' && macdImproving){
+    return {v:'🟢 BUY ⬆️ Strong', verdict:'BUY', target:base.target};
+  }
+
+  // ── CONFIRMED BUY: improving trend + BUY signal ──
+  if(base.verdict==='BUY' && (trendClass==='improving'||trendClass==='sustained-up') && macdImproving){
+    return {v:'🟢 BUY ✓✓', verdict:'BUY', target:base.target};
+  }
+
+  // ── EMERGING BUY: was WATCH, 4-week trend turning up ──
+  if(base.verdict==='WATCH' && trendClass==='sustained-up' && macdImproving && rsiImproving){
+    return {v:'🟢 BUY ↗ Emerging', verdict:'BUY', target:base.target};
+  }
+
+  // ── WATCH WEAKENING: 4-week downtrend ──
+  if(base.verdict==='WATCH' && trendClass==='sustained-down'){
+    return {v:'⚠️ CAUTION ⬇️', verdict:'CAUTION', target:z.downsideTarget||base.target};
+  }
+
+  // ── WATCH FADING: single week sharp drop ──
+  if(base.verdict==='WATCH' && scoreDelta!==null && scoreDelta<=-8){
+    return {v:'⚠️ CAUTION ↘', verdict:'CAUTION', target:z.downsideTarget||base.target};
+  }
+
+  // ── EXIT RECOVERING: 4-week score improving from exit zone ──
+  if(base.verdict==='EXIT' && trendClass==='improving' && trendSlope>2 && macdImproving){
+    return {v:'⚠️ CAUTION ↗ Recovering', verdict:'CAUTION', target:z.downsideTarget||base.target};
+  }
+
+  // ── EXIT CONFIRMED: sustained 4-week downtrend ──
+  if(base.verdict==='EXIT' && trendClass==='sustained-down'){
+    return {v:'🔴 EXIT ⬇️ Confirmed', verdict:'EXIT', target:base.target};
+  }
+
+  return base;
+}
+
 // ─── TABLE HEADER/ROW HELPERS ──────────────────
 function tableHeader(){
-  return `<tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Support 2</th><th>Resistance</th><th>Target</th><th>Score</th><th>Verdict</th><th>Momentum</th></tr>`;
+  const prevNote = _prevDate ? `<span style="font-size:10px;color:#4a6a8a;margin-left:6px">vs ${_prevDate}</span>` : '';
+  return `<tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Support 2</th><th>Resistance</th><th>Target</th><th>Score${prevNote}</th><th>Trend</th><th>Verdict</th><th>Momentum</th></tr>`;
 }
 function tableRow(r,i){
   const cls=r.Verdict==='BUY'?'buy-row':r.Verdict==='EXIT'?'exit-row':r.Verdict==='CAUTION'?'caution-row':r.Verdict==='WATCH'?'watch-row':'';
   const vcls=r.Verdict==='BUY'?'badge-buy':r.Verdict==='EXIT'?'badge-exit':r.Verdict==='CAUTION'?'badge-caution':r.Verdict==='WATCH'?'badge-watch':r.Verdict==='WAIT'?'badge-wait':'badge-avoid';
+  // Score delta display
+  const deltaStr = r.ScoreDelta!==null
+    ? `<span style="font-size:10px;color:${r.ScoreDelta>0?'#4caf50':r.ScoreDelta<0?'#ef5350':'#78909c'};margin-left:3px">`
+      +(r.ScoreDelta>0?'+':'')+r.ScoreDelta+'</span>'
+    : '';
+  // 4-week sparkline (scores separated by →)
+  const spark = r.Sparkline
+    ? '<div style="font-size:9px;color:#4a6a8a;margin-top:2px;letter-spacing:0px">'
+      + r.Sparkline.map((v,i)=>{
+          const isLast=(i===r.Sparkline.length-1);
+          const clr=isLast?'#e0e6ed':v==='?'?'#2e4060':v>=(r.Score-2)?'#4caf50':'#78909c';
+          return `<span style="color:${clr};font-weight:${isLast?'700':'400'}">${v}</span>`;
+        }).join('<span style="color:#2e4060">›</span>')
+      + '</div>'
+    : '';
+  // Price change
+  const pchg = r.PriceChg!==null
+    ? `<span style="font-size:10px;color:${r.PriceChg>0?'#4caf50':r.PriceChg<0?'#ef5350':'#78909c'};margin-left:3px">`
+      +(r.PriceChg>0?'+':'')+r.PriceChg.toFixed(1)+'%</span>'
+    : '';
   return `<tr class="${cls}">
-    <td>${i+1}</td><td><b>${r.Symbol}</b></td><td>${fmt(r.Price)}</td>
+    <td>${i+1}</td>
+    <td><b>${r.Symbol}</b></td>
+    <td>${fmt(r.Price)}${pchg}</td>
     <td>${r.Support}</td><td>${r.S2||'—'}</td><td>${r.Resistance}</td>
-    <td>${fmt(r.Target)}</td><td><b>${r.Score}</b></td>
-    <td class="${vcls}">${r.VLabel}</td><td>${r.Momentum}</td>
+    <td>${fmt(r.Target)}</td>
+    <td><b>${r.Score}</b>${deltaStr}${spark}</td>
+    <td style="font-size:16px;text-align:center">${r.Trend||'—'}</td>
+    <td class="${vcls}">${r.VLabel}</td>
+    <td>${r.Momentum}</td>
   </tr>`;
 }
 
@@ -1391,7 +1562,10 @@ function analyseSingle(){
 const FIELDS=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D',
               'MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume','52W-High','52W-Low',
               'Swing-Low','Swing-High'];
-let _rawData=[];
+let _rawData   = [];
+let _archiveWeeks = []; // [{date, data:{sym→row}}, ...] newest first, up to 4
+let _prevData  = {}; // alias → week[0].data for backward compat
+let _prevDate  = ''; // alias → week[0].date
 let _parsedRows=[];
 
 const KNOWN_HDR=['symbol','price','ma50','ma200','rsi','macd','signal','volume','high','low',
@@ -1520,13 +1694,48 @@ async function saveToGitHub(csvContent, msg){
   }
   setSaveStatus('⏳ Saving to GitHub...','#ffc107');
   try{
+    // Step 1: Read current data.csv (get content + SHA)
     const getRes = await fetch(
       `https://api.github.com/repos/${REPO}/contents/${DATA_FILE}`,
       { headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }}
     );
     if(!getRes.ok) throw new Error('Cannot read data.csv ('+getRes.status+')');
     const fd  = await getRes.json();
-    const nl  = '\n';
+    const sha = fd.sha;
+
+    // Step 2: Archive current data.csv → archive/YYYY-MM-DD.csv
+    setSaveStatus('⏳ Archiving previous data...','#ffc107');
+    const dateEl = document.getElementById('fDataDate');
+    const prevDate = dateEl && dateEl.value ? dateEl.value : new Date().toISOString().slice(0,10);
+    // Use the PREVIOUS Friday date from the existing data date stamp
+    const archiveFile = `archive/${_dataAsOf||prevDate}.csv`;
+    try{
+      // Check if archive already exists
+      const archCheckRes = await fetch(
+        `https://api.github.com/repos/${REPO}/contents/${archiveFile}`,
+        { headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }}
+      );
+      const archBody = { message:`Archive: ${_dataAsOf||prevDate}`, content:fd.content.replace(/\n/g,'') };
+      if(archCheckRes.ok){
+        const archFd = await archCheckRes.json();
+        archBody.sha = archFd.sha; // update if exists
+      }
+      await fetch(
+        `https://api.github.com/repos/${REPO}/contents/${archiveFile}`,
+        {
+          method:'PUT',
+          headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json',
+                    'Content-Type':'application/json' },
+          body: JSON.stringify(archBody)
+        }
+      );
+      setSaveStatus('⏳ Archive saved, writing new data...','#ffc107');
+    }catch(archErr){
+      console.log('Archive note:', archErr.message);
+      // Continue even if archive fails
+    }
+
+    // Step 3: Write new data.csv
     const encoded = btoa(unescape(encodeURIComponent(csvContent)));
     const putRes = await fetch(
       `https://api.github.com/repos/${REPO}/contents/${DATA_FILE}`,
@@ -1534,17 +1743,85 @@ async function saveToGitHub(csvContent, msg){
         method:'PUT',
         headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json',
                   'Content-Type':'application/json' },
-        body: JSON.stringify({ message:msg, content:encoded, sha:fd.sha })
+        body: JSON.stringify({ message:msg, content:encoded, sha:sha })
       }
     );
     if(!putRes.ok){ const e=await putRes.json(); throw new Error(e.message); }
-    setSaveStatus('✅ Saved to GitHub successfully!','#4caf50');
-    setTimeout(()=>setSaveStatus('',''),4000);
+
+    setSaveStatus('✅ Saved + archived previous data!','#4caf50');
+    setTimeout(()=>setSaveStatus('',''),5000);
+
+    // Refresh archive dropdown
+    loadArchiveList();
     return true;
   }catch(err){
     setSaveStatus('❌ '+err.message,'#ef5350');
     return false;
   }
+}
+
+// ── ARCHIVE SYSTEM ────────────────────────────────
+let _archiveDates = [];
+
+async function loadArchiveList(){
+  const token = _idxToken || document.getElementById('idxGhToken').value.trim();
+  try{
+    const res = await fetch(
+      `https://api.github.com/repos/${REPO}/contents/archive`,
+      { headers: token ? { Authorization:`token ${token}` } : {} }
+    );
+    if(!res.ok){ updateArchiveDropdown([]); return; }
+    const files = await res.json();
+    _archiveDates = files
+      .filter(f=>f.name.endsWith('.csv'))
+      .map(f=>f.name.replace('.csv',''))
+      .sort().reverse(); // newest first
+    updateArchiveDropdown(_archiveDates);
+  }catch(e){
+    updateArchiveDropdown([]);
+  }
+}
+
+function updateArchiveDropdown(dates){
+  const sel = document.getElementById('archiveSelect');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">📅 Load past Friday...</option>' +
+    dates.map(d=>`<option value="${d}">${d}</option>`).join('');
+  const wrap = document.getElementById('archiveWrap');
+  if(wrap) wrap.style.display = dates.length ? 'flex' : 'none';
+}
+
+async function loadArchive(){
+  const sel = document.getElementById('archiveSelect');
+  if(!sel||!sel.value) return;
+  const date = sel.value;
+  setSaveStatus(`⏳ Loading archive: ${date}...`,'#ffc107');
+  try{
+    const res = await fetch(
+      `https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`
+    );
+    if(!res.ok) throw new Error('Archive not found');
+    const text = (await res.text()).replace(/^\uFEFF/,'');
+    const lines = text.trim().split(/\r?\n/);
+    const headers = lines[0].split(',').map(h=>h.trim());
+    _rawData = lines.slice(1).filter(l=>l.trim()).map(line=>{
+      const cols=line.split(','); const obj={};
+      headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+      return obj;
+    });
+    setSaveStatus(`✅ Showing archive: ${date}`,'#4fc3f7');
+    runAnalysisFromData();
+    showPage('pgAnalysis');
+  }catch(e){
+    setSaveStatus('❌ '+e.message,'#ef5350');
+  }
+}
+
+function clearArchive(){
+  const sel = document.getElementById('archiveSelect');
+  if(sel) sel.value='';
+  setSaveStatus('','');
+  runAnalysis();
 }
 
 function setSaveStatus(msg,color){
@@ -1709,12 +1986,72 @@ async function loadCSV(){
     });
     try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){}
     renderHome();
+    // Auto-load latest archive for comparison
+    loadLatestArchive();
   } catch(e){
     console.log('CSV not loaded:',e.message);
   }
 }
 
+async function loadLatestArchive(){ await loadArchiveWeeks(); }
+
+async function loadArchiveWeeks(){
+  try{
+    const res = await fetch(
+      `https://api.github.com/repos/${REPO}/contents/archive`
+    );
+    if(!res.ok) return;
+    const files = await res.json();
+    const sorted = files
+      .filter(f=>f.name.endsWith('.csv'))
+      .map(f=>f.name.replace('.csv',''))
+      .sort().reverse()
+      .slice(0,4); // up to 4 most recent Fridays
+
+    if(!sorted.length) return;
+
+    // Load all 4 in parallel
+    const results = await Promise.all(sorted.map(async date=>{
+      try{
+        const r = await fetch(
+          `https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`
+        );
+        if(!r.ok) return null;
+        const text = (await r.text()).replace(/^\uFEFF/,'');
+        const lines = text.trim().split(/\r?\n/);
+        const hdrs  = lines[0].split(',').map(h=>h.trim());
+        const data  = {};
+        lines.slice(1).filter(l=>l.trim()).forEach(line=>{
+          const cols=line.split(','); const obj={};
+          hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+          if(obj.Symbol) data[obj.Symbol]=obj;
+        });
+        return {date, data};
+      }catch(e){ return null; }
+    }));
+
+    _archiveWeeks = results.filter(Boolean);
+    // Backward compat
+    if(_archiveWeeks.length){
+      _prevData = _archiveWeeks[0].data;
+      _prevDate = _archiveWeeks[0].date;
+    }
+    console.log('Archive weeks loaded:', _archiveWeeks.map(w=>w.date));
+    if(_rawData.length) runAnalysisFromData();
+  }catch(e){
+    console.log('Archive weeks error:', e.message);
+  }
+}
+
+// Get score for a symbol from a specific archive week (0=latest, 1=2wks ago etc)
+function archiveScore(sym, weekIdx){
+  if(weekIdx >= _archiveWeeks.length) return null;
+  const row = _archiveWeeks[weekIdx].data[sym];
+  return row ? scoreRow(row) : null;
+}
+
 loadCSV();
+setTimeout(loadArchiveList, 2000);
 </script>
 
 <!-- IMPORT PAGE PASSWORD GATE -->
