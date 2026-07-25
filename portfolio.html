@@ -127,7 +127,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 <!-- NAV -->
 <div class="nav">
   <span class="nav-logo">📈 PSX Portfolio</span>
-  <button class="btn btn-ta"   onclick="window.open('index.html','_self')">📊 Technical Analysis</button>
+  <button class="btn btn-ta"   onclick="window.location.href='index.html'">📊 Technical Analysis</button>
   <button class="btn btn-load" onclick="document.getElementById('csvUpload').click()">📂 Load Holdings</button>
   <input type="file" id="csvUpload" accept=".csv" onchange="loadCSV(event)" style="display:none">
   <span class="asof-badge" id="asofBadge" style="display:none">📅 As of: <b id="asofVal"></b></span>
