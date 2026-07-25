@@ -38,6 +38,58 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .btn-search:hover{ background:#00796b; }
 .btn-div{ background:#b45309; color:#fff; width:160px; }
 .btn-div:hover{ background:#d97706; }
+.btn-cf{ background:#1a3a5c; color:#7ab3d4; width:150px; border:1px solid #2e4060; }
+.btn-cf:hover{ background:#1e4a70; color:#fff; }
+
+/* CASH FLOW PAGE */
+#pgCashFlow{
+  position:fixed; inset:0; background:#0f1923; z-index:7777;
+  display:none; flex-direction:column; overflow-y:auto;
+}
+#pgCashFlow.open{ display:flex; }
+.cf-nav{
+  background:#1a2535; border-bottom:2px solid #2e4060; padding:10px 20px;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex-shrink:0;
+}
+.cf-content{ padding:20px 24px; flex:1; max-width:1200px; margin:0 auto; width:100%; }
+.cf-strip{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+.cf-kpi{ background:#1a2535; border-radius:10px; padding:12px 18px; flex:1;
+  min-width:130px; border:1px solid #2e4060; text-align:center; }
+.cf-kpi .ckv{ font-size:18px; font-weight:800; }
+.cf-kpi .ckl{ font-size:10px; color:#7a9ab5; margin-top:3px;
+  text-transform:uppercase; letter-spacing:.8px; }
+
+/* Add form */
+.cf-form{ background:#1a2535; border-radius:10px; padding:18px 20px;
+  margin-bottom:18px; border:1px solid #2e4060; display:none; }
+.cf-form.open{ display:block; }
+.cf-form-title{ font-size:14px; font-weight:700; color:#4fc3f7;
+  margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid #2e4060; }
+.cf-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
+.cf-field{ display:flex; flex-direction:column; gap:4px; }
+.cf-field label{ font-size:11px; color:#7a9ab5; text-transform:uppercase; letter-spacing:.6px; }
+.cf-field input,.cf-field select{
+  background:#0f1923; color:#e0e6ed; border:1px solid #2e4060;
+  border-radius:6px; padding:9px 12px; font-size:13px; outline:none;
+}
+.cf-field input:focus,.cf-field select:focus{ border-color:#4fc3f7; }
+.cf-calc{ background:#0d1923; border-radius:6px; padding:10px 14px;
+  font-size:13px; color:#a0c4e8; margin-bottom:12px; display:none; }
+.cf-hint{ font-size:12px; color:#4a6a8a; font-style:italic; margin-bottom:10px; }
+
+/* Table */
+.cf-tbl{ width:100%; border-collapse:collapse; font-size:13px; }
+.cf-tbl th{ background:#0d2240; color:#7ab3d4; padding:9px 12px; text-align:left;
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+  border-bottom:2px solid #1565c0; white-space:nowrap; }
+.cf-tbl td{ border-bottom:1px solid #131f2e; padding:8px 12px; }
+.cf-tbl tr:hover td{ background:#1a2535; }
+.cf-tbl tr.buy-r  td{ border-left:3px solid #ef5350; }
+.cf-tbl tr.sell-r td{ border-left:3px solid #4caf50; }
+.cf-tbl tr.div-r  td{ border-left:3px solid #ffc107; }
+.cf-tbl tr.dep-r  td{ border-left:3px solid #4fc3f7; }
+.cf-tbl tr.wdr-r  td{ border-left:3px solid #78909c; }
+.cf-tbl tr.total-r td{ background:#1e3050; font-weight:700; border-top:2px solid #2e4060; }
 
 /* DIVIDEND PAGE */
 #pgDividends{
@@ -414,6 +466,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <button class="btn btn-buysell" onclick="showBuySell()">💱 Buy / Sell</button>
   <button class="btn btn-search" onclick="goHistory()">🔍 Trade History</button>
   <button class="btn btn-div" onclick="goDividends()">💵 Dividends</button>
+  <button class="btn btn-cf" onclick="goCashFlow()">💳 Cash Flow</button>
   <span class="asof" id="asofBadge" style="display:none">📅 As of: <b id="asofVal"></b></span>
 </div>
 
@@ -1744,6 +1797,295 @@ function dvSetStatus(msg,color){
   if(el2){ el2.textContent=msg; el2.style.color=color; }
 }
 
+
+// ── CASH FLOW ─────────────────────────────────────
+const CF_FILE = 'cashflow.csv';
+const CF_HDRS = ['Date','Type','Symbol','Units','Rate','TradeValue','Fees','NetCash','Balance','Description'];
+let _cashFlow = [];
+
+function goCashFlow(){
+  document.getElementById('pgCashFlow').classList.add('open');
+  loadCashFlow();
+}
+function closeCashFlow(){
+  document.getElementById('pgCashFlow').classList.remove('open');
+}
+function toggleCfForm(){
+  const f=document.getElementById('cfForm');
+  f.classList.toggle('open');
+  if(f.classList.contains('open')){
+    // Set today's date
+    document.getElementById('cfDate').value=new Date().toISOString().slice(0,10);
+    cfTypeChanged();
+  }
+}
+
+function cfTypeChanged(){
+  const type=document.getElementById('cfType').value;
+  const isTrade = type==='Buy'||type==='Sell';
+  const isDiv   = type==='Dividend';
+  const isCash  = type==='Deposit'||type==='Withdrawal';
+
+  // Show/hide fields
+  document.getElementById('cfSymField').style.display   = (isTrade||isDiv)?'flex':'none';
+  document.getElementById('cfUnitsField').style.display  = isTrade?'flex':'none';
+  document.getElementById('cfRateField').style.display   = isTrade?'flex':'none';
+  document.getElementById('cfActualField').style.display = isTrade?'flex':'none';
+  document.getElementById('cfAmtField').style.display    = (isDiv||isCash)?'flex':'none';
+
+  // Hints
+  const hints={
+    Buy: '💡 Enter units × rate, then type your ACTUAL cash balance after the trade. System calculates fees automatically.',
+    Sell: '💡 Enter units × rate, then type your ACTUAL cash balance after the trade. System calculates fees automatically.',
+    Dividend: '💡 Enter the net amount received after tax.',
+    Deposit: '💡 Enter the amount you deposited into your trading account.',
+    Withdrawal: '💡 Enter the amount you withdrew from your trading account.'
+  };
+  document.getElementById('cfHint').textContent = hints[type]||'';
+  document.getElementById('cfCalcBox').style.display='none';
+}
+
+function cfCalc(){
+  const type   = document.getElementById('cfType').value;
+  const units  = parseFloat(document.getElementById('cfUnits')?.value)||0;
+  const rate   = parseFloat(document.getElementById('cfRate')?.value)||0;
+  const actual = parseFloat(document.getElementById('cfActual')?.value)||0;
+  const box    = document.getElementById('cfCalcBox');
+
+  if(type==='Buy'||type==='Sell'){
+    const tradeVal = units*rate;
+    if(!tradeVal){ box.style.display='none'; return; }
+
+    // Current balance = last entry balance or CAPITAL.freeCash
+    const currentBal = _cashFlow.length>0
+      ? parseFloat(_cashFlow[_cashFlow.length-1].Balance||0)
+      : CAPITAL.freeCash;
+
+    if(actual>0){
+      // Calculate fees from difference
+      const expected = type==='Buy' ? currentBal-tradeVal : currentBal+tradeVal;
+      const fees     = Math.abs(actual-expected);
+      const feesPct  = tradeVal>0?(fees/tradeVal*100).toFixed(2):0;
+      box.style.display='block';
+      box.innerHTML=`
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <div>
+            <div style="color:#7a9ab5;font-size:11px">Trade Value</div>
+            <div style="color:#4fc3f7;font-weight:700">PKR ${Math.round(tradeVal).toLocaleString()}</div>
+          </div>
+          <div>
+            <div style="color:#7a9ab5;font-size:11px">Fees & Tax</div>
+            <div style="color:#ef5350;font-weight:700">PKR ${Math.round(fees).toLocaleString()}
+              <span style="font-size:11px;color:#7a9ab5">(${feesPct}%)</span>
+            </div>
+          </div>
+          <div>
+            <div style="color:#7a9ab5;font-size:11px">New Balance</div>
+            <div style="color:#4caf50;font-weight:700">PKR ${Math.round(actual).toLocaleString()}</div>
+          </div>
+        </div>`;
+    } else {
+      box.style.display='block';
+      box.innerHTML=`<span style="color:#7a9ab5">Trade value: PKR ${Math.round(tradeVal).toLocaleString()} — enter actual balance to calculate fees</span>`;
+    }
+  }
+}
+
+async function loadCashFlow(){
+  try{
+    const res=await fetch(CF_FILE+'?'+Date.now());
+    if(!res.ok){ _cashFlow=[]; renderCashFlow(); return; }
+    const text=(await res.text()).replace(/^\uFEFF/,'');
+    const lines=text.trim().split(/\r?\n/);
+    const hdrs=lines[0].split(',').map(h=>h.trim());
+    _cashFlow=lines.slice(1).filter(l=>l.trim()).map(line=>{
+      const cols=line.split(','); const obj={};
+      hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+      return obj;
+    });
+    renderCashFlow();
+  }catch(e){ _cashFlow=[]; renderCashFlow(); }
+}
+
+function renderCashFlow(){
+  // KPIs
+  const deps  = _cashFlow.filter(r=>r.Type==='Deposit').reduce((s,r)=>s+parseFloat(r.NetCash||0),0);
+  const wdrs  = _cashFlow.filter(r=>r.Type==='Withdrawal').reduce((s,r)=>s+Math.abs(parseFloat(r.NetCash||0)),0);
+  const buys  = _cashFlow.filter(r=>r.Type==='Buy').reduce((s,r)=>s+Math.abs(parseFloat(r.NetCash||0)),0);
+  const sells = _cashFlow.filter(r=>r.Type==='Sell').reduce((s,r)=>s+parseFloat(r.NetCash||0),0);
+  const divs  = _cashFlow.filter(r=>r.Type==='Dividend').reduce((s,r)=>s+parseFloat(r.NetCash||0),0);
+  const fees  = _cashFlow.reduce((s,r)=>s+parseFloat(r.Fees||0),0);
+  const bal   = _cashFlow.length>0
+    ? parseFloat(_cashFlow[_cashFlow.length-1].Balance||0)
+    : CAPITAL.freeCash;
+
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('cfBalance',  'PKR '+Math.round(bal).toLocaleString());
+  set('cfDeposits', 'PKR '+Math.round(deps).toLocaleString());
+  set('cfWithdrawn','PKR '+Math.round(wdrs).toLocaleString());
+  set('cfBuys',     'PKR '+Math.round(buys).toLocaleString());
+  set('cfSells',    'PKR '+Math.round(sells).toLocaleString());
+  set('cfDivs',     'PKR '+Math.round(divs).toLocaleString());
+  set('cfFees',     'PKR '+Math.round(fees).toLocaleString());
+  set('cfCount',    _cashFlow.length+' entries · latest first');
+
+  if(!_cashFlow.length){
+    document.getElementById('cfTableWrap').innerHTML=
+      '<div style="background:#1a2535;border-radius:10px;padding:40px;text-align:center;color:#4a6a8a;border:1px solid #2e4060">'+
+      'No cash flow entries yet. Click <b>➕ Add Entry</b> to start recording.</div>';
+    return;
+  }
+
+  // Show newest first
+  const sorted=[..._cashFlow].reverse();
+  const typeIcon={Buy:'📉',Sell:'📈',Dividend:'💰',Deposit:'⬇️',Withdrawal:'⬆️'};
+  const typeCls ={Buy:'buy-r',Sell:'sell-r',Dividend:'div-r',Deposit:'dep-r',Withdrawal:'wdr-r'};
+  const typeClr ={Buy:'#ef9a9a',Sell:'#a5d6a7',Dividend:'#ffd54f',Deposit:'#4fc3f7',Withdrawal:'#90a4ae'};
+
+  let html=`<div style="overflow-x:auto;background:#1a2535;border-radius:10px;border:1px solid #2e4060">
+  <table class="cf-tbl">
+    <tr>
+      <th>#</th><th>Date</th><th>Type</th><th>Symbol</th>
+      <th>Units</th><th>Rate</th><th>Trade Value</th>
+      <th>Fees & Tax</th><th>Net Cash</th><th>Balance</th><th>Description</th>
+    </tr>`;
+
+  sorted.forEach((r,i)=>{
+    const cls   = typeCls[r.Type]||'';
+    const clr   = typeClr[r.Type]||'#e0e6ed';
+    const net   = parseFloat(r.NetCash||0);
+    const fees  = parseFloat(r.Fees||0);
+    const bal   = parseFloat(r.Balance||0);
+    const tv    = parseFloat(r.TradeValue||0);
+    const isOut = r.Type==='Buy'||r.Type==='Withdrawal';
+
+    html+=`<tr class="${cls}">
+      <td class="c-gray">${sorted.length-i}</td>
+      <td style="color:#a0c4e8;white-space:nowrap">${r.Date}</td>
+      <td style="white-space:nowrap">
+        <span style="color:${clr};font-weight:700">${typeIcon[r.Type]||''} ${r.Type}</span>
+      </td>
+      <td class="sym">${r.Symbol||'—'}</td>
+      <td>${r.Units&&r.Units!=='0'?parseInt(r.Units).toLocaleString():'—'}</td>
+      <td class="c-gold">${r.Rate&&r.Rate!=='0'?parseFloat(r.Rate).toFixed(2):'—'}</td>
+      <td>${tv>0?Math.round(tv).toLocaleString():'—'}</td>
+      <td class="c-red">${fees>0?Math.round(fees).toLocaleString():'—'}</td>
+      <td style="color:${isOut?'#ef9a9a':'#a5d6a7'};font-weight:700">
+        ${isOut?'-':'+'}${Math.round(Math.abs(net)).toLocaleString()}
+      </td>
+      <td class="c-blue bold">${Math.round(bal).toLocaleString()}</td>
+      <td style="color:#7a9ab5;font-size:12px">${r.Description||'—'}</td>
+    </tr>`;
+  });
+
+  html+=`</table></div>`;
+  document.getElementById('cfTableWrap').innerHTML=html;
+}
+
+async function saveCfEntry(){
+  const type   = document.getElementById('cfType').value;
+  const date   = document.getElementById('cfDate').value;
+  const sym    = (document.getElementById('cfSym')?.value||'').toUpperCase().trim();
+  const units  = parseFloat(document.getElementById('cfUnits')?.value)||0;
+  const rate   = parseFloat(document.getElementById('cfRate')?.value)||0;
+  const actual = parseFloat(document.getElementById('cfActual')?.value)||0;
+  const amt    = parseFloat(document.getElementById('cfAmt')?.value)||0;
+  const desc   = document.getElementById('cfDesc').value.trim();
+
+  if(!date){ cfSetStatus('❌ Date is required','#ef5350'); return; }
+
+  // Current balance
+  const currentBal = _cashFlow.length>0
+    ? parseFloat(_cashFlow[_cashFlow.length-1].Balance||0)
+    : CAPITAL.freeCash;
+
+  let tradeVal=0, fees=0, netCash=0, newBal=0;
+
+  if(type==='Buy'){
+    if(!units||!rate||!actual){ cfSetStatus('❌ Units, Rate and Actual Balance required','#ef5350'); return; }
+    tradeVal = units*rate;
+    netCash  = -(actual - (currentBal - tradeVal) + actual - actual); // actual - currentBal
+    netCash  = actual - currentBal; // negative
+    fees     = Math.abs(tradeVal - Math.abs(netCash));
+    newBal   = actual;
+  } else if(type==='Sell'){
+    if(!units||!rate||!actual){ cfSetStatus('❌ Units, Rate and Actual Balance required','#ef5350'); return; }
+    tradeVal = units*rate;
+    netCash  = actual - currentBal; // positive
+    fees     = Math.abs(tradeVal - Math.abs(netCash));
+    newBal   = actual;
+  } else if(type==='Dividend'){
+    if(!amt){ cfSetStatus('❌ Amount required','#ef5350'); return; }
+    netCash  = amt;
+    newBal   = currentBal + amt;
+  } else if(type==='Deposit'){
+    if(!amt){ cfSetStatus('❌ Amount required','#ef5350'); return; }
+    netCash  = amt;
+    newBal   = currentBal + amt;
+  } else if(type==='Withdrawal'){
+    if(!amt){ cfSetStatus('❌ Amount required','#ef5350'); return; }
+    netCash  = -amt;
+    newBal   = currentBal - amt;
+  }
+
+  const autoDesc = desc || (type==='Buy'?`Bought ${units} ${sym}`:
+    type==='Sell'?`Sold ${units} ${sym}`:
+    type==='Dividend'?`${sym} dividend`:type);
+
+  const newRow = [
+    date, type, sym||'—', units||0, rate||0,
+    tradeVal.toFixed(2), fees.toFixed(2),
+    netCash.toFixed(2), newBal.toFixed(2),
+    autoDesc
+  ].join(',');
+
+  // Save to GitHub
+  const token = window._ghToken();
+  if(!token){
+    // Add to memory
+    const obj={}; CF_HDRS.forEach((h,i)=>obj[h]=newRow.split(',')[i]||'');
+    _cashFlow.push(obj);
+    // Update CAPITAL.freeCash
+    CAPITAL.freeCash = newBal;
+    cfSetStatus('⚠️ No token — saved in session only','#ffc107');
+    renderCashFlow(); toggleCfForm(); return;
+  }
+
+  cfSetStatus('⏳ Saving...','#ffc107');
+  try{
+    const getRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,
+      {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}});
+    if(!getRes.ok) throw new Error('Cannot read cashflow.csv');
+    const fd=await getRes.json();
+    const current=atob(fd.content.replace(/\n/g,''));
+    const nl='\n';
+    const updated=current.trimEnd()+nl+newRow+nl;
+    const encoded=btoa(unescape(encodeURIComponent(updated)));
+    const putRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,{
+      method:'PUT',
+      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify({message:`Cash flow: ${type} ${sym||''} ${date}`,content:encoded,sha:fd.sha})
+    });
+    if(!putRes.ok){const e=await putRes.json();throw new Error(e.message);}
+
+    // Update cash.json balance too
+    CAPITAL.freeCash = newBal;
+    updateCAPITAL(null,0,0,newBal);
+
+    cfSetStatus('✅ Saved!','#4caf50');
+    setTimeout(()=>cfSetStatus('',''),3000);
+    await loadCashFlow();
+    toggleCfForm();
+  }catch(e){ cfSetStatus('❌ '+e.message,'#ef5350'); }
+}
+
+function cfSetStatus(msg,color){
+  ['cfStatus','cfFormStatus'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.textContent=msg;el.style.color=color;}
+  });
+}
+
 // ── AUTO LOAD ─────────────────────────────────
 async function autoLoad(){
   await loadDataCSV();
@@ -1917,6 +2259,105 @@ autoLoad();
       <p style="color:#4a6a8a;padding:20px;text-align:center">Loading dividend records...</p>
     </div>
 
+  </div>
+</div>
+
+
+<!-- CASH FLOW PAGE -->
+<div id="pgCashFlow">
+  <div class="cf-nav">
+    <span style="font-size:18px;font-weight:700;color:#4fc3f7;margin-right:6px">💳 Cash Flow</span>
+    <button onclick="closeCashFlow()" style="background:#2e4060;color:#a0c4e8;border:none;
+      border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer">
+      ← Back to Portfolio
+    </button>
+    <button onclick="toggleCfForm()" style="background:#1565c0;color:#fff;border:none;
+      border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer">
+      ➕ Add Entry
+    </button>
+    <span id="cfStatus" style="font-size:13px;margin-left:8px"></span>
+  </div>
+
+  <div class="cf-content">
+
+    <!-- KPI strip -->
+    <div class="cf-strip">
+      <div class="cf-kpi"><div class="ckv c-blue"  id="cfBalance">—</div><div class="ckl">Current Balance</div></div>
+      <div class="cf-kpi"><div class="ckv c-blue"  id="cfDeposits">—</div><div class="ckl">Total Deposited</div></div>
+      <div class="cf-kpi"><div class="ckv c-gray"  id="cfWithdrawn">—</div><div class="ckl">Total Withdrawn</div></div>
+      <div class="cf-kpi"><div class="ckv c-red"   id="cfBuys">—</div><div class="ckl">Total Bought</div></div>
+      <div class="cf-kpi"><div class="ckv c-green" id="cfSells">—</div><div class="ckl">Total Sold</div></div>
+      <div class="cf-kpi"><div class="ckv c-gold"  id="cfDivs">—</div><div class="ckl">Dividends Received</div></div>
+      <div class="cf-kpi"><div class="ckv c-red"   id="cfFees">—</div><div class="ckl">Total Fees</div></div>
+    </div>
+
+    <!-- Add form (hidden by default) -->
+    <div class="cf-form" id="cfForm">
+      <div class="cf-form-title">➕ Add Cash Flow Entry</div>
+      <div class="cf-grid">
+        <div class="cf-field">
+          <label>Type</label>
+          <select id="cfType" onchange="cfTypeChanged()">
+            <option value="Buy">📉 Buy (cash out)</option>
+            <option value="Sell">📈 Sell (cash in)</option>
+            <option value="Dividend">💰 Dividend received</option>
+            <option value="Deposit">⬇️ Cash deposit</option>
+            <option value="Withdrawal">⬆️ Cash withdrawal</option>
+          </select>
+        </div>
+        <div class="cf-field">
+          <label>Date</label>
+          <input type="date" id="cfDate">
+        </div>
+        <div class="cf-field" id="cfSymField">
+          <label>Symbol</label>
+          <input type="text" id="cfSym" placeholder="e.g. MCB" style="text-transform:uppercase">
+        </div>
+        <div class="cf-field" id="cfUnitsField">
+          <label>Units</label>
+          <input type="number" id="cfUnits" placeholder="e.g. 50" oninput="cfCalc()">
+        </div>
+        <div class="cf-field" id="cfRateField">
+          <label>Rate (PKR)</label>
+          <input type="number" id="cfRate" placeholder="e.g. 403.86" step="0.01" oninput="cfCalc()">
+        </div>
+        <div class="cf-field" id="cfActualField">
+          <label>Actual Cash After Trade</label>
+          <input type="number" id="cfActual" placeholder="e.g. 279620" oninput="cfCalc()">
+        </div>
+        <div class="cf-field" id="cfAmtField" style="display:none">
+          <label>Amount (PKR)</label>
+          <input type="number" id="cfAmt" placeholder="e.g. 50000" oninput="cfCalc()">
+        </div>
+        <div class="cf-field">
+          <label>Description (optional)</label>
+          <input type="text" id="cfDesc" placeholder="e.g. Bought 50 MCB">
+        </div>
+      </div>
+      <div class="cf-hint" id="cfHint"></div>
+      <div class="cf-calc" id="cfCalcBox"></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn btn-load" onclick="saveCfEntry()" style="width:180px;height:38px">
+          💾 Save Entry
+        </button>
+        <button style="background:#2e4060;color:#a0c4e8;border:none;border-radius:6px;
+          padding:8px 16px;font-size:13px;cursor:pointer" onclick="toggleCfForm()">
+          Cancel
+        </button>
+        <span id="cfFormStatus" style="font-size:13px"></span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:15px;font-weight:700;color:#4fc3f7">
+        📋 Cash Flow History
+        <span style="font-size:12px;color:#7a9ab5;font-weight:400;margin-left:8px" id="cfCount"></span>
+      </div>
+    </div>
+    <div id="cfTableWrap">
+      <p style="color:#4a6a8a;text-align:center;padding:30px">Loading cash flow...</p>
+    </div>
   </div>
 </div>
 
