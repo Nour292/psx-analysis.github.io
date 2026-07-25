@@ -605,6 +605,24 @@ function buildAction(){
     </tr>`;
   });
   html+=`</table></div>`;
+  html += `<div style="margin-top:16px;padding:12px 18px;background:#0d1f35;
+    border-radius:8px;border:1px solid #1565c0;display:flex;align-items:center;
+    justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div>
+      <div style="font-size:13px;color:#a0c4e8;font-weight:600">
+        📊 Get latest BUY &amp; EXIT signals
+      </div>
+      <div style="font-size:12px;color:#4a6a8a;margin-top:2px">
+        Run weekly analysis to see which symbols to buy or exit this week
+      </div>
+    </div>
+    <a href="index.html" style="
+      background:#1565c0;color:#fff;text-decoration:none;
+      padding:9px 20px;border-radius:7px;font-size:13px;font-weight:700;
+      display:inline-flex;align-items:center;gap:6px;white-space:nowrap">
+      ▶ Run Analysis — Weekly →
+    </a>
+  </div>`;
   document.getElementById('tab-action').innerHTML=html;
 }
 
