@@ -459,7 +459,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   let _ghToken = '';
 
   if(sessionStorage.getItem(KEY)==='1'){
-    _ghToken = sessionStorage.getItem('psx_gh_token')||'';
+    _ghToken = localStorage.getItem('psx_gh_token')||'';
     document.getElementById('pwGate').style.display='none';
   }
 
@@ -469,7 +469,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     if(val === PW){
       _ghToken = token;
       sessionStorage.setItem(KEY,'1');
-      if(token) sessionStorage.setItem('psx_gh_token', token);
+      if(token) localStorage.setItem('psx_gh_token', token);
       document.getElementById('pwGate').style.display='none';
     } else {
       const err=document.getElementById('pwErr');
