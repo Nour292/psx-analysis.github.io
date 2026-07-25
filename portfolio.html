@@ -513,83 +513,109 @@ function buildCapital(){
   const holdingsWorth  = _holdings.reduce((s,h)=>s+h.qty*(h.price||h.avg),0);
   const unrealPL       = holdingsWorth - holdingsAtCost;
   const annualDiv      = _holdings.reduce((s,h)=>s+h.qty*h.dps,0);
-
-  const totalCashIn    = CAPITAL.invested;
-  const totalCashOut   = CAPITAL.withdrawn;
-  const netCashProfit  = totalCashOut - totalCashIn;
   const freeCash       = CAPITAL.freeCash;
+  const totalIn        = CAPITAL.invested;
+  const totalOut       = CAPITAL.withdrawn;
+  const netCash        = totalOut - totalIn;
   const totalValue     = holdingsWorth + freeCash;
-  const totalReturn    = totalCashOut + totalValue;
-  const netGain        = totalReturn - totalCashIn;
-  const roi            = totalCashIn>0?((netGain/totalCashIn)*100):0;
+  const totalReturn    = totalOut + totalValue;
+  const netGain        = totalReturn - totalIn;
+  const roi            = totalIn>0?(netGain/totalIn)*100:0;
   const years          = 4.8;
-  const cagr           = (Math.pow(totalReturn/totalCashIn,1/years)-1)*100;
+  const cagr           = (Math.pow(totalReturn/totalIn,1/years)-1)*100;
+  const roiBar         = Math.min(roi/1.5,100);
 
-  const row=(lbl,val,cls='',note='')=>
-    `<tr><td style="color:#7a9ab5;width:260px">${lbl}</td>
-     <td class="${cls} bold" style="font-size:15px">${val}</td>
-     ${note?`<td style="font-size:12px;color:#4a6a8a">${note}</td>`:'<td></td>'}
-    </tr>`;
+  const card=(icon,title,value,sub,color,bg)=>`
+    <div style="background:${bg};border-radius:10px;padding:16px 20px;border-left:4px solid ${color}">
+      <div style="font-size:11px;color:#7a9ab5;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">${icon} ${title}</div>
+      <div style="font-size:22px;font-weight:800;color:${color};line-height:1">${value}</div>
+      ${sub?`<div style="font-size:12px;color:#7a9ab5;margin-top:4px">${sub}</div>`:''}
+    </div>`;
 
-  let html=`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1000px">
-
-    <!-- LEFT: Cash Flow -->
-    <div>
-      <div style="font-size:12px;font-weight:700;color:#4fc3f7;text-transform:uppercase;
-           letter-spacing:.8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #2e4060">
-        💵 Cash Flow History
+  const row=(lbl,val,valColor,note)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;
+         padding:10px 0;border-bottom:1px solid #1a2535">
+      <div style="font-size:13px;color:#a0c4e8">${lbl}</div>
+      <div style="text-align:right">
+        <div style="font-size:15px;font-weight:700;color:${valColor}">${val}</div>
+        ${note?`<div style="font-size:11px;color:#4a6a8a">${note}</div>`:''}
       </div>
-      <table class="tbl">
-        ${row('Portfolio started',CAPITAL.started,'c-gray')}
-        ${row('Total cash invested','PKR '+fmtN(totalCashIn),'c-blue','Since Sep 2021')}
-        ${row('Total cash withdrawn','PKR '+fmtN(totalCashOut),'c-green','Profits + capital')}
-        ${row('Net cash profit','PKR '+fmtN(netCashProfit),netCashProfit>=0?'c-green':'c-red','Withdrawn − Invested')}
-        ${row('Free cash now','PKR '+fmtN(freeCash),'c-gold','Idle / available')}
-      </table>
+    </div>`;
+
+  let html=`<div style="max-width:1000px">
+
+    <!-- ══ TOP SCORECARD ══ -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+      ${card('🏆','Overall ROI',roi.toFixed(1)+'%','Since Sep 2021','#4caf50','#0d1f0d')}
+      ${card('📈','CAGR',cagr.toFixed(1)+'%','Compound Annual','#ffc107','#1a1500')}
+      ${card('💰','Net Gain','PKR '+fmtN(netGain),'Total profit','#4fc3f7','#051525')}
     </div>
 
-    <!-- RIGHT: Portfolio Value -->
-    <div>
-      <div style="font-size:12px;font-weight:700;color:#4fc3f7;text-transform:uppercase;
-           letter-spacing:.8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #2e4060">
-        📊 Current Portfolio Value
+    <!-- ══ ROI BAR ══ -->
+    <div style="background:#1a2535;border-radius:10px;padding:16px 20px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px">
+        <span style="color:#7a9ab5">Started with</span>
+        <span style="color:#4fc3f7;font-weight:700">PKR ${fmtN(totalIn)}</span>
+        <span style="color:#7a9ab5">→ Now worth</span>
+        <span style="color:#4caf50;font-weight:700">PKR ${fmtN(totalReturn)}</span>
+        <span style="color:#ffc107;font-weight:700">+${roi.toFixed(1)}% in ${years} yrs</span>
       </div>
-      <table class="tbl">
-        ${row('Holdings at cost','PKR '+fmtN(holdingsAtCost),'c-blue')}
-        ${row('Holdings at market','PKR '+fmtN(holdingsWorth),'c-gold')}
-        ${row('Unrealised P/L','PKR '+(unrealPL>=0?'+':'')+fmtN(unrealPL),unrealPL>=0?'c-green':'c-red')}
-        ${row('Free cash','PKR '+fmtN(freeCash),'c-gold')}
-        ${row('Total value now','PKR '+fmtN(totalValue),'c-green','Holdings + cash')}
-      </table>
-    </div>
-
-    <!-- FULL WIDTH: ROI Summary -->
-    <div style="grid-column:1/-1">
-      <div style="font-size:12px;font-weight:700;color:#4fc3f7;text-transform:uppercase;
-           letter-spacing:.8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #2e4060">
-        🏆 Overall Performance
-      </div>
-      <table class="tbl">
-        ${row('Total cash invested','PKR '+fmtN(totalCashIn),'c-blue')}
-        ${row('Total value created','PKR '+fmtN(totalReturn),'c-green','Cash out + current value')}
-        ${row('Net total gain','PKR '+fmtN(netGain),netGain>=0?'c-green':'c-red')}
-        ${row('Overall ROI',roi.toFixed(1)+'%',roi>=0?'c-green':'c-red','Since Sep 2021')}
-        ${row('CAGR (4.8 years)',cagr.toFixed(1)+'%','c-gold','Compound Annual Growth Rate')}
-        ${row('Annual dividend income','PKR '+fmtN(annualDiv),'c-green','Based on current DPS')}
-      </table>
-
-      <!-- ROI visual bar -->
-      <div style="margin-top:16px;background:#1a2535;border-radius:8px;padding:14px 18px">
-        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
-          <span class="c-blue">Invested: PKR ${fmtN(totalCashIn)}</span>
-          <span class="c-green">Value now: PKR ${fmtN(totalReturn)}</span>
-          <span class="c-gold">Gain: ${roi.toFixed(1)}% in ${years} years</span>
+      <div style="background:#0f1923;border-radius:20px;height:22px;overflow:hidden;border:1px solid #2e4060">
+        <div style="width:${roiBar}%;height:100%;background:linear-gradient(90deg,#1565c0,#4caf50);
+             border-radius:20px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px">
+          <span style="font-size:12px;font-weight:700;color:#fff">${roi.toFixed(1)}% ROI</span>
         </div>
-        <div class="pb" style="height:20px">
-          <div class="pf" style="width:${Math.min(roi/2,100)}%;background:linear-gradient(90deg,#1565c0,#4caf50)">
-            <span class="pp" style="font-size:12px">${roi.toFixed(1)}% ROI</span>
-          </div>
+      </div>
+    </div>
+
+    <!-- ══ TWO COLUMNS ══ -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+
+      <!-- Cash Flow -->
+      <div style="background:#1a2535;border-radius:10px;padding:16px 20px">
+        <div style="font-size:12px;font-weight:700;color:#4fc3f7;text-transform:uppercase;
+             letter-spacing:.8px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #1565c0">
+          💵 Cash Flow
+        </div>
+        ${row('Total Cash In',  'PKR '+fmtN(totalIn),  '#4fc3f7','All deposits since Sep 2021')}
+        ${row('Total Cash Out', 'PKR '+fmtN(totalOut), '#4caf50','Withdrawals + profits')}
+        ${row('Net Cash Profit','PKR '+fmtN(netCash),  netCash>=0?'#4caf50':'#ef5350','Out minus In')}
+        ${row('Free Cash Now',  'PKR '+fmtN(freeCash), '#ffc107','Idle — available to deploy')}
+      </div>
+
+      <!-- Portfolio Value -->
+      <div style="background:#1a2535;border-radius:10px;padding:16px 20px">
+        <div style="font-size:12px;font-weight:700;color:#4fc3f7;text-transform:uppercase;
+             letter-spacing:.8px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #1565c0">
+          📊 Portfolio Value
+        </div>
+        ${row('Holdings at Cost',   'PKR '+fmtN(holdingsAtCost), '#4fc3f7','')}
+        ${row('Holdings at Market', 'PKR '+fmtN(holdingsWorth),  '#ffc107','Last update price')}
+        ${row('Unrealised P/L',     (unrealPL>=0?'+':'')+'PKR '+fmtN(Math.abs(unrealPL)), unrealPL>=0?'#4caf50':'#ef5350',unrealPL>=0?'Paper gain':'Paper loss')}
+        ${row('Free Cash',          'PKR '+fmtN(freeCash),       '#ffc107','')}
+        ${row('Total Value',        'PKR '+fmtN(totalValue),     '#4caf50','Holdings + Cash')}
+      </div>
+    </div>
+
+    <!-- ══ DIVIDEND PROGRESS ══ -->
+    <div style="background:#0d1f0d;border:1px solid #2e7d32;border-radius:10px;padding:16px 20px">
+      <div style="font-size:12px;font-weight:700;color:#4caf50;text-transform:uppercase;
+           letter-spacing:.8px;margin-bottom:12px">📅 Dividend Goal Progress</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:32px;font-weight:800;color:#4caf50;line-height:1">PKR ${fmtN(annualDiv)}</div>
+          <div style="font-size:13px;color:#7a9ab5;margin-top:4px">Annual dividend income</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:15px;font-weight:700;color:#ffc107">Gap: PKR ${fmtN(Math.max(0,1000000-annualDiv))}</div>
+          <div style="font-size:13px;color:#7a9ab5">to reach PKR 1,000,000 target</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;background:#0f1923;border-radius:20px;height:18px;overflow:hidden;border:1px solid #2e4060">
+        <div style="width:${Math.min(annualDiv/10000,100)}%;height:100%;
+             background:linear-gradient(90deg,#2e7d32,#4caf50);border-radius:20px;
+             display:flex;align-items:center;justify-content:flex-end;padding-right:8px">
+          <span style="font-size:11px;font-weight:700;color:#fff">${(annualDiv/10000).toFixed(1)}%</span>
         </div>
       </div>
     </div>
