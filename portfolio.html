@@ -299,7 +299,8 @@ const CAPITAL = {
   started:    'Sep 2021',
   invested:   2690000,   // total cash added since start
   withdrawn:  3000000,   // total cash withdrawn
-  freeCash:   448387     // idle cash available now
+  freeCash:   448387,    // idle cash available now
+  cashAsOf:   ''         // loaded from cash.json
 };
 
 let _holdings = [];
@@ -864,10 +865,66 @@ async function submitTrade(action){
 }
 
 function updateCAPITAL(action, units, rate, newCash){
-  // Update free cash display
   CAPITAL.freeCash = newCash;
   const el=document.getElementById('kFreeCash');
   if(el) el.textContent='PKR '+Math.round(newCash).toLocaleString();
+}
+
+async function saveCashOnly(){
+  const cash  = parseFloat(document.getElementById('bsCash').value)||0;
+  const token = window._ghToken();
+  const now   = new Date();
+  const asof  = now.toISOString().slice(0,10);
+
+  if(!token){
+    setStatus('⚠️ No GitHub token — cash updated in session only','#ffc107');
+    updateCAPITAL(null,0,0,cash);
+    CAPITAL.cashAsOf = asof;
+    return;
+  }
+
+  setStatus('⏳ Saving cash balance...','#ffc107');
+  try{
+    const CASH_FILE = 'cash.json';
+    const getRes = await fetch(
+      `https://api.github.com/repos/${window._REPO}/contents/${CASH_FILE}`,
+      { headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }}
+    );
+    if(!getRes.ok) throw new Error('Cannot read cash.json ('+getRes.status+')');
+    const fd  = await getRes.json();
+    const sha = fd.sha;
+
+    const newData    = JSON.stringify({ freeCash:cash, asof:asof }, null, 2);
+    const encoded    = btoa(unescape(encodeURIComponent(newData)));
+
+    const putRes = await fetch(
+      `https://api.github.com/repos/${window._REPO}/contents/${CASH_FILE}`,
+      {
+        method:'PUT',
+        headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json',
+                  'Content-Type':'application/json' },
+        body: JSON.stringify({
+          message: `Update free cash: PKR ${Math.round(cash).toLocaleString()}`,
+          content: encoded,
+          sha:     sha
+        })
+      }
+    );
+    if(!putRes.ok){ const e=await putRes.json(); throw new Error(e.message||putRes.status); }
+
+    CAPITAL.freeCash  = cash;
+    CAPITAL.cashAsOf  = asof;
+    updateCAPITAL(null,0,0,cash);
+
+    const asofEl=document.getElementById('cashAsOf');
+    if(asofEl) asofEl.textContent='as of '+asof;
+
+    setStatus('✅ Free cash updated: PKR '+Math.round(cash).toLocaleString(),'#4caf50');
+    setTimeout(()=>{ buildAll(); },1500);
+
+  }catch(err){
+    setStatus('❌ '+err.message,'#ef5350');
+  }
 }
 
 function setStatus(msg, color){
@@ -894,11 +951,15 @@ autoLoad();
     <div class="bs-title">💱 Record Trade</div>
 
     <!-- Free Cash -->
-    <div class="cash-row">
+    <div class="cash-row" style="flex-wrap:wrap;gap:8px">
       <span class="cash-lbl">💵 Free Cash:</span>
-      <input type="number" class="cash-edit" id="bsCash"
-        placeholder="448387" value="448387" step="1">
-      <span style="font-size:12px;color:#4a6a8a">PKR — update before saving</span>
+      <input type="number" class="cash-edit" id="bsCash" step="1">
+      <span style="font-size:12px;color:#4a6a8a" id="cashAsOf"></span>
+      <button onclick="saveCashOnly()" style="
+        background:#1565c0;color:#fff;border:none;border-radius:6px;
+        padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto">
+        💾 Update Cash Only
+      </button>
     </div>
 
     <div class="bs-grid">
