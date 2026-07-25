@@ -13,179 +13,152 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .nav-logo{ font-size:18px; font-weight:700; color:#4fc3f7; margin-right:6px; }
 .btn{ padding:8px 18px; border:none; border-radius:6px; font-size:13px; font-weight:600;
-  cursor:pointer; transition:all .15s; width:180px; height:38px;
-  display:inline-flex; align-items:center; justify-content:center; }
-.btn-ta   { background:#1565c0; color:#fff; }
+  cursor:pointer; transition:all .15s; height:38px;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+.btn-ta  { background:#1565c0; color:#fff; width:200px; }
 .btn-ta:hover{ background:#1976d2; }
-.btn-home { background:#2e4060; color:#a0c4e8; }
-.btn-home:hover{ background:#3a5070; }
-.btn-load { background:#2e7d32; color:#fff; }
+.btn-load{ background:#2e7d32; color:#fff; width:180px; }
 .btn-load:hover{ background:#388e3c; }
-
-/* KPI TILES */
-.kpi-bar{ display:flex; gap:12px; padding:16px 24px; flex-wrap:wrap; }
-.kpi{ background:#1a2535; border-radius:10px; padding:14px 20px; flex:1; min-width:160px;
-  border:1px solid #2e4060; text-align:center; }
-.kpi .k-val{ font-size:22px; font-weight:800; line-height:1.2; }
-.kpi .k-lbl{ font-size:11px; color:#7a9ab5; margin-top:4px; letter-spacing:.5px; text-transform:uppercase; }
-.kpi.invested .k-val{ color:#4fc3f7; }
-.kpi.divvy   .k-val{ color:#4caf50; }
-.kpi.worth   .k-val{ color:#ffc107; }
-.kpi.prog    .k-val{ color:#ff9800; }
-
-/* PROGRESS BAR */
-.prog-wrap{ padding:0 24px 16px; }
-.prog-label{ font-size:12px; color:#7a9ab5; margin-bottom:6px; }
-.prog-bar{ background:#1a2535; border-radius:20px; height:14px; overflow:hidden; border:1px solid #2e4060; }
-.prog-fill{ background:linear-gradient(90deg,#2e7d32,#4caf50); height:100%; border-radius:20px;
-  transition:width .8s ease; display:flex; align-items:center; justify-content:flex-end; padding-right:6px; }
-.prog-pct{ font-size:10px; font-weight:700; color:#fff; }
-
-/* TABS */
-.tab-bar{ display:flex; gap:0; padding:0 24px; border-bottom:2px solid #2e4060; margin-bottom:0; }
-.tab-btn{ padding:10px 24px; font-size:13px; font-weight:600; border:none; background:none;
-  color:#7a9ab5; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px;
-  transition:all .15s; }
-.tab-btn.active{ color:#4fc3f7; border-bottom-color:#4fc3f7; }
-.tab-btn:hover:not(.active){ color:#a0c4e8; }
-
-/* TAB CONTENT */
-.tab-pane{ display:none; padding:20px 24px; }
-.tab-pane.active{ display:block; }
-
-/* TABLES */
-.ptbl{ width:100%; border-collapse:collapse; font-size:13px; }
-.ptbl th{ background:#1e3050; color:#a0c4e8; padding:9px 12px; text-align:left;
-  font-weight:600; white-space:nowrap; border-bottom:2px solid #2e4060; }
-.ptbl td{ border-bottom:1px solid #1a2535; padding:8px 12px; }
-.ptbl tr:hover td{ background:#1a2535; }
-.ptbl tr.buy-row  td{ border-left:3px solid #4caf50; }
-.ptbl tr.sell-row td{ border-left:3px solid #ef5350; }
-.ptbl tr.watch-row td{ border-left:3px solid #ffc107; }
-.ptbl tr.wait-row td{ border-left:3px solid #78909c; }
-
-/* BADGES */
-.badge{ display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; }
-.badge-buy  { background:#1b5e20; color:#4caf50; }
-.badge-watch{ background:#1a1a00; color:#ffc107; }
-.badge-wait { background:#1a1a2e; color:#78909c; }
-.badge-sell { background:#4a1010; color:#ef5350; }
-
-/* ACTION CARDS */
-.action-grid{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
-.action-card{
-  background:#1a2535; border-radius:10px; padding:14px 18px;
-  border-left:4px solid #2e4060; min-width:200px; flex:1; max-width:260px;
-}
-.action-card.buy  { border-color:#4caf50; }
-.action-card.watch{ border-color:#ffc107; }
-.action-card.wait { border-color:#78909c; }
-.action-card .ac-sym{ font-size:18px; font-weight:800; color:#e0e6ed; margin-bottom:4px; }
-.action-card .ac-action{ font-size:12px; font-weight:700; margin-bottom:8px; }
-.action-card.buy  .ac-action{ color:#4caf50; }
-.action-card.watch .ac-action{ color:#ffc107; }
-.action-card.wait  .ac-action{ color:#78909c; }
-.action-card .ac-line{ font-size:12px; color:#7a9ab5; }
-.action-card .ac-val { font-size:12px; color:#e0e6ed; font-weight:600; }
-
-/* SECTOR BARS */
-.sector-row{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-.sector-lbl{ width:100px; font-size:13px; color:#a0c4e8; font-weight:600; }
-.sector-bar-wrap{ flex:1; background:#1a2535; border-radius:6px; height:24px;
-  overflow:hidden; border:1px solid #2e4060; position:relative; }
-.sector-bar-fill{ height:100%; border-radius:6px; display:flex; align-items:center;
-  padding:0 8px; font-size:11px; font-weight:700; color:#fff; transition:width .8s; }
-.sector-bar-fill.ok  { background:#1565c0; }
-.sector-bar-fill.over{ background:#b71c1c; }
-.sector-bar-fill.under{ background:#1b5e20; }
-.sector-target{ position:absolute; top:0; bottom:0; width:2px; background:#ffc107; opacity:.7; }
-.sector-pct{ width:50px; font-size:13px; font-weight:700; text-align:right; }
-
-/* DIV TABLE */
-.div-total{ background:#1b5e20; border-radius:8px; padding:12px 18px; margin-top:16px;
-  display:flex; justify-content:space-between; align-items:center; }
-.div-total .dt-lbl{ font-size:13px; color:#a5d6a7; }
-.div-total .dt-val{ font-size:22px; font-weight:800; color:#4caf50; }
-
-/* LOADING / STATUS */
-.status-msg{ padding:30px; text-align:center; color:#4a6a8a; font-size:14px; }
-.asof-badge{ font-size:12px; color:#4fc3f7; background:#0d2a4a; padding:4px 12px;
+.asof{ font-size:12px; color:#4fc3f7; background:#0d2a4a; padding:4px 12px;
   border-radius:12px; margin-left:auto; }
 
-/* UPLOAD SECTION */
-.upload-box{ background:#1a2535; border-radius:10px; padding:20px 24px;
-  border:2px dashed #2e4060; margin:16px 24px; text-align:center; }
-.upload-box p{ color:#7a9ab5; font-size:13px; margin-bottom:12px; }
-.upload-box input[type=file]{ display:none; }
-.upload-label{ display:inline-block; padding:8px 24px; background:#1565c0; color:#fff;
-  border-radius:6px; cursor:pointer; font-size:13px; font-weight:600; }
-.upload-label:hover{ background:#1976d2; }
+/* KPI */
+.kpi-bar{ display:flex; gap:12px; padding:14px 20px 8px; flex-wrap:wrap; }
+.kpi{ background:#1a2535; border-radius:10px; padding:12px 18px; flex:1; min-width:140px;
+  border:1px solid #2e4060; text-align:center; }
+.kv{ font-size:20px; font-weight:800; line-height:1.2; }
+.kl{ font-size:10px; color:#7a9ab5; margin-top:3px; text-transform:uppercase; letter-spacing:.8px; }
+.kpi.c1 .kv{ color:#4fc3f7; } .kpi.c2 .kv{ color:#4caf50; }
+.kpi.c3 .kv{ color:#ffc107; } .kpi.c4 .kv{ color:#ff9800; }
+.kpi.c5 .kv{ color:#ef5350; }
+
+/* PROGRESS */
+.pw{ padding:0 20px 10px; }
+.pl{ font-size:12px; color:#7a9ab5; margin-bottom:4px; }
+.pb{ background:#1a2535; border-radius:20px; height:14px; overflow:hidden; border:1px solid #2e4060; }
+.pf{ background:linear-gradient(90deg,#2e7d32,#4caf50); height:100%; border-radius:20px;
+  display:flex; align-items:center; justify-content:flex-end; padding-right:6px; transition:width .8s; }
+.pp{ font-size:10px; font-weight:700; color:#fff; }
+
+/* TABS */
+.tb{ display:flex; padding:0 20px; border-bottom:2px solid #2e4060; }
+.tb-btn{ padding:9px 20px; font-size:13px; font-weight:600; border:none; background:none;
+  color:#7a9ab5; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; }
+.tb-btn.active{ color:#4fc3f7; border-bottom-color:#4fc3f7; }
+.tb-btn:hover:not(.active){ color:#a0c4e8; }
+.tp{ display:none; padding:14px 20px; }
+.tp.active{ display:block; }
+
+/* TABLES */
+.tbl{ width:100%; border-collapse:collapse; font-size:13px; }
+.tbl th{
+  background:#0d2240; color:#7ab3d4; padding:9px 12px; text-align:left;
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+  border-bottom:2px solid #1565c0; white-space:nowrap;
+}
+.tbl td{ border-bottom:1px solid #131f2e; padding:8px 12px; text-align:left; font-size:13px; }
+.tbl tr:hover td{ background:#1a2535; }
+.tbl tr:last-child td{ border-bottom:none; }
+
+/* ROW COLORS by action */
+.r-buy  td{ border-left:3px solid #4caf50; }
+.r-watch td{ border-left:3px solid #ffc107; }
+.r-wait  td{ border-left:3px solid #78909c; }
+
+/* VALUE COLORS */
+.c-green{ color:#4caf50; font-weight:700; }
+.c-red  { color:#ef5350; font-weight:700; }
+.c-blue { color:#4fc3f7; font-weight:700; }
+.c-gold { color:#ffc107; font-weight:700; }
+.c-gray { color:#78909c; }
+.bold   { font-weight:700; }
+.sym    { font-size:14px; font-weight:800; color:#e0e6ed; }
+
+/* ACTION BADGES */
+.badge{ display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+.b-buy  { background:#1b5e20; color:#4caf50; }
+.b-watch{ background:#1a1a00; color:#ffc107; }
+.b-wait { background:#1a1a2e; color:#78909c; }
+
+/* PRICE NOTE */
+.price-note{ font-size:11px; color:#4a6a8a; margin-bottom:8px; padding:6px 10px;
+  background:#0d1923; border-radius:4px; border-left:2px solid #2e4060; }
+
+/* TOTAL ROW */
+.total-row td{ background:#1e3050; font-weight:700; border-top:2px solid #2e4060; }
+
+/* SECTOR BARS */
+.sec-wrap{ max-width:900px; }
+.sec-row{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.sec-lbl{ min-width:220px; font-size:14px; font-weight:700; color:#a0c4e8; text-align:left; }
+.sec-bar{ flex:1; background:#1a2535; border-radius:6px; height:28px;
+  overflow:hidden; border:1px solid #2e4060; position:relative; min-width:200px; }
+.sec-fill{ height:100%; border-radius:6px; display:flex; align-items:center;
+  padding:0 10px; font-size:12px; font-weight:700; color:#fff; }
+.sf-ok  { background:#1565c0; }
+.sf-over{ background:#b71c1c; }
+.sf-under{ background:#1b5e20; }
+.sec-tgt{ position:absolute; top:0; bottom:0; width:2px; background:#ffc107; opacity:.8; }
+.sec-flag{ min-width:80px; font-size:13px; font-weight:700; text-align:left; }
+.sec-amt{ min-width:110px; font-size:12px; color:#7a9ab5; text-align:left; }
+
+/* DIVIDEND PROGRESS */
+.div-prog{ background:#1a2535; border-radius:8px; padding:14px 18px; margin-top:14px; }
+.dp-row{ display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px; flex-wrap:wrap; gap:8px; }
+.div-total{ background:#1b5e20; border-radius:8px; padding:12px 18px; margin-top:12px;
+  display:flex; justify-content:space-between; align-items:center; }
+.dt-lbl{ font-size:13px; color:#a5d6a7; }
+.dt-val{ font-size:22px; font-weight:800; color:#4caf50; }
+
+/* ALERT */
+.alert{ background:#1a1a00; border:1px solid #ffc107; border-radius:8px;
+  padding:10px 16px; font-size:13px; color:#ffc107; margin-bottom:12px; }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <div class="nav">
   <span class="nav-logo">📈 PSX Portfolio</span>
-  <button class="btn btn-ta"   onclick="window.location.href='index.html'">📊 Technical Analysis</button>
+  <button class="btn btn-ta" onclick="window.location.href='index.html'">📊 Technical Analysis</button>
   <button class="btn btn-load" onclick="document.getElementById('csvUpload').click()">📂 Load Holdings</button>
   <input type="file" id="csvUpload" accept=".csv" onchange="loadCSV(event)" style="display:none">
-  <span class="asof-badge" id="asofBadge" style="display:none">📅 As of: <b id="asofVal"></b></span>
+  <span class="asof" id="asofBadge" style="display:none">📅 As of: <b id="asofVal"></b></span>
 </div>
 
 <!-- KPI -->
-<div class="kpi-bar" id="kpiBar">
-  <div class="kpi invested"><div class="k-val" id="kInvested">—</div><div class="k-lbl">Invested Capital</div></div>
-  <div class="kpi divvy">  <div class="k-val" id="kDivIncome">—</div><div class="k-lbl">Annual Dividend</div></div>
-  <div class="kpi worth">  <div class="k-val" id="kWorth">—</div><div class="k-lbl">Portfolio Worth</div></div>
-  <div class="kpi prog">   <div class="k-val" id="kProgress">—</div><div class="k-lbl">To ₨1M Target</div></div>
+<div class="kpi-bar">
+  <div class="kpi c1"><div class="kv" id="kInvested">—</div><div class="kl">Invested Capital</div></div>
+  <div class="kpi c2"><div class="kv" id="kDivIncome">—</div><div class="kl">Annual Dividend</div></div>
+  <div class="kpi c3"><div class="kv" id="kWorth">—</div><div class="kl">Portfolio Worth</div></div>
+  <div class="kpi c5"><div class="kv" id="kPL">—</div><div class="kl">Unrealised P/L</div></div>
+  <div class="kpi c4"><div class="kv" id="kProgress">—</div><div class="kl">To PKR 1M Target</div></div>
 </div>
 
-<!-- PROGRESS BAR -->
-<div class="prog-wrap">
-  <div class="prog-label">Dividend Income Progress → ₨1,000,000 / year</div>
-  <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"><span class="prog-pct" id="progPct"></span></div></div>
+<!-- PROGRESS -->
+<div class="pw">
+  <div class="pl">Dividend Income Progress → PKR 1,000,000 / year</div>
+  <div class="pb"><div class="pf" id="progFill" style="width:0%"><span class="pp" id="progPct"></span></div></div>
 </div>
 
 <!-- TABS -->
-<div class="tab-bar">
-  <button class="tab-btn active" onclick="switchTab('action',this)">🎯 Action Plan</button>
-  <button class="tab-btn"        onclick="switchTab('portfolio',this)">📋 Portfolio</button>
-  <button class="tab-btn"        onclick="switchTab('dividend',this)">💰 Dividend Income</button>
-  <button class="tab-btn"        onclick="switchTab('sector',this)">⚖️ Sector Balance</button>
+<div class="tb">
+  <button class="tb-btn active" onclick="showTab('action',this)">🎯 Action Plan</button>
+  <button class="tb-btn"        onclick="showTab('portfolio',this)">📋 Portfolio</button>
+  <button class="tb-btn"        onclick="showTab('dividend',this)">💰 Dividend Income</button>
+  <button class="tb-btn"        onclick="showTab('sector',this)">⚖️ Sector Balance</button>
 </div>
 
-<!-- TAB: ACTION PLAN -->
-<div id="tab-action" class="tab-pane active">
-  <div id="actionContent" class="status-msg">
-    Load your holdings.csv to see your action plan
-  </div>
-</div>
-
-<!-- TAB: PORTFOLIO -->
-<div id="tab-portfolio" class="tab-pane">
-  <div id="portfolioContent" class="status-msg">Load holdings.csv to view portfolio</div>
-</div>
-
-<!-- TAB: DIVIDEND -->
-<div id="tab-dividend" class="tab-pane">
-  <div id="dividendContent" class="status-msg">Load holdings.csv to view dividend income</div>
-</div>
-
-<!-- TAB: SECTOR -->
-<div id="tab-sector" class="tab-pane">
-  <div id="sectorContent" class="status-msg">Load holdings.csv to view sector balance</div>
-</div>
+<div id="tab-action"    class="tp active"><p class="c-gray" style="padding:20px">Loading...</p></div>
+<div id="tab-portfolio" class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
+<div id="tab-dividend"  class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
+<div id="tab-sector"    class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
 
 <script>
-// ─── FIXED DATA ────────────────────────────────
+// ── CONSTANTS ─────────────────────────────────
 const DPS = {
   HUBC:20, POL:75, UBL:40, FFC:34, MCB:36,
   OGDC:14.50, MTL:17.50, EFERT:13, BAFL:3, MEBL:30, HBL:22
 };
-// HBL pending confirmation — included but flagged
-const HBL_PENDING = false;
-
 const SECTOR = {
   HUBC:'Rental Power',
   POL:'Oil and Gas', OGDC:'Oil and Gas',
@@ -194,294 +167,339 @@ const SECTOR = {
   MTL:'Automobile Assembler',
   ENGROH:'Other', FCL:'Other', LUCK:'Other', SYS:'Other', ISL:'Other', KAPCO:'Other'
 };
-const SECTOR_TARGET = 20; // % each
-const EXCLUDE_SECTOR = ['ENGROH','FCL'];
+const EXCLUDE_SEC = ['ENGROH','FCL'];
 
-// Live prices — fetched or manually set
-let _livePrices = {};
-let _holdings   = [];
+let _holdings = [];
+let _prices   = {}; // symbol → last known price from data.csv
 
-// ─── FORMAT HELPERS ────────────────────────────
-function fmtPKR(n){ return '₨'+Math.round(n).toLocaleString('en-US'); }
-function fmt2(n)  { return parseFloat(n).toFixed(2); }
+// ── HELPERS ───────────────────────────────────
+function fmtN(n){ return Math.round(n).toLocaleString(); }
+function fmtD(n){ return parseFloat(n).toFixed(2); }
 
-// ─── TAB SWITCHING ─────────────────────────────
-function switchTab(name,btn){
-  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+// ── TABS ──────────────────────────────────────
+function showTab(name, btn){
+  document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tb-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if(btn) btn.classList.add('active');
 }
 
-// ─── LOAD CSV ──────────────────────────────────
+// ── LOAD PRICES FROM data.csv ─────────────────
+async function loadDataCSV(){
+  try{
+    const res  = await fetch('data.csv?'+Date.now());
+    if(!res.ok) return;
+    const text = (await res.text()).replace(/^\uFEFF/,'');
+    const lines= text.trim().split(/\r?\n/);
+    const hdrs = lines[0].split(',').map(h=>h.trim());
+    const pi   = hdrs.findIndex(h=>h==='Price');
+    const si   = hdrs.findIndex(h=>h==='Symbol');
+    lines.slice(1).forEach(l=>{
+      const cols=l.split(',');
+      const sym=(cols[si]||'').trim();
+      const p  =parseFloat(cols[pi]);
+      if(sym && !isNaN(p)) _prices[sym]=p;
+    });
+    console.log('Prices loaded:', Object.keys(_prices).length);
+  }catch(e){ console.log('data.csv not loaded'); }
+}
+
+// ── LOAD HOLDINGS ─────────────────────────────
 function loadCSV(e){
-  const file = e.target.files[0];
+  const file=e.target.files[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const text = ev.target.result.replace(/^\uFEFF/,'');
-    parseHoldings(text);
-  };
-  reader.readAsText(file);
+  const r=new FileReader();
+  r.onload=ev=>parseHoldings(ev.target.result.replace(/^\uFEFF/,''));
+  r.readAsText(file);
 }
 
 function parseHoldings(text){
-  const lines = text.trim().split(/\r?\n/);
-  const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
-  const rows = lines.slice(1).map(line=>{
-    const cols = line.split(',');
-    const obj = {};
+  const lines  = text.trim().split(/\r?\n/);
+  const headers= lines[0].split(',').map(h=>h.trim().toLowerCase());
+  const rows   = lines.slice(1).map(line=>{
+    const cols=line.split(','); const obj={};
     headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
     return obj;
-  }).filter(r=>r.symbol);
+  }).filter(r=>r.symbol&&r.symbol.trim());
 
-  // Calculate holdings from trade log
-  const map = {};
-  rows.forEach(r=>{
-    const sym    = r.symbol.toUpperCase();
-    const units  = parseFloat(r.units)||0;
-    const rate   = parseFloat(r.rate)||0;
-    const action = (r.action||'').toLowerCase();
-    if(!map[sym]) map[sym]={qty:0,cost:0};
-    if(action==='buy'){
-      const oq=map[sym].qty, oc=map[sym].cost;
-      const nq=oq+units;
-      map[sym].cost = nq>0?((oc*oq)+(rate*units))/nq:0;
-      map[sym].qty  = nq;
-    } else if(action==='sell'){
-      map[sym].qty = Math.max(0,map[sym].qty-units);
-    }
-  });
-
-  _holdings = Object.entries(map)
-    .filter(([,d])=>d.qty>0)
-    .map(([sym,d])=>({
-      symbol:sym,
-      qty:Math.round(d.qty),
-      avg:parseFloat(d.cost.toFixed(2)),
-      dps:DPS[sym]||0,
-      sector:SECTOR[sym]||'Other'
-    }))
-    .sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
-
-  // Find latest date
-  const dates = rows.map(r=>r.date).filter(Boolean);
-  const lastDate = dates[dates.length-1]||'';
+  // Latest date
+  const lastDate=rows[rows.length-1]?.date||'';
   if(lastDate){
     document.getElementById('asofBadge').style.display='inline-block';
     document.getElementById('asofVal').textContent=lastDate;
   }
 
-  buildDashboard();
+  // Calculate weighted avg
+  const map={};
+  rows.forEach(r=>{
+    const sym   =r.symbol.trim().toUpperCase();
+    const units =parseFloat(r.units)||0;
+    const rate  =parseFloat(r.rate)||0;
+    const action=(r.action||'').toLowerCase();
+    if(!map[sym]) map[sym]={qty:0,cost:0};
+    if(action==='buy'){
+      const oq=map[sym].qty,oc=map[sym].cost,nq=oq+units;
+      map[sym].cost=nq>0?((oc*oq)+(rate*units))/nq:0;
+      map[sym].qty=nq;
+    } else if(action==='sell'){
+      map[sym].qty=Math.max(0,map[sym].qty-units);
+    }
+  });
+
+  _holdings=Object.entries(map)
+    .filter(([sym,d])=>d.qty>0.5&&sym&&sym.trim())
+    .map(([sym,d])=>({
+      symbol:sym,
+      qty:Math.round(d.qty),
+      avg:parseFloat(d.cost.toFixed(2)),
+      dps:DPS[sym]||0,
+      sector:SECTOR[sym]||'Other',
+      price:_prices[sym]||null
+    }))
+    .sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
+
+  buildAll();
 }
 
-// ─── BUILD DASHBOARD ───────────────────────────
-function buildDashboard(){
+// ── BUILD ALL ─────────────────────────────────
+function buildAll(){
   if(!_holdings.length) return;
-  const totalInvested = _holdings.reduce((s,h)=>s+h.qty*h.avg,0);
-  const totalDiv      = _holdings.reduce((s,h)=>s+h.qty*h.dps,0);
-  const pct           = Math.min((totalDiv/1000000)*100,100);
 
-  // KPI
-  const setEl=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
-  setEl('kInvested', fmtPKR(totalInvested));
-  setEl('kDivIncome', fmtPKR(totalDiv));
-  setEl('kWorth', '—');
-  setEl('kProgress', pct.toFixed(1)+'%');
+  const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
+  const totalDiv=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);
+  const totalWorth=_holdings.reduce((s,h)=>s+h.qty*(h.price||h.avg),0);
+  const totalPL=totalWorth-totalInv;
+  const pct=Math.min((totalDiv/1000000)*100,100);
+
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('kInvested','PKR '+fmtN(totalInv));
+  set('kDivIncome','PKR '+fmtN(totalDiv));
+  set('kWorth','PKR '+fmtN(totalWorth));
+  set('kPL',(totalPL>=0?'+':'')+fmtN(totalPL));
+  set('kProgress',pct.toFixed(1)+'%');
+  document.getElementById('kPL').className='kv '+(totalPL>=0?'c-green':'c-red');
 
   const pf=document.getElementById('progFill');
   const pp=document.getElementById('progPct');
   if(pf) pf.style.width=pct+'%';
   if(pp) pp.textContent=pct.toFixed(1)+'%';
 
-  // Build each tab with error catching
-  [['buildAction','actionContent'],
-   ['buildPortfolio','portfolioContent'],
-   ['buildDividend','dividendContent'],
-   ['buildSector','sectorContent']].forEach(([fn,elId])=>{
-    try{
-      window[fn]();
-    }catch(err){
-      const el=document.getElementById(elId);
-      if(el) el.innerHTML='<p style="color:#ef5350;padding:20px">Error: '+err.message+'</p>';
-      console.error(fn+' failed:',err);
-    }
-  });
+  try{ buildAction(); }catch(e){ showErr('tab-action',e); }
+  try{ buildPortfolio(); }catch(e){ showErr('tab-portfolio',e); }
+  try{ buildDividend(); }catch(e){ showErr('tab-dividend',e); }
+  try{ buildSector(); }catch(e){ showErr('tab-sector',e); }
 }
-function buildAction(){
-  const rows = _holdings.map(h=>{
-    const yoc = h.avg>0?(h.dps/h.avg)*100:0;
-    const cls = yoc>=8?'buy':yoc>=5?'watch':'wait';
-    const act = yoc>=8?'🟢 BUY — Add more':yoc>=5?'🟡 WATCH — Good yield':'⚪ WAIT — Monitor';
-    return {h,yoc,cls,act};
-  }).sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
 
-  let html=`<div style="overflow-x:auto"><table class="ptbl" style="text-align:left">
+function showErr(id,e){
+  const el=document.getElementById(id);
+  if(el) el.innerHTML=`<p style="color:#ef5350;padding:20px">Error: ${e.message}</p>`;
+}
+
+// ── ACTION PLAN ───────────────────────────────
+// Sort by Action priority: BUY → WATCH → WAIT, then by YoC desc
+function buildAction(){
+  const ORDER={buy:1,watch:2,wait:3};
+  const rows=_holdings.map(h=>{
+    const yoc=h.avg>0?(h.dps/h.avg)*100:0;
+    const cat=yoc>=8?'buy':yoc>=5?'watch':'wait';
+    const lbl=yoc>=8?'BUY — Add more':yoc>=5?'WATCH — Good yield':'WAIT — Monitor';
+    const badge=yoc>=8?'b-buy':yoc>=5?'b-watch':'b-wait';
+    return {h,yoc,cat,lbl,badge};
+  }).sort((a,b)=>ORDER[a.cat]-ORDER[b.cat]||b.yoc-a.yoc);
+
+  let html=`<div style="overflow-x:auto"><table class="tbl">
     <tr>
-      <th style="text-align:left">#</th>
-      <th style="text-align:left">Symbol</th>
-      <th style="text-align:left">Units</th>
-      <th style="text-align:left">Avg Cost</th>
-      <th style="text-align:left">Invested</th>
-      <th style="text-align:left">DPS</th>
-      <th style="text-align:left">Yield on Cost</th>
-      <th style="text-align:left">Annual Div</th>
-      <th style="text-align:left">Action</th>
+      <th>Action</th><th>Symbol</th><th>Units</th>
+      <th>Avg Cost</th><th>DPS</th><th>Yield on Cost</th>
+      <th>Annual Div</th><th>Invested</th>
     </tr>`;
-  rows.forEach(({h,yoc,cls,act},i)=>{
-    const inv=h.qty*h.avg, ann=h.qty*h.dps;
-    const rcls=cls==='buy'?'buy-row':cls==='watch'?'watch-row':'';
-    html+=`<tr class="${rcls}" style="text-align:left">
-      <td>${i+1}</td>
-      <td style="text-align:left"><b>${h.symbol}</b></td>
+  rows.forEach(({h,yoc,cat,lbl,badge})=>{
+    const rcls=`r-${cat}`;
+    const ann=h.qty*h.dps;
+    html+=`<tr class="${rcls}">
+      <td><span class="badge ${badge}">${lbl}</span></td>
+      <td class="sym">${h.symbol}</td>
       <td>${h.qty.toLocaleString()}</td>
-      <td>${fmt2(h.avg)}</td>
-      <td>${fmtPKR(inv).replace('₨','')}</td>
-      <td>${h.dps||'—'}</td>
-      <td><b>${yoc.toFixed(1)}%</b></td>
-      <td>${h.dps?fmtPKR(ann).replace('₨',''):'—'}</td>
-      <td><b>${act}</b></td>
+      <td>${fmtD(h.avg)}</td>
+      <td class="c-gold">${h.dps||'—'}</td>
+      <td class="${yoc>=8?'c-green':yoc>=5?'c-gold':'c-gray'}"><b>${yoc.toFixed(1)}%</b></td>
+      <td>${h.dps?fmtN(ann):'—'}</td>
+      <td>${fmtN(h.qty*h.avg)}</td>
     </tr>`;
   });
   html+=`</table></div>`;
-  document.getElementById('actionContent').innerHTML=html;
+  document.getElementById('tab-action').innerHTML=html;
 }
+
+// ── PORTFOLIO ─────────────────────────────────
+// Sort A-Z, Live Price, P/L
 function buildPortfolio(){
+  const hasPrices=Object.keys(_prices).length>0;
   const sorted=[..._holdings].sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
-  let html=`<div style="overflow-x:auto"><table class="ptbl" style="text-align:left">
-    <tr>
-      <th style="text-align:left">#</th>
-      <th style="text-align:left">Symbol</th>
-      <th style="text-align:left">Units</th>
-      <th style="text-align:left">Avg Cost</th>
-      <th style="text-align:left">Invested</th>
-      <th style="text-align:left">DPS</th>
-      <th style="text-align:left">Yield on Cost</th>
-      <th style="text-align:left">Annual Div</th>
-    </tr>`;
-  sorted.forEach((h,i)=>{
-    const inv=h.qty*h.avg, yoc=h.avg>0?(h.dps/h.avg)*100:0, ann=h.qty*h.dps;
-    const cls=yoc>=8?'buy-row':yoc>=5?'watch-row':'wait-row';
-    html+=`<tr class="${cls}" style="text-align:left">
-      <td>${i+1}</td>
-      <td><b>${h.symbol}</b></td>
-      <td>${h.qty.toLocaleString()}</td>
-      <td>${fmt2(h.avg)}</td>
-      <td>${fmtPKR(inv).replace('₨','')}</td>
-      <td>${h.dps||'—'}</td>
-      <td><b>${yoc.toFixed(1)}%</b></td>
-      <td>${h.dps?fmtPKR(ann).replace('₨',''):'—'}</td>
-    </tr>`;
-  });
-  const ti=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
-  const td=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);
-  html+=`<tr style="background:#1e3050;font-weight:700;text-align:left">
-    <td colspan="4">TOTAL</td>
-    <td>${fmtPKR(ti).replace('₨','')}</td>
-    <td></td><td></td>
-    <td>${fmtPKR(td).replace('₨','')}</td>
-  </tr></table></div>`;
-  document.getElementById('portfolioContent').innerHTML=html;
-}
 
-function buildDividend(){
-  const withDps = _holdings.filter(h=>h.dps>0);
-  const hbl     = _holdings.find(h=>h.symbol==='HBL');
-  withDps.sort((a,b)=>b.qty*b.dps - a.qty*a.dps);
+  let html='';
+  if(hasPrices){
+    html+=`<div class="price-note">📡 Prices from last weekly data update — not real-time.
+      To get latest prices, update data.csv via Add/Update Row on the Technical Analysis page.</div>`;
+  } else {
+    html+=`<div class="price-note">⚠️ No price data — load data.csv via Technical Analysis to see current prices and P/L.</div>`;
+  }
 
-  let html=`<div style="overflow-x:auto"><table class="ptbl">
+  html+=`<div style="overflow-x:auto"><table class="tbl">
     <tr>
       <th>#</th><th>Symbol</th><th>Units</th>
-      <th>Annual DPS</th><th>Annual Income</th><th>Yield on Cost</th>
+      <th>Last Price</th><th>Avg Cost</th>
+      <th>Invested</th><th>Worth</th><th>P / L</th>
+      <th>P/L %</th><th>DPS</th><th>Yield on Cost</th>
     </tr>`;
-  let total=0;
-  withDps.forEach((h,i)=>{
-    const ann=h.qty*h.dps;
-    total+=ann;
-    const yoc=h.avg>0?(h.dps/h.avg)*100:0;
+
+  let ti=0,tw=0;
+  sorted.forEach((h,i)=>{
+    const price  = h.price||null;
+    const worth  = price!==null?h.qty*price:null;
+    const inv    = h.qty*h.avg;
+    const pl     = worth!==null?worth-inv:null;
+    const plpct  = pl!==null&&inv>0?(pl/inv)*100:null;
+    const yoc    = h.avg>0?(h.dps/h.avg)*100:0;
+    ti+=inv;
+    if(worth!==null) tw+=worth;
+
+    const priceCell = price!==null
+      ? `<td class="c-blue">${fmtD(price)}</td>`
+      : `<td class="c-gray">—</td>`;
+    const worthCell = worth!==null
+      ? `<td>${fmtN(worth)}</td>`
+      : `<td class="c-gray">—</td>`;
+    const plCell = pl!==null
+      ? `<td class="${pl>=0?'c-green':'c-red'}">${pl>=0?'+':''}${fmtN(pl)}</td>`
+      : `<td class="c-gray">—</td>`;
+    const plpctCell = plpct!==null
+      ? `<td class="${plpct>=0?'c-green':'c-red'}">${plpct>=0?'+':''}${plpct.toFixed(1)}%</td>`
+      : `<td class="c-gray">—</td>`;
+
     html+=`<tr>
-      <td>${i+1}</td><td><b>${h.symbol}</b></td>
+      <td class="c-gray">${i+1}</td>
+      <td class="sym">${h.symbol}</td>
       <td>${h.qty.toLocaleString()}</td>
-      <td>₨${h.dps}</td>
-      <td><b>${fmtPKR(ann)}</b></td>
-      <td>${yoc.toFixed(1)}%</td>
+      ${priceCell}
+      <td>${fmtD(h.avg)}</td>
+      <td>${fmtN(inv)}</td>
+      ${worthCell}
+      ${plCell}
+      ${plpctCell}
+      <td class="c-gold">${h.dps||'—'}</td>
+      <td class="${yoc>=8?'c-green':yoc>=5?'c-gold':'c-gray'}">${yoc.toFixed(1)}%</td>
     </tr>`;
   });
-  if(hbl){
-    html+=`<tr style="color:#ffc107">
-      <td>—</td><td><b>HBL</b></td>
-      <td>${hbl.qty.toLocaleString()}</td>
-      <td colspan="3" style="color:#ffc107">⏳ DPS pending — excluded from total</td>
-    </tr>`;
-  }
-  html+=`</table></div>
-  <div class="div-total">
-    <div>
-      <div class="dt-lbl">Total Annual Dividend Income</div>
-      <div style="font-size:12px;color:#7a9ab5;margin-top:2px">HBL excluded (DPS unconfirmed)</div>
-    </div>
-    <div class="dt-val">${fmtPKR(total)}</div>
-  </div>
-  <div style="margin-top:12px;background:#1a2535;border-radius:8px;padding:12px 18px">
-    <div style="font-size:13px;color:#7a9ab5;margin-bottom:8px">Progress to ₨1,000,000 target</div>
-    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
-      <span style="color:#4caf50">Current: ${fmtPKR(total)}</span>
-      <span style="color:#7a9ab5">Remaining: ${fmtPKR(1000000-total)}</span>
-      <span style="color:#ff9800">Target: ₨1,000,000</span>
-    </div>
-    <div class="prog-bar"><div class="prog-fill" style="width:${Math.min(total/10000,100)}%">
-      <span class="prog-pct">${(total/10000).toFixed(1)}%</span>
-    </div></div>
-  </div>`;
-  document.getElementById('dividendContent').innerHTML=html;
+
+  const totalPL=tw>0?tw-ti:null;
+  html+=`<tr class="total-row">
+    <td colspan="5">TOTAL</td>
+    <td>${fmtN(ti)}</td>
+    <td>${tw>0?fmtN(tw):'—'}</td>
+    <td class="${totalPL!==null&&totalPL>=0?'c-green':'c-red'}">${totalPL!==null?(totalPL>=0?'+':'')+fmtN(totalPL):'—'}</td>
+    <td colspan="3"></td>
+  </tr></table></div>`;
+
+  document.getElementById('tab-portfolio').innerHTML=html;
 }
 
-// ─── SECTOR BALANCE ────────────────────────────
+// ── DIVIDEND INCOME ───────────────────────────
+function buildDividend(){
+  const withDps=[..._holdings].filter(h=>h.dps>0).sort((a,b)=>b.qty*b.dps-a.qty*a.dps);
+  let total=0;
+
+  let html=`<div style="overflow-x:auto"><table class="tbl">
+    <tr>
+      <th>#</th><th>Symbol</th><th>Sector</th><th>Units</th>
+      <th>Annual DPS</th><th>Annual Income</th><th>Yield on Cost</th>
+    </tr>`;
+  withDps.forEach((h,i)=>{
+    const ann=h.qty*h.dps; total+=ann;
+    const yoc=h.avg>0?(h.dps/h.avg)*100:0;
+    const ycls=yoc>=8?'c-green':yoc>=5?'c-gold':'c-gray';
+    html+=`<tr>
+      <td class="c-gray">${i+1}</td>
+      <td class="sym">${h.symbol}</td>
+      <td style="color:#a0c4e8">${h.sector}</td>
+      <td>${h.qty.toLocaleString()}</td>
+      <td class="c-gold bold">${h.dps}</td>
+      <td class="c-green bold">${fmtN(ann)}</td>
+      <td class="${ycls} bold">${yoc.toFixed(1)}%</td>
+    </tr>`;
+  });
+  html+=`<tr class="total-row">
+    <td colspan="5">TOTAL ANNUAL DIVIDEND</td>
+    <td class="c-green bold">${fmtN(total)}</td>
+    <td></td>
+  </tr></table></div>
+
+  <div class="div-total" style="margin-top:14px">
+    <div>
+      <div class="dt-lbl">Total Annual Dividend Income</div>
+      <div style="font-size:11px;color:#7a9ab5;margin-top:2px">All confirmed DPS included</div>
+    </div>
+    <div class="dt-val">PKR ${fmtN(total)}</div>
+  </div>
+
+  <div class="div-prog">
+    <div class="dp-row">
+      <span class="c-green">Earned: PKR ${fmtN(total)}</span>
+      <span class="c-gold">Gap: PKR ${fmtN(Math.max(0,1000000-total))}</span>
+      <span style="color:#ff9800">Target: PKR 1,000,000</span>
+    </div>
+    <div class="pb"><div class="pf" style="width:${Math.min(total/10000,100)}%">
+      <span class="pp">${(total/10000).toFixed(1)}%</span>
+    </div></div>
+  </div>`;
+
+  document.getElementById('tab-dividend').innerHTML=html;
+}
+
+// ── SECTOR BALANCE ────────────────────────────
 function buildSector(){
   const map={};
   const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
-  _holdings.filter(h=>!EXCLUDE_SECTOR.includes(h.symbol)).forEach(h=>{
-    const inv=h.qty*h.avg;
-    map[h.sector]=(map[h.sector]||0)+inv;
+  _holdings.filter(h=>!EXCLUDE_SEC.includes(h.symbol)).forEach(h=>{
+    map[h.sector]=(map[h.sector]||0)+h.qty*h.avg;
   });
   const sectors=Object.entries(map)
     .map(([sec,inv])=>({sec,inv,pct:totalInv>0?(inv/totalInv)*100:0}))
     .sort((a,b)=>b.pct-a.pct);
-  let html='<div style="max-width:1000px">';
+
+  let html='<div class="sec-wrap">';
   sectors.forEach(({sec,inv,pct})=>{
     const over=pct>22,under=pct<18;
-    const cls=over?'over':under?'under':'ok';
+    const cls=over?'sf-over':under?'sf-under':'sf-ok';
     const flag=over?'🔴 Over':under?'🟡 Under':'✅ OK';
     const fc=over?'#ef5350':under?'#ffc107':'#4caf50';
-    html+=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
-      <div style="min-width:240px;font-size:15px;font-weight:700;color:#a0c4e8;text-align:left">${sec}</div>
-      <div style="flex:1;background:#1a2535;border-radius:6px;height:30px;overflow:hidden;
-                  border:1px solid #2e4060;position:relative;min-width:300px">
-        <div class="sector-bar-fill ${cls}" style="width:${Math.min(pct*4,100)}%;height:100%;
-             display:flex;align-items:center;padding:0 10px;font-size:13px;font-weight:700;color:#fff">
-          ${pct.toFixed(1)}%
-        </div>
-        <div style="position:absolute;top:0;bottom:0;width:2px;background:#ffc107;opacity:.8;
-                    left:${Math.min(80,100)}%"></div>
+    html+=`<div class="sec-row">
+      <div class="sec-lbl">${sec}</div>
+      <div class="sec-bar">
+        <div class="sec-fill ${cls}" style="width:${Math.min(pct*4,100)}%">${pct.toFixed(1)}%</div>
+        <div class="sec-tgt" style="left:${Math.min(80,100)}%"></div>
       </div>
-      <div style="min-width:90px;font-size:14px;font-weight:700;color:${fc};text-align:left">${flag}</div>
-      <div style="min-width:120px;font-size:13px;color:#7a9ab5;text-align:left">${fmtPKR(inv)}</div>
+      <div class="sec-flag" style="color:${fc}">${flag}</div>
+      <div class="sec-amt">PKR ${fmtN(inv)}</div>
     </div>`;
   });
-  html+=`<div style="font-size:13px;color:#7a9ab5;margin-top:14px;padding:12px 16px;
+  html+=`<div style="font-size:12px;color:#7a9ab5;margin-top:12px;padding:10px 14px;
     background:#1a2535;border-radius:6px;border-left:3px solid #ffc107">
-    🎯 Target 20% per sector &nbsp;|&nbsp; 🔴 Over >22% &nbsp;|&nbsp; 🟡 Under <18%
+    🎯 Target 20% per sector &nbsp;·&nbsp; 🔴 Over >22% &nbsp;·&nbsp; 🟡 Under <18%
+    &nbsp;·&nbsp; ENGROH &amp; FCL excluded
   </div></div>`;
-  document.getElementById('sectorContent').innerHTML=html;
+
+  document.getElementById('tab-sector').innerHTML=html;
 }
 
+// ── AUTO LOAD ─────────────────────────────────
 async function autoLoad(){
+  await loadDataCSV();
   try{
-    const res  = await fetch('holdings.csv?'+Date.now());
+    const res=await fetch('holdings.csv?'+Date.now());
     if(!res.ok) return;
-    const text = await res.text();
-    parseHoldings(text.replace(/^\uFEFF/,''));
-  }catch(e){ console.log('Auto-load:',e.message); }
+    parseHoldings((await res.text()).replace(/^\uFEFF/,''));
+  }catch(e){ console.log('holdings.csv:',e.message); }
 }
 
 autoLoad();
