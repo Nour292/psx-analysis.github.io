@@ -1164,7 +1164,7 @@ function verdictFn(s,sc,z){
     return {v:'⚠️ CAUTION',verdict:'CAUTION',target:z.downsideTarget};
 
   // EXIT SIGNAL — price below BOTH MAs
-  if(belowBothMAs&&macdDneg&&rsiWeak&&sc<=65)
+  if(belowBothMAs&&macdDneg&&rsiWeak&&sc<=60)
     return {v:'🔴 EXIT SIGNAL',verdict:'EXIT',target:z.downsideTarget};
 
   if(sc>=50) return {v:'🟡 WATCH',verdict:'WATCH',target:z.target};
