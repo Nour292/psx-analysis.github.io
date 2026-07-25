@@ -498,34 +498,39 @@ function parseHoldings(text){
     document.getElementById('asofVal').textContent=lastDate;
   }
 
-  // Calculate weighted avg
+  // Calculate avg cost: (Total Buy Amount - Total Sell Amount) / Holding Units
   const map={};
   rows.forEach(r=>{
     const sym   =r.symbol.trim().toUpperCase();
     const units =parseFloat(r.units)||0;
     const rate  =parseFloat(r.rate)||0;
     const action=(r.action||'').toLowerCase();
-    if(!map[sym]) map[sym]={qty:0,cost:0};
+    if(!map[sym]) map[sym]={qty:0,buyAmt:0,sellAmt:0};
     if(action==='buy'){
-      const oq=map[sym].qty,oc=map[sym].cost,nq=oq+units;
-      map[sym].cost=nq>0?((oc*oq)+(rate*units))/nq:0;
-      map[sym].qty=nq;
+      map[sym].qty    += units;
+      map[sym].buyAmt += units*rate;
     } else if(action==='sell'){
-      map[sym].qty=Math.max(0,map[sym].qty-units);
+      map[sym].qty     = Math.max(0,map[sym].qty-units);
+      map[sym].sellAmt += units*rate;
     }
   });
 
   _allTrades = rows; // store all raw trades for search
   _holdings=Object.entries(map)
     .filter(([sym,d])=>d.qty>0.5&&sym&&sym.trim())
-    .map(([sym,d])=>({
+    .map(([sym,d])=>{
+      const netAmt = d.buyAmt - d.sellAmt;
+      const qty    = Math.round(d.qty);
+      const avg    = qty>0?parseFloat((netAmt/qty).toFixed(2)):0;
+      return {
       symbol:sym,
-      qty:Math.round(d.qty),
-      avg:parseFloat(d.cost.toFixed(2)),
+      qty,
+      avg,
       dps:DPS[sym]||0,
       sector:SECTOR[sym]||'Other',
       price:_prices[sym]||null
-    }))
+      };
+    })
     .sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
 
   buildAll();
@@ -915,66 +920,76 @@ function runSearch(){
   if(!sym){ document.getElementById('srchResult').innerHTML=
     '<p class="sr-empty">Enter a symbol to search</p>'; return; }
 
-  const trades = _allTrades.filter(r=>r.symbol.toUpperCase()===sym);
+  const trades = _allTrades
+    .filter(r=>r.symbol.toUpperCase()===sym)
+    .reverse(); // latest on top
+
   if(!trades.length){
     document.getElementById('srchResult').innerHTML=
       `<p class="sr-empty">No trades found for <b style="color:#4fc3f7">${sym}</b></p>`;
     return;
   }
 
-  // Calculate summaries
+  // ── Summaries ──
   let totalBuyUnits=0, totalBuyAmt=0;
   let totalSellUnits=0, totalSellAmt=0;
-
   trades.forEach(r=>{
     const u=parseFloat(r.units)||0;
     const rate=parseFloat(r.rate)||0;
-    const amt=u*rate;
-    if((r.action||'').toLowerCase()==='buy'){
-      totalBuyUnits+=u; totalBuyAmt+=amt;
-    } else {
-      totalSellUnits+=u; totalSellAmt+=amt;
-    }
+    const isBuy=(r.action||'').toLowerCase()==='buy';
+    if(isBuy){ totalBuyUnits+=u; totalBuyAmt+=u*rate; }
+    else      { totalSellUnits+=u; totalSellAmt+=u*rate; }
   });
 
-  const avgBuyRate  = totalBuyUnits>0?totalBuyAmt/totalBuyUnits:0;
-  const avgSellRate = totalSellUnits>0?totalSellAmt/totalSellUnits:0;
-  const netUnits    = totalBuyUnits - totalSellUnits;
-  const netAmt      = totalBuyAmt - totalSellAmt;
-  const realPL      = totalSellAmt - (totalSellUnits * avgBuyRate);
+  const holdingUnits = Math.round(totalBuyUnits - totalSellUnits);
+  const netAmt       = totalBuyAmt - totalSellAmt;
+  const avgCost      = holdingUnits>0 ? netAmt/holdingUnits : 0;
+  const avgSellRate  = totalSellUnits>0 ? totalSellAmt/totalSellUnits : 0;
+  const realPL       = totalSellAmt - (totalSellUnits*(totalBuyAmt/totalBuyUnits));
 
   // Summary cards
   let html=`
-  <div style="font-size:14px;font-weight:700;color:#e0e6ed;margin-bottom:12px">
-    <span style="color:#4fc3f7;font-size:18px">${sym}</span>
-    &nbsp;—&nbsp; ${trades.length} trades
+  <div style="font-size:13px;color:#7a9ab5;margin-bottom:14px">
+    <b style="color:#4fc3f7;font-size:20px">${sym}</b>
+    &nbsp;·&nbsp; ${trades.length} trades total
   </div>
 
-  <div class="sr-cards">
+  <div class="sr-cards" style="grid-template-columns:repeat(4,1fr)">
     <div class="sr-card buy-card">
       <div class="sc-lbl">📈 Total Bought</div>
-      <div class="sc-val">${Math.round(totalBuyUnits).toLocaleString()} units</div>
+      <div class="sc-val">${Math.round(totalBuyUnits).toLocaleString()}</div>
+      <div class="sc-sub" style="font-size:13px;margin-top:4px">units</div>
       <div class="sc-sub">PKR ${Math.round(totalBuyAmt).toLocaleString()}</div>
-      <div class="sc-sub">Avg rate: ${avgBuyRate.toFixed(2)}</div>
+      <div class="sc-sub">Avg buy: ${(totalBuyAmt/totalBuyUnits).toFixed(2)}</div>
     </div>
     <div class="sr-card sell-card">
       <div class="sc-lbl">📉 Total Sold</div>
-      <div class="sc-val">${totalSellUnits>0?Math.round(totalSellUnits).toLocaleString()+' units':'—'}</div>
+      <div class="sc-val">${totalSellUnits>0?Math.round(totalSellUnits).toLocaleString():'—'}</div>
+      <div class="sc-sub" style="font-size:13px;margin-top:4px">${totalSellUnits>0?'units':''}</div>
       <div class="sc-sub">${totalSellUnits>0?'PKR '+Math.round(totalSellAmt).toLocaleString():'—'}</div>
-      <div class="sc-sub">${totalSellUnits>0?'Avg rate: '+avgSellRate.toFixed(2):'—'}</div>
+      <div class="sc-sub">${totalSellUnits>0?'Avg sell: '+avgSellRate.toFixed(2):'—'}</div>
     </div>
     <div class="sr-card net-card">
       <div class="sc-lbl">📊 Holding Now</div>
-      <div class="sc-val">${Math.round(netUnits).toLocaleString()} units</div>
-      <div class="sc-sub">Net invested: PKR ${Math.round(netAmt).toLocaleString()}</div>
-      <div class="sc-sub" style="color:${realPL>=0?'#4caf50':'#ef5350'}">
-        ${totalSellUnits>0?'Realised P/L: '+(realPL>=0?'+':'')+Math.round(realPL).toLocaleString():'No sells yet'}
+      <div class="sc-val">${holdingUnits.toLocaleString()}</div>
+      <div class="sc-sub" style="font-size:13px;margin-top:4px">units</div>
+      <div style="margin-top:8px;background:#0d47a1;border-radius:6px;padding:6px 10px;
+           font-size:15px;font-weight:800;color:#fff;letter-spacing:.5px">
+        Avg Cost: ${avgCost.toFixed(2)}
       </div>
+    </div>
+    <div class="sr-card" style="background:${realPL>=0?'#0d1f0d':'#1f0d0d'};
+         border:1px solid ${realPL>=0?'#2e7d32':'#b71c1c'}">
+      <div class="sc-lbl" style="color:#7a9ab5">💰 Realised P/L</div>
+      <div class="sc-val" style="color:${realPL>=0?'#4caf50':'#ef5350'}">
+        ${realPL>=0?'+':''}${Math.round(realPL).toLocaleString()}
+      </div>
+      <div class="sc-sub">${totalSellUnits>0?'From '+Math.round(totalSellUnits)+' sold units':'No sells yet'}</div>
     </div>
   </div>
 
-  <!-- Trade table -->
-  <div style="overflow-x:auto;max-height:400px;overflow-y:auto">
+  <!-- Trade table — latest first -->
+  <div style="overflow-x:auto;max-height:420px;overflow-y:auto;margin-top:4px">
   <table class="sr-tbl">
     <tr>
       <th>#</th><th>Date</th><th>Action</th>
@@ -990,7 +1005,7 @@ function runSearch(){
     const aclr = isBuy?'#4caf50':'#ef5350';
     html+=`<tr class="${cls}">
       <td class="c-gray">${i+1}</td>
-      <td style="color:#a0c4e8">${r.date}</td>
+      <td style="color:#a0c4e8;white-space:nowrap">${r.date}</td>
       <td><b style="color:${aclr}">${r.action}</b></td>
       <td style="color:#e0e6ed;font-weight:600">${Math.round(u).toLocaleString()}</td>
       <td style="color:#ffc107">${rate.toFixed(2)}</td>
@@ -1002,22 +1017,15 @@ function runSearch(){
 
   // Total row
   html+=`<tr class="total-tr">
-    <td colspan="3">TOTAL</td>
-    <td style="color:#4fc3f7">${Math.round(totalBuyUnits).toLocaleString()} bought
-      ${totalSellUnits>0?' / '+Math.round(totalSellUnits).toLocaleString()+' sold':''}</td>
-    <td style="color:#ffc107">
-      Buy avg: ${avgBuyRate.toFixed(2)}
-      ${totalSellUnits>0?' / Sell avg: '+avgSellRate.toFixed(2):''}
-    </td>
-    <td style="color:${netAmt>=0?'#ef9a9a':'#a5d6a7'}">
-      Net: ${Math.round(netAmt).toLocaleString()}
-    </td>
-  </tr>`;
+    <td colspan="3">SUMMARY</td>
+    <td style="color:#4fc3f7">Hold: ${holdingUnits.toLocaleString()}</td>
+    <td style="color:#ffc107">Avg: ${avgCost.toFixed(2)}</td>
+    <td style="color:#a0c4e8">Net: PKR ${Math.round(netAmt).toLocaleString()}</td>
+  </tr>
+  </table></div>`;
 
-  html+=`</table></div>`;
   document.getElementById('srchResult').innerHTML=html;
 }
-
 // ── BUY / SELL ────────────────────────────────
 function showBuySell(){
   document.getElementById('bsModal').classList.add('open');
