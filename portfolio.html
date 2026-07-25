@@ -1837,6 +1837,154 @@ function dvSetStatus(msg,color){
 }
 
 
+
+// ── CORRECT LAST TRADE ────────────────────────────
+function showCorrectLast(){
+  // Find most recent Buy or Sell entry
+  const lastTrade = [..._cashFlow].reverse().find(r=>r.Type==='Buy'||r.Type==='Sell');
+  if(!lastTrade){
+    alert('No trade entries found to correct.');
+    return;
+  }
+  const modal = document.getElementById('correctModal');
+  const info  = document.getElementById('correctLastInfo');
+  info.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <div><span style="color:#7a9ab5">Date:</span> <b>${lastTrade.Date}</b></div>
+      <div><span style="color:#7a9ab5">Type:</span>
+        <b style="color:${lastTrade.Type==='Buy'?'#ef9a9a':'#a5d6a7'}">${lastTrade.Type}</b></div>
+      <div><span style="color:#7a9ab5">Symbol:</span> <b class="c-blue">${lastTrade.Symbol}</b></div>
+      <div><span style="color:#7a9ab5">Units:</span> <b>${lastTrade.Units}</b></div>
+      <div><span style="color:#7a9ab5">Rate:</span> <b class="c-gold">${parseFloat(lastTrade.Rate).toFixed(2)}</b></div>
+      <div><span style="color:#7a9ab5">Trade Value:</span> <b>${Math.round(parseFloat(lastTrade.TradeValue||0)).toLocaleString()}</b></div>
+      <div><span style="color:#7a9ab5">Current Fees:</span>
+        <b class="c-red">${Math.round(parseFloat(lastTrade.Fees||0)).toLocaleString()}</b></div>
+      <div><span style="color:#7a9ab5">Current Balance:</span>
+        <b class="c-green">${Math.round(parseFloat(lastTrade.Balance||0)).toLocaleString()}</b></div>
+    </div>`;
+  document.getElementById('correctActual').value = '';
+  document.getElementById('correctPreview').style.display = 'none';
+  document.getElementById('correctStatus').textContent = '';
+  modal.style.display = 'flex';
+}
+
+function closeCorrect(){
+  document.getElementById('correctModal').style.display = 'none';
+}
+
+function previewCorrection(){
+  const actual = parseFloat(document.getElementById('correctActual').value)||0;
+  if(!actual){ document.getElementById('correctPreview').style.display='none'; return; }
+
+  const lastTrade = [..._cashFlow].reverse().find(r=>r.Type==='Buy'||r.Type==='Sell');
+  if(!lastTrade) return;
+
+  // Find balance BEFORE this trade
+  const idx = _cashFlow.lastIndexOf(lastTrade);
+  const prevBal = idx>0 ? parseFloat(_cashFlow[idx-1].Balance||0) : CAPITAL.freeCash;
+  const tradeVal = parseFloat(lastTrade.TradeValue||0);
+  const isBuy    = lastTrade.Type==='Buy';
+
+  const expectedBal = isBuy ? prevBal - tradeVal : prevBal + tradeVal;
+  const newFees     = Math.abs(expectedBal - actual);
+  const feesPct     = tradeVal>0?(newFees/tradeVal*100).toFixed(2):0;
+
+  const preview = document.getElementById('correctPreview');
+  preview.style.display = 'block';
+  preview.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div style="text-align:center">
+        <div style="font-size:11px;color:#7a9ab5;margin-bottom:4px">FEES & TAX</div>
+        <div style="font-size:18px;font-weight:800;color:#ef5350">
+          PKR ${Math.round(newFees).toLocaleString()}
+          <span style="font-size:11px;color:#7a9ab5">(${feesPct}%)</span>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:11px;color:#7a9ab5;margin-bottom:4px">NET CASH</div>
+        <div style="font-size:18px;font-weight:800;color:${isBuy?'#ef9a9a':'#a5d6a7'}">
+          ${isBuy?'-':'+'}PKR ${Math.round(Math.abs(actual-prevBal)).toLocaleString()}
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:11px;color:#7a9ab5;margin-bottom:4px">NEW BALANCE</div>
+        <div style="font-size:18px;font-weight:800;color:#4caf50">
+          PKR ${Math.round(actual).toLocaleString()}
+        </div>
+      </div>
+    </div>`;
+}
+
+async function applyCorrection(){
+  const actual = parseFloat(document.getElementById('correctActual').value)||0;
+  if(!actual){ document.getElementById('correctStatus').textContent='Enter actual balance first'; return; }
+
+  const lastIdx = [..._cashFlow].map((r,i)=>({r,i})).reverse().find(({r})=>r.Type==='Buy'||r.Type==='Sell');
+  if(!lastIdx){ document.getElementById('correctStatus').textContent='No trade found'; return; }
+
+  const idx      = lastIdx.i;
+  const lastTrade= _cashFlow[idx];
+  const prevBal  = idx>0?parseFloat(_cashFlow[idx-1].Balance||0):CAPITAL.freeCash;
+  const tradeVal = parseFloat(lastTrade.TradeValue||0);
+  const isBuy    = lastTrade.Type==='Buy';
+  const newFees  = Math.abs((isBuy?prevBal-tradeVal:prevBal+tradeVal)-actual);
+  const netCash  = actual - prevBal;
+
+  // Update the entry
+  _cashFlow[idx].Fees    = newFees.toFixed(2);
+  _cashFlow[idx].NetCash = netCash.toFixed(2);
+  _cashFlow[idx].Balance = actual.toFixed(2);
+
+  // Recalculate all subsequent balances
+  for(let i=idx+1; i<_cashFlow.length; i++){
+    const prev = parseFloat(_cashFlow[i-1].Balance||0);
+    const net  = parseFloat(_cashFlow[i].NetCash||0);
+    _cashFlow[i].Balance = (prev+net).toFixed(2);
+  }
+
+  // Update CAPITAL.freeCash to last balance
+  CAPITAL.freeCash = parseFloat(_cashFlow[_cashFlow.length-1].Balance||actual);
+  updateCAPITAL(null,0,0,CAPITAL.freeCash);
+
+  // Save to GitHub
+  const token = window._ghToken();
+  if(!token){
+    document.getElementById('correctStatus').textContent='⚠️ Session only — no token';
+    document.getElementById('correctStatus').style.color='#ffc107';
+    renderCashFlow(); closeCorrect(); return;
+  }
+
+  document.getElementById('correctStatus').textContent='⏳ Saving...';
+  document.getElementById('correctStatus').style.color='#ffc107';
+  try{
+    const nl='\n';
+    const lines=[CF_HDRS.join(',')];
+    _cashFlow.forEach(r=>lines.push(CF_HDRS.map(h=>r[h]||'').join(',')));
+    const newCsv=lines.join(nl);
+    const encoded=btoa(unescape(encodeURIComponent(newCsv)));
+    const getRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,
+      {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}});
+    if(!getRes.ok) throw new Error('Cannot read cashflow.csv');
+    const fd=await getRes.json();
+    const putRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,{
+      method:'PUT',
+      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify({
+        message:`Correct trade: ${lastTrade.Symbol} fees=${Math.round(newFees)}`,
+        content:encoded, sha:fd.sha
+      })
+    });
+    if(!putRes.ok){const e=await putRes.json();throw new Error(e.message);}
+    document.getElementById('correctStatus').textContent='✅ Corrected & saved!';
+    document.getElementById('correctStatus').style.color='#4caf50';
+    setTimeout(()=>closeCorrect(),1500);
+    renderCashFlow();
+  }catch(e){
+    document.getElementById('correctStatus').textContent='❌ '+e.message;
+    document.getElementById('correctStatus').style.color='#ef5350';
+  }
+}
+
 // ── CASH FLOW ─────────────────────────────────────
 const CF_FILE = 'cashflow.csv';
 const CF_HDRS = ['Date','Type','Symbol','Units','Rate','TradeValue','Fees','NetCash','Balance','Description'];
@@ -2317,6 +2465,10 @@ autoLoad();
       border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer">
       ➕ Add Entry
     </button>
+    <button onclick="showCorrectLast()" style="background:#6a3000;color:#ffb74d;border:1px solid #7a4010;
+      border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer">
+      ✏️ Correct Last Trade
+    </button>
     <span id="cfStatus" style="font-size:13px;margin-left:8px"></span>
   </div>
 
@@ -2400,6 +2552,46 @@ autoLoad();
     <div id="cfTableWrap">
       <p style="color:#4a6a8a;text-align:center;padding:30px">Loading cash flow...</p>
     </div>
+  </div>
+</div>
+
+
+<!-- CORRECT LAST TRADE MODAL -->
+<div id="correctModal" style="
+  position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;
+  display:none;align-items:center;justify-content:center">
+  <div style="background:#1a2535;border:1px solid #2e4060;border-radius:12px;
+    padding:28px 32px;width:440px;max-width:95vw">
+    <div style="font-size:16px;font-weight:700;color:#ffb74d;margin-bottom:16px">
+      ✏️ Correct Last Trade
+    </div>
+    <div id="correctLastInfo" style="background:#0f1923;border-radius:6px;
+      padding:10px 14px;font-size:13px;color:#a0c4e8;margin-bottom:16px"></div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px">
+      <label style="font-size:11px;color:#7a9ab5;text-transform:uppercase;letter-spacing:.6px">
+        Actual Cash After Trade (from your broker account)
+      </label>
+      <input type="number" id="correctActual"
+        placeholder="e.g. 279620"
+        style="background:#0f1923;color:#4fc3f7;border:2px solid #2e4060;
+          border-radius:6px;padding:10px 14px;font-size:15px;outline:none"
+        oninput="previewCorrection()"
+        onfocus="this.style.borderColor='#4fc3f7'"
+        onblur="this.style.borderColor='#2e4060'">
+    </div>
+    <div id="correctPreview" style="background:#0d1923;border-radius:6px;
+      padding:10px 14px;font-size:13px;margin-bottom:16px;display:none"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="applyCorrection()" style="flex:1;padding:11px;background:#2e7d32;
+        color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer">
+        ✅ Apply Correction
+      </button>
+      <button onclick="closeCorrect()" style="padding:11px 20px;background:#2e4060;
+        color:#a0c4e8;border:none;border-radius:7px;font-size:14px;cursor:pointer">
+        Cancel
+      </button>
+    </div>
+    <div id="correctStatus" style="font-size:13px;margin-top:10px;text-align:center"></div>
   </div>
 </div>
 
