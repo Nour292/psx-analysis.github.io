@@ -251,7 +251,9 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .badge{ display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; }
 .b-buy  { background:#1b5e20; color:#4caf50; }
 .b-watch{ background:#1a1a00; color:#ffc107; }
-.b-wait { background:#1a1a2e; color:#78909c; }
+.b-wait    { background:#1a1a2e; color:#78909c; }
+.b-caution { background:#1a1000; color:#ff9800; }
+.b-exit    { background:#1f0505; color:#ef5350; }
 
 /* PRICE NOTE */
 .price-note{ font-size:11px; color:#4a6a8a; margin-bottom:8px; padding:6px 10px;
@@ -521,7 +523,9 @@ function parseHoldings(text){
     .map(([sym,d])=>{
       const netAmt = d.buyAmt - d.sellAmt;
       const qty    = Math.round(d.qty);
-      const avg    = qty>0?parseFloat((netAmt/qty).toFixed(2)):0;
+      const rawAvg = qty>0?netAmt/qty:0;
+      // Free-of-cost lots: if sells recovered full cost, avg = 0 (house money)
+      const avg    = parseFloat(Math.max(0, rawAvg).toFixed(2));
       return {
       symbol:sym,
       qty,
@@ -574,15 +578,40 @@ function showErr(id,e){
 
 // ── ACTION PLAN ───────────────────────────────
 // Sort by Action priority: BUY → WATCH → WAIT, then by YoC desc
+// ── ACTION PLAN — uses Technical Analysis signals from data.csv ──
 function buildAction(){
-  const ORDER={buy:1,watch:2,wait:3};
-  const rows=_holdings.map(h=>{
-    const yoc=h.avg>0?(h.dps/h.avg)*100:0;
-    const cat=yoc>=8?'buy':yoc>=5?'watch':'wait';
-    const lbl=yoc>=8?'BUY — Add more':yoc>=5?'WATCH — Good yield':'WAIT — Monitor';
-    const badge=yoc>=8?'b-buy':yoc>=5?'b-watch':'b-wait';
-    return {h,yoc,cat,lbl,badge};
-  }).sort((a,b)=>ORDER[a.cat]-ORDER[b.cat]||b.yoc-a.yoc);
+  // Map technical verdict from data.csv prices/scores
+  // _prices already loaded; we also store verdicts when loading data.csv
+  const ORDER = {BUY:1, CAUTION:2, WATCH:3, EXIT:4, WAIT:5, AVOID:6};
+
+  const rows = _holdings.map(h=>{
+    const yoc  = h.avg>0?(h.dps/h.avg)*100:0;
+    const tech = _techVerdict[h.symbol]||null;
+
+    let action, cls, badge;
+
+    if(tech){
+      // Use technical signal
+      if(tech==='BUY'){
+        action='🟢 BUY — TA Signal';    cls='buy';   badge='b-buy';
+      } else if(tech==='CAUTION'){
+        action='⚠️ CAUTION — Watch MA'; cls='caution'; badge='b-caution';
+      } else if(tech==='EXIT'){
+        action='🔴 EXIT — TA Signal';   cls='exit';  badge='b-exit';
+      } else if(tech==='WATCH'){
+        action='🟡 WATCH — Building';   cls='watch'; badge='b-watch';
+      } else {
+        action='⚪ WAIT — No Signal';   cls='wait';  badge='b-wait';
+      }
+    } else {
+      // Fallback: use dividend yield
+      if(yoc>=8)      { action='🟢 BUY — High Yield';   cls='buy';   badge='b-buy'; }
+      else if(yoc>=5) { action='🟡 WATCH — Good Yield'; cls='watch'; badge='b-watch'; }
+      else            { action='⚪ WAIT — Low Yield';   cls='wait';  badge='b-wait'; }
+    }
+
+    return {h, yoc, cls, action, badge, techSort: ORDER[tech||'WAIT']||5};
+  }).sort((a,b)=> a.techSort - b.techSort || b.yoc - a.yoc);
 
   let html=`<div style="overflow-x:auto"><table class="tbl">
     <tr>
@@ -590,21 +619,28 @@ function buildAction(){
       <th>Avg Cost</th><th>DPS</th><th>Yield on Cost</th>
       <th>Annual Div</th><th>Invested</th>
     </tr>`;
-  rows.forEach(({h,yoc,cat,lbl,badge})=>{
-    const rcls=`r-${cat}`;
-    const ann=h.qty*h.dps;
+
+  rows.forEach(({h,yoc,cls,action,badge})=>{
+    const rcls = cls==='buy'?'r-buy':cls==='watch'||cls==='caution'?'r-watch':'r-wait';
+    const ann  = h.qty*h.dps;
+    const yocClr = yoc>=8?'c-green':yoc>=5?'c-gold':'c-gray';
     html+=`<tr class="${rcls}">
-      <td><span class="badge ${badge}">${lbl}</span></td>
+      <td><span class="badge ${badge}">${action}</span></td>
       <td class="sym">${h.symbol}</td>
       <td>${h.qty.toLocaleString()}</td>
-      <td>${fmtD(h.avg)}</td>
+      <td>${h.avg>0?fmtD(h.avg):'<span class="c-green bold">Free</span>'}</td>
       <td class="c-gold">${h.dps||'—'}</td>
-      <td class="${yoc>=8?'c-green':yoc>=5?'c-gold':'c-gray'}"><b>${yoc.toFixed(1)}%</b></td>
+      <td class="${yocClr}"><b>${h.avg>0?yoc.toFixed(1)+'%':'∞'}</b></td>
       <td>${h.dps?fmtN(ann):'—'}</td>
-      <td>${fmtN(h.qty*h.avg)}</td>
+      <td>${h.avg>0?fmtN(h.qty*h.avg):'<span class="c-green">Free lot</span>'}</td>
     </tr>`;
   });
+
   html+=`</table></div>`;
+  html+=`<div style="margin-top:8px;font-size:12px;color:#4a6a8a;padding:6px 10px;
+    background:#0d1923;border-radius:4px;border-left:2px solid #2e4060">
+    📡 Actions based on Technical Analysis signals from data.csv · Updated weekly
+  </div>`;
   html += `<div style="margin-top:16px;padding:12px 18px;background:#0d1f35;
     border-radius:8px;border:1px solid #1565c0;display:flex;align-items:center;
     justify-content:space-between;flex-wrap:wrap;gap:10px">
@@ -625,7 +661,6 @@ function buildAction(){
   </div>`;
   document.getElementById('tab-action').innerHTML=html;
 }
-
 // ── PORTFOLIO ─────────────────────────────────
 // Sort A-Z, Live Price, P/L
 function buildPortfolio(){
