@@ -376,6 +376,34 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   box-sizing:border-box; min-width:62px;
 }
 .sym-in:focus { outline:none; border-color:#4fc3f7; color:#4fc3f7; background:#0a1520; }
+
+/* ── Import Page Password Gate ── */
+#importGate{
+  position:fixed; inset:0; background:#0f1923; z-index:9999;
+  display:none; align-items:center; justify-content:center;
+}
+#importGate.open{ display:flex; }
+.ig-box{
+  background:#1a2535; border:1px solid #2e4060; border-radius:12px;
+  padding:36px 44px; text-align:center; max-width:380px; width:90%;
+}
+.ig-logo{ font-size:28px; margin-bottom:8px; }
+.ig-title{ font-size:17px; font-weight:700; color:#4fc3f7; margin-bottom:4px; }
+.ig-sub{ font-size:13px; color:#7a9ab5; margin-bottom:20px; }
+.ig-input{
+  width:100%; padding:11px 14px; font-size:15px; letter-spacing:4px;
+  background:#0f1923; color:#4fc3f7; border:2px solid #2e4060;
+  border-radius:7px; text-align:center; outline:none; margin-bottom:10px;
+  box-sizing:border-box;
+}
+.ig-input:focus{ border-color:#4fc3f7; }
+.ig-btn{
+  width:100%; padding:11px; background:#1565c0; color:#fff;
+  border:none; border-radius:7px; font-size:14px; font-weight:700;
+  cursor:pointer;
+}
+.ig-btn:hover{ background:#1976d2; }
+.ig-err{ font-size:12px; color:#ef5350; margin-top:8px; display:none; }
 </style>
 </head>
 <body>
@@ -971,7 +999,7 @@ function showPage(id){
 }
 function goHome()    { showPage('pgHome');     renderHome(); }
 function goAnalysis(){ showPage('pgAnalysis'); runWeekly(); }
-function goImport()  { showPage('pgImport'); setTimeout(loadIntoForm,50); }
+function goImport()  { showImportPage(); }
 function goSingle()  { showPage('pgSingle'); }
 
 // ─── ZONE WIDTH ────────────────────────────────
@@ -1479,27 +1507,6 @@ function getVal(sym, field){
 
 // ── SESSION TOKEN ────────────────────────────────
 let _idxToken = '';
-function saveTokenSession(){
-  const t = document.getElementById('idxGhToken').value.trim();
-  if(!t){ document.getElementById('tokenStatus').textContent='Enter a token first'; return; }
-  _idxToken = t;
-  try{ sessionStorage.setItem('psx_idx_token', t); }catch(e){}
-  document.getElementById('tokenStatus').textContent = '✅ Token saved for this session';
-  document.getElementById('tokenStatus').style.color = '#4caf50';
-  setTimeout(()=>{ document.getElementById('tokenStatus').textContent=''; }, 3000);
-}
-
-// Restore token from session
-(function(){
-  try{
-    const t=sessionStorage.getItem('psx_idx_token');
-    if(t){ _idxToken=t; document.getElementById('idxGhToken').value=t;
-      document.getElementById('tokenStatus').textContent='✅ Token loaded from session';
-      document.getElementById('tokenStatus').style.color='#4caf50';
-      setTimeout(()=>{ document.getElementById('tokenStatus').textContent=''; },2000);
-    }
-  }catch(e){}
-})();
 
 // ── SAVE ALL DATA TO GITHUB ───────────────────────
 const REPO     = 'Nour292/psx-analysis.github.io';
@@ -1606,6 +1613,69 @@ function loadIntoForm(){
   });
 }
 
+
+// ── IMPORT PAGE PASSWORD ─────────────────────────
+const IMPORT_PW  = 'rd172';
+const IMPORT_KEY = 'psx_import_auth';
+const TOKEN_KEY  = 'psx_idx_token_perm'; // localStorage = permanent
+
+function showImportPage(){
+  // Check session auth
+  if(sessionStorage.getItem(IMPORT_KEY)==='1'){
+    showPage('pgImport');
+    setTimeout(loadIntoForm, 50);
+    return;
+  }
+  // Show gate
+  document.getElementById('importGate').classList.add('open');
+  setTimeout(()=>document.getElementById('igPwInput').focus(), 100);
+}
+
+function checkImportPW(){
+  const val = document.getElementById('igPwInput').value;
+  if(val === IMPORT_PW){
+    sessionStorage.setItem(IMPORT_KEY,'1');
+    document.getElementById('importGate').classList.remove('open');
+    showPage('pgImport');
+    setTimeout(loadIntoForm, 50);
+    // Load saved token
+    loadSavedToken();
+  } else {
+    const err=document.getElementById('igErr');
+    err.style.display='block';
+    document.getElementById('igPwInput').value='';
+    document.getElementById('igPwInput').focus();
+    setTimeout(()=>err.style.display='none', 2000);
+  }
+}
+
+function loadSavedToken(){
+  try{
+    const t = localStorage.getItem(TOKEN_KEY);
+    if(t){
+      _idxToken = t;
+      const el = document.getElementById('idxGhToken');
+      if(el){ el.value=t; }
+      const st = document.getElementById('tokenStatus');
+      if(st){ st.textContent='✅ Token loaded'; st.style.color='#4caf50';
+        setTimeout(()=>st.textContent='', 2000); }
+    }
+  }catch(e){}
+}
+
+function saveTokenSession(){
+  const t = document.getElementById('idxGhToken').value.trim();
+  if(!t){ document.getElementById('tokenStatus').textContent='Enter a token first'; return; }
+  _idxToken = t;
+  // Save permanently in localStorage
+  try{ localStorage.setItem(TOKEN_KEY, t); }catch(e){}
+  try{ sessionStorage.setItem('psx_idx_token', t); }catch(e){}
+  const st = document.getElementById('tokenStatus');
+  st.textContent = '✅ Token saved permanently';
+  st.style.color = '#4caf50';
+  setTimeout(()=>{ st.textContent=''; }, 3000);
+}
+
 // ─── DATE STAMP ────────────────────────────────
 let _dataAsOf = '';
 function setDataDate(d){
@@ -1646,5 +1716,20 @@ async function loadCSV(){
 
 loadCSV();
 </script>
+
+<!-- IMPORT PAGE PASSWORD GATE -->
+<div id="importGate">
+  <div class="ig-box">
+    <div class="ig-logo">🔒</div>
+    <div class="ig-title">Add / Update Row</div>
+    <div class="ig-sub">Enter password to access data entry</div>
+    <input type="password" class="ig-input" id="igPwInput"
+      placeholder="••••••" maxlength="20"
+      onkeydown="if(event.key==='Enter') checkImportPW()">
+    <button class="ig-btn" onclick="checkImportPW()">Unlock</button>
+    <div class="ig-err" id="igErr">❌ Incorrect password</div>
+  </div>
+</div>
+
 </body>
 </html>
