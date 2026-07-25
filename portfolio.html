@@ -184,15 +184,15 @@ const DPS = {
   OGDC:14.50, MTL:17.50, EFERT:13, BAFL:3, MEBL:30, HBL:22
 };
 // HBL pending confirmation — included but flagged
-const HBL_PENDING = true;
+const HBL_PENDING = false;
 
 const SECTOR = {
-  MCB:'Banking', UBL:'Banking', HBL:'Banking', MEBL:'Banking', BAFL:'Banking', NBP:'Banking',
-  POL:'E&P', OGDC:'E&P',
-  FFC:'Fertilizer', EFERT:'Fertilizer', ENGROH:'Fertilizer',
-  HUBC:'Power', KAPCO:'Power',
-  MTL:'Auto', ISL:'Auto',
-  FCL:'Other', LUCK:'Other', SYS:'Other'
+  HUBC:'Rental Power',
+  POL:'Oil and Gas', OGDC:'Oil and Gas',
+  UBL:'Banking', MCB:'Banking', MEBL:'Banking', HBL:'Banking', BAFL:'Banking', NBP:'Banking',
+  FFC:'Fertilizer', EFERT:'Fertilizer',
+  MTL:'Automobile Assembler',
+  ENGROH:'Other', FCL:'Other', LUCK:'Other', SYS:'Other', ISL:'Other', KAPCO:'Other'
 };
 const SECTOR_TARGET = 20; // % each
 const EXCLUDE_SECTOR = ['ENGROH','FCL'];
@@ -306,83 +306,78 @@ function buildAction(){
     const cls = yoc>=8?'buy':yoc>=5?'watch':'wait';
     const act = yoc>=8?'🟢 BUY — Add more':yoc>=5?'🟡 WATCH — Good yield':'⚪ WAIT — Monitor';
     return {h,yoc,cls,act};
-  }).sort((a,b)=>{
-    const o={buy:1,watch:2,wait:3};
-    return o[a.cls]-o[b.cls]||b.yoc-a.yoc;
-  });
+  }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
 
-  let html=`<div style="overflow-x:auto"><table class="ptbl">
+  let html=`<div style="overflow-x:auto"><table class="ptbl" style="text-align:left">
     <tr>
-      <th>#</th><th>Symbol</th><th>Sector</th><th>Units</th>
-      <th>Avg Cost</th><th>Invested</th><th>DPS</th>
-      <th>Yield on Cost</th><th>Annual Div</th><th>Action</th>
+      <th style="text-align:left">#</th>
+      <th style="text-align:left">Symbol</th>
+      <th style="text-align:left">Units</th>
+      <th style="text-align:left">Avg Cost</th>
+      <th style="text-align:left">Invested</th>
+      <th style="text-align:left">DPS</th>
+      <th style="text-align:left">Yield on Cost</th>
+      <th style="text-align:left">Annual Div</th>
+      <th style="text-align:left">Action</th>
     </tr>`;
   rows.forEach(({h,yoc,cls,act},i)=>{
     const inv=h.qty*h.avg, ann=h.qty*h.dps;
     const rcls=cls==='buy'?'buy-row':cls==='watch'?'watch-row':'';
-    html+=`<tr class="${rcls}">
-      <td>${i+1}</td><td><b>${h.symbol}</b></td><td>${h.sector}</td>
-      <td>${h.qty.toLocaleString()}</td><td>₨${fmt2(h.avg)}</td>
-      <td>${fmtPKR(inv)}</td><td>${h.dps?'₨'+h.dps:'—'}</td>
+    html+=`<tr class="${rcls}" style="text-align:left">
+      <td>${i+1}</td>
+      <td style="text-align:left"><b>${h.symbol}</b></td>
+      <td>${h.qty.toLocaleString()}</td>
+      <td>${fmt2(h.avg)}</td>
+      <td>${fmtPKR(inv).replace('₨','')}</td>
+      <td>${h.dps||'—'}</td>
       <td><b>${yoc.toFixed(1)}%</b></td>
-      <td>${h.dps?fmtPKR(ann):'—'}</td>
+      <td>${h.dps?fmtPKR(ann).replace('₨',''):'—'}</td>
       <td><b>${act}</b></td>
     </tr>`;
   });
   html+=`</table></div>`;
-  if(HBL_PENDING){
-    html+=`<div style="background:#1a1a00;border:1px solid #ffc107;border-radius:8px;
-      padding:10px 16px;font-size:13px;color:#ffc107;margin-top:10px">
-      ⚠️ <b>HBL</b> — DPS ₨22 pending confirmation. Excluded from dividend roadmap until confirmed.
-    </div>`;
-  }
   document.getElementById('actionContent').innerHTML=html;
 }
 function buildPortfolio(){
-  const sorted = [..._holdings].sort((a,b)=>{
-    const yocA=a.avg>0?(a.dps/a.avg)*100:0;
-    const yocB=b.avg>0?(b.dps/b.avg)*100:0;
-    return yocB-yocA;
-  });
-
-  let html=`<div style="overflow-x:auto"><table class="ptbl">
+  const sorted=[..._holdings].sort((a,b)=>a.symbol.localeCompare(b.symbol));
+  let html=`<div style="overflow-x:auto"><table class="ptbl" style="text-align:left">
     <tr>
-      <th>#</th><th>Symbol</th><th>Sector</th><th>Units</th>
-      <th>Avg Cost</th><th>Invested</th><th>DPS</th>
-      <th>Yield on Cost</th><th>Annual Div</th>
+      <th style="text-align:left">#</th>
+      <th style="text-align:left">Symbol</th>
+      <th style="text-align:left">Units</th>
+      <th style="text-align:left">Avg Cost</th>
+      <th style="text-align:left">Invested</th>
+      <th style="text-align:left">DPS</th>
+      <th style="text-align:left">Yield on Cost</th>
+      <th style="text-align:left">Annual Div</th>
     </tr>`;
   sorted.forEach((h,i)=>{
-    const inv=h.qty*h.avg;
-    const yoc=h.avg>0?(h.dps/h.avg)*100:0;
-    const ann=h.qty*h.dps;
+    const inv=h.qty*h.avg, yoc=h.avg>0?(h.dps/h.avg)*100:0, ann=h.qty*h.dps;
     const cls=yoc>=8?'buy-row':yoc>=5?'watch-row':'wait-row';
-    html+=`<tr class="${cls}">
+    html+=`<tr class="${cls}" style="text-align:left">
       <td>${i+1}</td>
       <td><b>${h.symbol}</b></td>
-      <td>${h.sector}</td>
       <td>${h.qty.toLocaleString()}</td>
-      <td>₨${fmt2(h.avg)}</td>
-      <td>${fmtPKR(inv)}</td>
-      <td>${h.dps?'₨'+h.dps:'—'}</td>
+      <td>${fmt2(h.avg)}</td>
+      <td>${fmtPKR(inv).replace('₨','')}</td>
+      <td>${h.dps||'—'}</td>
       <td><b>${yoc.toFixed(1)}%</b></td>
-      <td>${h.dps?fmtPKR(ann):'—'}</td>
+      <td>${h.dps?fmtPKR(ann).replace('₨',''):'—'}</td>
     </tr>`;
   });
-  const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
-  const totalDiv=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);
-  html+=`<tr style="background:#1e3050;font-weight:700">
-    <td colspan="5">TOTAL</td>
-    <td>${fmtPKR(totalInv)}</td>
+  const ti=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
+  const td=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);
+  html+=`<tr style="background:#1e3050;font-weight:700;text-align:left">
+    <td colspan="4">TOTAL</td>
+    <td>${fmtPKR(ti).replace('₨','')}</td>
     <td></td><td></td>
-    <td>${fmtPKR(totalDiv)}</td>
-  </tr>`;
-  html+=`</table></div>`;
+    <td>${fmtPKR(td).replace('₨','')}</td>
+  </tr></table></div>`;
   document.getElementById('portfolioContent').innerHTML=html;
 }
 
-// ─── DIVIDEND INCOME ───────────────────────────
 function buildDividend(){
-  const withDps = _holdings.filter(h=>h.dps>0&&h.symbol!=='HBL');
+  const withDps = _holdings.filter(h=>h.dps>0);
   const hbl     = _holdings.find(h=>h.symbol==='HBL');
   withDps.sort((a,b)=>b.qty*b.dps - a.qty*a.dps);
 
@@ -435,47 +430,43 @@ function buildDividend(){
 
 // ─── SECTOR BALANCE ────────────────────────────
 function buildSector(){
-  const sectorMap = {};
-  const totalInv  = _holdings.reduce((s,h)=>s+h.qty*h.avg,0);
-
+  const map={};
+  const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
   _holdings.filter(h=>!EXCLUDE_SECTOR.includes(h.symbol)).forEach(h=>{
-    const sec=h.sector||'Other';
     const inv=h.qty*h.avg;
-    sectorMap[sec]=(sectorMap[sec]||0)+inv;
+    map[h.sector]=(map[h.sector]||0)+inv;
   });
-
-  const sectors = Object.entries(sectorMap)
+  const sectors=Object.entries(map)
     .map(([sec,inv])=>({sec,inv,pct:totalInv>0?(inv/totalInv)*100:0}))
     .sort((a,b)=>b.pct-a.pct);
-
-  const totalForSector=Object.values(sectorMap).reduce((s,v)=>s+v,0);
-
-  let html='<div style="max-width:700px">';
+  let html='<div style="max-width:1000px">';
   sectors.forEach(({sec,inv,pct})=>{
-    const isOver  = pct>22;
-    const isUnder = pct<18;
-    const cls     = isOver?'over':isUnder?'under':'ok';
-    const flag    = isOver?'🔴 Over':isUnder?'🟡 Under':'✅';
-    html+=`<div class="sector-row">
-      <div class="sector-lbl">${sec}</div>
-      <div class="sector-bar-wrap">
-        <div class="sector-bar-fill ${cls}" style="width:${Math.min(pct*3,100)}%">
+    const over=pct>22,under=pct<18;
+    const cls=over?'over':under?'under':'ok';
+    const flag=over?'🔴 Over':under?'🟡 Under':'✅ OK';
+    const fc=over?'#ef5350':under?'#ffc107':'#4caf50';
+    html+=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+      <div style="min-width:240px;font-size:15px;font-weight:700;color:#a0c4e8;text-align:left">${sec}</div>
+      <div style="flex:1;background:#1a2535;border-radius:6px;height:30px;overflow:hidden;
+                  border:1px solid #2e4060;position:relative;min-width:300px">
+        <div class="sector-bar-fill ${cls}" style="width:${Math.min(pct*4,100)}%;height:100%;
+             display:flex;align-items:center;padding:0 10px;font-size:13px;font-weight:700;color:#fff">
           ${pct.toFixed(1)}%
         </div>
-        <div class="sector-target" style="left:${Math.min(SECTOR_TARGET*3,100)}%"></div>
+        <div style="position:absolute;top:0;bottom:0;width:2px;background:#ffc107;opacity:.8;
+                    left:${Math.min(80,100)}%"></div>
       </div>
-      <div class="sector-pct" style="color:${isOver?'#ef5350':isUnder?'#ffc107':'#4caf50'}">${flag}</div>
-    </div>
-    <div style="font-size:11px;color:#4a6a8a;margin:-8px 0 10px 112px">${fmtPKR(inv)}</div>`;
+      <div style="min-width:90px;font-size:14px;font-weight:700;color:${fc};text-align:left">${flag}</div>
+      <div style="min-width:120px;font-size:13px;color:#7a9ab5;text-align:left">${fmtPKR(inv)}</div>
+    </div>`;
   });
-  html+=`<div style="font-size:12px;color:#7a9ab5;margin-top:12px;padding:10px;
+  html+=`<div style="font-size:13px;color:#7a9ab5;margin-top:14px;padding:12px 16px;
     background:#1a2535;border-radius:6px;border-left:3px solid #ffc107">
-    🎯 Target: 20% per sector | 🔴 Flag if &gt;22% or &lt;18% | ENGROH &amp; FCL excluded
+    🎯 Target 20% per sector &nbsp;|&nbsp; 🔴 Over >22% &nbsp;|&nbsp; 🟡 Under <18%
   </div></div>`;
   document.getElementById('sectorContent').innerHTML=html;
 }
 
-// ─── AUTO-LOAD from GitHub on page open ────────
 async function autoLoad(){
   try{
     const res  = await fetch('holdings.csv?'+Date.now());
