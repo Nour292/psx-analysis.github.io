@@ -38,15 +38,14 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .btn-search:hover{ background:#00796b; }
 
 /* SEARCH MODAL */
-#srchModal{
-  position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:8888;
-  display:none; align-items:flex-start; justify-content:center;
-  padding-top:40px; overflow-y:auto;
+#pgHistory{
+  position:fixed; inset:0; background:#0f1923; z-index:7777;
+  display:none; flex-direction:column; overflow-y:auto;
 }
-#srchModal.open{ display:flex; }
+#pgHistory.open{ display:flex; }
 .sr-box{
   background:#1a2535; border:1px solid #2e4060; border-radius:12px;
-  width:820px; max-width:95vw; padding:28px 28px 24px;
+  width:100%; max-width:1100px; margin:0 auto; padding:28px 28px 24px;
 }
 .sr-title{ font-size:16px; font-weight:700; color:#4fc3f7; margin-bottom:18px; }
 .sr-row{ display:flex; gap:10px; margin-bottom:16px; align-items:center; }
@@ -341,8 +340,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <span class="nav-logo">📈 PSX Portfolio</span>
   <button class="btn btn-ta" onclick="window.location.href='index.html'">📊 Technical Analysis</button>
   <button class="btn btn-buysell" onclick="showBuySell()">💱 Buy / Sell</button>
-  <button class="btn btn-search" onclick="showSearch()">🔍 Trade History</button>
-  <button class="btn btn-history" onclick="showHistory()">🔍 Trade History</button>
+  <button class="btn btn-search" onclick="goHistory()">🔍 Trade History</button>
   <span class="asof" id="asofBadge" style="display:none">📅 As of: <b id="asofVal"></b></span>
 </div>
 
@@ -891,14 +889,25 @@ function buildCapital(){
 let _allTrades = []; // raw rows from holdings.csv
 
 
+function goHistory(){
+  document.getElementById('pgHistory').classList.add('open');
+  document.getElementById('srchSym').value='';
+  document.getElementById('srchResult').innerHTML='';
+  setTimeout(()=>document.getElementById('srchSym').focus(),100);
+}
+function goBack(){
+  document.getElementById('pgHistory').classList.remove('open');
+}
+function showSearch(){ goHistory(); }
+function hideSearch(){ goBack(); }
 function showSearch(){
-  document.getElementById('srchModal').classList.add('open');
+  document.getElementById('pgHistory').classList.add('open');
   document.getElementById('srchSym').value='';
   document.getElementById('srchResult').innerHTML='';
   setTimeout(()=>document.getElementById('srchSym').focus(),100);
 }
 function hideSearch(){
-  document.getElementById('srchModal').classList.remove('open');
+  document.getElementById('pgHistory').classList.remove('open');
 }
 
 function runSearch(){
@@ -1367,7 +1376,7 @@ autoLoad();
 
 
 <!-- TRADE HISTORY MODAL -->
-<div id="histModal">
+tModal">
   <div class="hist-box">
     <div class="hist-title">🔍 Trade History</div>
     <div class="hist-search">
@@ -1382,9 +1391,18 @@ autoLoad();
 
 
 <!-- TRADE HISTORY MODAL -->
-<div id="srchModal">
-  <div class="sr-box">
-    <div class="sr-title">🔍 Trade History</div>
+<div id="pgHistory">
+  <!-- History Nav -->
+  <div style="background:#1a2535;border-bottom:2px solid #2e4060;padding:10px 20px;
+    display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <span style="font-size:18px;font-weight:700;color:#4fc3f7;margin-right:6px">🔍 Trade History</span>
+    <button onclick="goBack()" style="background:#2e4060;color:#a0c4e8;border:none;
+      border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;
+      display:flex;align-items:center;gap:6px">← Back to Portfolio</button>
+  </div>
+
+  <div style="padding:24px;flex:1">
+  <div class="sr-box" style="border:none;padding:0;background:transparent">
     <div class="sr-row">
       <input type="text" class="sr-input" id="srchSym"
         placeholder="TYPE SYMBOL — e.g. MCB"
@@ -1394,6 +1412,7 @@ autoLoad();
     </div>
     <div id="srchResult"></div>
   </div>
+  </div><!-- end padding -->
 </div>
 
 </body>
