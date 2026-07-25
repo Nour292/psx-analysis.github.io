@@ -31,6 +31,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .kpi.c1 .kv{ color:#4fc3f7; } .kpi.c2 .kv{ color:#4caf50; }
 .kpi.c3 .kv{ color:#ffc107; } .kpi.c4 .kv{ color:#ff9800; }
 .kpi.c5 .kv{ color:#ef5350; }
+.kpi.c6 .kv{ color:#a0c4e8; }
 
 /* PROGRESS */
 .pw{ padding:0 20px 10px; }
@@ -127,10 +128,11 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
 <!-- KPI -->
 <div class="kpi-bar">
-  <div class="kpi c1"><div class="kv" id="kInvested">—</div><div class="kl">Invested Capital</div></div>
-  <div class="kpi c2"><div class="kv" id="kDivIncome">—</div><div class="kl">Annual Dividend</div></div>
+  <div class="kpi c1"><div class="kv" id="kInvested">—</div><div class="kl">Holdings at Cost</div></div>
   <div class="kpi c3"><div class="kv" id="kWorth">—</div><div class="kl">Portfolio Worth</div></div>
   <div class="kpi c5"><div class="kv" id="kPL">—</div><div class="kl">Unrealised P/L</div></div>
+  <div class="kpi c2"><div class="kv" id="kDivIncome">—</div><div class="kl">Annual Dividend</div></div>
+  <div class="kpi c6"><div class="kv" id="kFreeCash">PKR 448,387</div><div class="kl">Free Cash</div></div>
   <div class="kpi c4"><div class="kv" id="kProgress">—</div><div class="kl">To PKR 1M Target</div></div>
 </div>
 
@@ -146,12 +148,14 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <button class="tb-btn"        onclick="showTab('portfolio',this)">📋 Portfolio</button>
   <button class="tb-btn"        onclick="showTab('dividend',this)">💰 Dividend Income</button>
   <button class="tb-btn"        onclick="showTab('sector',this)">⚖️ Sector Balance</button>
+  <button class="tb-btn"        onclick="showTab('capital',this)">💼 Capital Summary</button>
 </div>
 
 <div id="tab-action"    class="tp active"><p class="c-gray" style="padding:20px">Loading...</p></div>
 <div id="tab-portfolio" class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
 <div id="tab-dividend"  class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
 <div id="tab-sector"    class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
+<div id="tab-capital"   class="tp"></div>
 
 <script>
 // ── CONSTANTS ─────────────────────────────────
@@ -168,6 +172,14 @@ const SECTOR = {
   ENGROH:'Other', FCL:'Other', LUCK:'Other', SYS:'Other', ISL:'Other', KAPCO:'Other'
 };
 const EXCLUDE_SEC = ['ENGROH','FCL'];
+
+// ── CAPITAL HISTORY ──────────────────────────
+const CAPITAL = {
+  started:    'Sep 2021',
+  invested:   2690000,   // total cash added since start
+  withdrawn:  3000000,   // total cash withdrawn
+  freeCash:   448387     // idle cash available now
+};
 
 let _holdings = [];
 let _prices   = {}; // symbol → last known price from data.csv
@@ -276,6 +288,7 @@ function buildAll(){
   set('kDivIncome','PKR '+fmtN(totalDiv));
   set('kWorth','PKR '+fmtN(totalWorth));
   set('kPL',(totalPL>=0?'+':'')+fmtN(totalPL));
+  set('kFreeCash','PKR '+fmtN(CAPITAL.freeCash));
   set('kProgress',pct.toFixed(1)+'%');
   document.getElementById('kPL').className='kv '+(totalPL>=0?'c-green':'c-red');
 
@@ -288,6 +301,7 @@ function buildAll(){
   try{ buildPortfolio(); }catch(e){ showErr('tab-portfolio',e); }
   try{ buildDividend(); }catch(e){ showErr('tab-dividend',e); }
   try{ buildSector(); }catch(e){ showErr('tab-sector',e); }
+  try{ buildCapital(); }catch(e){ showErr('tab-capital',e); }
 }
 
 function showErr(id,e){
@@ -490,6 +504,99 @@ function buildSector(){
   </div></div>`;
 
   document.getElementById('tab-sector').innerHTML=html;
+}
+
+
+// ── CAPITAL SUMMARY ──────────────────────────
+function buildCapital(){
+  const holdingsAtCost = _holdings.reduce((s,h)=>s+h.qty*h.avg,0);
+  const holdingsWorth  = _holdings.reduce((s,h)=>s+h.qty*(h.price||h.avg),0);
+  const unrealPL       = holdingsWorth - holdingsAtCost;
+  const annualDiv      = _holdings.reduce((s,h)=>s+h.qty*h.dps,0);
+
+  const totalCashIn    = CAPITAL.invested;
+  const totalCashOut   = CAPITAL.withdrawn;
+  const netCashProfit  = totalCashOut - totalCashIn;
+  const freeCash       = CAPITAL.freeCash;
+  const totalValue     = holdingsWorth + freeCash;
+  const totalReturn    = totalCashOut + totalValue;
+  const netGain        = totalReturn - totalCashIn;
+  const roi            = totalCashIn>0?((netGain/totalCashIn)*100):0;
+  const years          = 4.8;
+  const cagr           = (Math.pow(totalReturn/totalCashIn,1/years)-1)*100;
+
+  const row=(lbl,val,cls='',note='')=>
+    `<tr><td style="color:#7a9ab5;width:260px">${lbl}</td>
+     <td class="${cls} bold" style="font-size:15px">${val}</td>
+     ${note?`<td style="font-size:12px;color:#4a6a8a">${note}</td>`:'<td></td>'}
+    </tr>`;
+
+  let html=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1000px">
+
+    <!-- LEFT: Cash Flow -->
+    <div>
+      <div style="font-size:12px;font-weight:700;color:#4fc3f7;text-transform:uppercase;
+           letter-spacing:.8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #2e4060">
+        💵 Cash Flow History
+      </div>
+      <table class="tbl">
+        ${row('Portfolio started',CAPITAL.started,'c-gray')}
+        ${row('Total cash invested','PKR '+fmtN(totalCashIn),'c-blue','Since Sep 2021')}
+        ${row('Total cash withdrawn','PKR '+fmtN(totalCashOut),'c-green','Profits + capital')}
+        ${row('Net cash profit','PKR '+fmtN(netCashProfit),netCashProfit>=0?'c-green':'c-red','Withdrawn − Invested')}
+        ${row('Free cash now','PKR '+fmtN(freeCash),'c-gold','Idle / available')}
+      </table>
+    </div>
+
+    <!-- RIGHT: Portfolio Value -->
+    <div>
+      <div style="font-size:12px;font-weight:700;color:#4fc3f7;text-transform:uppercase;
+           letter-spacing:.8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #2e4060">
+        📊 Current Portfolio Value
+      </div>
+      <table class="tbl">
+        ${row('Holdings at cost','PKR '+fmtN(holdingsAtCost),'c-blue')}
+        ${row('Holdings at market','PKR '+fmtN(holdingsWorth),'c-gold')}
+        ${row('Unrealised P/L','PKR '+(unrealPL>=0?'+':'')+fmtN(unrealPL),unrealPL>=0?'c-green':'c-red')}
+        ${row('Free cash','PKR '+fmtN(freeCash),'c-gold')}
+        ${row('Total value now','PKR '+fmtN(totalValue),'c-green','Holdings + cash')}
+      </table>
+    </div>
+
+    <!-- FULL WIDTH: ROI Summary -->
+    <div style="grid-column:1/-1">
+      <div style="font-size:12px;font-weight:700;color:#4fc3f7;text-transform:uppercase;
+           letter-spacing:.8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #2e4060">
+        🏆 Overall Performance
+      </div>
+      <table class="tbl">
+        ${row('Total cash invested','PKR '+fmtN(totalCashIn),'c-blue')}
+        ${row('Total value created','PKR '+fmtN(totalReturn),'c-green','Cash out + current value')}
+        ${row('Net total gain','PKR '+fmtN(netGain),netGain>=0?'c-green':'c-red')}
+        ${row('Overall ROI',roi.toFixed(1)+'%',roi>=0?'c-green':'c-red','Since Sep 2021')}
+        ${row('CAGR (4.8 years)',cagr.toFixed(1)+'%','c-gold','Compound Annual Growth Rate')}
+        ${row('Annual dividend income','PKR '+fmtN(annualDiv),'c-green','Based on current DPS')}
+      </table>
+
+      <!-- ROI visual bar -->
+      <div style="margin-top:16px;background:#1a2535;border-radius:8px;padding:14px 18px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+          <span class="c-blue">Invested: PKR ${fmtN(totalCashIn)}</span>
+          <span class="c-green">Value now: PKR ${fmtN(totalReturn)}</span>
+          <span class="c-gold">Gain: ${roi.toFixed(1)}% in ${years} years</span>
+        </div>
+        <div class="pb" style="height:20px">
+          <div class="pf" style="width:${Math.min(roi/2,100)}%;background:linear-gradient(90deg,#1565c0,#4caf50)">
+            <span class="pp" style="font-size:12px">${roi.toFixed(1)}% ROI</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>`;
+
+  document.getElementById('tab-capital').innerHTML=html;
 }
 
 // ── AUTO LOAD ─────────────────────────────────
