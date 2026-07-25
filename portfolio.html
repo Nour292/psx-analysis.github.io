@@ -262,7 +262,7 @@ function parseHoldings(text){
       dps:DPS[sym]||0,
       sector:SECTOR[sym]||'Other'
     }))
-    .sort((a,b)=>a.symbol.localeCompare(b.symbol));
+    .sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
 
   // Find latest date
   const dates = rows.map(r=>r.date).filter(Boolean);
@@ -314,7 +314,7 @@ function buildAction(){
     const cls = yoc>=8?'buy':yoc>=5?'watch':'wait';
     const act = yoc>=8?'🟢 BUY — Add more':yoc>=5?'🟡 WATCH — Good yield':'⚪ WAIT — Monitor';
     return {h,yoc,cls,act};
-  }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
+  }).sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
 
   let html=`<div style="overflow-x:auto"><table class="ptbl" style="text-align:left">
     <tr>
@@ -347,7 +347,7 @@ function buildAction(){
   document.getElementById('actionContent').innerHTML=html;
 }
 function buildPortfolio(){
-  const sorted=[..._holdings].sort((a,b)=>a.symbol.localeCompare(b.symbol));
+  const sorted=[..._holdings].sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
   let html=`<div style="overflow-x:auto"><table class="ptbl" style="text-align:left">
     <tr>
       <th style="text-align:left">#</th>
