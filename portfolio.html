@@ -301,50 +301,43 @@ function buildDashboard(){
 
 // ─── ACTION PLAN ───────────────────────────────
 function buildAction(){
-  // Simple rule-based action based on avg cost vs DPS yield
-  const cards = _holdings.map(h=>{
+  const rows = _holdings.map(h=>{
     const yoc = h.avg>0?(h.dps/h.avg)*100:0;
-    let action,cls;
-    if(yoc>=8)       { action='BUY — Add more';  cls='buy'; }
-    else if(yoc>=5)  { action='WATCH — Good yield'; cls='watch'; }
-    else             { action='WAIT — Monitor';   cls='wait'; }
-    return {h,action,cls,yoc};
+    const cls = yoc>=8?'buy':yoc>=5?'watch':'wait';
+    const act = yoc>=8?'🟢 BUY — Add more':yoc>=5?'🟡 WATCH — Good yield':'⚪ WAIT — Monitor';
+    return {h,yoc,cls,act};
+  }).sort((a,b)=>{
+    const o={buy:1,watch:2,wait:3};
+    return o[a.cls]-o[b.cls]||b.yoc-a.yoc;
   });
 
-  // Sort: BUY first, then WATCH, then WAIT
-  const order={buy:1,watch:2,wait:3};
-  cards.sort((a,b)=>order[a.cls]-order[b.cls]);
-
-  let html='<div class="action-grid">';
-  cards.forEach(({h,action,cls,yoc})=>{
-    const invested=h.qty*h.avg;
-    const annDiv=h.qty*h.dps;
-    html+=`<div class="action-card ${cls}">
-      <div class="ac-sym">${h.symbol}</div>
-      <div class="ac-action">${action}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:12px">
-        <span class="ac-line">Units</span><span class="ac-val">${h.qty.toLocaleString()}</span>
-        <span class="ac-line">Avg Cost</span><span class="ac-val">₨${fmt2(h.avg)}</span>
-        <span class="ac-line">DPS</span><span class="ac-val">₨${h.dps||'—'}</span>
-        <span class="ac-line">Yield on Cost</span><span class="ac-val">${yoc.toFixed(1)}%</span>
-        <span class="ac-line">Annual Div</span><span class="ac-val">${fmtPKR(annDiv)}</span>
-        <span class="ac-line">Invested</span><span class="ac-val">${fmtPKR(invested)}</span>
-      </div>
-    </div>`;
+  let html=`<div style="overflow-x:auto"><table class="ptbl">
+    <tr>
+      <th>#</th><th>Symbol</th><th>Sector</th><th>Units</th>
+      <th>Avg Cost</th><th>Invested</th><th>DPS</th>
+      <th>Yield on Cost</th><th>Annual Div</th><th>Action</th>
+    </tr>`;
+  rows.forEach(({h,yoc,cls,act},i)=>{
+    const inv=h.qty*h.avg, ann=h.qty*h.dps;
+    const rcls=cls==='buy'?'buy-row':cls==='watch'?'watch-row':'';
+    html+=`<tr class="${rcls}">
+      <td>${i+1}</td><td><b>${h.symbol}</b></td><td>${h.sector}</td>
+      <td>${h.qty.toLocaleString()}</td><td>₨${fmt2(h.avg)}</td>
+      <td>${fmtPKR(inv)}</td><td>${h.dps?'₨'+h.dps:'—'}</td>
+      <td><b>${yoc.toFixed(1)}%</b></td>
+      <td>${h.dps?fmtPKR(ann):'—'}</td>
+      <td><b>${act}</b></td>
+    </tr>`;
   });
-  html+='</div>';
-
-  // Alerts
+  html+=`</table></div>`;
   if(HBL_PENDING){
     html+=`<div style="background:#1a1a00;border:1px solid #ffc107;border-radius:8px;
-      padding:10px 16px;font-size:13px;color:#ffc107;margin-top:8px">
-      ⚠️ <b>HBL</b> — DPS pending confirmation. Excluded from dividend roadmap until confirmed.
+      padding:10px 16px;font-size:13px;color:#ffc107;margin-top:10px">
+      ⚠️ <b>HBL</b> — DPS ₨22 pending confirmation. Excluded from dividend roadmap until confirmed.
     </div>`;
   }
   document.getElementById('actionContent').innerHTML=html;
 }
-
-// ─── PORTFOLIO TABLE ───────────────────────────
 function buildPortfolio(){
   const sorted = [..._holdings].sort((a,b)=>{
     const yocA=a.avg>0?(a.dps/a.avg)*100:0;
