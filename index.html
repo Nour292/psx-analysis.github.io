@@ -441,6 +441,29 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   </div>
   <div style="padding:20px 24px">
 
+    <!-- GitHub Token bar -->
+    <div style="background:#1a2535;border-radius:8px;padding:12px 16px;
+      margin-bottom:14px;border:1px solid #2e4060;display:flex;align-items:center;
+      gap:12px;flex-wrap:wrap">
+      <span style="font-size:13px;color:#7a9ab5;font-weight:600;white-space:nowrap">
+        🔑 GitHub Token:
+      </span>
+      <input type="password" id="idxGhToken"
+        placeholder="ghp_xxxxxxxxxxxx — required to save directly to data.csv"
+        style="flex:1;min-width:280px;background:#0f1923;color:#4fc3f7;
+          border:1px solid #2e4060;border-radius:6px;padding:8px 12px;
+          font-size:13px;outline:none;"
+        onfocus="this.style.borderColor='#4fc3f7'"
+        onblur="this.style.borderColor='#2e4060'">
+      <button onclick="saveTokenSession()" style="
+        background:#2e4060;color:#a0c4e8;border:none;border-radius:6px;
+        padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;
+        white-space:nowrap">
+        💾 Remember for session
+      </button>
+      <span id="tokenStatus" style="font-size:12px;color:#4a6a8a"></span>
+    </div>
+
     <!-- Date + Save bar -->
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
       <span style="font-size:15px;color:#4fc3f7;font-weight:700">📅 Data as of:</span>
@@ -448,7 +471,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
         background:#1a2535;color:#4fc3f7;border:1px solid #2e4060;
         border-radius:6px;padding:7px 12px;font-size:14px;cursor:pointer">
       <button class="btn btn-weekly" onclick="saveAllData()" style="height:40px;width:200px;font-size:14px">
-        💾 Save All to CSV
+        💾 Save All to GitHub
       </button>
       <button class="btn btn-export" onclick="exportCSV()" style="height:40px;width:180px;font-size:14px">
         ⬇ Export CSV
@@ -1454,6 +1477,74 @@ function getVal(sym, field){
   return el ? el.value.trim() : '';
 }
 
+// ── SESSION TOKEN ────────────────────────────────
+let _idxToken = '';
+function saveTokenSession(){
+  const t = document.getElementById('idxGhToken').value.trim();
+  if(!t){ document.getElementById('tokenStatus').textContent='Enter a token first'; return; }
+  _idxToken = t;
+  try{ sessionStorage.setItem('psx_idx_token', t); }catch(e){}
+  document.getElementById('tokenStatus').textContent = '✅ Token saved for this session';
+  document.getElementById('tokenStatus').style.color = '#4caf50';
+  setTimeout(()=>{ document.getElementById('tokenStatus').textContent=''; }, 3000);
+}
+
+// Restore token from session
+(function(){
+  try{
+    const t=sessionStorage.getItem('psx_idx_token');
+    if(t){ _idxToken=t; document.getElementById('idxGhToken').value=t;
+      document.getElementById('tokenStatus').textContent='✅ Token loaded from session';
+      document.getElementById('tokenStatus').style.color='#4caf50';
+      setTimeout(()=>{ document.getElementById('tokenStatus').textContent=''; },2000);
+    }
+  }catch(e){}
+})();
+
+// ── SAVE ALL DATA TO GITHUB ───────────────────────
+const REPO     = 'Nour292/psx-analysis.github.io';
+const DATA_FILE= 'data.csv';
+
+async function saveToGitHub(csvContent, msg){
+  const token = _idxToken || document.getElementById('idxGhToken').value.trim();
+  if(!token){
+    setSaveStatus('⚠️ No token — use Export CSV to save manually','#ffc107');
+    return false;
+  }
+  setSaveStatus('⏳ Saving to GitHub...','#ffc107');
+  try{
+    const getRes = await fetch(
+      `https://api.github.com/repos/${REPO}/contents/${DATA_FILE}`,
+      { headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }}
+    );
+    if(!getRes.ok) throw new Error('Cannot read data.csv ('+getRes.status+')');
+    const fd  = await getRes.json();
+    const nl  = '\n';
+    const encoded = btoa(unescape(encodeURIComponent(csvContent)));
+    const putRes = await fetch(
+      `https://api.github.com/repos/${REPO}/contents/${DATA_FILE}`,
+      {
+        method:'PUT',
+        headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json',
+                  'Content-Type':'application/json' },
+        body: JSON.stringify({ message:msg, content:encoded, sha:fd.sha })
+      }
+    );
+    if(!putRes.ok){ const e=await putRes.json(); throw new Error(e.message); }
+    setSaveStatus('✅ Saved to GitHub successfully!','#4caf50');
+    setTimeout(()=>setSaveStatus('',''),4000);
+    return true;
+  }catch(err){
+    setSaveStatus('❌ '+err.message,'#ef5350');
+    return false;
+  }
+}
+
+function setSaveStatus(msg,color){
+  const el=document.getElementById('saveStatus');
+  if(el){ el.textContent=msg; el.style.color=color; }
+}
+
 function saveAllData(){
   const rows = ALL_SYMBOLS.map(sym => {
     const row = { Symbol:sym };
@@ -1482,9 +1573,14 @@ function saveAllData(){
   document.getElementById('csvOut').value = csv;
   document.getElementById('csvSection').style.display = 'block';
 
-  const st = document.getElementById('saveStatus');
-  st.textContent = '✅ Saved — copy CSV to GitHub';
-  setTimeout(()=>{ st.textContent=''; }, 5000);
+  // Try GitHub save first; fallback message if no token
+  const token = _idxToken || document.getElementById('idxGhToken').value.trim();
+  if(token){
+    const today = new Date().toISOString().slice(0,10);
+    saveToGitHub(csv, 'Update data.csv: '+today);
+  } else {
+    setSaveStatus('⚠️ No token — copy CSV below to upload manually','#ffc107');
+  }
 
   renderHome();
 }
