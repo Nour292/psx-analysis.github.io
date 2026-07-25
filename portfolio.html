@@ -1317,6 +1317,45 @@ async function submitTrade(action){
     updateCAPITAL(action, units, rate, cash);
     setStatus(`✅ Saved! ${action} ${units} ${sym} @ PKR ${rate} added to holdings.csv`,'#4caf50');
 
+    // Auto-add to cashflow
+    try{
+      const currentBal = _cashFlow.length>0
+        ? parseFloat(_cashFlow[_cashFlow.length-1].Balance||0)
+        : CAPITAL.freeCash;
+      const tradeVal   = units * rate;
+      const newActual  = action==='Buy'
+        ? currentBal - tradeVal  // estimated — user can correct later
+        : currentBal + tradeVal;
+      const feesEst    = 0; // no actual balance entered — fees unknown yet
+
+      const nl='\n';
+      const autoDesc   = `${action} ${units} ${sym} @ ${rate}`;
+      const cfRow      = [date, action, sym, units, rate.toFixed(2),
+        tradeVal.toFixed(2), feesEst, (newActual-currentBal).toFixed(2),
+        newActual.toFixed(2), autoDesc].join(',');
+
+      const cfGetRes=await fetch(
+        `https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,
+        {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}}
+      );
+      if(cfGetRes.ok){
+        const cfFd=await cfGetRes.json();
+        const cfCur=atob(cfFd.content.replace(/\n/g,''));
+        const cfUpd=cfCur.trimEnd()+nl+cfRow+nl;
+        const cfEnc=btoa(unescape(encodeURIComponent(cfUpd)));
+        await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,{
+          method:'PUT',
+          headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
+          body:JSON.stringify({message:`CF: ${autoDesc}`,content:cfEnc,sha:cfFd.sha})
+        });
+        // Update local cashflow
+        const cfObj={}; CF_HDRS.forEach((h,i)=>cfObj[h]=cfRow.split(',')[i]||'');
+        _cashFlow.push(cfObj);
+        CAPITAL.freeCash=newActual;
+        updateCAPITAL(null,0,0,newActual);
+      }
+    }catch(cfErr){ console.log('CF auto-entry:',cfErr.message); }
+
     // Reload holdings after 1.5s
     setTimeout(()=>{ autoLoad(); hideBuySell(); },2000);
 
@@ -2148,6 +2187,9 @@ autoLoad();
       <button class="bs-cancel" onclick="hideBuySell()">Cancel</button>
     </div>
     <div class="bs-status" id="bsStatus"></div>
+    <div style="font-size:11px;color:#4a6a8a;margin-top:8px;text-align:center">
+      💡 Trade auto-saved to Cash Flow. Update actual balance & fees in <b>💳 Cash Flow</b> after trade settles.
+    </div>
   </div>
 </div>
 
