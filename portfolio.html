@@ -32,6 +32,44 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .kpi.c3 .kv{ color:#ffc107; } .kpi.c4 .kv{ color:#ff9800; }
 .kpi.c5 .kv{ color:#ef5350; }
 .kpi.c6 .kv{ color:#a0c4e8; }
+.btn-buysell{ background:#6a1b9a; color:#fff; width:160px; }
+.btn-buysell:hover{ background:#7b1fa2; }
+
+/* BUY/SELL MODAL */
+#bsModal{
+  position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:8888;
+  display:none; align-items:center; justify-content:center;
+}
+#bsModal.open{ display:flex; }
+.bs-box{
+  background:#1a2535; border:1px solid #2e4060; border-radius:12px;
+  padding:28px 32px; width:480px; max-width:95vw;
+}
+.bs-title{ font-size:16px; font-weight:700; color:#4fc3f7; margin-bottom:20px; }
+.bs-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.bs-field{ display:flex; flex-direction:column; gap:5px; }
+.bs-field label{ font-size:11px; color:#7a9ab5; text-transform:uppercase; letter-spacing:.6px; }
+.bs-field input, .bs-field select{
+  background:#0f1923; color:#e0e6ed; border:1px solid #2e4060;
+  border-radius:6px; padding:10px 12px; font-size:14px; outline:none;
+}
+.bs-field input:focus, .bs-field select:focus{ border-color:#4fc3f7; }
+.bs-actions{ display:flex; gap:10px; margin-top:8px; }
+.bs-submit{ flex:1; padding:12px; border:none; border-radius:8px;
+  font-size:14px; font-weight:700; cursor:pointer; }
+.bs-buy { background:#2e7d32; color:#fff; }
+.bs-sell{ background:#b71c1c; color:#fff; }
+.bs-cancel{ background:#2e4060; color:#a0c4e8; padding:12px 20px;
+  border:none; border-radius:8px; cursor:pointer; font-size:14px; }
+.bs-status{ font-size:13px; margin-top:10px; text-align:center; min-height:20px; }
+
+/* FREE CASH SECTION */
+.cash-row{ display:flex; align-items:center; gap:10px; margin-bottom:16px;
+  background:#0d1923; border-radius:8px; padding:10px 14px; }
+.cash-lbl{ font-size:13px; color:#7a9ab5; }
+.cash-val{ font-size:16px; font-weight:700; color:#ffc107; }
+.cash-edit{ background:#1a2535; color:#ffc107; border:1px solid #2e4060;
+  border-radius:5px; padding:5px 8px; font-size:14px; width:140px; outline:none; }
 
 /* PROGRESS */
 .pw{ padding:0 20px 10px; }
@@ -152,8 +190,13 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <div class="pw-title">PSX Portfolio</div>
     <div class="pw-sub">Enter password to access</div>
     <input type="password" class="pw-input" id="pwInput"
-      placeholder="••••••" maxlength="20"
+      placeholder="Password" maxlength="20"
       onkeydown="if(event.key==='Enter') checkPW()">
+    <div style="font-size:11px;color:#7a9ab5;margin:8px 0 4px;text-align:left">
+      GitHub Token <span style="color:#4a6a8a">(for auto trade sync)</span>
+    </div>
+    <input type="password" class="pw-input" id="ghToken"
+      placeholder="ghp_xxxxxxxxxxxx" style="letter-spacing:1px;margin-bottom:12px">
     <button class="pw-btn" onclick="checkPW()">Unlock</button>
     <div class="pw-err" id="pwErr">❌ Incorrect password</div>
   </div>
@@ -162,8 +205,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 <div class="nav">
   <span class="nav-logo">📈 PSX Portfolio</span>
   <button class="btn btn-ta" onclick="window.location.href='index.html'">📊 Technical Analysis</button>
-  <button class="btn btn-load" onclick="document.getElementById('csvUpload').click()">📂 Load Holdings</button>
-  <input type="file" id="csvUpload" accept=".csv" onchange="loadCSV(event)" style="display:none">
+  <button class="btn btn-buysell" onclick="showBuySell()">💱 Buy / Sell</button>
   <span class="asof" id="asofBadge" style="display:none">📅 As of: <b id="asofVal"></b></span>
 </div>
 
@@ -202,15 +244,24 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
 // ── PASSWORD GATE ─────────────────────────────
 (function(){
-  const PW = 'rd172';
+  const PW  = 'rd172';
   const KEY = 'psx_port_auth';
+  const REPO = 'Nour292/psx-analysis.github.io';
+  const FILE = 'holdings.csv';
+  let _ghToken = '';
+
   if(sessionStorage.getItem(KEY)==='1'){
+    _ghToken = sessionStorage.getItem('psx_gh_token')||'';
     document.getElementById('pwGate').style.display='none';
   }
+
   window.checkPW = function(){
-    const val = document.getElementById('pwInput').value;
+    const val   = document.getElementById('pwInput').value;
+    const token = document.getElementById('ghToken').value.trim();
     if(val === PW){
+      _ghToken = token;
       sessionStorage.setItem(KEY,'1');
+      if(token) sessionStorage.setItem('psx_gh_token', token);
       document.getElementById('pwGate').style.display='none';
     } else {
       const err=document.getElementById('pwErr');
@@ -220,6 +271,11 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
       setTimeout(()=>err.style.display='none',2000);
     }
   };
+
+  // ── GitHub API helpers ──────────────────────
+  window._ghToken = ()=>_ghToken;
+  window._REPO    = REPO;
+  window._FILE    = FILE;
 })();
 
 
@@ -690,6 +746,135 @@ function buildCapital(){
   document.getElementById('tab-capital').innerHTML=html;
 }
 
+
+// ── BUY / SELL ────────────────────────────────
+function showBuySell(){
+  document.getElementById('bsModal').classList.add('open');
+  document.getElementById('bsCash').value = CAPITAL.freeCash;
+  document.getElementById('bsSym').value  = '';
+  document.getElementById('bsUnits').value= '';
+  document.getElementById('bsRate').value = '';
+  document.getElementById('bsStatus').textContent='';
+  document.getElementById('bsSummary').style.display='none';
+
+  // Live preview
+  ['bsSym','bsUnits','bsRate','bsAction'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', updateBsSummary);
+  });
+}
+
+function updateBsSummary(){
+  const sym    = (document.getElementById('bsSym').value||'').toUpperCase();
+  const units  = parseFloat(document.getElementById('bsUnits').value)||0;
+  const rate   = parseFloat(document.getElementById('bsRate').value)||0;
+  const action = document.getElementById('bsAction').value;
+  const el     = document.getElementById('bsSummary');
+  if(!sym||!units||!rate){ el.style.display='none'; return; }
+  const total  = units*rate;
+  const col    = action==='Buy'?'#4caf50':'#ef5350';
+  el.style.display='block';
+  el.innerHTML = `<b style="color:${col}">${action}</b> &nbsp;
+    <b style="color:#e0e6ed">${units.toLocaleString()} ${sym}</b>
+    &nbsp;@ PKR ${rate.toFixed(2)}
+    &nbsp;= <b style="color:${col}">PKR ${Math.round(total).toLocaleString()}</b>`;
+}
+
+function hideBuySell(){
+  document.getElementById('bsModal').classList.remove('open');
+}
+
+async function submitTrade(action){
+  const sym   = (document.getElementById('bsSym').value||'').toUpperCase().trim();
+  const units = parseFloat(document.getElementById('bsUnits').value)||0;
+  const rate  = parseFloat(document.getElementById('bsRate').value)||0;
+  const cash  = parseFloat(document.getElementById('bsCash').value)||0;
+  const token = window._ghToken();
+
+  if(!sym||!units||!rate){
+    setStatus('❌ Please fill Symbol, Units and Rate','#ef5350'); return;
+  }
+
+  // Format date
+  const now   = new Date();
+  const day   = now.getDate();
+  const mon   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()];
+  const yr    = now.getFullYear().toString().slice(2);
+  const date  = `${day}-${mon}-${yr}`;
+
+  const newRow = `${sym},${date},${action},${units},${rate.toFixed(2)}`;
+
+  if(!token){
+    // No token — show the row for manual entry
+    setStatus('','');
+    document.getElementById('bsStatus').innerHTML =
+      `<div style="text-align:left;background:#0f1923;border-radius:6px;padding:10px;margin-top:8px">
+        <div style="color:#ffc107;font-size:12px;margin-bottom:6px">⚠️ No GitHub token — copy this row into holdings.csv manually:</div>
+        <code style="color:#4fc3f7;font-size:13px;user-select:all">${newRow}</code>
+      </div>`;
+    updateCAPITAL(action, units, rate, cash);
+    return;
+  }
+
+  setStatus('⏳ Saving to GitHub...','#ffc107');
+
+  try{
+    // 1. Get current file content + SHA
+    const getRes = await fetch(
+      `https://api.github.com/repos/${window._REPO}/contents/${window._FILE}`,
+      { headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' } }
+    );
+    if(!getRes.ok) throw new Error('Cannot read holdings.csv ('+getRes.status+')');
+    const fileData = await getRes.json();
+    const sha      = fileData.sha;
+    const current  = atob(fileData.content.replace(/\n/g,''));
+
+    // 2. Append new row
+    const nl='\n'; const updated=current.trimEnd()+nl+newRow+nl;
+    const encoded  = btoa(unescape(encodeURIComponent(updated)));
+
+    // 3. Commit
+    const putRes = await fetch(
+      `https://api.github.com/repos/${window._REPO}/contents/${window._FILE}`,
+      {
+        method:'PUT',
+        headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json',
+                  'Content-Type':'application/json' },
+        body: JSON.stringify({
+          message: `Trade: ${action} ${units} ${sym} @ ${rate}`,
+          content: encoded,
+          sha:     sha
+        })
+      }
+    );
+    if(!putRes.ok){
+      const err=await putRes.json();
+      throw new Error(err.message||putRes.status);
+    }
+
+    // 4. Update free cash + reload
+    updateCAPITAL(action, units, rate, cash);
+    setStatus(`✅ Saved! ${action} ${units} ${sym} @ PKR ${rate} added to holdings.csv`,'#4caf50');
+
+    // Reload holdings after 1.5s
+    setTimeout(()=>{ autoLoad(); hideBuySell(); },2000);
+
+  }catch(err){
+    setStatus('❌ '+err.message,'#ef5350');
+  }
+}
+
+function updateCAPITAL(action, units, rate, newCash){
+  // Update free cash display
+  CAPITAL.freeCash = newCash;
+  const el=document.getElementById('kFreeCash');
+  if(el) el.textContent='PKR '+Math.round(newCash).toLocaleString();
+}
+
+function setStatus(msg, color){
+  const el=document.getElementById('bsStatus');
+  el.textContent=msg; el.style.color=color;
+}
+
 // ── AUTO LOAD ─────────────────────────────────
 async function autoLoad(){
   await loadDataCSV();
@@ -702,5 +887,54 @@ async function autoLoad(){
 
 autoLoad();
 </script>
+
+<!-- BUY/SELL MODAL -->
+<div id="bsModal">
+  <div class="bs-box">
+    <div class="bs-title">💱 Record Trade</div>
+
+    <!-- Free Cash -->
+    <div class="cash-row">
+      <span class="cash-lbl">💵 Free Cash:</span>
+      <input type="number" class="cash-edit" id="bsCash"
+        placeholder="448387" value="448387" step="1">
+      <span style="font-size:12px;color:#4a6a8a">PKR — update before saving</span>
+    </div>
+
+    <div class="bs-grid">
+      <div class="bs-field">
+        <label>Symbol</label>
+        <input type="text" id="bsSym" placeholder="e.g. MCB" style="text-transform:uppercase">
+      </div>
+      <div class="bs-field">
+        <label>Action</label>
+        <select id="bsAction">
+          <option value="Buy">📈 Buy</option>
+          <option value="Sell">📉 Sell</option>
+        </select>
+      </div>
+      <div class="bs-field">
+        <label>Units</label>
+        <input type="number" id="bsUnits" placeholder="e.g. 100" min="1">
+      </div>
+      <div class="bs-field">
+        <label>Rate (PKR per unit)</label>
+        <input type="number" id="bsRate" placeholder="e.g. 403.86" step="0.01">
+      </div>
+    </div>
+
+    <!-- Trade summary -->
+    <div id="bsSummary" style="background:#0f1923;border-radius:6px;padding:10px 14px;
+      font-size:13px;color:#a0c4e8;margin-bottom:12px;display:none"></div>
+
+    <div class="bs-actions">
+      <button class="bs-submit bs-buy"  onclick="submitTrade('Buy')">✅ Confirm Buy</button>
+      <button class="bs-submit bs-sell" onclick="submitTrade('Sell')">🔴 Confirm Sell</button>
+      <button class="bs-cancel" onclick="hideBuySell()">Cancel</button>
+    </div>
+    <div class="bs-status" id="bsStatus"></div>
+  </div>
+</div>
+
 </body>
 </html>
