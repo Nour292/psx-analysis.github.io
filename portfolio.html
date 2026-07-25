@@ -138,12 +138,12 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <div class="kpi invested"><div class="k-val" id="kInvested">—</div><div class="k-lbl">Invested Capital</div></div>
   <div class="kpi divvy">  <div class="k-val" id="kDivIncome">—</div><div class="k-lbl">Annual Dividend</div></div>
   <div class="kpi worth">  <div class="k-val" id="kWorth">—</div><div class="k-lbl">Portfolio Worth</div></div>
-  <div class="kpi prog">   <div class="k-val" id="kProgress">—</div><div class="k-lbl">To PKR 1M Target</div></div>
+  <div class="kpi prog">   <div class="k-val" id="kProgress">—</div><div class="k-lbl">To ₨1M Target</div></div>
 </div>
 
 <!-- PROGRESS BAR -->
 <div class="prog-wrap">
-  <div class="prog-label">Dividend Income Progress → PKR 1,000,000 / year</div>
+  <div class="prog-label">Dividend Income Progress → ₨1,000,000 / year</div>
   <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"><span class="prog-pct" id="progPct"></span></div></div>
 </div>
 
@@ -202,8 +202,7 @@ let _livePrices = {};
 let _holdings   = [];
 
 // ─── FORMAT HELPERS ────────────────────────────
-function fmtPKR(n){ return 'PKR '+Math.round(n).toLocaleString(); }
-function fmtNum(n){ return Math.round(n).toLocaleString(); }
+function fmtPKR(n){ return '₨'+Math.round(n).toLocaleString('en-US'); }
 function fmt2(n)  { return parseFloat(n).toFixed(2); }
 
 // ─── TAB SWITCHING ─────────────────────────────
@@ -279,28 +278,36 @@ function parseHoldings(text){
 // ─── BUILD DASHBOARD ───────────────────────────
 function buildDashboard(){
   if(!_holdings.length) return;
-
   const totalInvested = _holdings.reduce((s,h)=>s+h.qty*h.avg,0);
   const totalDiv      = _holdings.reduce((s,h)=>s+h.qty*h.dps,0);
   const pct           = Math.min((totalDiv/1000000)*100,100);
 
   // KPI
-  document.getElementById('kInvested').textContent  = fmtPKR(totalInvested);
-  document.getElementById('kDivIncome').textContent = fmtPKR(totalDiv);
-  document.getElementById('kWorth').textContent     = '—'; // needs live price
-  document.getElementById('kProgress').textContent  = pct.toFixed(1)+'%';
+  const setEl=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  setEl('kInvested', fmtPKR(totalInvested));
+  setEl('kDivIncome', fmtPKR(totalDiv));
+  setEl('kWorth', '—');
+  setEl('kProgress', pct.toFixed(1)+'%');
 
-  // Progress bar
-  document.getElementById('progFill').style.width = pct+'%';
-  document.getElementById('progPct').textContent  = pct.toFixed(1)+'%';
+  const pf=document.getElementById('progFill');
+  const pp=document.getElementById('progPct');
+  if(pf) pf.style.width=pct+'%';
+  if(pp) pp.textContent=pct.toFixed(1)+'%';
 
-  buildAction();
-  buildPortfolio();
-  buildDividend();
-  buildSector();
+  // Build each tab with error catching
+  [['buildAction','actionContent'],
+   ['buildPortfolio','portfolioContent'],
+   ['buildDividend','dividendContent'],
+   ['buildSector','sectorContent']].forEach(([fn,elId])=>{
+    try{
+      window[fn]();
+    }catch(err){
+      const el=document.getElementById(elId);
+      if(el) el.innerHTML='<p style="color:#ef5350;padding:20px">Error: '+err.message+'</p>';
+      console.error(fn+' failed:',err);
+    }
+  });
 }
-
-// ─── ACTION PLAN ───────────────────────────────
 function buildAction(){
   const rows = _holdings.map(h=>{
     const yoc = h.avg>0?(h.dps/h.avg)*100:0;
@@ -329,17 +336,15 @@ function buildAction(){
       <td style="text-align:left"><b>${h.symbol}</b></td>
       <td>${h.qty.toLocaleString()}</td>
       <td>${fmt2(h.avg)}</td>
-      <td>${fmtNum(inv)}</td>
+      <td>${fmtPKR(inv).replace('₨','')}</td>
       <td>${h.dps||'—'}</td>
       <td><b>${yoc.toFixed(1)}%</b></td>
-      <td>${h.dps?fmtNum(ann):'—'}</td>
+      <td>${h.dps?fmtPKR(ann).replace('₨',''):'—'}</td>
       <td><b>${act}</b></td>
     </tr>`;
   });
   html+=`</table></div>`;
-  const el=document.getElementById('actionContent');
-  if(el) el.innerHTML=html;
-  else console.error('actionContent not found');
+  document.getElementById('actionContent').innerHTML=html;
 }
 function buildPortfolio(){
   const sorted=[..._holdings].sort((a,b)=>a.symbol.localeCompare(b.symbol));
@@ -362,22 +367,21 @@ function buildPortfolio(){
       <td><b>${h.symbol}</b></td>
       <td>${h.qty.toLocaleString()}</td>
       <td>${fmt2(h.avg)}</td>
-      <td>${fmtNum(inv)}</td>
+      <td>${fmtPKR(inv).replace('₨','')}</td>
       <td>${h.dps||'—'}</td>
       <td><b>${yoc.toFixed(1)}%</b></td>
-      <td>${h.dps?fmtNum(ann):'—'}</td>
+      <td>${h.dps?fmtPKR(ann).replace('₨',''):'—'}</td>
     </tr>`;
   });
   const ti=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
   const td=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);
   html+=`<tr style="background:#1e3050;font-weight:700;text-align:left">
     <td colspan="4">TOTAL</td>
-    <td>${fmtNum(ti)}</td>
+    <td>${fmtPKR(ti).replace('₨','')}</td>
     <td></td><td></td>
-    <td>${fmtNum(td)}</td>
+    <td>${fmtPKR(td).replace('₨','')}</td>
   </tr></table></div>`;
-  const el=document.getElementById('portfolioContent');
-  if(el) el.innerHTML=html;
+  document.getElementById('portfolioContent').innerHTML=html;
 }
 
 function buildDividend(){
@@ -398,7 +402,7 @@ function buildDividend(){
     html+=`<tr>
       <td>${i+1}</td><td><b>${h.symbol}</b></td>
       <td>${h.qty.toLocaleString()}</td>
-      <td>${h.dps}</td>
+      <td>₨${h.dps}</td>
       <td><b>${fmtPKR(ann)}</b></td>
       <td>${yoc.toFixed(1)}%</td>
     </tr>`;
@@ -419,7 +423,7 @@ function buildDividend(){
     <div class="dt-val">${fmtPKR(total)}</div>
   </div>
   <div style="margin-top:12px;background:#1a2535;border-radius:8px;padding:12px 18px">
-    <div style="font-size:13px;color:#7a9ab5;margin-bottom:8px">Progress to PKR 1,000,000 target</div>
+    <div style="font-size:13px;color:#7a9ab5;margin-bottom:8px">Progress to ₨1,000,000 target</div>
     <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
       <span style="color:#4caf50">Current: ${fmtPKR(total)}</span>
       <span style="color:#7a9ab5">Remaining: ${fmtPKR(1000000-total)}</span>
@@ -429,8 +433,7 @@ function buildDividend(){
       <span class="prog-pct">${(total/10000).toFixed(1)}%</span>
     </div></div>
   </div>`;
-  const el=document.getElementById('dividendContent');
-  if(el) el.innerHTML=html;
+  document.getElementById('dividendContent').innerHTML=html;
 }
 
 // ─── SECTOR BALANCE ────────────────────────────
@@ -469,8 +472,7 @@ function buildSector(){
     background:#1a2535;border-radius:6px;border-left:3px solid #ffc107">
     🎯 Target 20% per sector &nbsp;|&nbsp; 🔴 Over >22% &nbsp;|&nbsp; 🟡 Under <18%
   </div></div>`;
-  const el=document.getElementById('sectorContent');
-  if(el) el.innerHTML=html;
+  document.getElementById('sectorContent').innerHTML=html;
 }
 
 async function autoLoad(){
