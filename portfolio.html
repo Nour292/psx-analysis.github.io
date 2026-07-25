@@ -441,7 +441,8 @@ const CAPITAL = {
 };
 
 let _holdings = [];
-let _prices   = {}; // symbol → last known price from data.csv
+let _prices      = {}; // symbol → last known price from data.csv
+let _techVerdict = {}; // symbol → TA verdict from data.csv
 
 // ── HELPERS ───────────────────────────────────
 function fmtN(n){ return Math.round(n).toLocaleString(); }
@@ -460,21 +461,43 @@ async function loadDataCSV(){
   try{
     const res  = await fetch('data.csv?'+Date.now());
     if(!res.ok) return;
-    const text = (await res.text()).replace(/^\uFEFF/,'');
+    const text = (await res.text()).replace(/^﻿/,'');
     const lines= text.trim().split(/\r?\n/);
     const hdrs = lines[0].split(',').map(h=>h.trim());
-    const pi   = hdrs.findIndex(h=>h==='Price');
-    const si   = hdrs.findIndex(h=>h==='Symbol');
+    const gi   = k=>hdrs.findIndex(h=>h===k);
+    const si=gi('Symbol'),pi=gi('Price'),
+          ma50di=gi('MA50-D'),ma200di=gi('MA200-D'),rsidi=gi('RSI-D'),
+          macddi=gi('MACD-H-D'),sigdi=gi('Signal-D'),
+          ma50wi=gi('MA50-W'),ma200wi=gi('MA200-W'),
+          macdwi=gi('MACD-H-W'),sigwi=gi('Signal-W'),h52i=gi('52W-High');
     lines.slice(1).forEach(l=>{
-      const cols=l.split(',');
-      const sym=(cols[si]||'').trim();
-      const p  =parseFloat(cols[pi]);
-      if(sym && !isNaN(p)) _prices[sym]=p;
+      const c=l.split(',');
+      const sym=(c[si]||'').trim(); if(!sym) return;
+      const n=i=>parseFloat(c[i])||null;
+      const p=n(pi); if(p) _prices[sym]=p;
+      const ma50d=n(ma50di),ma200d=n(ma200di),rsid=n(rsidi);
+      const macdD=n(macddi),macdW=n(macdwi),sigW=n(sigwi);
+      const ma50w=n(ma50wi),ma200w=n(ma200wi),h52=n(h52i);
+      if(!p) return;
+      const belowBoth    = ma50d&&ma200d&&p<ma50d&&p<ma200d;
+      const belowMA50only= ma50d&&p<ma50d&&(!ma200d||p>=ma200d);
+      const weeklyUp     = ma50w&&ma200w&&ma50w>ma200w;
+      const macdWposRis  = macdW!==null&&sigW!==null&&macdW>0&&macdW>sigW;
+      const rsiCool      = rsid!==null&&rsid>=30&&rsid<=53;
+      const near52H      = h52&&(h52-p)/h52<=0.05;
+      const aboveBoth    = ma50d&&ma200d&&p>ma50d&&p>ma200d;
+      const nearestMA    = ma50d&&ma200d?[ma50d,ma200d].reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b):null;
+      const atMA         = nearestMA?Math.abs(p-nearestMA)/p<=0.03:false;
+      let verdict='WAIT';
+      if((atMA||aboveBoth)&&weeklyUp&&macdWposRis&&rsiCool&&!near52H) verdict='BUY';
+      else if(belowMA50only&&macdD<0) verdict='CAUTION';
+      else if(belowBoth&&macdD<0&&rsid<50) verdict='EXIT';
+      else if(weeklyUp&&macdW>0) verdict='WATCH';
+      _techVerdict[sym]=verdict;
     });
-    console.log('Prices loaded:', Object.keys(_prices).length);
+    console.log('Data loaded:',Object.keys(_prices).length,'symbols');
   }catch(e){ console.log('data.csv not loaded'); }
 }
-
 // ── LOAD HOLDINGS ─────────────────────────────
 function loadCSV(e){
   const file=e.target.files[0];
