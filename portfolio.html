@@ -1838,156 +1838,9 @@ function dvSetStatus(msg,color){
 
 
 
-// ── CORRECT LAST TRADE ────────────────────────────
-function showCorrectLast(){
-  // Find most recent Buy or Sell entry
-  const lastTrade = [..._cashFlow].reverse().find(r=>r.Type==='Buy'||r.Type==='Sell');
-  if(!lastTrade){
-    alert('No trade entries found to correct.');
-    return;
-  }
-  const modal = document.getElementById('correctModal');
-  const info  = document.getElementById('correctLastInfo');
-  info.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <div><span style="color:#7a9ab5">Date:</span> <b>${lastTrade.Date}</b></div>
-      <div><span style="color:#7a9ab5">Type:</span>
-        <b style="color:${lastTrade.Type==='Buy'?'#ef9a9a':'#a5d6a7'}">${lastTrade.Type}</b></div>
-      <div><span style="color:#7a9ab5">Symbol:</span> <b class="c-blue">${lastTrade.Symbol}</b></div>
-      <div><span style="color:#7a9ab5">Units:</span> <b>${lastTrade.Units}</b></div>
-      <div><span style="color:#7a9ab5">Rate:</span> <b class="c-gold">${parseFloat(lastTrade.Rate).toFixed(2)}</b></div>
-      <div><span style="color:#7a9ab5">Trade Value:</span> <b>${Math.round(parseFloat(lastTrade.TradeValue||0)).toLocaleString()}</b></div>
-      <div><span style="color:#7a9ab5">Current Fees:</span>
-        <b class="c-red">${Math.round(parseFloat(lastTrade.Fees||0)).toLocaleString()}</b></div>
-      <div><span style="color:#7a9ab5">Current Balance:</span>
-        <b class="c-green">${Math.round(parseFloat(lastTrade.Balance||0)).toLocaleString()}</b></div>
-    </div>`;
-  document.getElementById('correctActual').value = '';
-  document.getElementById('correctPreview').style.display = 'none';
-  document.getElementById('correctStatus').textContent = '';
-  modal.style.display = 'flex';
-}
-
-function closeCorrect(){
-  document.getElementById('correctModal').style.display = 'none';
-}
-
-function previewCorrection(){
-  const actual = parseFloat(document.getElementById('correctActual').value)||0;
-  if(!actual){ document.getElementById('correctPreview').style.display='none'; return; }
-
-  const lastTrade = [..._cashFlow].reverse().find(r=>r.Type==='Buy'||r.Type==='Sell');
-  if(!lastTrade) return;
-
-  // Find balance BEFORE this trade
-  const idx = _cashFlow.lastIndexOf(lastTrade);
-  const prevBal = idx>0 ? parseFloat(_cashFlow[idx-1].Balance||0) : CAPITAL.freeCash;
-  const tradeVal = parseFloat(lastTrade.TradeValue||0);
-  const isBuy    = lastTrade.Type==='Buy';
-
-  const expectedBal = isBuy ? prevBal - tradeVal : prevBal + tradeVal;
-  const newFees     = Math.abs(expectedBal - actual);
-  const feesPct     = tradeVal>0?(newFees/tradeVal*100).toFixed(2):0;
-
-  const preview = document.getElementById('correctPreview');
-  preview.style.display = 'block';
-  preview.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-      <div style="text-align:center">
-        <div style="font-size:11px;color:#7a9ab5;margin-bottom:4px">FEES & TAX</div>
-        <div style="font-size:18px;font-weight:800;color:#ef5350">
-          PKR ${Math.round(newFees).toLocaleString()}
-          <span style="font-size:11px;color:#7a9ab5">(${feesPct}%)</span>
-        </div>
-      </div>
-      <div style="text-align:center">
-        <div style="font-size:11px;color:#7a9ab5;margin-bottom:4px">NET CASH</div>
-        <div style="font-size:18px;font-weight:800;color:${isBuy?'#ef9a9a':'#a5d6a7'}">
-          ${isBuy?'-':'+'}PKR ${Math.round(Math.abs(actual-prevBal)).toLocaleString()}
-        </div>
-      </div>
-      <div style="text-align:center">
-        <div style="font-size:11px;color:#7a9ab5;margin-bottom:4px">NEW BALANCE</div>
-        <div style="font-size:18px;font-weight:800;color:#4caf50">
-          PKR ${Math.round(actual).toLocaleString()}
-        </div>
-      </div>
-    </div>`;
-}
-
-async function applyCorrection(){
-  const actual = parseFloat(document.getElementById('correctActual').value)||0;
-  if(!actual){ document.getElementById('correctStatus').textContent='Enter actual balance first'; return; }
-
-  const lastIdx = [..._cashFlow].map((r,i)=>({r,i})).reverse().find(({r})=>r.Type==='Buy'||r.Type==='Sell');
-  if(!lastIdx){ document.getElementById('correctStatus').textContent='No trade found'; return; }
-
-  const idx      = lastIdx.i;
-  const lastTrade= _cashFlow[idx];
-  const prevBal  = idx>0?parseFloat(_cashFlow[idx-1].Balance||0):CAPITAL.freeCash;
-  const tradeVal = parseFloat(lastTrade.TradeValue||0);
-  const isBuy    = lastTrade.Type==='Buy';
-  const newFees  = Math.abs((isBuy?prevBal-tradeVal:prevBal+tradeVal)-actual);
-  const netCash  = actual - prevBal;
-
-  // Update the entry
-  _cashFlow[idx].Fees    = newFees.toFixed(2);
-  _cashFlow[idx].NetCash = netCash.toFixed(2);
-  _cashFlow[idx].Balance = actual.toFixed(2);
-
-  // Recalculate all subsequent balances
-  for(let i=idx+1; i<_cashFlow.length; i++){
-    const prev = parseFloat(_cashFlow[i-1].Balance||0);
-    const net  = parseFloat(_cashFlow[i].NetCash||0);
-    _cashFlow[i].Balance = (prev+net).toFixed(2);
-  }
-
-  // Update CAPITAL.freeCash to last balance
-  CAPITAL.freeCash = parseFloat(_cashFlow[_cashFlow.length-1].Balance||actual);
-  updateCAPITAL(null,0,0,CAPITAL.freeCash);
-
-  // Save to GitHub
-  const token = window._ghToken();
-  if(!token){
-    document.getElementById('correctStatus').textContent='⚠️ Session only — no token';
-    document.getElementById('correctStatus').style.color='#ffc107';
-    renderCashFlow(); closeCorrect(); return;
-  }
-
-  document.getElementById('correctStatus').textContent='⏳ Saving...';
-  document.getElementById('correctStatus').style.color='#ffc107';
-  try{
-    const nl='\n';
-    const lines=[CF_HDRS.join(',')];
-    _cashFlow.forEach(r=>lines.push(CF_HDRS.map(h=>r[h]||'').join(',')));
-    const newCsv=lines.join(nl);
-    const encoded=btoa(unescape(encodeURIComponent(newCsv)));
-    const getRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,
-      {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}});
-    if(!getRes.ok) throw new Error('Cannot read cashflow.csv');
-    const fd=await getRes.json();
-    const putRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,{
-      method:'PUT',
-      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
-      body:JSON.stringify({
-        message:`Correct trade: ${lastTrade.Symbol} fees=${Math.round(newFees)}`,
-        content:encoded, sha:fd.sha
-      })
-    });
-    if(!putRes.ok){const e=await putRes.json();throw new Error(e.message);}
-    document.getElementById('correctStatus').textContent='✅ Corrected & saved!';
-    document.getElementById('correctStatus').style.color='#4caf50';
-    setTimeout(()=>closeCorrect(),1500);
-    renderCashFlow();
-  }catch(e){
-    document.getElementById('correctStatus').textContent='❌ '+e.message;
-    document.getElementById('correctStatus').style.color='#ef5350';
-  }
-}
-
 // ── CASH FLOW ─────────────────────────────────────
 const CF_FILE = 'cashflow.csv';
-const CF_HDRS = ['Date','Type','Symbol','Units','Rate','TradeValue','Fees','NetCash','Balance','Description'];
+const CF_HDRS = ['Date','OpeningCash','ClosingCash','NetChange','Fees','Type','Notes'];
 let _cashFlow = [];
 
 function goCashFlow(){
@@ -1999,83 +1852,47 @@ function closeCashFlow(){
 }
 function toggleCfForm(){
   const f=document.getElementById('cfForm');
+  const isOpen = f.classList.contains('open');
   f.classList.toggle('open');
-  if(f.classList.contains('open')){
-    // Set today's date
-    document.getElementById('cfDate').value=new Date().toISOString().slice(0,10);
-    cfTypeChanged();
-  }
-}
-
-function cfTypeChanged(){
-  const type=document.getElementById('cfType').value;
-  const isTrade = type==='Buy'||type==='Sell';
-  const isDiv   = type==='Dividend';
-  const isCash  = type==='Deposit'||type==='Withdrawal';
-
-  // Show/hide fields
-  document.getElementById('cfSymField').style.display   = (isTrade||isDiv)?'flex':'none';
-  document.getElementById('cfUnitsField').style.display  = isTrade?'flex':'none';
-  document.getElementById('cfRateField').style.display   = isTrade?'flex':'none';
-  document.getElementById('cfActualField').style.display = isTrade?'flex':'none';
-  document.getElementById('cfAmtField').style.display    = (isDiv||isCash)?'flex':'none';
-
-  // Hints
-  const hints={
-    Buy: '💡 Enter units × rate, then type your ACTUAL cash balance after the trade. System calculates fees automatically.',
-    Sell: '💡 Enter units × rate, then type your ACTUAL cash balance after the trade. System calculates fees automatically.',
-    Dividend: '💡 Enter the net amount received after tax.',
-    Deposit: '💡 Enter the amount you deposited into your trading account.',
-    Withdrawal: '💡 Enter the amount you withdrew from your trading account.'
-  };
-  document.getElementById('cfHint').textContent = hints[type]||'';
-  document.getElementById('cfCalcBox').style.display='none';
-}
-
-function cfCalc(){
-  const type   = document.getElementById('cfType').value;
-  const units  = parseFloat(document.getElementById('cfUnits')?.value)||0;
-  const rate   = parseFloat(document.getElementById('cfRate')?.value)||0;
-  const actual = parseFloat(document.getElementById('cfActual')?.value)||0;
-  const box    = document.getElementById('cfCalcBox');
-
-  if(type==='Buy'||type==='Sell'){
-    const tradeVal = units*rate;
-    if(!tradeVal){ box.style.display='none'; return; }
-
-    // Current balance = last entry balance or CAPITAL.freeCash
-    const currentBal = _cashFlow.length>0
-      ? parseFloat(_cashFlow[_cashFlow.length-1].Balance||0)
+  if(!isOpen){
+    // Pre-fill opening cash from last entry or CAPITAL.freeCash
+    const lastBal = _cashFlow.length>0
+      ? parseFloat(_cashFlow[_cashFlow.length-1].ClosingCash||0)
       : CAPITAL.freeCash;
-
-    if(actual>0){
-      // Calculate fees from difference
-      const expected = type==='Buy' ? currentBal-tradeVal : currentBal+tradeVal;
-      const fees     = Math.abs(actual-expected);
-      const feesPct  = tradeVal>0?(fees/tradeVal*100).toFixed(2):0;
-      box.style.display='block';
-      box.innerHTML=`
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-          <div>
-            <div style="color:#7a9ab5;font-size:11px">Trade Value</div>
-            <div style="color:#4fc3f7;font-weight:700">PKR ${Math.round(tradeVal).toLocaleString()}</div>
-          </div>
-          <div>
-            <div style="color:#7a9ab5;font-size:11px">Fees & Tax</div>
-            <div style="color:#ef5350;font-weight:700">PKR ${Math.round(fees).toLocaleString()}
-              <span style="font-size:11px;color:#7a9ab5">(${feesPct}%)</span>
-            </div>
-          </div>
-          <div>
-            <div style="color:#7a9ab5;font-size:11px">New Balance</div>
-            <div style="color:#4caf50;font-weight:700">PKR ${Math.round(actual).toLocaleString()}</div>
-          </div>
-        </div>`;
-    } else {
-      box.style.display='block';
-      box.innerHTML=`<span style="color:#7a9ab5">Trade value: PKR ${Math.round(tradeVal).toLocaleString()} — enter actual balance to calculate fees</span>`;
-    }
+    document.getElementById('cfOpen').value  = Math.round(lastBal);
+    document.getElementById('cfClose').value = '';
+    document.getElementById('cfDate').value  = new Date().toISOString().slice(0,10);
+    document.getElementById('cfNotes').value = '';
+    document.getElementById('cfType').value  = 'Trading';
+    document.getElementById('cfCalcBox').style.display='none';
+    document.getElementById('cfFormStatus').textContent='';
   }
+}
+
+function cfDayCalc(){
+  const open  = parseFloat(document.getElementById('cfOpen').value)||0;
+  const close = parseFloat(document.getElementById('cfClose').value)||0;
+  const box   = document.getElementById('cfCalcBox');
+  if(!open||!close){ box.style.display='none'; return; }
+
+  const net   = close - open;
+  const type  = document.getElementById('cfType').value;
+  // Fees only apply to trading days
+  // For trading: we compare net vs what trades alone would give
+  // But since we don't know individual trades here, fees = 0 for now
+  // User can add notes about fees
+  const isTrading = type==='Trading'||type==='Mixed';
+  const fees  = 0; // calculated when user knows
+
+  box.style.display='block';
+  const netClr = net>=0?'#4caf50':'#ef9a9a';
+  document.getElementById('cfNetDisp').textContent  = (net>=0?'+':'')+'PKR '+Math.round(Math.abs(net)).toLocaleString();
+  document.getElementById('cfNetDisp').style.color  = netClr;
+  document.getElementById('cfFeesDisp').textContent = '—';
+  document.getElementById('cfCloseDisp').textContent= 'PKR '+Math.round(close).toLocaleString();
+  document.getElementById('cfFeeNote').textContent  = isTrading
+    ? '💡 Tip: Fees are included in your closing cash. Net change already reflects all costs.'
+    : '';
 }
 
 async function loadCashFlow(){
@@ -2084,6 +1901,7 @@ async function loadCashFlow(){
     if(!res.ok){ _cashFlow=[]; renderCashFlow(); return; }
     const text=(await res.text()).replace(/^\uFEFF/,'');
     const lines=text.trim().split(/\r?\n/);
+    if(lines.length<2){ _cashFlow=[]; renderCashFlow(); return; }
     const hdrs=lines[0].split(',').map(h=>h.trim());
     _cashFlow=lines.slice(1).filter(l=>l.trim()).map(line=>{
       const cols=line.split(','); const obj={};
@@ -2095,73 +1913,62 @@ async function loadCashFlow(){
 }
 
 function renderCashFlow(){
+  const sorted=[..._cashFlow].reverse(); // newest first
+
   // KPIs
-  const deps  = _cashFlow.filter(r=>r.Type==='Deposit').reduce((s,r)=>s+parseFloat(r.NetCash||0),0);
-  const wdrs  = _cashFlow.filter(r=>r.Type==='Withdrawal').reduce((s,r)=>s+Math.abs(parseFloat(r.NetCash||0)),0);
-  const buys  = _cashFlow.filter(r=>r.Type==='Buy').reduce((s,r)=>s+Math.abs(parseFloat(r.NetCash||0)),0);
-  const sells = _cashFlow.filter(r=>r.Type==='Sell').reduce((s,r)=>s+parseFloat(r.NetCash||0),0);
-  const divs  = _cashFlow.filter(r=>r.Type==='Dividend').reduce((s,r)=>s+parseFloat(r.NetCash||0),0);
-  const fees  = _cashFlow.reduce((s,r)=>s+parseFloat(r.Fees||0),0);
-  const bal   = _cashFlow.length>0
-    ? parseFloat(_cashFlow[_cashFlow.length-1].Balance||0)
+  const lastBal = _cashFlow.length>0
+    ? parseFloat(_cashFlow[_cashFlow.length-1].ClosingCash||0)
     : CAPITAL.freeCash;
+  const totalFees = _cashFlow.reduce((s,r)=>s+parseFloat(r.Fees||0),0);
+  const totalIn   = _cashFlow.filter(r=>parseFloat(r.NetChange||0)>0)
+    .reduce((s,r)=>s+parseFloat(r.NetChange||0),0);
+  const totalOut  = _cashFlow.filter(r=>parseFloat(r.NetChange||0)<0)
+    .reduce((s,r)=>s+Math.abs(parseFloat(r.NetChange||0)),0);
 
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  set('cfBalance',  'PKR '+Math.round(bal).toLocaleString());
-  set('cfDeposits', 'PKR '+Math.round(deps).toLocaleString());
-  set('cfWithdrawn','PKR '+Math.round(wdrs).toLocaleString());
-  set('cfBuys',     'PKR '+Math.round(buys).toLocaleString());
-  set('cfSells',    'PKR '+Math.round(sells).toLocaleString());
-  set('cfDivs',     'PKR '+Math.round(divs).toLocaleString());
-  set('cfFees',     'PKR '+Math.round(fees).toLocaleString());
-  set('cfCount',    _cashFlow.length+' entries · latest first');
+  set('cfBalance',   'PKR '+Math.round(lastBal).toLocaleString());
+  set('cfTotalFees', 'PKR '+Math.round(totalFees).toLocaleString());
+  set('cfTotalIn',   'PKR '+Math.round(totalIn).toLocaleString());
+  set('cfTotalOut',  'PKR '+Math.round(totalOut).toLocaleString());
+  set('cfEntries',   _cashFlow.length+' days');
+  set('cfCount',     _cashFlow.length+' entries · newest first');
 
   if(!_cashFlow.length){
     document.getElementById('cfTableWrap').innerHTML=
-      '<div style="background:#1a2535;border-radius:10px;padding:40px;text-align:center;color:#4a6a8a;border:1px solid #2e4060">'+
-      'No cash flow entries yet. Click <b>➕ Add Entry</b> to start recording.</div>';
+      '<div style="background:#1a2535;border-radius:10px;padding:40px;text-align:center;'+
+      'color:#4a6a8a;border:1px solid #2e4060">No entries yet. Click <b>➕ Add Day Entry</b> to start.</div>';
     return;
   }
 
-  // Show newest first
-  const sorted=[..._cashFlow].reverse();
-  const typeIcon={Buy:'📉',Sell:'📈',Dividend:'💰',Deposit:'⬇️',Withdrawal:'⬆️'};
-  const typeCls ={Buy:'buy-r',Sell:'sell-r',Dividend:'div-r',Deposit:'dep-r',Withdrawal:'wdr-r'};
-  const typeClr ={Buy:'#ef9a9a',Sell:'#a5d6a7',Dividend:'#ffd54f',Deposit:'#4fc3f7',Withdrawal:'#90a4ae'};
+  const typeIcon ={Trading:'📊',Deposit:'⬇️',Withdrawal:'⬆️',Dividend:'💰',Mixed:'🔀'};
+  const typeCls  ={Trading:'buy-r',Deposit:'dep-r',Withdrawal:'wdr-r',Dividend:'div-r',Mixed:'dep-r'};
 
   let html=`<div style="overflow-x:auto;background:#1a2535;border-radius:10px;border:1px solid #2e4060">
   <table class="cf-tbl">
     <tr>
-      <th>#</th><th>Date</th><th>Type</th><th>Symbol</th>
-      <th>Units</th><th>Rate</th><th>Trade Value</th>
-      <th>Fees & Tax</th><th>Net Cash</th><th>Balance</th><th>Description</th>
+      <th>#</th><th>Date</th><th>Type</th>
+      <th>Opening Cash</th><th>Closing Cash</th>
+      <th>Net Change</th><th>Notes</th>
     </tr>`;
 
   sorted.forEach((r,i)=>{
-    const cls   = typeCls[r.Type]||'';
-    const clr   = typeClr[r.Type]||'#e0e6ed';
-    const net   = parseFloat(r.NetCash||0);
-    const fees  = parseFloat(r.Fees||0);
-    const bal   = parseFloat(r.Balance||0);
-    const tv    = parseFloat(r.TradeValue||0);
-    const isOut = r.Type==='Buy'||r.Type==='Withdrawal';
+    const net  = parseFloat(r.NetChange||0);
+    const open = parseFloat(r.OpeningCash||0);
+    const cls  = typeCls[r.Type]||'';
+    const netClr=net>=0?'#a5d6a7':'#ef9a9a';
 
     html+=`<tr class="${cls}">
       <td class="c-gray">${sorted.length-i}</td>
-      <td style="color:#a0c4e8;white-space:nowrap">${r.Date}</td>
+      <td style="color:#a0c4e8;white-space:nowrap;font-weight:600">${r.Date}</td>
       <td style="white-space:nowrap">
-        <span style="color:${clr};font-weight:700">${typeIcon[r.Type]||''} ${r.Type}</span>
+        <span style="font-weight:700">${typeIcon[r.Type]||''} ${r.Type}</span>
       </td>
-      <td class="sym">${r.Symbol||'—'}</td>
-      <td>${r.Units&&r.Units!=='0'?parseInt(r.Units).toLocaleString():'—'}</td>
-      <td class="c-gold">${r.Rate&&r.Rate!=='0'?parseFloat(r.Rate).toFixed(2):'—'}</td>
-      <td>${tv>0?Math.round(tv).toLocaleString():'—'}</td>
-      <td class="c-red">${fees>0?Math.round(fees).toLocaleString():'—'}</td>
-      <td style="color:${isOut?'#ef9a9a':'#a5d6a7'};font-weight:700">
-        ${isOut?'-':'+'}${Math.round(Math.abs(net)).toLocaleString()}
+      <td style="color:#7a9ab5">${Math.round(open).toLocaleString()}</td>
+      <td class="c-blue bold">${Math.round(parseFloat(r.ClosingCash||0)).toLocaleString()}</td>
+      <td style="color:${netClr};font-weight:700">
+        ${net>=0?'+':''}${Math.round(Math.abs(net)).toLocaleString()}
       </td>
-      <td class="c-blue bold">${Math.round(bal).toLocaleString()}</td>
-      <td style="color:#7a9ab5;font-size:12px">${r.Description||'—'}</td>
+      <td style="color:#7a9ab5;font-size:12px">${r.Notes||'—'}</td>
     </tr>`;
   });
 
@@ -2170,71 +1977,27 @@ function renderCashFlow(){
 }
 
 async function saveCfEntry(){
-  const type   = document.getElementById('cfType').value;
-  const date   = document.getElementById('cfDate').value;
-  const sym    = (document.getElementById('cfSym')?.value||'').toUpperCase().trim();
-  const units  = parseFloat(document.getElementById('cfUnits')?.value)||0;
-  const rate   = parseFloat(document.getElementById('cfRate')?.value)||0;
-  const actual = parseFloat(document.getElementById('cfActual')?.value)||0;
-  const amt    = parseFloat(document.getElementById('cfAmt')?.value)||0;
-  const desc   = document.getElementById('cfDesc').value.trim();
+  const date  = document.getElementById('cfDate').value;
+  const open  = parseFloat(document.getElementById('cfOpen').value)||0;
+  const close = parseFloat(document.getElementById('cfClose').value)||0;
+  const type  = document.getElementById('cfType').value;
+  const notes = document.getElementById('cfNotes').value.trim();
 
-  if(!date){ cfSetStatus('❌ Date is required','#ef5350'); return; }
-
-  // Current balance
-  const currentBal = _cashFlow.length>0
-    ? parseFloat(_cashFlow[_cashFlow.length-1].Balance||0)
-    : CAPITAL.freeCash;
-
-  let tradeVal=0, fees=0, netCash=0, newBal=0;
-
-  if(type==='Buy'){
-    if(!units||!rate||!actual){ cfSetStatus('❌ Units, Rate and Actual Balance required','#ef5350'); return; }
-    tradeVal = units*rate;
-    netCash  = -(actual - (currentBal - tradeVal) + actual - actual); // actual - currentBal
-    netCash  = actual - currentBal; // negative
-    fees     = Math.abs(tradeVal - Math.abs(netCash));
-    newBal   = actual;
-  } else if(type==='Sell'){
-    if(!units||!rate||!actual){ cfSetStatus('❌ Units, Rate and Actual Balance required','#ef5350'); return; }
-    tradeVal = units*rate;
-    netCash  = actual - currentBal; // positive
-    fees     = Math.abs(tradeVal - Math.abs(netCash));
-    newBal   = actual;
-  } else if(type==='Dividend'){
-    if(!amt){ cfSetStatus('❌ Amount required','#ef5350'); return; }
-    netCash  = amt;
-    newBal   = currentBal + amt;
-  } else if(type==='Deposit'){
-    if(!amt){ cfSetStatus('❌ Amount required','#ef5350'); return; }
-    netCash  = amt;
-    newBal   = currentBal + amt;
-  } else if(type==='Withdrawal'){
-    if(!amt){ cfSetStatus('❌ Amount required','#ef5350'); return; }
-    netCash  = -amt;
-    newBal   = currentBal - amt;
+  if(!date||!open||!close){
+    cfSetStatus('❌ Date, Opening and Closing cash required','#ef5350'); return;
   }
 
-  const autoDesc = desc || (type==='Buy'?`Bought ${units} ${sym}`:
-    type==='Sell'?`Sold ${units} ${sym}`:
-    type==='Dividend'?`${sym} dividend`:type);
+  const net  = close - open;
+  const fees = 0;
+  const newRow = [date,open.toFixed(0),close.toFixed(0),net.toFixed(0),fees,type,notes||'—'].join(',');
 
-  const newRow = [
-    date, type, sym||'—', units||0, rate||0,
-    tradeVal.toFixed(2), fees.toFixed(2),
-    netCash.toFixed(2), newBal.toFixed(2),
-    autoDesc
-  ].join(',');
-
-  // Save to GitHub
   const token = window._ghToken();
   if(!token){
-    // Add to memory
     const obj={}; CF_HDRS.forEach((h,i)=>obj[h]=newRow.split(',')[i]||'');
     _cashFlow.push(obj);
-    // Update CAPITAL.freeCash
-    CAPITAL.freeCash = newBal;
-    cfSetStatus('⚠️ No token — saved in session only','#ffc107');
+    CAPITAL.freeCash=close;
+    updateCAPITAL(null,0,0,close);
+    cfSetStatus('⚠️ Session only — no token','#ffc107');
     renderCashFlow(); toggleCfForm(); return;
   }
 
@@ -2244,21 +2007,19 @@ async function saveCfEntry(){
       {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}});
     if(!getRes.ok) throw new Error('Cannot read cashflow.csv');
     const fd=await getRes.json();
-    const current=atob(fd.content.replace(/\n/g,''));
+    const cur=atob(fd.content.replace(/\n/g,''));
     const nl='\n';
-    const updated=current.trimEnd()+nl+newRow+nl;
-    const encoded=btoa(unescape(encodeURIComponent(updated)));
+    const upd=cur.trimEnd()+nl+newRow+nl;
+    const enc=btoa(unescape(encodeURIComponent(upd)));
     const putRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,{
       method:'PUT',
       headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
-      body:JSON.stringify({message:`Cash flow: ${type} ${sym||''} ${date}`,content:encoded,sha:fd.sha})
+      body:JSON.stringify({message:`Cash flow: ${type} ${date}`,content:enc,sha:fd.sha})
     });
     if(!putRes.ok){const e=await putRes.json();throw new Error(e.message);}
 
-    // Update cash.json balance too
-    CAPITAL.freeCash = newBal;
-    updateCAPITAL(null,0,0,newBal);
-
+    CAPITAL.freeCash=close;
+    updateCAPITAL(null,0,0,close);
     cfSetStatus('✅ Saved!','#4caf50');
     setTimeout(()=>cfSetStatus('',''),3000);
     await loadCashFlow();
@@ -2272,6 +2033,7 @@ function cfSetStatus(msg,color){
     if(el){el.textContent=msg;el.style.color=color;}
   });
 }
+
 
 // ── AUTO LOAD ─────────────────────────────────
 async function autoLoad(){
@@ -2461,13 +2223,9 @@ autoLoad();
       border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer">
       ← Back to Portfolio
     </button>
-    <button onclick="toggleCfForm()" style="background:#1565c0;color:#fff;border:none;
+    <button onclick="toggleCfForm()" id="cfAddBtn" style="background:#1565c0;color:#fff;border:none;
       border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer">
-      ➕ Add Entry
-    </button>
-    <button onclick="showCorrectLast()" style="background:#6a3000;color:#ffb74d;border:1px solid #7a4010;
-      border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer">
-      ✏️ Correct Last Trade
+      ➕ Add Day Entry
     </button>
     <span id="cfStatus" style="font-size:13px;margin-left:8px"></span>
   </div>
@@ -2477,65 +2235,75 @@ autoLoad();
     <!-- KPI strip -->
     <div class="cf-strip">
       <div class="cf-kpi"><div class="ckv c-blue"  id="cfBalance">—</div><div class="ckl">Current Balance</div></div>
-      <div class="cf-kpi"><div class="ckv c-blue"  id="cfDeposits">—</div><div class="ckl">Total Deposited</div></div>
-      <div class="cf-kpi"><div class="ckv c-gray"  id="cfWithdrawn">—</div><div class="ckl">Total Withdrawn</div></div>
-      <div class="cf-kpi"><div class="ckv c-red"   id="cfBuys">—</div><div class="ckl">Total Bought</div></div>
-      <div class="cf-kpi"><div class="ckv c-green" id="cfSells">—</div><div class="ckl">Total Sold</div></div>
-      <div class="cf-kpi"><div class="ckv c-gold"  id="cfDivs">—</div><div class="ckl">Dividends Received</div></div>
-      <div class="cf-kpi"><div class="ckv c-red"   id="cfFees">—</div><div class="ckl">Total Fees</div></div>
+      <div class="cf-kpi"><div class="ckv c-red"   id="cfTotalFees">—</div><div class="ckl">Total Fees Paid</div></div>
+      <div class="cf-kpi"><div class="ckv c-green" id="cfTotalIn">—</div><div class="ckl">Total Cash In</div></div>
+      <div class="cf-kpi"><div class="ckv c-red"   id="cfTotalOut">—</div><div class="ckl">Total Cash Out</div></div>
+      <div class="cf-kpi"><div class="ckv" style="color:#a0c4e8" id="cfEntries">—</div><div class="ckl">Day Entries</div></div>
     </div>
 
-    <!-- Add form (hidden by default) -->
+    <!-- Add form -->
     <div class="cf-form" id="cfForm">
-      <div class="cf-form-title">➕ Add Cash Flow Entry</div>
-      <div class="cf-grid">
-        <div class="cf-field">
-          <label>Type</label>
-          <select id="cfType" onchange="cfTypeChanged()">
-            <option value="Buy">📉 Buy (cash out)</option>
-            <option value="Sell">📈 Sell (cash in)</option>
-            <option value="Dividend">💰 Dividend received</option>
-            <option value="Deposit">⬇️ Cash deposit</option>
-            <option value="Withdrawal">⬆️ Cash withdrawal</option>
-          </select>
-        </div>
+      <div class="cf-form-title">➕ Add Day Entry</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
         <div class="cf-field">
           <label>Date</label>
           <input type="date" id="cfDate">
         </div>
-        <div class="cf-field" id="cfSymField">
-          <label>Symbol</label>
-          <input type="text" id="cfSym" placeholder="e.g. MCB" style="text-transform:uppercase">
-        </div>
-        <div class="cf-field" id="cfUnitsField">
-          <label>Units</label>
-          <input type="number" id="cfUnits" placeholder="e.g. 50" oninput="cfCalc()">
-        </div>
-        <div class="cf-field" id="cfRateField">
-          <label>Rate (PKR)</label>
-          <input type="number" id="cfRate" placeholder="e.g. 403.86" step="0.01" oninput="cfCalc()">
-        </div>
-        <div class="cf-field" id="cfActualField">
-          <label>Actual Cash After Trade</label>
-          <input type="number" id="cfActual" placeholder="e.g. 279620" oninput="cfCalc()">
-        </div>
-        <div class="cf-field" id="cfAmtField" style="display:none">
-          <label>Amount (PKR)</label>
-          <input type="number" id="cfAmt" placeholder="e.g. 50000" oninput="cfCalc()">
+        <div class="cf-field">
+          <label>Opening Cash (start of day)</label>
+          <input type="number" id="cfOpen" placeholder="e.g. 448,387" oninput="cfDayCalc()">
         </div>
         <div class="cf-field">
-          <label>Description (optional)</label>
-          <input type="text" id="cfDesc" placeholder="e.g. Bought 50 MCB">
+          <label>Closing Cash (end of day — from broker)</label>
+          <input type="number" id="cfClose" placeholder="e.g. 394,210" oninput="cfDayCalc()"
+            style="border-color:#4fc3f7">
         </div>
       </div>
-      <div class="cf-hint" id="cfHint"></div>
-      <div class="cf-calc" id="cfCalcBox"></div>
+
+      <div class="cf-field" style="margin-bottom:12px">
+        <label>Type</label>
+        <select id="cfType" style="max-width:300px">
+          <option value="Trading">📊 Trading Day (buy/sell)</option>
+          <option value="Deposit">⬇️ Cash Deposit</option>
+          <option value="Withdrawal">⬆️ Cash Withdrawal</option>
+          <option value="Dividend">💰 Dividend Received</option>
+          <option value="Mixed">🔀 Mixed (trades + deposit/withdrawal)</option>
+        </select>
+      </div>
+
+      <div class="cf-field" style="margin-bottom:14px">
+        <label>Notes (optional)</label>
+        <input type="text" id="cfNotes" placeholder="e.g. Bought 50 MCB, sold 25 POL">
+      </div>
+
+      <!-- Live calculation -->
+      <div id="cfCalcBox" style="background:#0d1923;border-radius:8px;padding:14px 18px;
+        margin-bottom:14px;display:none">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
+          <div>
+            <div style="font-size:11px;color:#7a9ab5;margin-bottom:4px">NET CHANGE</div>
+            <div style="font-size:20px;font-weight:800" id="cfNetDisp">—</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#7a9ab5;margin-bottom:4px">FEES & TAX</div>
+            <div style="font-size:20px;font-weight:800;color:#ef5350" id="cfFeesDisp">—</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#7a9ab5;margin-bottom:4px">CLOSING BALANCE</div>
+            <div style="font-size:20px;font-weight:800;color:#4caf50" id="cfCloseDisp">—</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#4a6a8a;margin-top:10px;text-align:center" id="cfFeeNote"></div>
+      </div>
+
       <div style="display:flex;gap:10px;align-items:center">
-        <button class="btn btn-load" onclick="saveCfEntry()" style="width:180px;height:38px">
+        <button onclick="saveCfEntry()" style="background:#2e7d32;color:#fff;border:none;
+          border-radius:6px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer">
           💾 Save Entry
         </button>
-        <button style="background:#2e4060;color:#a0c4e8;border:none;border-radius:6px;
-          padding:8px 16px;font-size:13px;cursor:pointer" onclick="toggleCfForm()">
+        <button onclick="toggleCfForm()" style="background:#2e4060;color:#a0c4e8;border:none;
+          border-radius:6px;padding:10px 16px;font-size:13px;cursor:pointer">
           Cancel
         </button>
         <span id="cfFormStatus" style="font-size:13px"></span>
@@ -2545,55 +2313,17 @@ autoLoad();
     <!-- Table -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:15px;font-weight:700;color:#4fc3f7">
-        📋 Cash Flow History
+        📋 Daily Cash Flow History
         <span style="font-size:12px;color:#7a9ab5;font-weight:400;margin-left:8px" id="cfCount"></span>
       </div>
     </div>
     <div id="cfTableWrap">
-      <p style="color:#4a6a8a;text-align:center;padding:30px">Loading cash flow...</p>
+      <p style="color:#4a6a8a;text-align:center;padding:30px">Loading...</p>
     </div>
   </div>
 </div>
 
 
-<!-- CORRECT LAST TRADE MODAL -->
-<div id="correctModal" style="
-  position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;
-  display:none;align-items:center;justify-content:center">
-  <div style="background:#1a2535;border:1px solid #2e4060;border-radius:12px;
-    padding:28px 32px;width:440px;max-width:95vw">
-    <div style="font-size:16px;font-weight:700;color:#ffb74d;margin-bottom:16px">
-      ✏️ Correct Last Trade
-    </div>
-    <div id="correctLastInfo" style="background:#0f1923;border-radius:6px;
-      padding:10px 14px;font-size:13px;color:#a0c4e8;margin-bottom:16px"></div>
-    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:16px">
-      <label style="font-size:11px;color:#7a9ab5;text-transform:uppercase;letter-spacing:.6px">
-        Actual Cash After Trade (from your broker account)
-      </label>
-      <input type="number" id="correctActual"
-        placeholder="e.g. 279620"
-        style="background:#0f1923;color:#4fc3f7;border:2px solid #2e4060;
-          border-radius:6px;padding:10px 14px;font-size:15px;outline:none"
-        oninput="previewCorrection()"
-        onfocus="this.style.borderColor='#4fc3f7'"
-        onblur="this.style.borderColor='#2e4060'">
-    </div>
-    <div id="correctPreview" style="background:#0d1923;border-radius:6px;
-      padding:10px 14px;font-size:13px;margin-bottom:16px;display:none"></div>
-    <div style="display:flex;gap:10px">
-      <button onclick="applyCorrection()" style="flex:1;padding:11px;background:#2e7d32;
-        color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer">
-        ✅ Apply Correction
-      </button>
-      <button onclick="closeCorrect()" style="padding:11px 20px;background:#2e4060;
-        color:#a0c4e8;border:none;border-radius:7px;font-size:14px;cursor:pointer">
-        Cancel
-      </button>
-    </div>
-    <div id="correctStatus" style="font-size:13px;margin-top:10px;text-align:center"></div>
-  </div>
-</div>
 
 </body>
 </html>
