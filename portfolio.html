@@ -36,6 +36,76 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .btn-buysell:hover{ background:#7b1fa2; }
 .btn-search{ background:#00695c; color:#fff; width:180px; }
 .btn-search:hover{ background:#00796b; }
+.btn-div{ background:#b45309; color:#fff; width:160px; }
+.btn-div:hover{ background:#d97706; }
+
+/* DIVIDEND PAGE */
+#pgDividends{
+  position:fixed; inset:0; background:#0f1923; z-index:7777;
+  display:none; flex-direction:column; overflow-y:auto;
+}
+#pgDividends.open{ display:flex; }
+.dv-nav{
+  background:#1a2535; border-bottom:2px solid #2e4060; padding:10px 20px;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex-shrink:0;
+}
+.dv-content{ padding:20px 24px; flex:1; max-width:1200px; margin:0 auto; width:100%; }
+
+/* Summary strip */
+.dv-strip{
+  display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;
+}
+.dv-kpi{
+  background:#1a2535; border-radius:10px; padding:12px 18px; flex:1; min-width:140px;
+  border:1px solid #2e4060; text-align:center;
+}
+.dv-kpi .dkv{ font-size:18px; font-weight:800; }
+.dv-kpi .dkl{ font-size:10px; color:#7a9ab5; margin-top:3px; text-transform:uppercase; letter-spacing:.8px; }
+
+/* Add form */
+.dv-form{
+  background:#1a2535; border-radius:10px; padding:18px 20px;
+  margin-bottom:20px; border:1px solid #2e4060;
+}
+.dv-form-title{
+  font-size:14px; font-weight:700; color:#4fc3f7; margin-bottom:14px;
+  padding-bottom:8px; border-bottom:1px solid #2e4060;
+}
+.dv-grid{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px;
+}
+.dv-field{ display:flex; flex-direction:column; gap:4px; }
+.dv-field label{ font-size:11px; color:#7a9ab5; text-transform:uppercase; letter-spacing:.6px; }
+.dv-field input, .dv-field select{
+  background:#0f1923; color:#e0e6ed; border:1px solid #2e4060;
+  border-radius:6px; padding:9px 12px; font-size:13px; outline:none;
+}
+.dv-field input:focus, .dv-field select:focus{ border-color:#4fc3f7; }
+.dv-calc{
+  background:#0d1923; border-radius:6px; padding:10px 14px;
+  font-size:13px; color:#a0c4e8; margin-bottom:12px; display:none;
+}
+.dv-actions{ display:flex; gap:10px; align-items:center; }
+.dv-status{ font-size:13px; min-height:18px; }
+
+/* Dividend table */
+.dv-tbl{ width:100%; border-collapse:collapse; font-size:13px; }
+.dv-tbl th{
+  background:#0d2240; color:#7ab3d4; padding:9px 12px; text-align:left;
+  font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+  border-bottom:2px solid #1565c0; white-space:nowrap;
+}
+.dv-tbl td{ border-bottom:1px solid #131f2e; padding:8px 12px; font-size:13px; }
+.dv-tbl tr:hover td{ background:#1a2535; }
+.dv-tbl tr.paid-row   td{ border-left:3px solid #4caf50; }
+.dv-tbl tr.wait-row   td{ border-left:3px solid #ffc107; }
+.badge-paid{ background:#1b5e20; color:#4caf50; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+.badge-wait{ background:#1a1a00; color:#ffc107; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+.pay-btn{
+  background:#2e7d32; color:#fff; border:none; border-radius:5px;
+  padding:4px 12px; font-size:12px; font-weight:700; cursor:pointer;
+}
+.pay-btn:hover{ background:#388e3c; }
 
 /* SEARCH MODAL */
 #pgHistory{
@@ -343,6 +413,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <button class="btn btn-ta" onclick="window.location.href='index.html'">📊 Technical Analysis</button>
   <button class="btn btn-buysell" onclick="showBuySell()">💱 Buy / Sell</button>
   <button class="btn btn-search" onclick="goHistory()">🔍 Trade History</button>
+  <button class="btn btn-div" onclick="goDividends()">💵 Dividends</button>
   <span class="asof" id="asofBadge" style="display:none">📅 As of: <b id="asofVal"></b></span>
 </div>
 
@@ -1376,6 +1447,255 @@ function searchHistory(){
   html+=`</table></div>`;
   document.getElementById('histResult').innerHTML=html;
 }
+
+// ── DIVIDENDS ─────────────────────────────────────
+const TAX_RATE   = 0.15;
+const DIV_FILE   = 'dividends.csv';
+const DIV_HDRS   = ['Symbol','Units','DPS','AnnouncementDate','XDate','GrossAmount','TaxAmount','NetAmount','Status','PayDate'];
+let _dividends   = [];
+
+function goDividends(){
+  document.getElementById('pgDividends').classList.add('open');
+  loadDividendsCSV();
+}
+function closeDividends(){
+  document.getElementById('pgDividends').classList.remove('open');
+}
+
+// Auto-fill units from holdings
+function dvAutoFill(){
+  const sym = document.getElementById('dvSym').value.toUpperCase();
+  const h   = _holdings.find(h=>h.symbol===sym);
+  if(h){
+    document.getElementById('dvUnits').value = h.qty;
+    document.getElementById('dvDPS').value   = h.dps||'';
+    dvCalc();
+  }
+}
+
+// Live calc
+function dvCalc(){
+  const units = parseFloat(document.getElementById('dvUnits').value)||0;
+  const dps   = parseFloat(document.getElementById('dvDPS').value)||0;
+  const box   = document.getElementById('dvCalcBox');
+  if(!units||!dps){ box.style.display='none'; return; }
+  const gross = units*dps;
+  const tax   = gross*TAX_RATE;
+  const net   = gross-tax;
+  box.style.display='block';
+  box.innerHTML=`
+    <span style="color:#4fc3f7">Gross: <b>PKR ${Math.round(gross).toLocaleString()}</b></span>
+    &nbsp;·&nbsp;
+    <span style="color:#ef5350">Tax 15%: <b>PKR ${Math.round(tax).toLocaleString()}</b></span>
+    &nbsp;·&nbsp;
+    <span style="color:#4caf50">Net: <b>PKR ${Math.round(net).toLocaleString()}</b></span>`;
+}
+
+function dvClearForm(){
+  ['dvSym','dvUnits','dvDPS','dvPayDate'].forEach(id=>document.getElementById(id).value='');
+  ['dvAnnDate','dvXDate','dvPayDate'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('dvPayStatus').value='Waiting';
+  document.getElementById('dvCalcBox').style.display='none';
+  document.getElementById('dvFormStatus').textContent='';
+}
+
+async function loadDividendsCSV(){
+  try{
+    const res=await fetch(DIV_FILE+'?'+Date.now());
+    if(!res.ok){ _dividends=[]; renderDividends(); return; }
+    const text=(await res.text()).replace(/^\uFEFF/,'');
+    const lines=text.trim().split(/\r?\n/);
+    const hdrs=lines[0].split(',').map(h=>h.trim());
+    _dividends=lines.slice(1).filter(l=>l.trim()).map(line=>{
+      const cols=line.split(','); const obj={};
+      hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+      return obj;
+    });
+    renderDividends();
+  }catch(e){ _dividends=[]; renderDividends(); }
+}
+
+function renderDividends(){
+  // Sort: Waiting first, then Paid — newest X date on top
+  const sorted=[..._dividends].sort((a,b)=>{
+    if(a.Status==='Waiting'&&b.Status!=='Waiting') return -1;
+    if(b.Status==='Waiting'&&a.Status!=='Waiting') return 1;
+    return (b.XDate||'').localeCompare(a.XDate||'');
+  });
+
+  // KPIs
+  const paid   = sorted.filter(r=>r.Status==='Paid');
+  const waiting= sorted.filter(r=>r.Status!=='Paid');
+  const totalNet  = paid.reduce((s,r)=>s+parseFloat(r.NetAmount||0),0);
+  const pendNet   = waiting.reduce((s,r)=>s+parseFloat(r.NetAmount||0),0);
+  const totalGross= sorted.reduce((s,r)=>s+parseFloat(r.GrossAmount||0),0);
+  const totalTax  = sorted.reduce((s,r)=>s+parseFloat(r.TaxAmount||0),0);
+
+  const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  setEl('dvTotal',  'PKR '+Math.round(totalNet).toLocaleString());
+  setEl('dvPending','PKR '+Math.round(pendNet).toLocaleString());
+  setEl('dvGross',  'PKR '+Math.round(totalGross).toLocaleString());
+  setEl('dvTax',    'PKR '+Math.round(totalTax).toLocaleString());
+  setEl('dvCount',  sorted.length+' records');
+
+  if(!sorted.length){
+    document.getElementById('dvTableWrap').innerHTML=
+      '<p style="color:#4a6a8a;padding:30px;text-align:center">No dividend records yet. Add your first record above.</p>';
+    return;
+  }
+
+  let html=`<div style="overflow-x:auto"><table class="dv-tbl">
+    <tr>
+      <th>#</th><th>Symbol</th><th>Units</th><th>DPS</th>
+      <th>Ann. Date</th><th>X Date</th>
+      <th>Gross Amount</th><th>Tax (15%)</th><th>Net Amount</th>
+      <th>Status</th><th>Pay Date</th><th>Action</th>
+    </tr>`;
+
+  sorted.forEach((r,i)=>{
+    const isPaid = r.Status==='Paid';
+    const rcls   = isPaid?'paid-row':'wait-row';
+    const gross  = parseFloat(r.GrossAmount||0);
+    const tax    = parseFloat(r.TaxAmount||0);
+    const net    = parseFloat(r.NetAmount||0);
+    html+=`<tr class="${rcls}">
+      <td class="c-gray">${i+1}</td>
+      <td class="sym">${r.Symbol}</td>
+      <td>${parseInt(r.Units||0).toLocaleString()}</td>
+      <td class="c-gold bold">${r.DPS}</td>
+      <td style="color:#a0c4e8;white-space:nowrap">${r.AnnouncementDate||'—'}</td>
+      <td style="color:#4fc3f7;white-space:nowrap">${r.XDate||'—'}</td>
+      <td class="c-blue bold">${Math.round(gross).toLocaleString()}</td>
+      <td class="c-red">${Math.round(tax).toLocaleString()}</td>
+      <td class="c-green bold">${Math.round(net).toLocaleString()}</td>
+      <td><span class="${isPaid?'badge-paid':'badge-wait'}">${isPaid?'✅ Paid':'⏳ Waiting'}</span></td>
+      <td style="color:#7a9ab5">${r.PayDate||'—'}</td>
+      <td>${!isPaid?`<button class="pay-btn" onclick="markPaid(${i})">✅ Mark Paid</button>`:''}</td>
+    </tr>`;
+  });
+
+  // Totals row
+  const tGross=sorted.reduce((s,r)=>s+parseFloat(r.GrossAmount||0),0);
+  const tTax  =sorted.reduce((s,r)=>s+parseFloat(r.TaxAmount||0),0);
+  const tNet  =sorted.reduce((s,r)=>s+parseFloat(r.NetAmount||0),0);
+  html+=`<tr style="background:#1e3050;font-weight:700">
+    <td colspan="6">TOTAL</td>
+    <td class="c-blue">${Math.round(tGross).toLocaleString()}</td>
+    <td class="c-red">${Math.round(tTax).toLocaleString()}</td>
+    <td class="c-green">${Math.round(tNet).toLocaleString()}</td>
+    <td colspan="3"></td>
+  </tr></table></div>`;
+
+  document.getElementById('dvTableWrap').innerHTML=html;
+}
+
+async function addDividend(){
+  const sym    = document.getElementById('dvSym').value.toUpperCase().trim();
+  const units  = parseFloat(document.getElementById('dvUnits').value)||0;
+  const dps    = parseFloat(document.getElementById('dvDPS').value)||0;
+  const annDate= document.getElementById('dvAnnDate').value;
+  const xDate  = document.getElementById('dvXDate').value;
+  const status = document.getElementById('dvPayStatus').value;
+  const payDate= document.getElementById('dvPayDate').value;
+
+  if(!sym||!units||!dps){
+    dvSetStatus('❌ Symbol, Units and DPS are required','#ef5350'); return;
+  }
+
+  const gross = units*dps;
+  const tax   = parseFloat((gross*TAX_RATE).toFixed(2));
+  const net   = parseFloat((gross-tax).toFixed(2));
+
+  const newRow = [sym,units,dps,annDate,xDate,gross.toFixed(2),tax.toFixed(2),net.toFixed(2),status,payDate].join(',');
+  await saveToDivCSV(newRow, `Add dividend: ${sym} PKR ${net.toLocaleString()}`);
+}
+
+async function markPaid(idx){
+  // Get sorted index → match to _dividends
+  const sorted=[..._dividends].sort((a,b)=>{
+    if(a.Status==='Waiting'&&b.Status!=='Waiting') return -1;
+    if(b.Status==='Waiting'&&a.Status!=='Waiting') return 1;
+    return (b.XDate||'').localeCompare(a.XDate||'');
+  });
+  const record = sorted[idx];
+  if(!record) return;
+
+  const today = new Date().toISOString().slice(0,10);
+  // Update in _dividends array
+  const di = _dividends.findIndex(r=>
+    r.Symbol===record.Symbol && r.XDate===record.XDate && r.Units===record.Units);
+  if(di>=0){
+    _dividends[di].Status  = 'Paid';
+    _dividends[di].PayDate = today;
+  }
+  await rewriteDivCSV(`Mark paid: ${record.Symbol}`);
+}
+
+async function rewriteDivCSV(msg){
+  const token = window._ghToken();
+  if(!token){ dvSetStatus('⚠️ No token — session updated only','#ffc107'); renderDividends(); return; }
+  dvSetStatus('⏳ Saving...','#ffc107');
+  try{
+    const getRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${DIV_FILE}`,
+      {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}});
+    const fd=await getRes.json();
+    const lines=[DIV_HDRS.join(',')];
+    _dividends.forEach(r=>lines.push(DIV_HDRS.map(h=>r[h]||'').join(',')));
+    const nl='\n';
+    const encoded=btoa(unescape(encodeURIComponent(lines.join(nl))));
+    const putRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${DIV_FILE}`,{
+      method:'PUT',
+      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify({message:msg,content:encoded,sha:fd.sha})
+    });
+    if(!putRes.ok){ const e=await putRes.json(); throw new Error(e.message); }
+    dvSetStatus('✅ Saved!','#4caf50');
+    setTimeout(()=>dvSetStatus('',''),3000);
+    renderDividends();
+  }catch(e){ dvSetStatus('❌ '+e.message,'#ef5350'); }
+}
+
+async function saveToDivCSV(newRow, msg){
+  const token = window._ghToken();
+  if(!token){
+    // Add to memory only
+    const cols=newRow.split(',');
+    const obj={};
+    DIV_HDRS.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+    _dividends.push(obj);
+    dvSetStatus('⚠️ No token — added in session only','#ffc107');
+    renderDividends(); dvClearForm(); return;
+  }
+  dvSetStatus('⏳ Saving...','#ffc107');
+  try{
+    const getRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${DIV_FILE}`,
+      {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}});
+    if(!getRes.ok) throw new Error('Cannot read '+DIV_FILE);
+    const fd=await getRes.json();
+    const current=atob(fd.content.replace(/\n/g,''));
+    const nl='\n';
+    const updated=current.trimEnd()+nl+newRow+nl;
+    const encoded=btoa(unescape(encodeURIComponent(updated)));
+    const putRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${DIV_FILE}`,{
+      method:'PUT',
+      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify({message:msg,content:encoded,sha:fd.sha})
+    });
+    if(!putRes.ok){ const e=await putRes.json(); throw new Error(e.message); }
+    dvSetStatus('✅ Record saved!','#4caf50');
+    setTimeout(()=>dvSetStatus('',''),3000);
+    await loadDividendsCSV();
+    dvClearForm();
+  }catch(e){ dvSetStatus('❌ '+e.message,'#ef5350'); }
+}
+
+function dvSetStatus(msg,color){
+  const el=document.getElementById('dvStatus');
+  const el2=document.getElementById('dvFormStatus');
+  if(el){ el.textContent=msg; el.style.color=color; }
+  if(el2){ el2.textContent=msg; el2.style.color=color; }
+}
+
 // ── AUTO LOAD ─────────────────────────────────
 async function autoLoad(){
   await loadDataCSV();
@@ -1465,6 +1785,90 @@ autoLoad();
     <div id="srchResult"></div>
   </div>
   </div><!-- end padding -->
+</div>
+
+
+<!-- DIVIDENDS PAGE -->
+<div id="pgDividends">
+  <div class="dv-nav">
+    <span style="font-size:18px;font-weight:700;color:#ffc107;margin-right:6px">💵 Dividends</span>
+    <button onclick="closeDividends()" style="background:#2e4060;color:#a0c4e8;border:none;
+      border-radius:6px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer">
+      ← Back to Portfolio
+    </button>
+    <span id="dvStatus" style="font-size:13px;margin-left:10px"></span>
+  </div>
+
+  <div class="dv-content">
+
+    <!-- KPI strip -->
+    <div class="dv-strip">
+      <div class="dv-kpi"><div class="dkv c-green" id="dvTotal">—</div><div class="dkl">Total Net Received</div></div>
+      <div class="dv-kpi"><div class="dkv c-gold"  id="dvPending">—</div><div class="dkl">Pending</div></div>
+      <div class="dv-kpi"><div class="dkv c-blue"  id="dvGross">—</div><div class="dkl">Total Gross</div></div>
+      <div class="dv-kpi"><div class="dkv c-red"   id="dvTax">—</div><div class="dkl">Total Tax (15%)</div></div>
+      <div class="dv-kpi"><div class="dkv" style="color:#a0c4e8" id="dvCount">—</div><div class="dkl">Records</div></div>
+    </div>
+
+    <!-- Add form -->
+    <div class="dv-form">
+      <div class="dv-form-title">➕ Add Dividend Record</div>
+      <div class="dv-grid">
+        <div class="dv-field">
+          <label>Symbol</label>
+          <input type="text" id="dvSym" placeholder="e.g. MCB" style="text-transform:uppercase"
+            oninput="dvAutoFill()">
+        </div>
+        <div class="dv-field">
+          <label>Units</label>
+          <input type="number" id="dvUnits" placeholder="e.g. 300" oninput="dvCalc()">
+        </div>
+        <div class="dv-field">
+          <label>DPS (PKR per share)</label>
+          <input type="number" id="dvDPS" placeholder="e.g. 36" step="0.01" oninput="dvCalc()">
+        </div>
+        <div class="dv-field">
+          <label>Announcement Date</label>
+          <input type="date" id="dvAnnDate">
+        </div>
+        <div class="dv-field">
+          <label>X Date (Ex-Dividend)</label>
+          <input type="date" id="dvXDate">
+        </div>
+        <div class="dv-field">
+          <label>Payment Status</label>
+          <select id="dvPayStatus">
+            <option value="Waiting">⏳ Waiting</option>
+            <option value="Paid">✅ Paid</option>
+          </select>
+        </div>
+        <div class="dv-field">
+          <label>Payment Date</label>
+          <input type="date" id="dvPayDate">
+        </div>
+      </div>
+
+      <!-- Live calculation -->
+      <div class="dv-calc" id="dvCalcBox"></div>
+
+      <div class="dv-actions">
+        <button class="btn btn-load" onclick="addDividend()" style="width:180px;height:38px">
+          💾 Save Record
+        </button>
+        <button style="background:#2e4060;color:#a0c4e8;border:none;border-radius:6px;
+          padding:8px 16px;font-size:13px;cursor:pointer;height:38px" onclick="dvClearForm()">
+          Clear
+        </button>
+        <span class="dv-status" id="dvFormStatus"></span>
+      </div>
+    </div>
+
+    <!-- Records table -->
+    <div id="dvTableWrap">
+      <p style="color:#4a6a8a;padding:20px;text-align:center">Loading dividend records...</p>
+    </div>
+
+  </div>
 </div>
 
 </body>
