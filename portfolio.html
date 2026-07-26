@@ -450,11 +450,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
     <input type="password" class="pw-input" id="pwInput"
       placeholder="Password" maxlength="20"
       onkeydown="if(event.key==='Enter') checkPW()">
-    <div style="font-size:11px;color:#7a9ab5;margin:8px 0 4px;text-align:left">
-      GitHub Token <span style="color:#4a6a8a">(for auto trade sync)</span>
-    </div>
-    <input type="password" class="pw-input" id="ghToken"
-      placeholder="ghp_xxxxxxxxxxxx" style="letter-spacing:1px;margin-bottom:12px">
+    <input type="hidden" id="ghToken" value="">
     <button class="pw-btn" onclick="checkPW()">Unlock</button>
     <div class="pw-err" id="pwErr">❌ Incorrect password</div>
   </div>
@@ -537,12 +533,9 @@ async function gsWrite(action, tab, data){
   }
 
   window.checkPW = function(){
-    const val   = document.getElementById('pwInput').value;
-    const token = document.getElementById('ghToken').value.trim();
+    const val = document.getElementById('pwInput').value;
     if(val === PW){
-      _ghToken = token;
       sessionStorage.setItem(KEY,'1');
-      if(token) localStorage.setItem('psx_gh_token', token);
       document.getElementById('pwGate').style.display='none';
     } else {
       const err=document.getElementById('pwErr');
