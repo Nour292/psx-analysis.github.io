@@ -1278,18 +1278,6 @@ async function submitTrade(action){
 
   const newRow = `${sym},${date},${action},${units},${rate.toFixed(2)}`;
 
-  if(!token){
-    // No token — show the row for manual entry
-    setStatus('','');
-    document.getElementById('bsStatus').innerHTML =
-      `<div style="text-align:left;background:#0f1923;border-radius:6px;padding:10px;margin-top:8px">
-        <div style="color:#ffc107;font-size:12px;margin-bottom:6px">⚠️ No GitHub token — copy this row into holdings.csv manually:</div>
-        <code style="color:#4fc3f7;font-size:13px;user-select:all">${newRow}</code>
-      </div>`;
-    updateCAPITAL(action, units, rate, cash);
-    return;
-  }
-
   setStatus('⏳ Saving to Google Sheets...','#ffc107');
 
   try{
@@ -1337,13 +1325,6 @@ async function saveCashOnly(){
   const token = window._ghToken();
   const now   = new Date();
   const asof  = now.toISOString().slice(0,10);
-
-  if(!token){
-    setStatus('⚠️ No GitHub token — cash updated in session only','#ffc107');
-    updateCAPITAL(null,0,0,cash);
-    CAPITAL.cashAsOf = asof;
-    return;
-  }
 
   setStatus('⏳ Saving cash to Google Sheets...','#ffc107');
   try{
@@ -1899,15 +1880,6 @@ async function saveCfEntry(){
   const newRow = [date,open.toFixed(0),close.toFixed(0),net.toFixed(0),fees,type,notes||'—'].join(',');
 
   const token = window._ghToken();
-  if(!token){
-    const obj={}; CF_HDRS.forEach((h,i)=>obj[h]=newRow.split(',')[i]||'');
-    _cashFlow.push(obj);
-    CAPITAL.freeCash=close;
-    updateCAPITAL(null,0,0,close);
-    cfSetStatus('⚠️ Session only — no token','#ffc107');
-    renderCashFlow(); toggleCfForm(); return;
-  }
-
   cfSetStatus('⏳ Saving to Google Sheets...','#ffc107');
   try{
     const row = newRow.split(',');
