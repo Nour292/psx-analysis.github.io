@@ -1013,6 +1013,15 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
      CORE ENGINE (shared JS)
 ═══════════════════════════════════════════════ -->
 <script>
+/* ═══════════════════════════════════════════════
+   GOOGLE SHEETS CONFIG
+═══════════════════════════════════════════════ */
+const GS_ID      = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
+const GS_KEY     = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
+const GS_WRITE   = 'https://script.google.com/macros/s/AKfycbx9iuuBLDXYecY45EGVUYHeOEy1QBAqjJqjaQ6qjas7xQWmOixKaLIBANOTcWu2qi72cg/exec';
+const GS_TAB_DATA = 'Data';
+function gsUrl(tab){ return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`; }
+
 // ─── HELPERS ───────────────────────────────────
 function num(v){ return(v===''||v===undefined||v===null)?null:Number(v); }
 function fmt(v){ const n=parseFloat(v);return isNaN(n)?v:parseFloat(n.toFixed(2)).toString(); }
@@ -1687,71 +1696,32 @@ const REPO     = 'Nour292/psx-analysis.github.io';
 const DATA_FILE= 'data.csv';
 
 async function saveToGitHub(csvContent, msg){
-  const token = _idxToken || document.getElementById('idxGhToken').value.trim();
-  if(!token){
-    setSaveStatus('⚠️ No token — use Export CSV to save manually','#ffc107');
-    return false;
-  }
-  setSaveStatus('⏳ Saving to GitHub...','#ffc107');
+  // Now saves to Google Sheets instead of GitHub
+  return await saveToSheets(csvContent);
+}
+
+async function saveToSheets(csvContent){
   try{
-    // Step 1: Read current data.csv (get content + SHA)
-    const getRes = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${DATA_FILE}`,
-      { headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }}
-    );
-    if(!getRes.ok) throw new Error('Cannot read data.csv ('+getRes.status+')');
-    const fd  = await getRes.json();
-    const sha = fd.sha;
+    setSaveStatus('⏳ Saving to Google Sheets...','#ffc107');
 
-    // Step 2: Archive current data.csv → archive/YYYY-MM-DD.csv
-    setSaveStatus('⏳ Archiving previous data...','#ffc107');
-    const dateEl = document.getElementById('fDataDate');
-    const prevDate = dateEl && dateEl.value ? dateEl.value : new Date().toISOString().slice(0,10);
-    // Use the PREVIOUS Friday date from the existing data date stamp
-    const archiveFile = `archive/${_dataAsOf||prevDate}.csv`;
-    try{
-      // Check if archive already exists
-      const archCheckRes = await fetch(
-        `https://api.github.com/repos/${REPO}/contents/${archiveFile}`,
-        { headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }}
-      );
-      const archBody = { message:`Archive: ${_dataAsOf||prevDate}`, content:fd.content.replace(/\n/g,'') };
-      if(archCheckRes.ok){
-        const archFd = await archCheckRes.json();
-        archBody.sha = archFd.sha; // update if exists
-      }
-      await fetch(
-        `https://api.github.com/repos/${REPO}/contents/${archiveFile}`,
-        {
-          method:'PUT',
-          headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json',
-                    'Content-Type':'application/json' },
-          body: JSON.stringify(archBody)
-        }
-      );
-      setSaveStatus('⏳ Archive saved, writing new data...','#ffc107');
-    }catch(archErr){
-      console.log('Archive note:', archErr.message);
-      // Continue even if archive fails
-    }
+    // Parse CSV back to rows
+    const lines   = csvContent.trim().split(/\r?\n/);
+    const headers = lines[0].split(',').map(h=>h.trim());
+    const dataRows= lines.slice(1).map(l=>l.split(','));
 
-    // Step 3: Write new data.csv
-    const encoded = btoa(unescape(encodeURIComponent(csvContent)));
-    const putRes = await fetch(
-      `https://api.github.com/repos/${REPO}/contents/${DATA_FILE}`,
-      {
-        method:'PUT',
-        headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json',
-                  'Content-Type':'application/json' },
-        body: JSON.stringify({ message:msg, content:encoded, sha:sha })
-      }
-    );
-    if(!putRes.ok){ const e=await putRes.json(); throw new Error(e.message); }
+    // Archive current data first (add new sheet row in archive tab)
+    const archDate = _dataAsOf || new Date().toISOString().slice(0,10);
 
-    setSaveStatus('✅ Saved + archived previous data!','#4caf50');
+    // Update each row in the Data sheet via Apps Script
+    const allRows = [headers, ...dataRows];
+    const res = await fetch(GS_WRITE, {
+      method : 'POST',
+      mode   : 'no-cors',
+      body   : JSON.stringify({ action:'replaceSheet', tab: GS_TAB_DATA, rows: allRows, archDate })
+    });
+
+    setSaveStatus('✅ Saved to Google Sheets!','#4caf50');
     setTimeout(()=>setSaveStatus('',''),5000);
-
-    // Refresh archive dropdown
     loadArchiveList();
     return true;
   }catch(err){
@@ -1974,22 +1944,22 @@ function showDataDate(){
 // ─── LOAD CSV ON START ─────────────────────────
 async function loadCSV(){
   try{
-    const res=await fetch('data.csv?'+Date.now());
-    const text=await res.text();
-    const bom=text.charCodeAt(0)===0xFEFF?text.slice(1):text;
-    const lines=bom.trim().split(/\r?\n/);
-    const headers=lines[0].split(',').map(h=>h.trim());
-    _rawData=lines.slice(1).filter(l=>l.trim()).map(line=>{
-      const cols=line.split(','); const obj={};
-      headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+    const res  = await fetch(gsUrl(GS_TAB_DATA));
+    if(!res.ok) throw new Error('Sheets API error: '+res.status);
+    const json = await res.json();
+    const rows = json.values || [];
+    if(rows.length < 2){ console.log('No data in Sheet'); return; }
+    const headers = rows[0].map(h=>h.trim());
+    _rawData = rows.slice(1).filter(r=>r.length>0).map(row=>{
+      const obj={};
+      headers.forEach((h,i)=>obj[h]=(row[i]||'').trim());
       return obj;
     });
     try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){}
     renderHome();
-    // Auto-load latest archive for comparison
     loadLatestArchive();
   } catch(e){
-    console.log('CSV not loaded:',e.message);
+    console.log('Sheets not loaded:',e.message);
   }
 }
 
