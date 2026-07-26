@@ -1289,14 +1289,15 @@ async function submitTrade(action){
     // Auto-add to cashflow
     try{
       const currentBal = _cashFlow.length>0
-        ? parseFloat(_cashFlow[_cashFlow.length-1].Balance||0)
+        ? parseFloat(_cashFlow[_cashFlow.length-1].ClosingCash||0)
         : CAPITAL.freeCash;
       const tradeVal   = units * rate;
-      const newActual  = action==='Buy' ? currentBal - tradeVal : currentBal + tradeVal;
+      const netChange  = action==='Buy' ? -tradeVal : tradeVal;
+      const newActual  = currentBal + netChange;
       const autoDesc   = `${action} ${units} ${sym} @ ${rate}`;
-      const cfRow      = [date, action, sym, units, rate.toFixed(2),
-        tradeVal.toFixed(2), 0, (newActual-currentBal).toFixed(2),
-        newActual.toFixed(2), autoDesc];
+      // Match CF_HDRS: Date, OpeningCash, ClosingCash, NetChange, Fees, Type, Notes
+      const cfRow = [date, currentBal.toFixed(2), newActual.toFixed(2),
+        netChange.toFixed(2), 0, action, autoDesc];
       await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
         body: JSON.stringify({ action:'append', tab:'Cashflow', row: cfRow }) });
       const cfObj={}; CF_HDRS.forEach((h,i)=>cfObj[h]=String(cfRow[i]||''));
