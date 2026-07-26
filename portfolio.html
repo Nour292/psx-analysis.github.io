@@ -502,6 +502,26 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 <div id="tab-capital"   class="tp"></div>
 
 <script>
+/* ═══════════════════════════════════════════════
+   GOOGLE SHEETS CONFIG
+═══════════════════════════════════════════════ */
+const GS_ID    = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
+const GS_KEY   = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
+const GS_WRITE = 'https://script.google.com/macros/s/AKfycbx9iuuBLDXYecY45EGVUYHeOEy1QBAqjJqjaQ6qjas7xQWmOixKaLIBANOTcWu2qi72cg/exec';
+
+function gsUrl(tab){
+  return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`;
+}
+
+async function gsWrite(action, tab, data){
+  await fetch(GS_WRITE, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({ action, tab, ...data })
+  });
+}
+
+
 
 // ── PASSWORD GATE ─────────────────────────────
 (function(){
@@ -583,7 +603,7 @@ function showTab(name, btn){
 // ── LOAD PRICES FROM data.csv ─────────────────
 async function loadDataCSV(){
   try{
-    const res  = await fetch('data.csv?'+Date.now());
+    const res  = await fetch(gsUrl('holdings'));
     if(!res.ok) return;
     const text = (await res.text()).replace(/^﻿/,'');
     const lines= text.trim().split(/\r?\n/);
@@ -1277,45 +1297,12 @@ async function submitTrade(action){
     return;
   }
 
-  setStatus('⏳ Saving to GitHub...','#ffc107');
+  setStatus('⏳ Saving to Google Sheets...','#ffc107');
 
   try{
-    // 1. Get current file content + SHA
-    const getRes = await fetch(
-      `https://api.github.com/repos/${window._REPO}/contents/${window._FILE}`,
-      { headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' } }
-    );
-    if(!getRes.ok) throw new Error('Cannot read holdings.csv ('+getRes.status+')');
-    const fileData = await getRes.json();
-    const sha      = fileData.sha;
-    const current  = atob(fileData.content.replace(/\n/g,''));
-
-    // 2. Append new row
-    const nl='\n'; const updated=current.trimEnd()+nl+newRow+nl;
-    const encoded  = btoa(unescape(encodeURIComponent(updated)));
-
-    // 3. Commit
-    const putRes = await fetch(
-      `https://api.github.com/repos/${window._REPO}/contents/${window._FILE}`,
-      {
-        method:'PUT',
-        headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json',
-                  'Content-Type':'application/json' },
-        body: JSON.stringify({
-          message: `Trade: ${action} ${units} ${sym} @ ${rate}`,
-          content: encoded,
-          sha:     sha
-        })
-      }
-    );
-    if(!putRes.ok){
-      const err=await putRes.json();
-      throw new Error(err.message||putRes.status);
-    }
-
-    // 4. Update free cash + reload
-    updateCAPITAL(action, units, rate, cash);
-    setStatus(`✅ Saved! ${action} ${units} ${sym} @ PKR ${rate} added to holdings.csv`,'#4caf50');
+    // Save trade to Google Sheets holdings tab
+    await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+      body: JSON.stringify({ action:'append', tab:'holdings', row: newRow.split(',') }) });
 
     // Auto-add to cashflow
     try{
@@ -1323,40 +1310,22 @@ async function submitTrade(action){
         ? parseFloat(_cashFlow[_cashFlow.length-1].Balance||0)
         : CAPITAL.freeCash;
       const tradeVal   = units * rate;
-      const newActual  = action==='Buy'
-        ? currentBal - tradeVal  // estimated — user can correct later
-        : currentBal + tradeVal;
-      const feesEst    = 0; // no actual balance entered — fees unknown yet
-
-      const nl='\n';
+      const newActual  = action==='Buy' ? currentBal - tradeVal : currentBal + tradeVal;
       const autoDesc   = `${action} ${units} ${sym} @ ${rate}`;
       const cfRow      = [date, action, sym, units, rate.toFixed(2),
-        tradeVal.toFixed(2), feesEst, (newActual-currentBal).toFixed(2),
-        newActual.toFixed(2), autoDesc].join(',');
-
-      const cfGetRes=await fetch(
-        `https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,
-        {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}}
-      );
-      if(cfGetRes.ok){
-        const cfFd=await cfGetRes.json();
-        const cfCur=atob(cfFd.content.replace(/\n/g,''));
-        const cfUpd=cfCur.trimEnd()+nl+cfRow+nl;
-        const cfEnc=btoa(unescape(encodeURIComponent(cfUpd)));
-        await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,{
-          method:'PUT',
-          headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
-          body:JSON.stringify({message:`CF: ${autoDesc}`,content:cfEnc,sha:cfFd.sha})
-        });
-        // Update local cashflow
-        const cfObj={}; CF_HDRS.forEach((h,i)=>cfObj[h]=cfRow.split(',')[i]||'');
-        _cashFlow.push(cfObj);
-        CAPITAL.freeCash=newActual;
-        updateCAPITAL(null,0,0,newActual);
-      }
+        tradeVal.toFixed(2), 0, (newActual-currentBal).toFixed(2),
+        newActual.toFixed(2), autoDesc];
+      await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+        body: JSON.stringify({ action:'append', tab:'Cashflow', row: cfRow }) });
+      const cfObj={}; CF_HDRS.forEach((h,i)=>cfObj[h]=String(cfRow[i]||''));
+      _cashFlow.push(cfObj);
+      CAPITAL.freeCash=newActual;
+      updateCAPITAL(null,0,0,newActual);
     }catch(cfErr){ console.log('CF auto-entry:',cfErr.message); }
 
-    // Reload holdings after 1.5s
+    // 4. Update free cash + reload
+    updateCAPITAL(action, units, rate, cash);
+    setStatus(`✅ Saved! ${action} ${units} ${sym} @ PKR ${rate} added to Google Sheets`,'#4caf50');
     setTimeout(()=>{ autoLoad(); hideBuySell(); },2000);
 
   }catch(err){
@@ -1383,34 +1352,11 @@ async function saveCashOnly(){
     return;
   }
 
-  setStatus('⏳ Saving cash balance...','#ffc107');
+  setStatus('⏳ Saving cash to Google Sheets...','#ffc107');
   try{
-    const CASH_FILE = 'cash.json';
-    const getRes = await fetch(
-      `https://api.github.com/repos/${window._REPO}/contents/${CASH_FILE}`,
-      { headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json' }}
-    );
-    if(!getRes.ok) throw new Error('Cannot read cash.json ('+getRes.status+')');
-    const fd  = await getRes.json();
-    const sha = fd.sha;
-
-    const newData    = JSON.stringify({ freeCash:cash, asof:asof }, null, 2);
-    const encoded    = btoa(unescape(encodeURIComponent(newData)));
-
-    const putRes = await fetch(
-      `https://api.github.com/repos/${window._REPO}/contents/${CASH_FILE}`,
-      {
-        method:'PUT',
-        headers:{ Authorization:`token ${token}`, Accept:'application/vnd.github.v3+json',
-                  'Content-Type':'application/json' },
-        body: JSON.stringify({
-          message: `Update free cash: PKR ${Math.round(cash).toLocaleString()}`,
-          content: encoded,
-          sha:     sha
-        })
-      }
-    );
-    if(!putRes.ok){ const e=await putRes.json(); throw new Error(e.message||putRes.status); }
+    // Update Cash tab row 2 in Google Sheets
+    await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+      body: JSON.stringify({ action:'update', tab:'Cash', rows:[[cash, asof]], rowNum:2 }) });
 
     CAPITAL.freeCash  = cash;
     CAPITAL.cashAsOf  = asof;
@@ -1593,7 +1539,7 @@ function dvClearForm(){
 
 async function loadDividendsCSV(){
   try{
-    const res=await fetch(DIV_FILE+'?'+Date.now());
+    const res=await fetch(gsUrl('Dividends'));
     if(!res.ok){ _dividends=[]; renderDividends(); return; }
     const text=(await res.text()).replace(/^\uFEFF/,'');
     const lines=text.trim().split(/\r?\n/);
@@ -1772,23 +1718,12 @@ async function markPaid(idx){
 }
 
 async function rewriteDivCSV(msg){
-  const token = window._ghToken();
-  if(!token){ dvSetStatus('⚠️ No token — session updated only','#ffc107'); renderDividends(); return; }
-  dvSetStatus('⏳ Saving...','#ffc107');
+  dvSetStatus('⏳ Saving to Google Sheets...','#ffc107');
   try{
-    const getRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${DIV_FILE}`,
-      {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}});
-    const fd=await getRes.json();
-    const lines=[DIV_HDRS.join(',')];
-    _dividends.forEach(r=>lines.push(DIV_HDRS.map(h=>r[h]||'').join(',')));
-    const nl='\n';
-    const encoded=btoa(unescape(encodeURIComponent(lines.join(nl))));
-    const putRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${DIV_FILE}`,{
-      method:'PUT',
-      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
-      body:JSON.stringify({message:msg,content:encoded,sha:fd.sha})
-    });
-    if(!putRes.ok){ const e=await putRes.json(); throw new Error(e.message); }
+    // Replace entire Dividends tab
+    const allRows = [DIV_HDRS, ..._dividends.map(r=>DIV_HDRS.map(h=>r[h]||''))];
+    await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+      body: JSON.stringify({ action:'replaceSheet', tab:'Dividends', rows: allRows }) });
     dvSetStatus('✅ Saved!','#4caf50');
     setTimeout(()=>dvSetStatus('',''),3000);
     renderDividends();
@@ -1796,32 +1731,11 @@ async function rewriteDivCSV(msg){
 }
 
 async function saveToDivCSV(newRow, msg){
-  const token = window._ghToken();
-  if(!token){
-    // Add to memory only
-    const cols=newRow.split(',');
-    const obj={};
-    DIV_HDRS.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
-    _dividends.push(obj);
-    dvSetStatus('⚠️ No token — added in session only','#ffc107');
-    renderDividends(); dvClearForm(); return;
-  }
-  dvSetStatus('⏳ Saving...','#ffc107');
+  dvSetStatus('⏳ Saving to Google Sheets...','#ffc107');
   try{
-    const getRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${DIV_FILE}`,
-      {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}});
-    if(!getRes.ok) throw new Error('Cannot read '+DIV_FILE);
-    const fd=await getRes.json();
-    const current=atob(fd.content.replace(/\n/g,''));
-    const nl='\n';
-    const updated=current.trimEnd()+nl+newRow+nl;
-    const encoded=btoa(unescape(encodeURIComponent(updated)));
-    const putRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${DIV_FILE}`,{
-      method:'PUT',
-      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
-      body:JSON.stringify({message:msg,content:encoded,sha:fd.sha})
-    });
-    if(!putRes.ok){ const e=await putRes.json(); throw new Error(e.message); }
+    const row = newRow.split(',');
+    await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+      body: JSON.stringify({ action:'append', tab:'Dividends', row }) });
     dvSetStatus('✅ Record saved!','#4caf50');
     setTimeout(()=>dvSetStatus('',''),3000);
     await loadDividendsCSV();
@@ -1897,7 +1811,7 @@ function cfDayCalc(){
 
 async function loadCashFlow(){
   try{
-    const res=await fetch(CF_FILE+'?'+Date.now());
+    const res=await fetch(gsUrl('Cashflow'));
     if(!res.ok){ _cashFlow=[]; renderCashFlow(); return; }
     const text=(await res.text()).replace(/^\uFEFF/,'');
     const lines=text.trim().split(/\r?\n/);
@@ -2001,22 +1915,11 @@ async function saveCfEntry(){
     renderCashFlow(); toggleCfForm(); return;
   }
 
-  cfSetStatus('⏳ Saving...','#ffc107');
+  cfSetStatus('⏳ Saving to Google Sheets...','#ffc107');
   try{
-    const getRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,
-      {headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}});
-    if(!getRes.ok) throw new Error('Cannot read cashflow.csv');
-    const fd=await getRes.json();
-    const cur=atob(fd.content.replace(/\n/g,''));
-    const nl='\n';
-    const upd=cur.trimEnd()+nl+newRow+nl;
-    const enc=btoa(unescape(encodeURIComponent(upd)));
-    const putRes=await fetch(`https://api.github.com/repos/${window._REPO}/contents/${CF_FILE}`,{
-      method:'PUT',
-      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
-      body:JSON.stringify({message:`Cash flow: ${type} ${date}`,content:enc,sha:fd.sha})
-    });
-    if(!putRes.ok){const e=await putRes.json();throw new Error(e.message);}
+    const row = newRow.split(',');
+    await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+      body: JSON.stringify({ action:'append', tab:'Cashflow', row }) });
 
     CAPITAL.freeCash=close;
     updateCAPITAL(null,0,0,close);
@@ -2039,10 +1942,15 @@ function cfSetStatus(msg,color){
 async function autoLoad(){
   await loadDataCSV();
   try{
-    const res=await fetch('holdings.csv?'+Date.now());
+    const res=await fetch(gsUrl('holdings'));
     if(!res.ok) return;
-    parseHoldings((await res.text()).replace(/^\uFEFF/,''));
-  }catch(e){ console.log('holdings.csv:',e.message); }
+    const json=await res.json();
+    const rows=json.values||[];
+    if(rows.length<2) return;
+    const hdrs=rows[0]; const lines=[hdrs.join(',')];
+    rows.slice(1).forEach(r=>lines.push(r.join(',')));
+    parseHoldings(lines.join('\n'));
+  }catch(e){ console.log('holdings GS:',e.message); }
 }
 
 autoLoad();
