@@ -596,19 +596,20 @@ function showTab(name, btn){
 // ── LOAD PRICES FROM data.csv ─────────────────
 async function loadDataCSV(){
   try{
-    const res  = await fetch(gsUrl('holdings'));
+    const res  = await fetch(gsUrl('Data'));
     if(!res.ok) return;
-    const text = (await res.text()).replace(/^﻿/,'');
-    const lines= text.trim().split(/\r?\n/);
-    const hdrs = lines[0].split(',').map(h=>h.trim());
+    const json = await res.json();
+    const rows = json.values||[];
+    if(rows.length<2) return;
+    const hdrs = rows[0].map(h=>h.trim());
     const gi   = k=>hdrs.findIndex(h=>h===k);
     const si=gi('Symbol'),pi=gi('Price'),
           ma50di=gi('MA50-D'),ma200di=gi('MA200-D'),rsidi=gi('RSI-D'),
           macddi=gi('MACD-H-D'),sigdi=gi('Signal-D'),
           ma50wi=gi('MA50-W'),ma200wi=gi('MA200-W'),
           macdwi=gi('MACD-H-W'),sigwi=gi('Signal-W'),h52i=gi('52W-High');
-    lines.slice(1).forEach(l=>{
-      const c=l.split(',');
+    rows.slice(1).forEach(l=>{
+      const c=l;
       const sym=(c[si]||'').trim(); if(!sym) return;
       const n=i=>parseFloat(c[i])||null;
       const p=n(pi); if(p) _prices[sym]=p;
@@ -1515,12 +1516,13 @@ async function loadDividendsCSV(){
   try{
     const res=await fetch(gsUrl('Dividends'));
     if(!res.ok){ _dividends=[]; renderDividends(); return; }
-    const text=(await res.text()).replace(/^\uFEFF/,'');
-    const lines=text.trim().split(/\r?\n/);
-    const hdrs=lines[0].split(',').map(h=>h.trim());
-    _dividends=lines.slice(1).filter(l=>l.trim()).map(line=>{
-      const cols=line.split(','); const obj={};
-      hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+    const json=await res.json();
+    const rows=json.values||[];
+    if(rows.length<2){ _dividends=[]; renderDividends(); return; }
+    const hdrs=rows[0].map(h=>h.trim());
+    _dividends=rows.slice(1).filter(r=>r.length>0).map(row=>{
+      const obj={};
+      hdrs.forEach((h,i)=>obj[h]=(row[i]||'').trim());
       return obj;
     });
     renderDividends();
@@ -1787,13 +1789,13 @@ async function loadCashFlow(){
   try{
     const res=await fetch(gsUrl('Cashflow'));
     if(!res.ok){ _cashFlow=[]; renderCashFlow(); return; }
-    const text=(await res.text()).replace(/^\uFEFF/,'');
-    const lines=text.trim().split(/\r?\n/);
-    if(lines.length<2){ _cashFlow=[]; renderCashFlow(); return; }
-    const hdrs=lines[0].split(',').map(h=>h.trim());
-    _cashFlow=lines.slice(1).filter(l=>l.trim()).map(line=>{
-      const cols=line.split(','); const obj={};
-      hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+    const json=await res.json();
+    const rows=json.values||[];
+    if(rows.length<2){ _cashFlow=[]; renderCashFlow(); return; }
+    const hdrs=rows[0].map(h=>h.trim());
+    _cashFlow=rows.slice(1).filter(r=>r.length>0).map(row=>{
+      const obj={};
+      hdrs.forEach((h,i)=>obj[h]=(row[i]||'').trim());
       return obj;
     });
     renderCashFlow();
