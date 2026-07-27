@@ -813,34 +813,39 @@ function buildAction(){
       note    = 'Zero cost basis. Hold until dividend confirmed.';
       sortKey = 'WATCH';
 
-    } else if(hasDPS && yoc >= 10 && nearAvg){
+    } else if(hasDPS && yoc >= 10){
+      // Prime accumulation — high yield regardless of price vs avg
       action  = '🟢 ACCUMULATE — Prime Zone';
       cls     = 'buy'; badge = 'b-buy';
-      note    = `YoC ${yoc.toFixed(1)}% — add 25–50 units at current price`;
+      note    = `YoC ${yoc.toFixed(1)}% — excellent yield, add 25–50 units`;
       sortKey = 'ACCUMULATE';
 
-    } else if(hasDPS && yoc >= 8 && nearAvg){
+    } else if(hasDPS && yoc >= 8){
+      // Strong yield — always worth adding for dividend goal
       action  = '🟢 ADD — Strong Yield';
       cls     = 'buy'; badge = 'b-buy';
-      note    = `YoC ${yoc.toFixed(1)}% — accumulate small tranches`;
+      note    = `YoC ${yoc.toFixed(1)}% — strong dividend, accumulate small tranches`;
       sortKey = 'ADD';
 
-    } else if(hasDPS && yoc >= 8 && !nearAvg){
-      action  = '🟡 WATCH — Buy on Dip';
+    } else if(hasDPS && yoc >= 6){
+      // Decent yield — hold and watch for better entry
+      action  = '🟡 WATCH — Good Yield';
       cls     = 'watch'; badge = 'b-watch';
-      note    = `YoC ${yoc.toFixed(1)}% — wait for pullback toward avg cost`;
+      note    = `YoC ${yoc.toFixed(1)}% — decent yield, add on dips`;
       sortKey = 'WATCH';
 
-    } else if(hasDPS && atProfit && yoc >= 5){
+    } else if(hasDPS && atProfit){
+      // Price +50% above avg — consider trimming excess, keep core
       action  = '✂️ TRIM — Take Profit';
       cls     = 'caution'; badge = 'b-caution';
-      note    = 'Price +20% above avg. Trim 20–30%, keep core for DPS.';
+      note    = 'Price +50% above avg. Trim 20–30% of excess, always keep core for DPS.';
       sortKey = 'TRIM';
 
-    } else if(hasDPS && yoc >= 5){
+    } else if(hasDPS && yoc >= 4){
+      // Lower yield — hold core, collect dividends
       action  = '🔵 HOLD — Collect Dividends';
       cls     = 'watch'; badge = 'b-watch';
-      note    = `YoC ${yoc.toFixed(1)}% — core position, collect quarterly DPS`;
+      note    = `YoC ${yoc.toFixed(1)}% — hold core position, collect quarterly DPS`;
       sortKey = 'HOLD';
 
     } else if(!hasDPS){
@@ -852,7 +857,7 @@ function buildAction(){
     } else {
       action  = '⚪ WAIT — Low Yield';
       cls     = 'wait'; badge = 'b-wait';
-      note    = `YoC ${yoc.toFixed(1)}% — below 5% threshold. Monitor.`;
+      note    = `YoC ${yoc.toFixed(1)}% — below 4% threshold. Monitor or exit.`;
       sortKey = 'WAIT';
     }
 
@@ -920,9 +925,10 @@ function buildAction(){
 
   html+=`</table></div>
   <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;font-size:12px">
-    <span style="background:#0d1f0d;border:1px solid #2e7d32;border-radius:6px;padding:4px 10px;color:#4caf50">🟢 Accumulate/Add = YoC ≥ 8% near avg cost</span>
-    <span style="background:#051525;border:1px solid #1565c0;border-radius:6px;padding:4px 10px;color:#4fc3f7">🔵 Hold = YoC 5–8%, collect dividends</span>
-    <span style="background:#1a1000;border:1px solid #ff9800;border-radius:6px;padding:4px 10px;color:#ff9800">✂️ Trim = Price +20% above avg, keep core</span>
+    <span style="background:#0d1f0d;border:1px solid #2e7d32;border-radius:6px;padding:4px 10px;color:#4caf50">🟢 Accumulate = YoC ≥ 10% · Add = YoC ≥ 8%</span>
+    <span style="background:#1a1a00;border:1px solid #ffc107;border-radius:6px;padding:4px 10px;color:#ffc107">🟡 Watch = YoC 6–8%, add on dips</span>
+    <span style="background:#051525;border:1px solid #1565c0;border-radius:6px;padding:4px 10px;color:#4fc3f7">🔵 Hold = YoC 4–6%, collect dividends</span>
+    <span style="background:#1a1000;border:1px solid #ff9800;border-radius:6px;padding:4px 10px;color:#ff9800">✂️ Trim = Price +50% above avg, keep core</span>
     <span style="background:#0d1f0d;border:1px solid #2e7d32;border-radius:6px;padding:4px 10px;color:#4caf50">💰 Free Lot = Zero cost, infinite yield, never sell</span>
   </div>`;
 
