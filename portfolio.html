@@ -436,6 +436,14 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 }
 .pw-btn:hover{ background:#1976d2; }
 .pw-err{ font-size:13px; color:#ef5350; margin-top:10px; display:none; }
+
+/* PRICE SOURCE BADGE */
+.price-src-badge{
+  display:inline-block; font-size:10px; font-weight:700; padding:2px 7px;
+  border-radius:8px; margin-left:5px; vertical-align:middle;
+}
+.psb-sheet{ background:#0d2a0d; color:#4caf50; border:1px solid #2e7d32; }
+.psb-data { background:#0d1a2a; color:#4fc3f7; border:1px solid #1565c0; }
 </style>
 </head>
 <body>
@@ -518,7 +526,6 @@ async function gsWrite(action, tab, data){
 }
 
 
-
 // ── PASSWORD GATE ─────────────────────────────
 (function(){
   const PW  = 'rd172';
@@ -546,7 +553,6 @@ async function gsWrite(action, tab, data){
     }
   };
 
-  // ── GitHub API helpers ──────────────────────
   window._ghToken = ()=>_ghToken;
   window._REPO    = REPO;
   window._FILE    = FILE;
@@ -571,15 +577,16 @@ const EXCLUDE_SEC = ['ENGROH','FCL'];
 // ── CAPITAL HISTORY ──────────────────────────
 const CAPITAL = {
   started:    'Sep 2021',
-  invested:   2690000,   // total cash added since start
-  withdrawn:  3000000,   // total cash withdrawn
-  freeCash:   448387,    // idle cash available now
-  cashAsOf:   ''         // loaded from cash.json
+  invested:   2690000,
+  withdrawn:  3000000,
+  freeCash:   448387,
+  cashAsOf:   ''
 };
 
-let _holdings = [];
-let _prices      = {}; // symbol → last known price from data.csv
-let _techVerdict = {}; // symbol → TA verdict from data.csv
+let _holdings    = [];
+let _prices      = {}; // symbol → price  (Data tab first, Prices tab overrides)
+let _priceSource = {}; // symbol → 'sheet' | 'data'  (for badge display)
+let _techVerdict = {}; // symbol → TA verdict from Data tab
 
 // ── HELPERS ───────────────────────────────────
 function fmtN(n){ return Math.round(n).toLocaleString(); }
@@ -593,7 +600,7 @@ function showTab(name, btn){
   if(btn) btn.classList.add('active');
 }
 
-// ── LOAD PRICES FROM data.csv ─────────────────
+// ── LOAD PRICES FROM Data tab ─────────────────
 async function loadDataCSV(){
   try{
     const res  = await fetch(gsUrl('Data'));
@@ -612,7 +619,7 @@ async function loadDataCSV(){
       const c=l;
       const sym=(c[si]||'').trim(); if(!sym) return;
       const n=i=>parseFloat(c[i])||null;
-      const p=n(pi); if(p) _prices[sym]=p;
+      const p=n(pi); if(p){ _prices[sym]=p; _priceSource[sym]='data'; }
       const ma50d=n(ma50di),ma200d=n(ma200di),rsid=n(rsidi);
       const macdD=n(macddi),macdW=n(macdwi),sigW=n(sigwi);
       const ma50w=n(ma50wi),ma200w=n(ma200wi),h52=n(h52i);
@@ -633,9 +640,37 @@ async function loadDataCSV(){
       else if(weeklyUp&&macdW>0) verdict='WATCH';
       _techVerdict[sym]=verdict;
     });
-    console.log('Data loaded:',Object.keys(_prices).length,'symbols');
-  }catch(e){ console.log('data.csv not loaded'); }
+    console.log('Data tab loaded: '+Object.keys(_prices).length+' symbols');
+  }catch(e){ console.log('Data tab not loaded:', e.message); }
 }
+
+// ── LOAD LIVE PRICES FROM Prices tab (Google Sheet Column C) ──
+// This runs AFTER loadDataCSV so it overrides with your manually updated prices
+async function loadPricesSheet(){
+  try{
+    const res = await fetch(gsUrl('Prices'));
+    if(!res.ok) return;
+    const json = await res.json();
+    const rows = json.values||[];
+    if(rows.length < 2) return;
+    // Skip header row (row[0]), data starts row[1]
+    // Columns: A=Symbol, B=Net Units, C=Current Price, D=Avg Buy Price, E=P&L/Unit, F=Total P&L, G=Return%
+    let count = 0;
+    rows.slice(1).forEach(r=>{
+      const sym   = (r[0]||'').trim().toUpperCase();
+      const price = parseFloat(r[2]); // Column C = Current Price
+      if(sym && !isNaN(price) && price > 0){
+        _prices[sym]      = price;
+        _priceSource[sym] = 'sheet'; // mark as coming from your Prices tab
+        count++;
+      }
+    });
+    console.log('Prices tab loaded: '+count+' live prices (override)');
+  }catch(e){
+    console.log('Prices tab not loaded:', e.message);
+  }
+}
+
 // ── LOAD HOLDINGS ─────────────────────────────
 function loadCSV(e){
   const file=e.target.files[0];
@@ -678,22 +713,22 @@ function parseHoldings(text){
     }
   });
 
-  _allTrades = rows; // store all raw trades for search
+  _allTrades = rows;
   _holdings=Object.entries(map)
     .filter(([sym,d])=>d.qty>0.5&&sym&&sym.trim())
     .map(([sym,d])=>{
       const netAmt = d.buyAmt - d.sellAmt;
       const qty    = Math.round(d.qty);
       const rawAvg = qty>0?netAmt/qty:0;
-      // Free-of-cost lots: if sells recovered full cost, avg = 0 (house money)
       const avg    = parseFloat(Math.max(0, rawAvg).toFixed(2));
       return {
-      symbol:sym,
-      qty,
-      avg,
-      dps:DPS[sym]||0,
-      sector:SECTOR[sym]||'Other',
-      price:_prices[sym]||null
+        symbol:sym,
+        qty,
+        avg,
+        dps:DPS[sym]||0,
+        sector:SECTOR[sym]||'Other',
+        price:_prices[sym]||null,
+        priceSource:_priceSource[sym]||null
       };
     })
     .sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
@@ -705,11 +740,11 @@ function parseHoldings(text){
 function buildAll(){
   if(!_holdings.length) return;
 
-  const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
-  const totalDiv=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);
+  const totalInv  =_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
+  const totalDiv  =_holdings.reduce((s,h)=>s+h.qty*h.dps,0);
   const totalWorth=_holdings.reduce((s,h)=>s+h.qty*(h.price||h.avg),0);
-  const totalPL=totalWorth-totalInv;
-  const pct=Math.min((totalDiv/1000000)*100,100);
+  const totalPL   =totalWorth-totalInv;
+  const pct       =Math.min((totalDiv/1000000)*100,100);
 
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set('kInvested','PKR '+fmtN(totalInv));
@@ -738,11 +773,7 @@ function showErr(id,e){
 }
 
 // ── ACTION PLAN ───────────────────────────────
-// Sort by Action priority: BUY → WATCH → WAIT, then by YoC desc
-// ── ACTION PLAN — uses Technical Analysis signals from data.csv ──
 function buildAction(){
-  // Map technical verdict from data.csv prices/scores
-  // _prices already loaded; we also store verdicts when loading data.csv
   const ORDER = {BUY:1, CAUTION:2, WATCH:3, EXIT:4, WAIT:5, AVOID:6};
 
   const rows = _holdings.map(h=>{
@@ -752,20 +783,18 @@ function buildAction(){
     let action, cls, badge;
 
     if(tech){
-      // Use technical signal
       if(tech==='BUY'){
-        action='🟢 BUY — TA Signal';    cls='buy';   badge='b-buy';
+        action='🟢 BUY — TA Signal';    cls='buy';     badge='b-buy';
       } else if(tech==='CAUTION'){
         action='⚠️ CAUTION — Watch MA'; cls='caution'; badge='b-caution';
       } else if(tech==='EXIT'){
-        action='🔴 EXIT — TA Signal';   cls='exit';  badge='b-exit';
+        action='🔴 EXIT — TA Signal';   cls='exit';    badge='b-exit';
       } else if(tech==='WATCH'){
-        action='🟡 WATCH — Building';   cls='watch'; badge='b-watch';
+        action='🟡 WATCH — Building';   cls='watch';   badge='b-watch';
       } else {
-        action='⚪ WAIT — No Signal';   cls='wait';  badge='b-wait';
+        action='⚪ WAIT — No Signal';   cls='wait';    badge='b-wait';
       }
     } else {
-      // Fallback: use dividend yield
       if(yoc>=8)      { action='🟢 BUY — High Yield';   cls='buy';   badge='b-buy'; }
       else if(yoc>=5) { action='🟡 WATCH — Good Yield'; cls='watch'; badge='b-watch'; }
       else            { action='⚪ WAIT — Low Yield';   cls='wait';  badge='b-wait'; }
@@ -800,29 +829,35 @@ function buildAction(){
   html+=`</table></div>`;
   html+=`<div style="margin-top:8px;font-size:12px;color:#4a6a8a;padding:6px 10px;
     background:#0d1923;border-radius:4px;border-left:2px solid #2e4060">
-    📡 Actions based on Technical Analysis signals from data.csv · Updated weekly
+    📡 Actions based on Technical Analysis signals from Data tab · Updated weekly
   </div>`;
-  
+
   document.getElementById('tab-action').innerHTML=html;
 }
+
 // ── PORTFOLIO ─────────────────────────────────
-// Sort A-Z, Live Price, P/L
 function buildPortfolio(){
-  const hasPrices=Object.keys(_prices).length>0;
+  const hasSheetPrices = Object.values(_priceSource).some(s=>s==='sheet');
+  const hasDataPrices  = Object.values(_priceSource).some(s=>s==='data');
   const sorted=[..._holdings].sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
 
-  let html='';
-  if(hasPrices){
-    html+=`<div class="price-note">📡 Prices from last weekly data update — not real-time.
-      To get latest prices, update data.csv via Add/Update Row on the Technical Analysis page.</div>`;
+  // Price source legend
+  let legendHtml='';
+  if(hasSheetPrices || hasDataPrices){
+    legendHtml=`<div class="price-note" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span>📡 Price sources:</span>
+      ${hasSheetPrices?'<span class="price-src-badge psb-sheet">🟢 Sheet</span> <span style="font-size:11px;color:#4a6a8a">= Your Prices tab (Column C)</span>':''}
+      ${hasDataPrices?'<span class="price-src-badge psb-data">🔵 Data</span> <span style="font-size:11px;color:#4a6a8a">= Last TA data update</span>':''}
+    </div>`;
   } else {
-    html+=`<div class="price-note">⚠️ No price data — load data.csv via Technical Analysis to see current prices and P/L.</div>`;
+    legendHtml=`<div class="price-note">⚠️ No price data — update Column C in your Prices tab, or refresh TA data.</div>`;
   }
 
+  let html=legendHtml;
   html+=`<div style="overflow-x:auto"><table class="tbl">
     <tr>
       <th>#</th><th>Symbol</th><th>Units</th>
-      <th>Last Price</th><th>Avg Cost</th>
+      <th>Last Price</th><th>Src</th><th>Avg Cost</th>
       <th>Invested</th><th>Worth</th><th>P / L</th>
       <th>P/L %</th><th>DPS</th><th>Yield on Cost</th>
     </tr>`;
@@ -830,6 +865,7 @@ function buildPortfolio(){
   let ti=0,tw=0;
   sorted.forEach((h,i)=>{
     const price  = h.price||null;
+    const src    = h.priceSource||null;
     const worth  = price!==null?h.qty*price:null;
     const inv    = h.qty*h.avg;
     const pl     = worth!==null?worth-inv:null;
@@ -837,6 +873,12 @@ function buildPortfolio(){
     const yoc    = h.avg>0?(h.dps/h.avg)*100:0;
     ti+=inv;
     if(worth!==null) tw+=worth;
+
+    const srcBadge = src==='sheet'
+      ? `<span class="price-src-badge psb-sheet" title="From your Prices tab">🟢</span>`
+      : src==='data'
+        ? `<span class="price-src-badge psb-data" title="From last TA data update">🔵</span>`
+        : `<span style="color:#4a6a8a">—</span>`;
 
     const priceCell = price!==null
       ? `<td class="c-blue">${fmtD(price)}</td>`
@@ -856,6 +898,7 @@ function buildPortfolio(){
       <td class="sym">${h.symbol}</td>
       <td>${h.qty.toLocaleString()}</td>
       ${priceCell}
+      <td>${srcBadge}</td>
       <td>${fmtD(h.avg)}</td>
       <td>${fmtN(inv)}</td>
       ${worthCell}
@@ -868,7 +911,7 @@ function buildPortfolio(){
 
   const totalPL=tw>0?tw-ti:null;
   html+=`<tr class="total-row">
-    <td colspan="5">TOTAL</td>
+    <td colspan="6">TOTAL</td>
     <td>${fmtN(ti)}</td>
     <td>${tw>0?fmtN(tw):'—'}</td>
     <td class="${totalPL!==null&&totalPL>=0?'c-green':'c-red'}">${totalPL!==null?(totalPL>=0?'+':'')+fmtN(totalPL):'—'}</td>
@@ -966,7 +1009,6 @@ function buildSector(){
   document.getElementById('tab-sector').innerHTML=html;
 }
 
-
 // ── CAPITAL SUMMARY ──────────────────────────
 function buildCapital(){
   const holdingsAtCost = _holdings.reduce((s,h)=>s+h.qty*h.avg,0);
@@ -1004,14 +1046,12 @@ function buildCapital(){
 
   let html=`<div style="max-width:1000px">
 
-    <!-- ══ TOP SCORECARD ══ -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
       ${card('🏆','Overall ROI',roi.toFixed(1)+'%','Since Sep 2021','#4caf50','#0d1f0d')}
       ${card('📈','CAGR',cagr.toFixed(1)+'%','Compound Annual','#ffc107','#1a1500')}
       ${card('💰','Net Gain','PKR '+fmtN(netGain),'Total profit','#4fc3f7','#051525')}
     </div>
 
-    <!-- ══ ROI BAR ══ -->
     <div style="background:#1a2535;border-radius:10px;padding:16px 20px;margin-bottom:20px">
       <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px">
         <span style="color:#7a9ab5">Started with</span>
@@ -1028,10 +1068,7 @@ function buildCapital(){
       </div>
     </div>
 
-    <!-- ══ TWO COLUMNS ══ -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-
-      <!-- Cash Flow -->
       <div style="background:#1a2535;border-radius:10px;padding:16px 20px">
         <div style="font-size:12px;font-weight:700;color:#4fc3f7;text-transform:uppercase;
              letter-spacing:.8px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #1565c0">
@@ -1043,7 +1080,6 @@ function buildCapital(){
         ${row('Free Cash Now',  'PKR '+fmtN(freeCash), '#ffc107','Idle — available to deploy')}
       </div>
 
-      <!-- Portfolio Value -->
       <div style="background:#1a2535;border-radius:10px;padding:16px 20px">
         <div style="font-size:12px;font-weight:700;color:#4fc3f7;text-transform:uppercase;
              letter-spacing:.8px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #1565c0">
@@ -1057,7 +1093,6 @@ function buildCapital(){
       </div>
     </div>
 
-    <!-- ══ DIVIDEND PROGRESS ══ -->
     <div style="background:#0d1f0d;border:1px solid #2e7d32;border-radius:10px;padding:16px 20px">
       <div style="font-size:12px;font-weight:700;color:#4caf50;text-transform:uppercase;
            letter-spacing:.8px;margin-bottom:12px">📅 Dividend Goal Progress</div>
@@ -1086,10 +1121,8 @@ function buildCapital(){
 }
 
 
-
 // ── TRADE HISTORY SEARCH ──────────────────────
-let _allTrades = []; // raw rows from holdings.csv
-
+let _allTrades = [];
 
 function goHistory(){
   document.getElementById('pgHistory').classList.add('open');
@@ -1100,8 +1133,6 @@ function goHistory(){
 function goBack(){
   document.getElementById('pgHistory').classList.remove('open');
 }
-function showSearch(){ goHistory(); }
-function hideSearch(){ goBack(); }
 function showSearch(){
   document.getElementById('pgHistory').classList.add('open');
   document.getElementById('srchSym').value='';
@@ -1119,7 +1150,7 @@ function runSearch(){
 
   const trades = _allTrades
     .filter(r=>r.symbol.toUpperCase()===sym)
-    .reverse(); // latest on top
+    .reverse();
 
   if(!trades.length){
     document.getElementById('srchResult').innerHTML=
@@ -1127,7 +1158,6 @@ function runSearch(){
     return;
   }
 
-  // ── Summaries ──
   let totalBuyUnits=0, totalBuyAmt=0;
   let totalSellUnits=0, totalSellAmt=0;
   trades.forEach(r=>{
@@ -1144,7 +1174,6 @@ function runSearch(){
   const avgSellRate  = totalSellUnits>0 ? totalSellAmt/totalSellUnits : 0;
   const realPL       = totalSellAmt - (totalSellUnits*(totalBuyAmt/totalBuyUnits));
 
-  // Summary cards
   let html=`
   <div style="font-size:13px;color:#7a9ab5;margin-bottom:14px">
     <b style="color:#4fc3f7;font-size:20px">${sym}</b>
@@ -1185,7 +1214,6 @@ function runSearch(){
     </div>
   </div>
 
-  <!-- Trade table — latest first -->
   <div style="overflow-x:auto;max-height:420px;overflow-y:auto;margin-top:4px">
   <table class="sr-tbl">
     <tr>
@@ -1212,7 +1240,6 @@ function runSearch(){
     </tr>`;
   });
 
-  // Total row
   html+=`<tr class="total-tr">
     <td colspan="3">SUMMARY</td>
     <td style="color:#4fc3f7">Hold: ${holdingUnits.toLocaleString()}</td>
@@ -1223,6 +1250,7 @@ function runSearch(){
 
   document.getElementById('srchResult').innerHTML=html;
 }
+
 // ── BUY / SELL ────────────────────────────────
 function showBuySell(){
   document.getElementById('bsModal').classList.add('open');
@@ -1233,7 +1261,6 @@ function showBuySell(){
   document.getElementById('bsStatus').textContent='';
   document.getElementById('bsSummary').style.display='none';
 
-  // Live preview
   ['bsSym','bsUnits','bsRate','bsAction'].forEach(id=>{
     document.getElementById(id).addEventListener('input', updateBsSummary);
   });
@@ -1264,13 +1291,11 @@ async function submitTrade(action){
   const units = parseFloat(document.getElementById('bsUnits').value)||0;
   const rate  = parseFloat(document.getElementById('bsRate').value)||0;
   const cash  = parseFloat(document.getElementById('bsCash').value)||0;
-  const token = window._ghToken();
 
   if(!sym||!units||!rate){
     setStatus('❌ Please fill Symbol, Units and Rate','#ef5350'); return;
   }
 
-  // Format date
   const now   = new Date();
   const day   = now.getDate();
   const mon   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()];
@@ -1282,11 +1307,9 @@ async function submitTrade(action){
   setStatus('⏳ Saving to Google Sheets...','#ffc107');
 
   try{
-    // Save trade to Google Sheets holdings tab
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
       body: JSON.stringify({ action:'append', tab:'holdings', row: newRow.split(',') }) });
 
-    // Auto-add to cashflow
     try{
       const currentBal = _cashFlow.length>0
         ? parseFloat(_cashFlow[_cashFlow.length-1].ClosingCash||0)
@@ -1295,7 +1318,6 @@ async function submitTrade(action){
       const netChange  = action==='Buy' ? -tradeVal : tradeVal;
       const newActual  = currentBal + netChange;
       const autoDesc   = `${action} ${units} ${sym} @ ${rate}`;
-      // Match CF_HDRS: Date, OpeningCash, ClosingCash, NetChange, Fees, Type, Notes
       const cfRow = [date, currentBal.toFixed(2), newActual.toFixed(2),
         netChange.toFixed(2), 0, action, autoDesc];
       await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
@@ -1306,7 +1328,6 @@ async function submitTrade(action){
       updateCAPITAL(null,0,0,newActual);
     }catch(cfErr){ console.log('CF auto-entry:',cfErr.message); }
 
-    // 4. Update free cash + reload
     updateCAPITAL(action, units, rate, cash);
     setStatus(`✅ Saved! ${action} ${units} ${sym} @ PKR ${rate} added to Google Sheets`,'#4caf50');
     setTimeout(()=>{ autoLoad(); hideBuySell(); },2000);
@@ -1324,13 +1345,11 @@ function updateCAPITAL(action, units, rate, newCash){
 
 async function saveCashOnly(){
   const cash  = parseFloat(document.getElementById('bsCash').value)||0;
-  const token = window._ghToken();
   const now   = new Date();
   const asof  = now.toISOString().slice(0,10);
 
   setStatus('⏳ Saving cash to Google Sheets...','#ffc107');
   try{
-    // Update Cash tab row 2 in Google Sheets
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
       body: JSON.stringify({ action:'update', tab:'Cash', rows:[[cash, asof]], rowNum:2 }) });
 
@@ -1375,7 +1394,6 @@ function searchHistory(){
   if(!trades.length){ document.getElementById('histResult').innerHTML=
     `<p style="color:#ef5350;padding:10px">No trades found for <b>${sym}</b></p>`; return; }
 
-  // Calculate summary
   let buyUnits=0, buyAmt=0, sellUnits=0, sellAmt=0;
   trades.forEach(r=>{
     const u=parseFloat(r.units)||0, rt=parseFloat(r.rate)||0;
@@ -1389,7 +1407,6 @@ function searchHistory(){
   const realized= sellAmt - (avgBuy*sellUnits);
 
   let html=`
-  <!-- Symbol header -->
   <div style="font-size:22px;font-weight:800;color:#e0e6ed;margin-bottom:14px">
     ${sym}
     <span style="font-size:13px;font-weight:400;color:#7a9ab5;margin-left:10px">
@@ -1397,7 +1414,6 @@ function searchHistory(){
     </span>
   </div>
 
-  <!-- Summary cards -->
   <div class="hist-cards">
     <div class="hist-card hc-buy">
       <div class="hc-label">Total Bought</div>
@@ -1419,7 +1435,6 @@ function searchHistory(){
     </div>
   </div>
 
-  <!-- Net position -->
   ${realized!==0?`<div class="hist-net ${realized>=0?'profit':'loss'}">
     <div>
       <div style="font-size:11px;color:#7a9ab5;text-transform:uppercase;letter-spacing:.6px">Realised P/L (on sold units)</div>
@@ -1433,7 +1448,6 @@ function searchHistory(){
     </div>
   </div>`:''}
 
-  <!-- Trade table -->
   <div style="overflow-x:auto;max-height:320px;overflow-y:auto">
     <table class="hist-tbl">
       <tr>
@@ -1476,7 +1490,6 @@ function closeDividends(){
   document.getElementById('pgDividends').classList.remove('open');
 }
 
-// Auto-fill units from holdings
 function dvAutoFill(){
   const sym = document.getElementById('dvSym').value.toUpperCase();
   const h   = _holdings.find(h=>h.symbol===sym);
@@ -1487,7 +1500,6 @@ function dvAutoFill(){
   }
 }
 
-// Live calc
 function dvCalc(){
   const units = parseFloat(document.getElementById('dvUnits').value)||0;
   const dps   = parseFloat(document.getElementById('dvDPS').value)||0;
@@ -1537,7 +1549,6 @@ function renderDividends(){
     return (b.XDate||'').localeCompare(a.XDate||'');
   });
 
-  // KPIs
   const paid   = sorted.filter(r=>r.Status==='Paid');
   const waiting= sorted.filter(r=>r.Status!=='Paid');
   const totalNet  = paid.reduce((s,r)=>s+parseFloat(r.NetAmount||0),0);
@@ -1552,7 +1563,6 @@ function renderDividends(){
   setEl('dvTax',    'PKR '+Math.round(totalTax).toLocaleString());
   setEl('dvCount',  sorted.length+' records');
 
-  // ── Table with "+ Add Record" button top right ──
   let html=`
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <div style="font-size:15px;font-weight:700;color:#4fc3f7">
@@ -1584,18 +1594,10 @@ function renderDividends(){
   html+=`<div style="overflow-x:auto;background:#1a2535;border-radius:10px;border:1px solid #2e4060">
   <table class="dv-tbl" style="margin:0">
     <tr>
-      <th>#</th>
-      <th>Symbol</th>
-      <th>Units</th>
-      <th>DPS</th>
-      <th>Ann. Date</th>
-      <th>X Date</th>
-      <th>Gross</th>
-      <th>Tax 15%</th>
-      <th>Net Amount</th>
-      <th>Status</th>
-      <th>Pay Date</th>
-      <th>Action</th>
+      <th>#</th><th>Symbol</th><th>Units</th><th>DPS</th>
+      <th>Ann. Date</th><th>X Date</th>
+      <th>Gross</th><th>Tax 15%</th><th>Net Amount</th>
+      <th>Status</th><th>Pay Date</th><th>Action</th>
     </tr>`;
 
   sorted.forEach((r,i)=>{
@@ -1623,7 +1625,6 @@ function renderDividends(){
     </tr>`;
   });
 
-  // Totals
   const tGross=sorted.reduce((s,r)=>s+parseFloat(r.GrossAmount||0),0);
   const tTax  =sorted.reduce((s,r)=>s+parseFloat(r.TaxAmount||0),0);
   const tNet  =sorted.reduce((s,r)=>s+parseFloat(r.NetAmount||0),0);
@@ -1646,7 +1647,6 @@ function renderDividends(){
   document.getElementById('dvTableWrap').innerHTML=html;
 }
 
-// Toggle Add form
 function showDvForm(){
   const f=document.getElementById('dvFormBox');
   if(f) f.style.display=f.style.display==='none'?'block':'none';
@@ -1674,7 +1674,6 @@ async function addDividend(){
 }
 
 async function markPaid(idx){
-  // Get sorted index → match to _dividends
   const sorted=[..._dividends].sort((a,b)=>{
     if(a.Status==='Waiting'&&b.Status!=='Waiting') return -1;
     if(b.Status==='Waiting'&&a.Status!=='Waiting') return 1;
@@ -1684,7 +1683,6 @@ async function markPaid(idx){
   if(!record) return;
 
   const today = new Date().toISOString().slice(0,10);
-  // Update in _dividends array
   const di = _dividends.findIndex(r=>
     r.Symbol===record.Symbol && r.XDate===record.XDate && r.Units===record.Units);
   if(di>=0){
@@ -1697,7 +1695,6 @@ async function markPaid(idx){
 async function rewriteDivCSV(msg){
   dvSetStatus('⏳ Saving to Google Sheets...','#ffc107');
   try{
-    // Replace entire Dividends tab
     const allRows = [DIV_HDRS, ..._dividends.map(r=>DIV_HDRS.map(h=>r[h]||''))];
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
       body: JSON.stringify({ action:'replaceSheet', tab:'Dividends', rows: allRows }) });
@@ -1728,7 +1725,6 @@ function dvSetStatus(msg,color){
 }
 
 
-
 // ── CASH FLOW ─────────────────────────────────────
 const CF_FILE = 'cashflow.csv';
 const CF_HDRS = ['Date','OpeningCash','ClosingCash','NetChange','Fees','Type','Notes'];
@@ -1746,7 +1742,6 @@ function toggleCfForm(){
   const isOpen = f.classList.contains('open');
   f.classList.toggle('open');
   if(!isOpen){
-    // Pre-fill opening cash from last entry or CAPITAL.freeCash
     const lastBal = _cashFlow.length>0
       ? parseFloat(_cashFlow[_cashFlow.length-1].ClosingCash||0)
       : CAPITAL.freeCash;
@@ -1768,12 +1763,7 @@ function cfDayCalc(){
 
   const net   = close - open;
   const type  = document.getElementById('cfType').value;
-  // Fees only apply to trading days
-  // For trading: we compare net vs what trades alone would give
-  // But since we don't know individual trades here, fees = 0 for now
-  // User can add notes about fees
   const isTrading = type==='Trading'||type==='Mixed';
-  const fees  = 0; // calculated when user knows
 
   box.style.display='block';
   const netClr = net>=0?'#4caf50':'#ef9a9a';
@@ -1804,9 +1794,8 @@ async function loadCashFlow(){
 }
 
 function renderCashFlow(){
-  const sorted=[..._cashFlow].reverse(); // newest first
+  const sorted=[..._cashFlow].reverse();
 
-  // KPIs
   const lastBal = _cashFlow.length>0
     ? parseFloat(_cashFlow[_cashFlow.length-1].ClosingCash||0)
     : CAPITAL.freeCash;
@@ -1882,7 +1871,6 @@ async function saveCfEntry(){
   const fees = 0;
   const newRow = [date,open.toFixed(0),close.toFixed(0),net.toFixed(0),fees,type,notes||'—'].join(',');
 
-  const token = window._ghToken();
   cfSetStatus('⏳ Saving to Google Sheets...','#ffc107');
   try{
     const row = newRow.split(',');
@@ -1906,9 +1894,19 @@ function cfSetStatus(msg,color){
 }
 
 
-// ── AUTO LOAD ─────────────────────────────────
+// ══════════════════════════════════════════════
+//  AUTO LOAD — Data tab first, then Prices tab
+//  override, then Holdings
+// ══════════════════════════════════════════════
 async function autoLoad(){
+  // 1. Load TA signals + prices from Data tab
   await loadDataCSV();
+
+  // 2. Override/add prices from your Prices tab (Column C = Current Price)
+  //    Any symbol with a value in Column C will use that price instead of Data tab
+  await loadPricesSheet();
+
+  // 3. Load holdings and build dashboard
   try{
     const res=await fetch(gsUrl('holdings'));
     if(!res.ok) return;
@@ -1929,7 +1927,6 @@ autoLoad();
   <div class="bs-box">
     <div class="bs-title">💱 Record Trade</div>
 
-    <!-- Free Cash -->
     <div class="cash-row" style="flex-wrap:wrap;gap:8px">
       <span class="cash-lbl">💵 Free Cash:</span>
       <input type="number" class="cash-edit" id="bsCash" step="1">
@@ -1963,7 +1960,6 @@ autoLoad();
       </div>
     </div>
 
-    <!-- Trade summary -->
     <div id="bsSummary" style="background:#0f1923;border-radius:6px;padding:10px 14px;
       font-size:13px;color:#a0c4e8;margin-bottom:12px;display:none"></div>
 
@@ -1980,9 +1976,8 @@ autoLoad();
 </div>
 
 
-<!-- TRADE HISTORY MODAL -->
+<!-- TRADE HISTORY PAGE -->
 <div id="pgHistory">
-  <!-- History Nav -->
   <div style="background:#1a2535;border-bottom:2px solid #2e4060;padding:10px 20px;
     display:flex;align-items:center;gap:10px;flex-shrink:0">
     <span style="font-size:18px;font-weight:700;color:#4fc3f7;margin-right:6px">🔍 Trade History</span>
@@ -2002,7 +1997,7 @@ autoLoad();
     </div>
     <div id="srchResult"></div>
   </div>
-  </div><!-- end padding -->
+  </div>
 </div>
 
 
@@ -2019,7 +2014,6 @@ autoLoad();
 
   <div class="dv-content">
 
-    <!-- KPI strip -->
     <div class="dv-strip">
       <div class="dv-kpi"><div class="dkv c-green" id="dvTotal">—</div><div class="dkl">Total Net Received</div></div>
       <div class="dv-kpi"><div class="dkv c-gold"  id="dvPending">—</div><div class="dkl">Pending</div></div>
@@ -2028,7 +2022,6 @@ autoLoad();
       <div class="dv-kpi"><div class="dkv" style="color:#a0c4e8" id="dvCount">—</div><div class="dkl">Records</div></div>
     </div>
 
-    <!-- Add form -->
     <div id="dvFormBox" style="display:none"><div class="dv-form">
       <div class="dv-form-title">➕ Add Dividend Record</div>
       <div class="dv-grid">
@@ -2066,7 +2059,6 @@ autoLoad();
         </div>
       </div>
 
-      <!-- Live calculation -->
       <div class="dv-calc" id="dvCalcBox"></div>
 
       <div class="dv-actions">
@@ -2079,10 +2071,8 @@ autoLoad();
         </button>
         <span class="dv-status" id="dvFormStatus"></span>
       </div>
-    </div>
+    </div></div>
 
-    <!-- Records table -->
-    </div><!-- end dvFormBox -->
     <div id="dvTableWrap">
       <p style="color:#4a6a8a;padding:20px;text-align:center">Loading dividend records...</p>
     </div>
@@ -2108,7 +2098,6 @@ autoLoad();
 
   <div class="cf-content">
 
-    <!-- KPI strip -->
     <div class="cf-strip">
       <div class="cf-kpi"><div class="ckv c-blue"  id="cfBalance">—</div><div class="ckl">Current Balance</div></div>
       <div class="cf-kpi"><div class="ckv c-red"   id="cfTotalFees">—</div><div class="ckl">Total Fees Paid</div></div>
@@ -2117,7 +2106,6 @@ autoLoad();
       <div class="cf-kpi"><div class="ckv" style="color:#a0c4e8" id="cfEntries">—</div><div class="ckl">Day Entries</div></div>
     </div>
 
-    <!-- Add form -->
     <div class="cf-form" id="cfForm">
       <div class="cf-form-title">➕ Add Day Entry</div>
 
@@ -2153,7 +2141,6 @@ autoLoad();
         <input type="text" id="cfNotes" placeholder="e.g. Bought 50 MCB, sold 25 POL">
       </div>
 
-      <!-- Live calculation -->
       <div id="cfCalcBox" style="background:#0d1923;border-radius:8px;padding:14px 18px;
         margin-bottom:14px;display:none">
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
@@ -2186,7 +2173,6 @@ autoLoad();
       </div>
     </div>
 
-    <!-- Table -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:15px;font-weight:700;color:#4fc3f7">
         📋 Daily Cash Flow History
@@ -2198,7 +2184,6 @@ autoLoad();
     </div>
   </div>
 </div>
-
 
 
 </body>
