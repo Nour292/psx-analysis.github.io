@@ -1224,6 +1224,13 @@ function buildCapital(){
 // ── TRADE HISTORY SEARCH ──────────────────────
 let _allTrades = [];
 
+function goBack(){
+  document.getElementById('pgHistory').classList.remove('open');
+}
+function hideSearch(){
+  document.getElementById('pgHistory').classList.remove('open');
+}
+
 function goHistory(){
   document.getElementById('pgHistory').classList.add('open');
   populateSymbolDropdown();
