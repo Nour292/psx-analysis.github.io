@@ -772,64 +772,158 @@ function showErr(id,e){
   if(el) el.innerHTML=`<p style="color:#ef5350;padding:20px">Error: ${e.message}</p>`;
 }
 
-// ── ACTION PLAN ───────────────────────────────
+// ── ACTION PLAN — Dividend Accumulation Logic ─
+// Goal: PKR 1,000,000/year dividend income
+// Rules: YoC, price vs avg cost, free-of-cost status
 function buildAction(){
-  const ORDER = {BUY:1, CAUTION:2, WATCH:3, EXIT:4, WAIT:5, AVOID:6};
+
+  const PRIORITY = {
+    'ACCUMULATE' : 1,
+    'ADD'        : 2,
+    'FREE-CORE'  : 3,
+    'TRIM'       : 4,
+    'WATCH'      : 5,
+    'HOLD'       : 6,
+    'WAIT'       : 7,
+  };
+
+  const totalAnnualDiv = _holdings.reduce((s,h)=>s+h.qty*h.dps, 0);
+  const divGap         = Math.max(0, 1000000 - totalAnnualDiv);
 
   const rows = _holdings.map(h=>{
-    const yoc  = h.avg>0?(h.dps/h.avg)*100:0;
-    const tech = _techVerdict[h.symbol]||null;
+    const price    = h.price || h.avg || 0;
+    const yoc      = h.avg > 0 ? (h.dps / h.avg) * 100 : 0;
+    const isFree   = h.avg === 0;
+    const atProfit = price > 0 && h.avg > 0 && price >= h.avg * 1.20;
+    const nearAvg  = price > 0 && h.avg > 0 && price <= h.avg * 1.05;
+    const annDiv   = h.qty * h.dps;
+    const hasDPS   = h.dps > 0;
 
-    let action, cls, badge;
+    let action, cls, badge, note, sortKey;
 
-    if(tech){
-      if(tech==='BUY'){
-        action='🟢 BUY — TA Signal';    cls='buy';     badge='b-buy';
-      } else if(tech==='CAUTION'){
-        action='⚠️ CAUTION — Watch MA'; cls='caution'; badge='b-caution';
-      } else if(tech==='EXIT'){
-        action='🔴 EXIT — TA Signal';   cls='exit';    badge='b-exit';
-      } else if(tech==='WATCH'){
-        action='🟡 WATCH — Building';   cls='watch';   badge='b-watch';
-      } else {
-        action='⚪ WAIT — No Signal';   cls='wait';    badge='b-wait';
-      }
+    if(isFree && hasDPS){
+      action  = '💰 FREE LOT — Dividend Machine';
+      cls     = 'buy'; badge = 'b-buy';
+      note    = 'Never sell core. Infinite yield. Pure house money income.';
+      sortKey = 'FREE-CORE';
+
+    } else if(isFree && !hasDPS){
+      action  = '🆓 FREE LOT — Hold & Wait DPS';
+      cls     = 'watch'; badge = 'b-watch';
+      note    = 'Zero cost basis. Hold until dividend confirmed.';
+      sortKey = 'WATCH';
+
+    } else if(hasDPS && yoc >= 10 && nearAvg){
+      action  = '🟢 ACCUMULATE — Prime Zone';
+      cls     = 'buy'; badge = 'b-buy';
+      note    = `YoC ${yoc.toFixed(1)}% — add 25–50 units at current price`;
+      sortKey = 'ACCUMULATE';
+
+    } else if(hasDPS && yoc >= 8 && nearAvg){
+      action  = '🟢 ADD — Strong Yield';
+      cls     = 'buy'; badge = 'b-buy';
+      note    = `YoC ${yoc.toFixed(1)}% — accumulate small tranches`;
+      sortKey = 'ADD';
+
+    } else if(hasDPS && yoc >= 8 && !nearAvg){
+      action  = '🟡 WATCH — Buy on Dip';
+      cls     = 'watch'; badge = 'b-watch';
+      note    = `YoC ${yoc.toFixed(1)}% — wait for pullback toward avg cost`;
+      sortKey = 'WATCH';
+
+    } else if(hasDPS && atProfit && yoc >= 5){
+      action  = '✂️ TRIM — Take Profit';
+      cls     = 'caution'; badge = 'b-caution';
+      note    = 'Price +20% above avg. Trim 20–30%, keep core for DPS.';
+      sortKey = 'TRIM';
+
+    } else if(hasDPS && yoc >= 5){
+      action  = '🔵 HOLD — Collect Dividends';
+      cls     = 'watch'; badge = 'b-watch';
+      note    = `YoC ${yoc.toFixed(1)}% — core position, collect quarterly DPS`;
+      sortKey = 'HOLD';
+
+    } else if(!hasDPS){
+      action  = '⚪ WAIT — No DPS Confirmed';
+      cls     = 'wait'; badge = 'b-wait';
+      note    = 'No dividend declared yet. Hold and monitor.';
+      sortKey = 'WAIT';
+
     } else {
-      if(yoc>=8)      { action='🟢 BUY — High Yield';   cls='buy';   badge='b-buy'; }
-      else if(yoc>=5) { action='🟡 WATCH — Good Yield'; cls='watch'; badge='b-watch'; }
-      else            { action='⚪ WAIT — Low Yield';   cls='wait';  badge='b-wait'; }
+      action  = '⚪ WAIT — Low Yield';
+      cls     = 'wait'; badge = 'b-wait';
+      note    = `YoC ${yoc.toFixed(1)}% — below 5% threshold. Monitor.`;
+      sortKey = 'WAIT';
     }
 
-    return {h, yoc, cls, action, badge, techSort: ORDER[tech||'WAIT']||5};
-  }).sort((a,b)=> a.techSort - b.techSort || b.yoc - a.yoc);
+    return { h, yoc, annDiv, cls, action, badge, note,
+             isFree, price, sortKey,
+             priority: PRIORITY[sortKey]||9 };
 
-  let html=`<div style="overflow-x:auto"><table class="tbl">
+  }).sort((a,b)=> a.priority - b.priority || b.yoc - a.yoc || b.annDiv - a.annDiv);
+
+  const accCount  = rows.filter(r=>['ACCUMULATE','ADD'].includes(r.sortKey)).length;
+  const freeCount = rows.filter(r=>r.isFree).length;
+
+  let html=`
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    <div style="background:#0d1f0d;border:1px solid #2e7d32;border-radius:8px;padding:12px 16px;text-align:center">
+      <div style="font-size:11px;color:#7a9ab5;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Annual Dividend</div>
+      <div style="font-size:20px;font-weight:800;color:#4caf50">PKR ${fmtN(totalAnnualDiv)}</div>
+    </div>
+    <div style="background:#1a1500;border:1px solid #f57f17;border-radius:8px;padding:12px 16px;text-align:center">
+      <div style="font-size:11px;color:#7a9ab5;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Gap to PKR 1M</div>
+      <div style="font-size:20px;font-weight:800;color:#ffc107">PKR ${fmtN(divGap)}</div>
+    </div>
+    <div style="background:#051525;border:1px solid #1565c0;border-radius:8px;padding:12px 16px;text-align:center">
+      <div style="font-size:11px;color:#7a9ab5;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Accumulate Now</div>
+      <div style="font-size:20px;font-weight:800;color:#4fc3f7">${accCount} symbols</div>
+    </div>
+    <div style="background:#0d1f0d;border:1px solid #2e7d32;border-radius:8px;padding:12px 16px;text-align:center">
+      <div style="font-size:11px;color:#7a9ab5;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Free Lots</div>
+      <div style="font-size:20px;font-weight:800;color:#4caf50">${freeCount} symbols</div>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto"><table class="tbl">
     <tr>
-      <th>Action</th><th>Symbol</th><th>Units</th>
-      <th>Avg Cost</th><th>DPS</th><th>Yield on Cost</th>
-      <th>Annual Div</th><th>Invested</th>
+      <th>Action</th>
+      <th>Symbol</th>
+      <th>Units</th>
+      <th>Current Price</th>
+      <th>Avg Cost</th>
+      <th>DPS</th>
+      <th>Yield on Cost</th>
+      <th>Annual Div</th>
+      <th>Note</th>
     </tr>`;
 
-  rows.forEach(({h,yoc,cls,action,badge})=>{
-    const rcls = cls==='buy'?'r-buy':cls==='watch'||cls==='caution'?'r-watch':'r-wait';
-    const ann  = h.qty*h.dps;
-    const yocClr = yoc>=8?'c-green':yoc>=5?'c-gold':'c-gray';
+  rows.forEach(({h, yoc, annDiv, cls, action, badge, note, isFree, price})=>{
+    const rcls   = cls==='buy'?'r-buy':cls==='watch'||cls==='caution'?'r-watch':'r-wait';
+    const yocClr = isFree?'c-green':yoc>=8?'c-green':yoc>=5?'c-gold':'c-gray';
+    const priceCell = price>0
+      ? `<td class="c-blue">${fmtD(price)}</td>`
+      : `<td class="c-gray">—</td>`;
+
     html+=`<tr class="${rcls}">
       <td><span class="badge ${badge}">${action}</span></td>
       <td class="sym">${h.symbol}</td>
       <td>${h.qty.toLocaleString()}</td>
-      <td>${h.avg>0?fmtD(h.avg):'<span class="c-green bold">Free</span>'}</td>
-      <td class="c-gold">${h.dps||'—'}</td>
-      <td class="${yocClr}"><b>${h.avg>0?yoc.toFixed(1)+'%':'∞'}</b></td>
-      <td>${h.dps?fmtN(ann):'—'}</td>
-      <td>${h.avg>0?fmtN(h.qty*h.avg):'<span class="c-green">Free lot</span>'}</td>
+      ${priceCell}
+      <td>${isFree?'<span class="c-green bold">Free</span>':fmtD(h.avg)}</td>
+      <td class="c-gold bold">${h.dps||'—'}</td>
+      <td class="${yocClr} bold">${isFree?'∞':h.avg>0?yoc.toFixed(1)+'%':'—'}</td>
+      <td class="c-green">${h.dps&&annDiv>0?fmtN(annDiv):'—'}</td>
+      <td style="font-size:12px;color:#7a9ab5">${note}</td>
     </tr>`;
   });
 
-  html+=`</table></div>`;
-  html+=`<div style="margin-top:8px;font-size:12px;color:#4a6a8a;padding:6px 10px;
-    background:#0d1923;border-radius:4px;border-left:2px solid #2e4060">
-    📡 Actions based on Technical Analysis signals from Data tab · Updated weekly
+  html+=`</table></div>
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;font-size:12px">
+    <span style="background:#0d1f0d;border:1px solid #2e7d32;border-radius:6px;padding:4px 10px;color:#4caf50">🟢 Accumulate/Add = YoC ≥ 8% near avg cost</span>
+    <span style="background:#051525;border:1px solid #1565c0;border-radius:6px;padding:4px 10px;color:#4fc3f7">🔵 Hold = YoC 5–8%, collect dividends</span>
+    <span style="background:#1a1000;border:1px solid #ff9800;border-radius:6px;padding:4px 10px;color:#ff9800">✂️ Trim = Price +20% above avg, keep core</span>
+    <span style="background:#0d1f0d;border:1px solid #2e7d32;border-radius:6px;padding:4px 10px;color:#4caf50">💰 Free Lot = Zero cost, infinite yield, never sell</span>
   </div>`;
 
   document.getElementById('tab-action').innerHTML=html;
