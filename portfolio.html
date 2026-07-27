@@ -1853,33 +1853,41 @@ function toggleCfForm(){
     document.getElementById('cfType').value   = 'Trading';
     document.getElementById('cfCalcBox').style.display='none';
     document.getElementById('cfFormStatus').textContent='';
-    cfTypeChanged(); // reset Amount field visibility
+    cfTypeChanged(); // apply correct field states for Trading
   }
 }
 
 function cfTypeChanged(){
-  const type   = document.getElementById('cfType').value;
-  const wrap   = document.getElementById('cfAmountWrap');
-  const label  = document.getElementById('cfAmountLabel');
-  const cfOpen = parseFloat(document.getElementById('cfOpen').value)||0;
+  const type  = document.getElementById('cfType').value;
+  const label = document.getElementById('cfAmountLabel');
+  const amtEl = document.getElementById('cfAmount');
+  const clsEl = document.getElementById('cfClose');
 
   if(type === 'Trading'){
-    // Trading: no Amount field, user enters Closing manually
-    wrap.style.display = 'none';
-    document.getElementById('cfAmount').value = '';
-    document.getElementById('cfClose').readOnly = false;
-    document.getElementById('cfClose').style.borderColor = '#4fc3f7';
-    document.getElementById('cfClose').placeholder = 'e.g. 394,210';
+    // Trading: Amount disabled, user enters Closing manually
+    amtEl.value       = '';
+    amtEl.disabled    = true;
+    amtEl.placeholder = 'N/A for Trading';
+    amtEl.style.borderColor  = '#2e4060';
+    amtEl.style.opacity      = '0.4';
+    label.textContent        = 'Amount';
+    label.style.color        = '#4a6a8a';
+    clsEl.readOnly           = false;
+    clsEl.style.borderColor  = '#4fc3f7';
+    clsEl.placeholder        = 'e.g. 394,210';
   } else {
-    // Non-trading: show Amount field, auto-calculate Closing
-    wrap.style.display = 'block';
-    if(type==='Deposit')    label.textContent = '⬇️ Deposit Amount';
-    if(type==='Withdrawal') label.textContent = '⬆️ Withdrawal Amount';
-    if(type==='Dividend')   label.textContent = '💰 Dividend Amount';
-    if(type==='Mixed')      label.textContent = '🔀 Net Amount (+/-)';
-    document.getElementById('cfClose').readOnly = true;
-    document.getElementById('cfClose').style.borderColor = '#2e4060';
-    document.getElementById('cfClose').placeholder = 'Auto-calculated';
+    // Non-trading: Amount enabled, Closing auto-calculated
+    amtEl.disabled           = false;
+    amtEl.style.opacity      = '1';
+    amtEl.style.borderColor  = '#ffc107';
+    amtEl.placeholder        = 'e.g. 50,000';
+    clsEl.readOnly           = true;
+    clsEl.style.borderColor  = '#2e4060';
+    clsEl.placeholder        = 'Auto-calculated';
+    if(type==='Deposit')    { label.textContent='⬇️ Deposit Amount';     label.style.color='#4fc3f7'; }
+    if(type==='Withdrawal') { label.textContent='⬆️ Withdrawal Amount';  label.style.color='#ef5350'; }
+    if(type==='Dividend')   { label.textContent='💰 Dividend Amount';    label.style.color='#ffc107'; }
+    if(type==='Mixed')      { label.textContent='🔀 Net Amount (+/-)';   label.style.color='#a0c4e8'; }
   }
   cfDayCalc();
 }
@@ -2281,13 +2289,13 @@ autoLoad();
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px" id="cfCashGrid">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
         <div class="cf-field">
           <label>Opening Cash (start of day)</label>
           <input type="number" id="cfOpen" placeholder="e.g. 448,387" oninput="cfDayCalc()">
         </div>
-        <div class="cf-field" id="cfAmountWrap" style="display:none">
-          <label id="cfAmountLabel">Amount</label>
+        <div class="cf-field">
+          <label id="cfAmountLabel" style="color:#ffc107">Amount</label>
           <input type="number" id="cfAmount" placeholder="e.g. 50,000" oninput="cfDayCalc()"
             style="border-color:#ffc107">
         </div>
