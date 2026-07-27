@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="10" fill="#1a1200"/>
+  <ellipse cx="32" cy="54" rx="20" ry="6" fill="#f9a825"/>
+  <rect x="12" y="42" width="40" height="12" fill="#f9a825"/>
+  <ellipse cx="32" cy="42" rx="20" ry="6" fill="#fdd835"/>
+  <rect x="12" y="30" width="40" height="12" fill="#f9a825"/>
+  <ellipse cx="32" cy="30" rx="20" ry="6" fill="#fdd835"/>
+  <rect x="12" y="18" width="40" height="12" fill="#f9a825"/>
+  <ellipse cx="32" cy="18" rx="20" ry="6" fill="#fdd835"/>
+  <text x="32" y="22" text-anchor="middle" font-size="10" font-weight="700" fill="#5d4037" font-family="Arial">₨</text>
+</svg>
