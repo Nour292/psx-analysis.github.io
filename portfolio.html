@@ -619,7 +619,7 @@ async function loadDataCSV(){
       const c=l;
       const sym=(c[si]||'').trim(); if(!sym) return;
       const n=i=>parseFloat(c[i])||null;
-      const p=n(pi); if(p){ _prices[sym]=p; _priceSource[sym]='data'; }
+      const p=n(pi); // prices from Data tab intentionally ignored — Prices tab Column C is the only price source
       const ma50d=n(ma50di),ma200d=n(ma200di),rsid=n(rsidi);
       const macdD=n(macddi),macdW=n(macdwi),sigW=n(sigwi);
       const ma50w=n(ma50wi),ma200w=n(ma200wi),h52=n(h52i);
