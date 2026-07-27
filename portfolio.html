@@ -1845,35 +1845,83 @@ function toggleCfForm(){
     const lastBal = _cashFlow.length>0
       ? parseFloat(_cashFlow[_cashFlow.length-1].ClosingCash||0)
       : CAPITAL.freeCash;
-    document.getElementById('cfOpen').value  = Math.round(lastBal);
-    document.getElementById('cfClose').value = '';
-    document.getElementById('cfDate').value  = new Date().toISOString().slice(0,10);
-    document.getElementById('cfNotes').value = '';
-    document.getElementById('cfType').value  = 'Trading';
+    document.getElementById('cfOpen').value   = Math.round(lastBal);
+    document.getElementById('cfClose').value  = '';
+    document.getElementById('cfAmount').value = '';
+    document.getElementById('cfDate').value   = new Date().toISOString().slice(0,10);
+    document.getElementById('cfNotes').value  = '';
+    document.getElementById('cfType').value   = 'Trading';
     document.getElementById('cfCalcBox').style.display='none';
     document.getElementById('cfFormStatus').textContent='';
+    cfTypeChanged(); // reset Amount field visibility
   }
 }
 
-function cfDayCalc(){
-  const open  = parseFloat(document.getElementById('cfOpen').value)||0;
-  const close = parseFloat(document.getElementById('cfClose').value)||0;
-  const box   = document.getElementById('cfCalcBox');
-  if(!open||!close){ box.style.display='none'; return; }
+function cfTypeChanged(){
+  const type   = document.getElementById('cfType').value;
+  const wrap   = document.getElementById('cfAmountWrap');
+  const label  = document.getElementById('cfAmountLabel');
+  const cfOpen = parseFloat(document.getElementById('cfOpen').value)||0;
 
-  const net   = close - open;
-  const type  = document.getElementById('cfType').value;
-  const isTrading = type==='Trading'||type==='Mixed';
+  if(type === 'Trading'){
+    // Trading: no Amount field, user enters Closing manually
+    wrap.style.display = 'none';
+    document.getElementById('cfAmount').value = '';
+    document.getElementById('cfClose').readOnly = false;
+    document.getElementById('cfClose').style.borderColor = '#4fc3f7';
+    document.getElementById('cfClose').placeholder = 'e.g. 394,210';
+  } else {
+    // Non-trading: show Amount field, auto-calculate Closing
+    wrap.style.display = 'block';
+    if(type==='Deposit')    label.textContent = '⬇️ Deposit Amount';
+    if(type==='Withdrawal') label.textContent = '⬆️ Withdrawal Amount';
+    if(type==='Dividend')   label.textContent = '💰 Dividend Amount';
+    if(type==='Mixed')      label.textContent = '🔀 Net Amount (+/-)';
+    document.getElementById('cfClose').readOnly = true;
+    document.getElementById('cfClose').style.borderColor = '#2e4060';
+    document.getElementById('cfClose').placeholder = 'Auto-calculated';
+  }
+  cfDayCalc();
+}
+
+function cfDayCalc(){
+  const open   = parseFloat(document.getElementById('cfOpen').value)||0;
+  const type   = document.getElementById('cfType').value;
+  const box    = document.getElementById('cfCalcBox');
+  const amount = parseFloat(document.getElementById('cfAmount').value)||0;
+
+  let close;
+
+  if(type === 'Trading'){
+    // Trading: closing entered manually
+    close = parseFloat(document.getElementById('cfClose').value)||0;
+    if(!open||!close){ box.style.display='none'; return; }
+  } else {
+    // Non-trading: auto-calculate closing from amount
+    if(!open||!amount){ box.style.display='none'; return; }
+    if(type==='Withdrawal'){
+      close = open - amount;
+    } else {
+      // Deposit, Dividend, Mixed
+      close = open + amount;
+    }
+    // Auto-fill the closing cash field
+    document.getElementById('cfClose').value = Math.round(close);
+  }
+
+  const net    = close - open;
+  const netClr = net>=0?'#4caf50':'#ef9a9a';
 
   box.style.display='block';
-  const netClr = net>=0?'#4caf50':'#ef9a9a';
-  document.getElementById('cfNetDisp').textContent  = (net>=0?'+':'')+'PKR '+Math.round(Math.abs(net)).toLocaleString();
-  document.getElementById('cfNetDisp').style.color  = netClr;
-  document.getElementById('cfFeesDisp').textContent = '—';
-  document.getElementById('cfCloseDisp').textContent= 'PKR '+Math.round(close).toLocaleString();
-  document.getElementById('cfFeeNote').textContent  = isTrading
+  document.getElementById('cfNetDisp').textContent   = (net>=0?'+':'')+'PKR '+Math.round(Math.abs(net)).toLocaleString();
+  document.getElementById('cfNetDisp').style.color   = netClr;
+  document.getElementById('cfFeesDisp').textContent  = '—';
+  document.getElementById('cfCloseDisp').textContent = 'PKR '+Math.round(close).toLocaleString();
+  document.getElementById('cfFeeNote').textContent   = type==='Trading'
     ? '💡 Tip: Fees are included in your closing cash. Net change already reflects all costs.'
-    : '';
+    : type==='Withdrawal'
+      ? `💡 New balance: PKR ${Math.round(open).toLocaleString()} − PKR ${Math.round(amount).toLocaleString()} = PKR ${Math.round(close).toLocaleString()}`
+      : `💡 New balance: PKR ${Math.round(open).toLocaleString()} + PKR ${Math.round(amount).toLocaleString()} = PKR ${Math.round(close).toLocaleString()}`;
 }
 
 async function loadCashFlow(){
@@ -1957,14 +2005,21 @@ function renderCashFlow(){
 }
 
 async function saveCfEntry(){
-  const date  = document.getElementById('cfDate').value;
-  const open  = parseFloat(document.getElementById('cfOpen').value)||0;
-  const close = parseFloat(document.getElementById('cfClose').value)||0;
-  const type  = document.getElementById('cfType').value;
-  const notes = document.getElementById('cfNotes').value.trim();
+  const date   = document.getElementById('cfDate').value;
+  const open   = parseFloat(document.getElementById('cfOpen').value)||0;
+  const close  = parseFloat(document.getElementById('cfClose').value)||0;
+  const type   = document.getElementById('cfType').value;
+  const notes  = document.getElementById('cfNotes').value.trim();
+  const amount = parseFloat(document.getElementById('cfAmount').value)||0;
 
-  if(!date||!open||!close){
-    cfSetStatus('❌ Date, Opening and Closing cash required','#ef5350'); return;
+  if(!date||!open){
+    cfSetStatus('❌ Date and Opening Cash are required','#ef5350'); return;
+  }
+  if(type==='Trading' && !close){
+    cfSetStatus('❌ Closing Cash is required for Trading Day','#ef5350'); return;
+  }
+  if(type!=='Trading' && !amount){
+    cfSetStatus('❌ Amount is required','#ef5350'); return;
   }
 
   const net  = close - open;
@@ -2209,31 +2264,38 @@ autoLoad();
     <div class="cf-form" id="cfForm">
       <div class="cf-form-title">➕ Add Day Entry</div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
         <div class="cf-field">
           <label>Date</label>
           <input type="date" id="cfDate">
         </div>
         <div class="cf-field">
+          <label>Type</label>
+          <select id="cfType" onchange="cfTypeChanged()" style="width:100%">
+            <option value="Trading">📊 Trading Day (buy/sell)</option>
+            <option value="Deposit">⬇️ Cash Deposit</option>
+            <option value="Withdrawal">⬆️ Cash Withdrawal</option>
+            <option value="Dividend">💰 Dividend Received</option>
+            <option value="Mixed">🔀 Mixed (trades + deposit/withdrawal)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px" id="cfCashGrid">
+        <div class="cf-field">
           <label>Opening Cash (start of day)</label>
           <input type="number" id="cfOpen" placeholder="e.g. 448,387" oninput="cfDayCalc()">
+        </div>
+        <div class="cf-field" id="cfAmountWrap" style="display:none">
+          <label id="cfAmountLabel">Amount</label>
+          <input type="number" id="cfAmount" placeholder="e.g. 50,000" oninput="cfDayCalc()"
+            style="border-color:#ffc107">
         </div>
         <div class="cf-field">
           <label>Closing Cash (end of day — from broker)</label>
           <input type="number" id="cfClose" placeholder="e.g. 394,210" oninput="cfDayCalc()"
             style="border-color:#4fc3f7">
         </div>
-      </div>
-
-      <div class="cf-field" style="margin-bottom:12px">
-        <label>Type</label>
-        <select id="cfType" style="max-width:300px">
-          <option value="Trading">📊 Trading Day (buy/sell)</option>
-          <option value="Deposit">⬇️ Cash Deposit</option>
-          <option value="Withdrawal">⬆️ Cash Withdrawal</option>
-          <option value="Dividend">💰 Dividend Received</option>
-          <option value="Mixed">🔀 Mixed (trades + deposit/withdrawal)</option>
-        </select>
       </div>
 
       <div class="cf-field" style="margin-bottom:14px">
