@@ -1226,27 +1226,38 @@ let _allTrades = [];
 
 function goHistory(){
   document.getElementById('pgHistory').classList.add('open');
+  populateSymbolDropdown();
   document.getElementById('srchSym').value='';
   document.getElementById('srchResult').innerHTML='';
-  setTimeout(()=>document.getElementById('srchSym').focus(),100);
-}
-function goBack(){
-  document.getElementById('pgHistory').classList.remove('open');
 }
 function showSearch(){
   document.getElementById('pgHistory').classList.add('open');
+  populateSymbolDropdown();
   document.getElementById('srchSym').value='';
   document.getElementById('srchResult').innerHTML='';
-  setTimeout(()=>document.getElementById('srchSym').focus(),100);
+}
+
+function populateSymbolDropdown(){
+  const sel = document.getElementById('srchSym');
+  // Get unique symbols from all trades, sorted A-Z
+  const syms = [...new Set(_allTrades.map(r=>r.symbol.toUpperCase()).filter(Boolean))].sort();
+  // Rebuild options
+  sel.innerHTML = '<option value="">— Select Symbol —</option>';
+  syms.forEach(sym=>{
+    const opt = document.createElement('option');
+    opt.value = sym;
+    opt.textContent = sym;
+    sel.appendChild(opt);
+  });
 }
 function hideSearch(){
   document.getElementById('pgHistory').classList.remove('open');
 }
 
 function runSearch(){
-  const sym = document.getElementById('srchSym').value.trim().toUpperCase();
+  const sym = (document.getElementById('srchSym').value||'').trim().toUpperCase();
   if(!sym){ document.getElementById('srchResult').innerHTML=
-    '<p class="sr-empty">Enter a symbol to search</p>'; return; }
+    '<p class="sr-empty">Please select a symbol</p>'; return; }
 
   const trades = _allTrades
     .filter(r=>r.symbol.toUpperCase()===sym)
@@ -2152,9 +2163,11 @@ autoLoad();
   <div style="padding:24px;flex:1">
   <div class="sr-box" style="border:none;padding:0;background:transparent">
     <div class="sr-row">
-      <input type="text" class="sr-input" id="srchSym"
-        placeholder="TYPE SYMBOL — e.g. MCB"
-        onkeydown="if(event.key==='Enter') runSearch()">
+      <select id="srchSym" class="sr-input" style="font-size:15px;font-weight:700;
+        letter-spacing:1px;cursor:pointer;padding:11px 16px"
+        onchange="if(this.value) runSearch()">
+        <option value="">— Select Symbol —</option>
+      </select>
       <button class="sr-btn" onclick="runSearch()">Search</button>
       <button class="sr-close" onclick="hideSearch()">✕ Close</button>
     </div>
