@@ -1053,11 +1053,7 @@ function parseHoldings(text){
   }).filter(r=>r.symbol&&r.symbol.trim());
 
   // Latest date
-  const lastDate=rows[rows.length-1]?.date||'';
-  if(lastDate){
-    document.getElementById('asofBadge').style.display='inline-block';
-    document.getElementById('asofVal').textContent=lastDate;
-  }
+  // "As of" date is set from Prices tab (today's date) — not from holdings
 
   // Calculate avg cost: (Total Buy Amount - Total Sell Amount) / Holding Units
   const map={};
