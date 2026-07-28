@@ -481,7 +481,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <div class="kpi c3"><div class="kv" id="kWorth">—</div><div class="kl">Portfolio Worth</div></div>
   <div class="kpi c5"><div class="kv" id="kPL">—</div><div class="kl">Unrealised P/L</div></div>
   <div class="kpi c2"><div class="kv" id="kDivIncome">—</div><div class="kl">Annual Dividend</div></div>
-  <div class="kpi c6"><div class="kv" id="kFreeCash">PKR 448,387</div><div class="kl">Free Cash</div></div>
+  <div class="kpi c6"><div class="kv" id="kFreeCash">—</div><div class="kl">Free Cash</div></div>
   <div class="kpi c4"><div class="kv" id="kProgress">—</div><div class="kl">To PKR 1M Target</div></div>
 </div>
 
@@ -580,7 +580,7 @@ const CAPITAL = {
   started:    'Sep 2021',
   invested:   2690000,
   withdrawn:  3000000,
-  freeCash:   448387,
+  freeCash:   0,
   cashAsOf:   ''
 };
 
@@ -1373,7 +1373,8 @@ function runSearch(){
 // ── BUY / SELL ────────────────────────────────
 function showBuySell(){
   document.getElementById('bsModal').classList.add('open');
-  document.getElementById('bsCash').value = CAPITAL.freeCash;
+  const bsDisp=document.getElementById('bsCashDisplay');
+  if(bsDisp) bsDisp.textContent='PKR '+Math.round(CAPITAL.freeCash).toLocaleString();
   document.getElementById('bsSym').value  = '';
   document.getElementById('bsUnits').value= '';
   document.getElementById('bsRate').value = '';
@@ -1409,7 +1410,7 @@ async function submitTrade(action){
   const sym   = (document.getElementById('bsSym').value||'').toUpperCase().trim();
   const units = parseFloat(document.getElementById('bsUnits').value)||0;
   const rate  = parseFloat(document.getElementById('bsRate').value)||0;
-  const cash  = parseFloat(document.getElementById('bsCash').value)||0;
+  const cash  = CAPITAL.freeCash;
 
   if(!sym||!units||!rate){
     setStatus('❌ Please fill Symbol, Units and Rate','#ef5350'); return;
@@ -1462,30 +1463,7 @@ function updateCAPITAL(action, units, rate, newCash){
   if(el) el.textContent='PKR '+Math.round(newCash).toLocaleString();
 }
 
-async function saveCashOnly(){
-  const cash  = parseFloat(document.getElementById('bsCash').value)||0;
-  const now   = new Date();
-  const asof  = now.toISOString().slice(0,10);
 
-  setStatus('⏳ Saving cash to Google Sheets...','#ffc107');
-  try{
-    await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ action:'update', tab:'Cash', rows:[[cash, asof]], rowNum:2 }) });
-
-    CAPITAL.freeCash  = cash;
-    CAPITAL.cashAsOf  = asof;
-    updateCAPITAL(null,0,0,cash);
-
-    const asofEl=document.getElementById('cashAsOf');
-    if(asofEl) asofEl.textContent='as of '+asof;
-
-    setStatus('✅ Free cash updated: PKR '+Math.round(cash).toLocaleString(),'#4caf50');
-    setTimeout(()=>{ buildAll(); },1500);
-
-  }catch(err){
-    setStatus('❌ '+err.message,'#ef5350');
-  }
-}
 
 function setStatus(msg, color){
   const el=document.getElementById('bsStatus');
@@ -1964,6 +1942,17 @@ async function loadCashFlow(){
       hdrs.forEach((h,i)=>obj[h]=(row[i]||'').trim());
       return obj;
     });
+    // ── SINGLE SOURCE OF TRUTH: derive freeCash from last Cashflow row ──
+    if(_cashFlow.length>0){
+      const last=_cashFlow[_cashFlow.length-1];
+      const derived=parseFloat(last.ClosingCash||0);
+      if(derived>0){
+        CAPITAL.freeCash=derived;
+        CAPITAL.cashAsOf=last.Date||'';
+        const el=document.getElementById('kFreeCash');
+        if(el) el.textContent='PKR '+Math.round(derived).toLocaleString();
+      }
+    }
     renderCashFlow();
   }catch(e){ _cashFlow=[]; renderCashFlow(); }
 }
@@ -2081,14 +2070,16 @@ function cfSetStatus(msg,color){
 //  override, then Holdings
 // ══════════════════════════════════════════════
 async function autoLoad(){
-  // 1. Load TA signals + prices from Data tab
+  // 1. Load Cashflow FIRST — sets CAPITAL.freeCash as single source of truth
+  await loadCashFlow();
+
+  // 2. Load TA signals + prices from Data tab
   await loadDataCSV();
 
-  // 2. Override/add prices from your Prices tab (Column C = Current Price)
-  //    Any symbol with a value in Column C will use that price instead of Data tab
+  // 3. Override/add prices from your Prices tab (Column C = Current Price)
   await loadPricesSheet();
 
-  // 3. Load holdings and build dashboard
+  // 4. Load holdings and build dashboard
   try{
     const res=await fetch(gsUrl('holdings'));
     if(!res.ok) return;
@@ -2111,13 +2102,8 @@ autoLoad();
 
     <div class="cash-row" style="flex-wrap:wrap;gap:8px">
       <span class="cash-lbl">💵 Free Cash:</span>
-      <input type="number" class="cash-edit" id="bsCash" step="1">
+      <span class="cash-val" id="bsCashDisplay">—</span>
       <span style="font-size:12px;color:#4a6a8a" id="cashAsOf"></span>
-      <button onclick="saveCashOnly()" style="
-        background:#1565c0;color:#fff;border:none;border-radius:6px;
-        padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto">
-        💾 Update Cash Only
-      </button>
     </div>
 
     <div class="bs-grid">
