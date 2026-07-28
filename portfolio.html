@@ -41,7 +41,6 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .btn-div:hover{ background:#d97706; }
 .btn-cf{ background:#1a3a5c; color:#7ab3d4; width:150px; border:1px solid #2e4060; }
 .btn-cf:hover{ background:#1e4a70; color:#fff; }
-.admin-only{ display:none; } /* hidden by default; shown only for admin */
 
 /* CASH FLOW PAGE */
 #pgCashFlow{
@@ -420,46 +419,24 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 }
 .pw-box{
   background:#1a2535; border:1px solid #2e4060; border-radius:12px;
-  padding:40px 48px; text-align:center; max-width:400px; width:90%;
+  padding:40px 48px; text-align:center; max-width:360px; width:90%;
 }
 .pw-logo{ font-size:32px; margin-bottom:8px; }
 .pw-title{ font-size:18px; font-weight:700; color:#4fc3f7; margin-bottom:4px; }
-.pw-sub{ font-size:13px; color:#7a9ab5; margin-bottom:20px; }
-.auth-tabs{ display:flex; gap:0; margin-bottom:24px; border-radius:8px; overflow:hidden; border:1px solid #2e4060; }
-.auth-tab{ flex:1; padding:10px; font-size:13px; font-weight:700; cursor:pointer;
-  background:#0f1923; color:#7a9ab5; border:none; transition:all .15s; }
-.auth-tab.active{ background:#1565c0; color:#fff; }
+.pw-sub{ font-size:13px; color:#7a9ab5; margin-bottom:24px; }
 .pw-input{
-  width:100%; padding:12px 16px; font-size:14px; letter-spacing:1px;
-  background:#0f1923; color:#e0e6ed; border:2px solid #2e4060;
-  border-radius:8px; text-align:left; outline:none; margin-bottom:10px;
+  width:100%; padding:12px 16px; font-size:16px; letter-spacing:4px;
+  background:#0f1923; color:#4fc3f7; border:2px solid #2e4060;
+  border-radius:8px; text-align:center; outline:none; margin-bottom:12px;
 }
 .pw-input:focus{ border-color:#4fc3f7; }
-.pw-input::placeholder{ color:#4a6a8a; letter-spacing:0; }
 .pw-btn{
   width:100%; padding:12px; background:#1565c0; color:#fff;
   border:none; border-radius:8px; font-size:15px; font-weight:700;
-  cursor:pointer; transition:background .15s; margin-top:4px;
+  cursor:pointer; transition:background .15s;
 }
 .pw-btn:hover{ background:#1976d2; }
-.pw-btn.green{ background:#2e7d32; }
-.pw-btn.green:hover{ background:#388e3c; }
 .pw-err{ font-size:13px; color:#ef5350; margin-top:10px; display:none; }
-.pw-ok { font-size:13px; color:#4caf50; margin-top:10px; display:none; }
-.auth-panel{ display:none; }
-.auth-panel.active{ display:block; }
-.user-badge{
-  background:#0d2240; border:1px solid #2e4060; border-radius:20px;
-  padding:4px 14px; font-size:12px; color:#4fc3f7; font-weight:600;
-  display:none; align-items:center; gap:6px;
-}
-.user-badge.show{ display:inline-flex; }
-.logout-btn{
-  background:transparent; border:1px solid #ef5350; color:#ef5350;
-  border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;
-  margin-left:6px;
-}
-.logout-btn:hover{ background:#ef5350; color:#fff; }
 
 /* PRICE SOURCE BADGE */
 .price-src-badge{
@@ -473,92 +450,18 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 <body>
 
 
-<!-- AUTH GATE -->
+<!-- PASSWORD GATE -->
 <div id="pwGate">
   <div class="pw-box">
-    <div class="pw-logo">📈</div>
+    <div class="pw-logo">🔒</div>
     <div class="pw-title">PSX Portfolio</div>
-    <div class="pw-sub">Sign in to your portfolio</div>
-
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
-      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
-    </div>
-
-    <!-- LOGIN PANEL -->
-    <div class="auth-panel active" id="panelLogin">
-      <input type="text" class="pw-input" id="loginUser" placeholder="Username" maxlength="30"
-        onkeydown="if(event.key==='Enter') doLogin()">
-      <input type="password" class="pw-input" id="loginPass" placeholder="Password" maxlength="30"
-        onkeydown="if(event.key==='Enter') doLogin()">
-      <button class="pw-btn" onclick="doLogin()">🔓 Login</button>
-      <div class="pw-err" id="loginErr"></div>
-      <div class="pw-ok"  id="loginOk"></div>
-    </div>
-
-    <!-- REGISTER PANEL — Step 1: Fill details -->
-    <div class="auth-panel" id="panelRegister">
-
-      <!-- STEP 1: Registration form -->
-      <div id="regStep1">
-        <input type="text" class="pw-input" id="regUser" placeholder="Choose a username" maxlength="30">
-        <input type="password" class="pw-input" id="regPass" placeholder="Choose a password (min 6 chars)" maxlength="30">
-        <input type="password" class="pw-input" id="regPass2" placeholder="Confirm password" maxlength="30">
-        <input type="email" class="pw-input" id="regEmail" placeholder="Email address" maxlength="80">
-        <div style="display:flex;gap:6px;margin-bottom:0">
-          <select class="pw-input" id="regCountry" style="flex:1.2;margin-bottom:10px">
-            <option value="">🌍 Country</option>
-            <option value="PK">🇵🇰 Pakistan (+92)</option>
-            <option value="SA">🇸🇦 Saudi Arabia (+966)</option>
-            <option value="AE">🇦🇪 UAE (+971)</option>
-            <option value="GB">🇬🇧 UK (+44)</option>
-            <option value="US">🇺🇸 USA (+1)</option>
-            <option value="IN">🇮🇳 India (+91)</option>
-            <option value="CA">🇨🇦 Canada (+1)</option>
-            <option value="AU">🇦🇺 Australia (+61)</option>
-            <option value="DE">🇩🇪 Germany (+49)</option>
-            <option value="FR">🇫🇷 France (+33)</option>
-            <option value="TR">🇹🇷 Turkey (+90)</option>
-            <option value="EG">🇪🇬 Egypt (+20)</option>
-            <option value="NG">🇳🇬 Nigeria (+234)</option>
-            <option value="KW">🇰🇼 Kuwait (+965)</option>
-            <option value="QA">🇶🇦 Qatar (+974)</option>
-            <option value="BH">🇧🇭 Bahrain (+973)</option>
-            <option value="OM">🇴🇲 Oman (+968)</option>
-            <option value="JO">🇯🇴 Jordan (+962)</option>
-            <option value="BD">🇧🇩 Bangladesh (+880)</option>
-            <option value="OTHER">🌐 Other</option>
-          </select>
-          <input type="tel" class="pw-input" id="regMobile" placeholder="Mobile number" maxlength="15" style="flex:2;margin-bottom:10px">
-        </div>
-        <button class="pw-btn green" onclick="doRegister()">📧 Send OTP to Email</button>
-        <div class="pw-err" id="regErr"></div>
-        <div class="pw-ok"  id="regOk"></div>
-      </div>
-
-      <!-- STEP 2: OTP verification (hidden initially) -->
-      <div id="regStep2" style="display:none">
-        <div style="text-align:center;margin-bottom:16px">
-          <div style="font-size:28px">📬</div>
-          <div style="color:#4fc3f7;font-weight:700;font-size:15px;margin-top:6px">Check your email</div>
-          <div style="color:#7a9ab5;font-size:12px;margin-top:4px">We sent a 6-digit OTP to<br><span id="otpEmailDisplay" style="color:#e0e6ed"></span></div>
-        </div>
-        <input type="text" class="pw-input" id="regOtp" placeholder="Enter 6-digit OTP"
-          maxlength="6" style="text-align:center;font-size:22px;font-weight:700;letter-spacing:8px"
-          onkeydown="if(event.key==='Enter') doVerifyOtp()">
-        <button class="pw-btn green" onclick="doVerifyOtp()">✅ Verify & Create Account</button>
-        <div style="margin-top:10px;text-align:center">
-          <span style="font-size:12px;color:#4a6a8a">Didn't receive it? </span>
-          <button onclick="resendOtp()" style="background:none;border:none;color:#4fc3f7;font-size:12px;cursor:pointer;text-decoration:underline">Resend OTP</button>
-          <span style="font-size:12px;color:#4a6a8a"> | </span>
-          <button onclick="backToRegForm()" style="background:none;border:none;color:#7a9ab5;font-size:12px;cursor:pointer;text-decoration:underline">← Back</button>
-        </div>
-        <div class="pw-err" id="otpErr"></div>
-        <div class="pw-ok"  id="otpOk"></div>
-      </div>
-
-    </div>
-
+    <div class="pw-sub">Enter password to access</div>
+    <input type="password" class="pw-input" id="pwInput"
+      placeholder="Password" maxlength="20"
+      onkeydown="if(event.key==='Enter') checkPW()">
+    <input type="hidden" id="ghToken" value="">
+    <button class="pw-btn" onclick="checkPW()">Unlock</button>
+    <div class="pw-err" id="pwErr">❌ Incorrect password</div>
   </div>
 </div>
 
@@ -570,10 +473,6 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <button class="btn btn-div" onclick="goDividends()">💵 Dividends</button>
   <button class="btn btn-cf" onclick="goCashFlow()">💳 Cash Flow</button>
   <span class="asof" id="asofBadge" style="display:none">📅 As of: <b id="asofVal"></b></span>
-  <span class="user-badge" id="userBadge">
-    👤 <span id="userBadgeName"></span>
-    <button class="logout-btn" onclick="doLogout()">Logout</button>
-  </span>
 </div>
 
 <!-- KPI -->
@@ -593,15 +492,15 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 </div>
 
 <!-- TABS -->
-<div class="tb" id="mainTabBar">
-  <button class="tb-btn admin-only" onclick="showTab('action',this)">🎯 Action Plan</button>
-  <button class="tb-btn"            onclick="showTab('portfolio',this)">📋 Portfolio</button>
-  <button class="tb-btn"            onclick="showTab('dividend',this)">💰 Dividend Income</button>
-  <button class="tb-btn"            onclick="showTab('sector',this)">⚖️ Sector Balance</button>
-  <button class="tb-btn"            onclick="showTab('capital',this)">💼 Capital Summary</button>
+<div class="tb">
+  <button class="tb-btn active" onclick="showTab('action',this)">🎯 Action Plan</button>
+  <button class="tb-btn"        onclick="showTab('portfolio',this)">📋 Portfolio</button>
+  <button class="tb-btn"        onclick="showTab('dividend',this)">💰 Dividend Income</button>
+  <button class="tb-btn"        onclick="showTab('sector',this)">⚖️ Sector Balance</button>
+  <button class="tb-btn"        onclick="showTab('capital',this)">💼 Capital Summary</button>
 </div>
 
-<div id="tab-action"    class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
+<div id="tab-action"    class="tp active"><p class="c-gray" style="padding:20px">Loading...</p></div>
 <div id="tab-portfolio" class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
 <div id="tab-dividend"  class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
 <div id="tab-sector"    class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
@@ -613,7 +512,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 ═══════════════════════════════════════════════ */
 const GS_ID    = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY   = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
-const GS_WRITE = 'https://script.google.com/macros/s/AKfycbxJc2BTgFosDhNZ3z9zFNGPN69Po8Nowo8-ePPz6dBTNM2zyLNVygrauEyBQlCtIzMg2A/exec';
+const GS_WRITE = 'https://script.google.com/macros/s/AKfycbx9iuuBLDXYecY45EGVUYHeOEy1QBAqjJqjaQ6qjas7xQWmOixKaLIBANOTcWu2qi72cg/exec';
 
 function gsUrl(tab){
   return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`;
@@ -628,298 +527,37 @@ async function gsWrite(action, tab, data){
 }
 
 
-// ── MULTI-USER AUTH ───────────────────────────
-const AUTH_KEY = 'psx_user';
-let _currentUser = ''; // logged-in username — prefix for all tab reads/writes
-
-function gsTabFor(base){ 
-  if(isAdmin()) return base; // admin uses original tab names
-  return _currentUser + '_' + base; 
-}
-
-// On page load — restore session
+// ── PASSWORD GATE ─────────────────────────────
 (function(){
-  const saved = sessionStorage.getItem(AUTH_KEY);
-  if(saved){
-    _currentUser = saved;
+  const PW  = 'rd172';
+  const KEY = 'psx_port_auth';
+  const REPO = 'Nour292/psx-analysis.github.io';
+  const FILE = 'holdings.csv';
+  let _ghToken = '';
+
+  if(sessionStorage.getItem(KEY)==='1'){
+    _ghToken = localStorage.getItem('psx_gh_token')||'';
     document.getElementById('pwGate').style.display='none';
-    // showUserBadge calls applyRoleUI — but DOM may not be ready yet for tab logic
-    // so defer slightly
-    setTimeout(()=>showUserBadge(saved), 50);
   }
-})();
 
-function switchAuthTab(tab){
-  document.querySelectorAll('.auth-tab').forEach((t,i)=>{
-    t.classList.toggle('active',(tab==='login'&&i===0)||(tab==='register'&&i===1));
-  });
-  document.getElementById('panelLogin').classList.toggle('active',tab==='login');
-  document.getElementById('panelRegister').classList.toggle('active',tab==='register');
-}
-
-const ADMIN_USER = 'qasim'; // only this user sees Action Plan
-
-function isAdmin(){ return _currentUser === ADMIN_USER; }
-
-function applyRoleUI(){
-  // Show/hide Action Plan tab based on role
-  document.querySelectorAll('.admin-only').forEach(el=>{
-    el.style.display = isAdmin() ? '' : 'none';
-  });
-  // Clear all active states
-  document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tb-btn').forEach(b=>b.classList.remove('active'));
-  // Set correct first tab
-  const firstTabName = isAdmin() ? 'action' : 'portfolio';
-  const activeTab = document.getElementById('tab-'+firstTabName);
-  if(activeTab) activeTab.classList.add('active');
-  // Activate correct button
-  const allBtns = [...document.querySelectorAll('.tb-btn')];
-  if(isAdmin()){
-    // First button (Action Plan) for admin
-    if(allBtns[0]) allBtns[0].classList.add('active');
-  } else {
-    // First visible button (Portfolio) for regular users
-    const visibleBtns = allBtns.filter(b=>b.style.display!=='none');
-    if(visibleBtns[0]) visibleBtns[0].classList.add('active');
-  }
-}
-
-function showUserBadge(name){
-  const b=document.getElementById('userBadge');
-  document.getElementById('userBadgeName').textContent=name;
-  b.classList.add('show');
-  applyRoleUI();
-}
-
-async function doLogin(){
-  const user=(document.getElementById('loginUser').value||'').trim().toLowerCase();
-  const pass=(document.getElementById('loginPass').value||'').trim();
-  const err=document.getElementById('loginErr');
-  const ok =document.getElementById('loginOk');
-  err.style.display='none'; ok.style.display='none';
-  if(!user||!pass){ showAuthMsg('loginErr','Please enter username and password.'); return; }
-  ok.style.display='block'; ok.textContent='⏳ Checking...';
-  try{
-    const vRes=await fetch(gsUrl('Users'));
-    if(!vRes.ok){ ok.style.display='none'; showAuthMsg('loginErr','❌ Cannot reach server.'); return; }
-    const json=await vRes.json();
-    const rows=(json.values||[]).slice(1);
-    const match=rows.find(r=>(r[0]||'').toLowerCase()===user&&(r[1]||'')===pass);
-    if(match){
-      const status=(match[7]||match[3]||'Active');
-      if(status==='Pending'){
-        ok.style.display='none';
-        showAuthMsg('loginErr','⏳ Your email is not verified yet. Please complete registration.');
-        return;
-      }
-      if(status!=='Active'){
-        ok.style.display='none';
-        showAuthMsg('loginErr','❌ Account inactive. Please contact admin.');
-        return;
-      }
-      _currentUser=user;
-      sessionStorage.setItem(AUTH_KEY,user);
-      ok.textContent='✅ Welcome '+user+'!';
-      setTimeout(()=>{
-        document.getElementById('pwGate').style.display='none';
-        showUserBadge(user);
-        autoLoad();
-      },800);
+  window.checkPW = function(){
+    const val = document.getElementById('pwInput').value;
+    if(val === PW){
+      sessionStorage.setItem(KEY,'1');
+      document.getElementById('pwGate').style.display='none';
     } else {
-      ok.style.display='none';
-      showAuthMsg('loginErr','❌ Invalid username or password.');
+      const err=document.getElementById('pwErr');
+      err.style.display='block';
+      document.getElementById('pwInput').value='';
+      document.getElementById('pwInput').focus();
+      setTimeout(()=>err.style.display='none',2000);
     }
-  }catch(e){ ok.style.display='none'; showAuthMsg('loginErr','❌ Error: '+e.message); }
-}
+  };
 
-// ── REGISTRATION — Step 1: validate + send OTP ──
-let _pendingReg = {}; // holds form data while waiting for OTP
-
-async function doRegister(){
-  const user   =(document.getElementById('regUser').value||'').trim().toLowerCase();
-  const pass   =(document.getElementById('regPass').value||'').trim();
-  const pass2  =(document.getElementById('regPass2').value||'').trim();
-  const email  =(document.getElementById('regEmail').value||'').trim().toLowerCase();
-  const country=(document.getElementById('regCountry').value||'').trim();
-  const mobile =(document.getElementById('regMobile').value||'').trim();
-  const ok     = document.getElementById('regOk');
-
-  // Validations
-  if(!user||!pass||!pass2||!email||!country||!mobile){
-    showAuthMsg('regErr','Please fill all fields.'); return; }
-  if(user.length<3){
-    showAuthMsg('regErr','Username must be at least 3 characters.'); return; }
-  if(!/^[a-z0-9_]+$/.test(user)){
-    showAuthMsg('regErr','Username: letters, numbers, underscore only.'); return; }
-  if(pass.length<6){
-    showAuthMsg('regErr','Password must be at least 6 characters.'); return; }
-  if(pass!==pass2){
-    showAuthMsg('regErr','Passwords do not match.'); return; }
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-    showAuthMsg('regErr','Please enter a valid email address.'); return; }
-  if(!/^\d{7,15}$/.test(mobile)){
-    showAuthMsg('regErr','Mobile: digits only, 7–15 characters.'); return; }
-
-  ok.style.display='block'; ok.textContent='⏳ Checking details...';
-
-  try{
-    // Check duplicates in Users sheet
-    const vRes=await fetch(gsUrl('Users'));
-    if(vRes.ok){
-      const json=await vRes.json();
-      const rows=(json.values||[]).slice(1);
-      if(rows.find(r=>(r[0]||'').toLowerCase()===user)){
-        ok.style.display='none'; showAuthMsg('regErr','❌ Username already taken.'); return; }
-      if(rows.find(r=>(r[2]||'').toLowerCase()===email)){
-        ok.style.display='none'; showAuthMsg('regErr','❌ Email already registered.'); return; }
-    }
-
-    ok.textContent='⏳ Sending OTP to your email...';
-
-    // Send OTP via Apps Script — use readable fetch (no mode:no-cors) so we can catch errors
-    let otpRes;
-    try{
-      otpRes = await fetch(GS_WRITE,{
-        method:'POST',
-        headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({ action:'sendOtp', email, username:user })
-      });
-    }catch(fetchErr){
-      // CORS blocked — fall back to no-cors (email still sends, we just can't read response)
-      await fetch(GS_WRITE,{
-        method:'POST', mode:'no-cors',
-        body:JSON.stringify({ action:'sendOtp', email, username:user })
-      });
-      otpRes = null;
-    }
-
-    // Try to read response if available
-    if(otpRes && otpRes.ok){
-      try{
-        const result = await otpRes.json();
-        if(!result.ok){
-          ok.style.display='none';
-          showAuthMsg('regErr','❌ '+(result.error||'Failed to send OTP. Please try again.'));
-          return;
-        }
-      }catch(e){ /* response not JSON — continue anyway */ }
-    }
-
-    // Store pending registration data
-    _pendingReg = { user, pass, email, mobile, country };
-
-    // Show Step 2
-    document.getElementById('regStep1').style.display='none';
-    document.getElementById('regStep2').style.display='block';
-    document.getElementById('otpEmailDisplay').textContent=email;
-    document.getElementById('regOtp').value='';
-    document.getElementById('regOtp').focus();
-    ok.style.display='none';
-
-  }catch(e){ ok.style.display='none'; showAuthMsg('regErr','❌ Error: '+e.message); }
-}
-
-// ── REGISTRATION — Step 2: verify OTP ───────────
-async function doVerifyOtp(){
-  const otp=(document.getElementById('regOtp').value||'').trim();
-  const ok =document.getElementById('otpOk');
-
-  if(!otp||otp.length!==6||!/^\d{6}$/.test(otp)){
-    showAuthMsg('otpErr','Please enter the 6-digit OTP.'); return; }
-
-  ok.style.display='block'; ok.textContent='⏳ Verifying OTP...';
-
-  try{
-    // Verify OTP + complete registration
-    const res=await fetch(GS_WRITE,{
-      method:'POST',
-      body:JSON.stringify({
-        action:'verifyOtpAndRegister',
-        username : _pendingReg.user,
-        password : _pendingReg.pass,
-        email    : _pendingReg.email,
-        mobile   : _pendingReg.mobile,
-        country  : _pendingReg.country,
-        otp      : otp
-      })
-    });
-
-    // Parse response (no-cors blocks reading — use a GET verify instead)
-    // Since we can't read no-cors response, we use a read-back approach:
-    // Wait 2s then check Users sheet for Active status
-    ok.textContent='⏳ Creating your account...';
-    await new Promise(r=>setTimeout(r,2500));
-
-    const vRes=await fetch(gsUrl('Users'));
-    if(vRes.ok){
-      const json=await vRes.json();
-      const rows=(json.values||[]).slice(1);
-      const match=rows.find(r=>(r[0]||'').toLowerCase()===_pendingReg.user);
-      if(match && (match[7]||match[3]||'')===('Active')){
-        ok.textContent='✅ Account created! Logging you in...';
-        _currentUser=_pendingReg.user;
-        sessionStorage.setItem(AUTH_KEY,_pendingReg.user);
-        _pendingReg={};
-        setTimeout(()=>{
-          document.getElementById('pwGate').style.display='none';
-          showUserBadge(_currentUser);
-          autoLoad();
-        },1000);
-        return;
-      }
-    }
-    // If not Active yet — OTP wrong or expired
-    ok.style.display='none';
-    showAuthMsg('otpErr','❌ Incorrect or expired OTP. Please try again.');
-
-  }catch(e){ ok.style.display='none'; showAuthMsg('otpErr','❌ Error: '+e.message); }
-}
-
-async function resendOtp(){
-  if(!_pendingReg.email){ showAuthMsg('otpErr','Session expired. Please go back.'); return; }
-  const ok = document.getElementById('otpOk');
-  ok.style.display='block'; ok.textContent='⏳ Resending OTP...';
-  try{
-    const res = await fetch(GS_WRITE,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({ action:'sendOtp', email:_pendingReg.email, username:_pendingReg.user })
-    });
-    ok.textContent='✅ OTP resent! Check your email.';
-  }catch(e){
-    await fetch(GS_WRITE,{
-      method:'POST', mode:'no-cors',
-      body:JSON.stringify({ action:'sendOtp', email:_pendingReg.email, username:_pendingReg.user })
-    });
-    ok.textContent='✅ OTP resent! Check your email.';
-  }
-  setTimeout(()=>ok.style.display='none',3000);
-}
-
-function backToRegForm(){
-  document.getElementById('regStep1').style.display='block';
-  document.getElementById('regStep2').style.display='none';
-  document.getElementById('otpErr').style.display='none';
-  document.getElementById('otpOk').style.display='none';
-}
-
-function doLogout(){
-  sessionStorage.removeItem(AUTH_KEY);
-  _currentUser='';
-  document.getElementById('userBadge').classList.remove('show');
-  document.getElementById('pwGate').style.display='flex';
-  document.getElementById('loginUser').value='';
-  document.getElementById('loginPass').value='';
-  document.getElementById('loginErr').style.display='none';
-  document.getElementById('loginOk').style.display='none';
-}
-
-function showAuthMsg(id,msg){
-  const el=document.getElementById(id);
-  el.textContent=msg; el.style.display='block';
-  setTimeout(()=>el.style.display='none',3500);
-}
+  window._ghToken = ()=>_ghToken;
+  window._REPO    = REPO;
+  window._FILE    = FILE;
+})();
 
 
 // ── CONSTANTS ─────────────────────────────────
@@ -1011,24 +649,32 @@ async function loadDataCSV(){
 // This runs AFTER loadDataCSV so it overrides with your manually updated prices
 async function loadPricesSheet(){
   try{
-    const res = await fetch(gsUrl(gsTabFor('Prices')));
+    const res = await fetch(gsUrl('Prices'));
     if(!res.ok) return;
     const json = await res.json();
     const rows = json.values||[];
     if(rows.length < 2) return;
-    // Skip header row (row[0]), data starts row[1]
-    // Columns: A=Symbol, B=Net Units, C=Current Price, D=Avg Buy Price, E=P&L/Unit, F=Total P&L, G=Return%
     let count = 0;
     rows.slice(1).forEach(r=>{
       const sym   = (r[0]||'').trim().toUpperCase();
       const price = parseFloat(r[2]); // Column C = Current Price
       if(sym && !isNaN(price) && price > 0){
         _prices[sym]      = price;
-        _priceSource[sym] = 'sheet'; // mark as coming from your Prices tab
+        _priceSource[sym] = 'sheet';
         count++;
       }
     });
-    console.log('Prices tab loaded: '+count+' live prices (override)');
+    // Set "As of" to today's date automatically
+    if(count > 0){
+      const today = new Date();
+      const dd  = String(today.getDate()).padStart(2,'0');
+      const mon = today.toLocaleString('en-GB',{month:'short'});
+      const yy  = String(today.getFullYear()).slice(-2);
+      const label = dd+'-'+mon+'-'+yy;
+      document.getElementById('asofBadge').style.display='inline-block';
+      document.getElementById('asofVal').textContent = label;
+    }
+    console.log('Prices tab loaded: '+count+' prices');
   }catch(e){
     console.log('Prices tab not loaded:', e.message);
   }
@@ -1123,7 +769,7 @@ function buildAll(){
   if(pf) pf.style.width=pct+'%';
   if(pp) pp.textContent=pct.toFixed(1)+'%';
 
-  if(isAdmin()){ try{ buildAction(); }catch(e){ showErr('tab-action',e); } }
+  try{ buildAction(); }catch(e){ showErr('tab-action',e); }
   try{ buildPortfolio(); }catch(e){ showErr('tab-portfolio',e); }
   try{ buildDividend(); }catch(e){ showErr('tab-dividend',e); }
   try{ buildSector(); }catch(e){ showErr('tab-sector',e); }
@@ -1790,7 +1436,7 @@ async function submitTrade(action){
 
   try{
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ action:'append', tab:gsTabFor('holdings'), row: newRow.split(',') }) });
+      body: JSON.stringify({ action:'append', tab:'holdings', row: newRow.split(',') }) });
 
     try{
       const currentBal = _cashFlow.length>0
@@ -1803,7 +1449,7 @@ async function submitTrade(action){
       const cfRow = [date, currentBal.toFixed(2), newActual.toFixed(2),
         netChange.toFixed(2), 0, action, autoDesc];
       await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-        body: JSON.stringify({ action:'append', tab:gsTabFor('Cashflow'), row: cfRow }) });
+        body: JSON.stringify({ action:'append', tab:'Cashflow', row: cfRow }) });
       const cfObj={}; CF_HDRS.forEach((h,i)=>cfObj[h]=String(cfRow[i]||''));
       _cashFlow.push(cfObj);
       CAPITAL.freeCash=newActual;
@@ -1986,7 +1632,7 @@ function dvClearForm(){
 
 async function loadDividendsCSV(){
   try{
-    const res=await fetch(gsUrl(gsTabFor('Dividends')));
+    const res=await fetch(gsUrl('Dividends'));
     if(!res.ok){ _dividends=[]; renderDividends(); return; }
     const json=await res.json();
     const rows=json.values||[];
@@ -2156,7 +1802,7 @@ async function rewriteDivCSV(msg){
   try{
     const allRows = [DIV_HDRS, ..._dividends.map(r=>DIV_HDRS.map(h=>r[h]||''))];
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ action:'replaceSheet', tab:gsTabFor('Dividends'), rows: allRows }) });
+      body: JSON.stringify({ action:'replaceSheet', tab:'Dividends', rows: allRows }) });
     dvSetStatus('✅ Saved!','#4caf50');
     setTimeout(()=>dvSetStatus('',''),3000);
     renderDividends();
@@ -2168,7 +1814,7 @@ async function saveToDivCSV(newRow, msg){
   try{
     const row = newRow.split(',');
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ action:'append', tab:gsTabFor('Dividends'), row }) });
+      body: JSON.stringify({ action:'append', tab:'Dividends', row }) });
     dvSetStatus('✅ Record saved!','#4caf50');
     setTimeout(()=>dvSetStatus('',''),3000);
     await loadDividendsCSV();
@@ -2293,7 +1939,7 @@ function cfDayCalc(){
 
 async function loadCashFlow(){
   try{
-    const res=await fetch(gsUrl(gsTabFor('Cashflow')));
+    const res=await fetch(gsUrl('Cashflow'));
     if(!res.ok){ _cashFlow=[]; renderCashFlow(); return; }
     const json=await res.json();
     const rows=json.values||[];
@@ -2408,7 +2054,7 @@ async function saveCfEntry(){
   try{
     const row = newRow.split(',');
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ action:'append', tab:gsTabFor('Cashflow'), row }) });
+      body: JSON.stringify({ action:'append', tab:'Cashflow', row }) });
 
     CAPITAL.freeCash=close;
     updateCAPITAL(null,0,0,close);
@@ -2443,7 +2089,7 @@ async function autoLoad(){
 
   // 4. Load holdings and build dashboard
   try{
-    const res=await fetch(gsUrl(gsTabFor('holdings')));
+    const res=await fetch(gsUrl('holdings'));
     if(!res.ok) return;
     const json=await res.json();
     const rows=json.values||[];
@@ -2454,8 +2100,7 @@ async function autoLoad(){
   }catch(e){ console.log('holdings GS:',e.message); }
 }
 
-// autoLoad triggered after login/register — not on page load
-if(sessionStorage.getItem(AUTH_KEY)) autoLoad();
+autoLoad();
 </script>
 
 <!-- BUY/SELL MODAL -->
