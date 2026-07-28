@@ -41,6 +41,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .btn-div:hover{ background:#d97706; }
 .btn-cf{ background:#1a3a5c; color:#7ab3d4; width:150px; border:1px solid #2e4060; }
 .btn-cf:hover{ background:#1e4a70; color:#fff; }
+.admin-only{ display:none; } /* hidden by default; shown only for admin */
 
 /* CASH FLOW PAGE */
 #pgCashFlow{
@@ -542,15 +543,15 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 </div>
 
 <!-- TABS -->
-<div class="tb">
-  <button class="tb-btn active" onclick="showTab('action',this)">🎯 Action Plan</button>
-  <button class="tb-btn"        onclick="showTab('portfolio',this)">📋 Portfolio</button>
-  <button class="tb-btn"        onclick="showTab('dividend',this)">💰 Dividend Income</button>
-  <button class="tb-btn"        onclick="showTab('sector',this)">⚖️ Sector Balance</button>
-  <button class="tb-btn"        onclick="showTab('capital',this)">💼 Capital Summary</button>
+<div class="tb" id="mainTabBar">
+  <button class="tb-btn admin-only" onclick="showTab('action',this)">🎯 Action Plan</button>
+  <button class="tb-btn"            onclick="showTab('portfolio',this)">📋 Portfolio</button>
+  <button class="tb-btn"            onclick="showTab('dividend',this)">💰 Dividend Income</button>
+  <button class="tb-btn"            onclick="showTab('sector',this)">⚖️ Sector Balance</button>
+  <button class="tb-btn"            onclick="showTab('capital',this)">💼 Capital Summary</button>
 </div>
 
-<div id="tab-action"    class="tp active"><p class="c-gray" style="padding:20px">Loading...</p></div>
+<div id="tab-action"    class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
 <div id="tab-portfolio" class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
 <div id="tab-dividend"  class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
 <div id="tab-sector"    class="tp"><p class="c-gray" style="padding:20px">Loading...</p></div>
@@ -589,7 +590,9 @@ function gsTabFor(base){ return _currentUser + '_' + base; }
   if(saved){
     _currentUser = saved;
     document.getElementById('pwGate').style.display='none';
-    showUserBadge(saved);
+    // showUserBadge calls applyRoleUI — but DOM may not be ready yet for tab logic
+    // so defer slightly
+    setTimeout(()=>showUserBadge(saved), 50);
   }
 })();
 
@@ -601,10 +604,36 @@ function switchAuthTab(tab){
   document.getElementById('panelRegister').classList.toggle('active',tab==='register');
 }
 
+const ADMIN_USER = 'qasim'; // only this user sees Action Plan
+
+function isAdmin(){ return _currentUser === ADMIN_USER; }
+
+function applyRoleUI(){
+  // Show/hide Action Plan tab based on role
+  document.querySelectorAll('.admin-only').forEach(el=>{
+    el.style.display = isAdmin() ? '' : 'none';
+  });
+  // Set first visible tab as active
+  const firstBtn = document.querySelector('.tb-btn:not([style*="display: none"])');
+  const firstTabName = isAdmin() ? 'action' : 'portfolio';
+  document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tb-btn').forEach(b=>b.classList.remove('active'));
+  const activeTab = document.getElementById('tab-'+firstTabName);
+  if(activeTab) activeTab.classList.add('active');
+  if(firstBtn && !isAdmin()){
+    // activate Portfolio button (second button)
+    const btns = [...document.querySelectorAll('.tb-btn')].filter(b=>b.style.display!=='none');
+    if(btns[0]) btns[0].classList.add('active');
+  } else if(firstBtn){
+    firstBtn.classList.add('active');
+  }
+}
+
 function showUserBadge(name){
   const b=document.getElementById('userBadge');
   document.getElementById('userBadgeName').textContent=name;
   b.classList.add('show');
+  applyRoleUI();
 }
 
 async function doLogin(){
@@ -895,7 +924,7 @@ function buildAll(){
   if(pf) pf.style.width=pct+'%';
   if(pp) pp.textContent=pct.toFixed(1)+'%';
 
-  try{ buildAction(); }catch(e){ showErr('tab-action',e); }
+  if(isAdmin()){ try{ buildAction(); }catch(e){ showErr('tab-action',e); } }
   try{ buildPortfolio(); }catch(e){ showErr('tab-portfolio',e); }
   try{ buildDividend(); }catch(e){ showErr('tab-dividend',e); }
   try{ buildSector(); }catch(e){ showErr('tab-sector',e); }
