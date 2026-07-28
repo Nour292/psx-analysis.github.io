@@ -498,13 +498,41 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
     <!-- REGISTER PANEL -->
     <div class="auth-panel" id="panelRegister">
-      <input type="text" class="pw-input" id="regUser" placeholder="Choose a username" maxlength="30"
-        onkeydown="if(event.key==='Enter') doRegister()">
-      <input type="password" class="pw-input" id="regPass" placeholder="Choose a password" maxlength="30"
-        onkeydown="if(event.key==='Enter') doRegister()">
-      <input type="password" class="pw-input" id="regPass2" placeholder="Confirm password" maxlength="30"
-        onkeydown="if(event.key==='Enter') doRegister()">
+      <input type="text" class="pw-input" id="regUser" placeholder="Choose a username" maxlength="30">
+      <input type="password" class="pw-input" id="regPass" placeholder="Choose a password (min 6 chars)" maxlength="30">
+      <input type="password" class="pw-input" id="regPass2" placeholder="Confirm password" maxlength="30">
+      <input type="email" class="pw-input" id="regEmail" placeholder="Email address" maxlength="80">
+      <div style="display:flex;gap:6px;margin-bottom:0">
+        <select class="pw-input" id="regCountry" style="flex:1.2;margin-bottom:10px">
+          <option value="">🌍 Country</option>
+          <option value="PK">🇵🇰 Pakistan (+92)</option>
+          <option value="SA">🇸🇦 Saudi Arabia (+966)</option>
+          <option value="AE">🇦🇪 UAE (+971)</option>
+          <option value="GB">🇬🇧 UK (+44)</option>
+          <option value="US">🇺🇸 USA (+1)</option>
+          <option value="IN">🇮🇳 India (+91)</option>
+          <option value="CA">🇨🇦 Canada (+1)</option>
+          <option value="AU">🇦🇺 Australia (+61)</option>
+          <option value="DE">🇩🇪 Germany (+49)</option>
+          <option value="FR">🇫🇷 France (+33)</option>
+          <option value="TR">🇹🇷 Turkey (+90)</option>
+          <option value="EG">🇪🇬 Egypt (+20)</option>
+          <option value="NG">🇳🇬 Nigeria (+234)</option>
+          <option value="KW">🇰🇼 Kuwait (+965)</option>
+          <option value="QA">🇶🇦 Qatar (+974)</option>
+          <option value="BH">🇧🇭 Bahrain (+973)</option>
+          <option value="OM">🇴🇲 Oman (+968)</option>
+          <option value="JO">🇯🇴 Jordan (+962)</option>
+          <option value="BD">🇧🇩 Bangladesh (+880)</option>
+          <option value="OTHER">🌐 Other</option>
+        </select>
+        <input type="tel" class="pw-input" id="regMobile" placeholder="Mobile number" maxlength="15" style="flex:2;margin-bottom:10px">
+      </div>
       <button class="pw-btn green" onclick="doRegister()">✅ Create Account</button>
+      <div style="font-size:11px;color:#4a6a8a;margin-top:10px;line-height:1.5">
+        🔒 Your account will be reviewed and activated by the admin.<br>
+        You'll be notified at your email once approved.
+      </div>
       <div class="pw-err" id="regErr"></div>
       <div class="pw-ok"  id="regOk"></div>
     </div>
@@ -655,8 +683,19 @@ async function doLogin(){
     if(!vRes.ok){ ok.style.display='none'; showAuthMsg('loginErr','❌ Cannot reach server.'); return; }
     const json=await vRes.json();
     const rows=(json.values||[]).slice(1);
-    const match=rows.find(r=>(r[0]||'').toLowerCase()===user&&(r[1]||'')===pass&&(r[3]||'Active')==='Active');
+    const match=rows.find(r=>(r[0]||'').toLowerCase()===user&&(r[1]||'')===pass);
     if(match){
+      const status=(match[7]||match[3]||'Active');
+      if(status==='Pending'){
+        ok.style.display='none';
+        showAuthMsg('loginErr','⏳ Your account is pending admin approval. You will receive an email once activated.');
+        return;
+      }
+      if(status!=='Active'){
+        ok.style.display='none';
+        showAuthMsg('loginErr','❌ Account is not active. Please contact admin.');
+        return;
+      }
       _currentUser=user;
       sessionStorage.setItem(AUTH_KEY,user);
       ok.textContent='✅ Welcome '+user+'!';
@@ -673,41 +712,63 @@ async function doLogin(){
 }
 
 async function doRegister(){
-  const user=(document.getElementById('regUser').value||'').trim().toLowerCase();
-  const pass=(document.getElementById('regPass').value||'').trim();
-  const pass2=(document.getElementById('regPass2').value||'').trim();
-  const err=document.getElementById('regErr');
+  const user   =(document.getElementById('regUser').value||'').trim().toLowerCase();
+  const pass   =(document.getElementById('regPass').value||'').trim();
+  const pass2  =(document.getElementById('regPass2').value||'').trim();
+  const email  =(document.getElementById('regEmail').value||'').trim().toLowerCase();
+  const country=(document.getElementById('regCountry').value||'').trim();
+  const mobile =(document.getElementById('regMobile').value||'').trim();
   const ok =document.getElementById('regOk');
-  err.style.display='none'; ok.style.display='none';
-  if(!user||!pass||!pass2){ showAuthMsg('regErr','Please fill all fields.'); return; }
-  if(user.length<3){ showAuthMsg('regErr','Username must be at least 3 characters.'); return; }
-  if(!/^[a-z0-9_]+$/.test(user)){ showAuthMsg('regErr','Letters, numbers, underscore only.'); return; }
-  if(pass.length<4){ showAuthMsg('regErr','Password must be at least 4 characters.'); return; }
-  if(pass!==pass2){ showAuthMsg('regErr','Passwords do not match.'); return; }
-  ok.style.display='block'; ok.textContent='⏳ Creating your account...';
+
+  // Validations
+  if(!user||!pass||!pass2||!email||!country||!mobile){
+    showAuthMsg('regErr','Please fill all fields.'); return; }
+  if(user.length<3){
+    showAuthMsg('regErr','Username must be at least 3 characters.'); return; }
+  if(!/^[a-z0-9_]+$/.test(user)){
+    showAuthMsg('regErr','Username: letters, numbers, underscore only.'); return; }
+  if(pass.length<6){
+    showAuthMsg('regErr','Password must be at least 6 characters.'); return; }
+  if(pass!==pass2){
+    showAuthMsg('regErr','Passwords do not match.'); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    showAuthMsg('regErr','Please enter a valid email address.'); return; }
+  if(!/^\d{7,15}$/.test(mobile)){
+    showAuthMsg('regErr','Mobile: digits only, 7–15 characters.'); return; }
+
+  ok.style.display='block'; ok.textContent='⏳ Submitting registration...';
   try{
+    // Check duplicate username or email
     const vRes=await fetch(gsUrl('Users'));
     if(vRes.ok){
       const json=await vRes.json();
       const rows=(json.values||[]).slice(1);
       if(rows.find(r=>(r[0]||'').toLowerCase()===user)){
         ok.style.display='none';
-        showAuthMsg('regErr','❌ Username already taken.');
-        return;
+        showAuthMsg('regErr','❌ Username already taken.'); return;
+      }
+      if(rows.find(r=>(r[2]||'').toLowerCase()===email)){
+        ok.style.display='none';
+        showAuthMsg('regErr','❌ Email already registered.'); return;
       }
     }
+    // Submit to Apps Script — status will be Pending until admin approves
     await fetch(GS_WRITE,{
       method:'POST', mode:'no-cors',
-      body:JSON.stringify({action:'register', username:user, password:pass})
+      body:JSON.stringify({
+        action:'register',
+        username:user, password:pass,
+        email:email, mobile:mobile, country:country
+      })
     });
-    ok.textContent='✅ Account created! Logging you in...';
-    _currentUser=user;
-    sessionStorage.setItem(AUTH_KEY,user);
-    setTimeout(()=>{
-      document.getElementById('pwGate').style.display='none';
-      showUserBadge(user);
-      autoLoad();
-    },1500);
+    ok.textContent='✅ Registration submitted! The admin will review and activate your account. You will receive an email once approved.';
+    // Clear form
+    ['regUser','regPass','regPass2','regEmail','regMobile'].forEach(id=>{
+      document.getElementById(id).value='';
+    });
+    document.getElementById('regCountry').value='';
+    // Switch to login tab after 4 seconds
+    setTimeout(()=>switchAuthTab('login'), 4000);
   }catch(e){ ok.style.display='none'; showAuthMsg('regErr','❌ Error: '+e.message); }
 }
 
