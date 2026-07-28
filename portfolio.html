@@ -594,7 +594,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
 <!-- TABS -->
 <div class="tb" id="mainTabBar">
-  <button class="tb-btn admin-only" style="display:none" onclick="showTab('action',this)">🎯 Action Plan</button>
+  <button class="tb-btn" id="btnActionPlan" style="display:none" onclick="showTab('action',this)">🎯 Action Plan</button>
   <button class="tb-btn"            onclick="showTab('portfolio',this)">📋 Portfolio</button>
   <button class="tb-btn"            onclick="showTab('dividend',this)">💰 Dividend Income</button>
   <button class="tb-btn"            onclick="showTab('sector',this)">⚖️ Sector Balance</button>
@@ -662,7 +662,10 @@ function isAdmin(){ return _currentUser === ADMIN_USER; }
 
 function applyRoleUI(){
   const admin = isAdmin();
-  // Show/hide Action Plan tab based on role
+  // Show/hide Action Plan tab button based on role
+  const btnAP = document.getElementById('btnActionPlan');
+  if(btnAP) btnAP.style.display = admin ? 'inline-block' : 'none';
+  // Also handle any other admin-only elements
   document.querySelectorAll('.admin-only').forEach(el=>{
     el.style.display = admin ? 'inline-block' : 'none';
   });
@@ -676,11 +679,9 @@ function applyRoleUI(){
   // Activate correct button
   const allBtns = [...document.querySelectorAll('.tb-btn')];
   if(admin){
-    // First button (Action Plan) for admin — force display then activate
-    if(allBtns[0]){
-      allBtns[0].style.display = '';
-      allBtns[0].classList.add('active');
-    }
+    // Activate Action Plan button for admin
+    const btnAP = document.getElementById('btnActionPlan');
+    if(btnAP){ btnAP.style.display='inline-block'; btnAP.classList.add('active'); }
   } else {
     // First visible button (Portfolio) for regular users
     const visibleBtns = allBtns.filter(b=>b.style.display!=='none');
