@@ -496,45 +496,67 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
       <div class="pw-ok"  id="loginOk"></div>
     </div>
 
-    <!-- REGISTER PANEL -->
+    <!-- REGISTER PANEL — Step 1: Fill details -->
     <div class="auth-panel" id="panelRegister">
-      <input type="text" class="pw-input" id="regUser" placeholder="Choose a username" maxlength="30">
-      <input type="password" class="pw-input" id="regPass" placeholder="Choose a password (min 6 chars)" maxlength="30">
-      <input type="password" class="pw-input" id="regPass2" placeholder="Confirm password" maxlength="30">
-      <input type="email" class="pw-input" id="regEmail" placeholder="Email address" maxlength="80">
-      <div style="display:flex;gap:6px;margin-bottom:0">
-        <select class="pw-input" id="regCountry" style="flex:1.2;margin-bottom:10px">
-          <option value="">🌍 Country</option>
-          <option value="PK">🇵🇰 Pakistan (+92)</option>
-          <option value="SA">🇸🇦 Saudi Arabia (+966)</option>
-          <option value="AE">🇦🇪 UAE (+971)</option>
-          <option value="GB">🇬🇧 UK (+44)</option>
-          <option value="US">🇺🇸 USA (+1)</option>
-          <option value="IN">🇮🇳 India (+91)</option>
-          <option value="CA">🇨🇦 Canada (+1)</option>
-          <option value="AU">🇦🇺 Australia (+61)</option>
-          <option value="DE">🇩🇪 Germany (+49)</option>
-          <option value="FR">🇫🇷 France (+33)</option>
-          <option value="TR">🇹🇷 Turkey (+90)</option>
-          <option value="EG">🇪🇬 Egypt (+20)</option>
-          <option value="NG">🇳🇬 Nigeria (+234)</option>
-          <option value="KW">🇰🇼 Kuwait (+965)</option>
-          <option value="QA">🇶🇦 Qatar (+974)</option>
-          <option value="BH">🇧🇭 Bahrain (+973)</option>
-          <option value="OM">🇴🇲 Oman (+968)</option>
-          <option value="JO">🇯🇴 Jordan (+962)</option>
-          <option value="BD">🇧🇩 Bangladesh (+880)</option>
-          <option value="OTHER">🌐 Other</option>
-        </select>
-        <input type="tel" class="pw-input" id="regMobile" placeholder="Mobile number" maxlength="15" style="flex:2;margin-bottom:10px">
+
+      <!-- STEP 1: Registration form -->
+      <div id="regStep1">
+        <input type="text" class="pw-input" id="regUser" placeholder="Choose a username" maxlength="30">
+        <input type="password" class="pw-input" id="regPass" placeholder="Choose a password (min 6 chars)" maxlength="30">
+        <input type="password" class="pw-input" id="regPass2" placeholder="Confirm password" maxlength="30">
+        <input type="email" class="pw-input" id="regEmail" placeholder="Email address" maxlength="80">
+        <div style="display:flex;gap:6px;margin-bottom:0">
+          <select class="pw-input" id="regCountry" style="flex:1.2;margin-bottom:10px">
+            <option value="">🌍 Country</option>
+            <option value="PK">🇵🇰 Pakistan (+92)</option>
+            <option value="SA">🇸🇦 Saudi Arabia (+966)</option>
+            <option value="AE">🇦🇪 UAE (+971)</option>
+            <option value="GB">🇬🇧 UK (+44)</option>
+            <option value="US">🇺🇸 USA (+1)</option>
+            <option value="IN">🇮🇳 India (+91)</option>
+            <option value="CA">🇨🇦 Canada (+1)</option>
+            <option value="AU">🇦🇺 Australia (+61)</option>
+            <option value="DE">🇩🇪 Germany (+49)</option>
+            <option value="FR">🇫🇷 France (+33)</option>
+            <option value="TR">🇹🇷 Turkey (+90)</option>
+            <option value="EG">🇪🇬 Egypt (+20)</option>
+            <option value="NG">🇳🇬 Nigeria (+234)</option>
+            <option value="KW">🇰🇼 Kuwait (+965)</option>
+            <option value="QA">🇶🇦 Qatar (+974)</option>
+            <option value="BH">🇧🇭 Bahrain (+973)</option>
+            <option value="OM">🇴🇲 Oman (+968)</option>
+            <option value="JO">🇯🇴 Jordan (+962)</option>
+            <option value="BD">🇧🇩 Bangladesh (+880)</option>
+            <option value="OTHER">🌐 Other</option>
+          </select>
+          <input type="tel" class="pw-input" id="regMobile" placeholder="Mobile number" maxlength="15" style="flex:2;margin-bottom:10px">
+        </div>
+        <button class="pw-btn green" onclick="doRegister()">📧 Send OTP to Email</button>
+        <div class="pw-err" id="regErr"></div>
+        <div class="pw-ok"  id="regOk"></div>
       </div>
-      <button class="pw-btn green" onclick="doRegister()">✅ Create Account</button>
-      <div style="font-size:11px;color:#4a6a8a;margin-top:10px;line-height:1.5">
-        🔒 Your account will be reviewed and activated by the admin.<br>
-        You'll be notified at your email once approved.
+
+      <!-- STEP 2: OTP verification (hidden initially) -->
+      <div id="regStep2" style="display:none">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:28px">📬</div>
+          <div style="color:#4fc3f7;font-weight:700;font-size:15px;margin-top:6px">Check your email</div>
+          <div style="color:#7a9ab5;font-size:12px;margin-top:4px">We sent a 6-digit OTP to<br><span id="otpEmailDisplay" style="color:#e0e6ed"></span></div>
+        </div>
+        <input type="text" class="pw-input" id="regOtp" placeholder="Enter 6-digit OTP"
+          maxlength="6" style="text-align:center;font-size:22px;font-weight:700;letter-spacing:8px"
+          onkeydown="if(event.key==='Enter') doVerifyOtp()">
+        <button class="pw-btn green" onclick="doVerifyOtp()">✅ Verify & Create Account</button>
+        <div style="margin-top:10px;text-align:center">
+          <span style="font-size:12px;color:#4a6a8a">Didn't receive it? </span>
+          <button onclick="resendOtp()" style="background:none;border:none;color:#4fc3f7;font-size:12px;cursor:pointer;text-decoration:underline">Resend OTP</button>
+          <span style="font-size:12px;color:#4a6a8a"> | </span>
+          <button onclick="backToRegForm()" style="background:none;border:none;color:#7a9ab5;font-size:12px;cursor:pointer;text-decoration:underline">← Back</button>
+        </div>
+        <div class="pw-err" id="otpErr"></div>
+        <div class="pw-ok"  id="otpOk"></div>
       </div>
-      <div class="pw-err" id="regErr"></div>
-      <div class="pw-ok"  id="regOk"></div>
+
     </div>
 
   </div>
@@ -591,7 +613,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 ═══════════════════════════════════════════════ */
 const GS_ID    = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY   = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
-const GS_WRITE = 'https://script.google.com/macros/s/AKfycbwTYzhhh9q02qr_Epw4xnDNFPKCOeRqzqw1H5bM5ndn6CwUBcQ6Zti-EnDhJLjq-kiuGA/exec';
+const GS_WRITE = 'https://script.google.com/macros/s/AKfycbxKq8r0kG-0wX6EOlWXMWoYQznLrzTb6fOPEM5U6R3ujdNTtSSvAPBxVq_JMwptjdZeIA/exec';
 
 function gsUrl(tab){
   return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`;
@@ -688,12 +710,12 @@ async function doLogin(){
       const status=(match[7]||match[3]||'Active');
       if(status==='Pending'){
         ok.style.display='none';
-        showAuthMsg('loginErr','⏳ Your account is pending admin approval. You will receive an email once activated.');
+        showAuthMsg('loginErr','⏳ Your email is not verified yet. Please complete registration.');
         return;
       }
       if(status!=='Active'){
         ok.style.display='none';
-        showAuthMsg('loginErr','❌ Account is not active. Please contact admin.');
+        showAuthMsg('loginErr','❌ Account inactive. Please contact admin.');
         return;
       }
       _currentUser=user;
@@ -711,6 +733,9 @@ async function doLogin(){
   }catch(e){ ok.style.display='none'; showAuthMsg('loginErr','❌ Error: '+e.message); }
 }
 
+// ── REGISTRATION — Step 1: validate + send OTP ──
+let _pendingReg = {}; // holds form data while waiting for OTP
+
 async function doRegister(){
   const user   =(document.getElementById('regUser').value||'').trim().toLowerCase();
   const pass   =(document.getElementById('regPass').value||'').trim();
@@ -718,7 +743,7 @@ async function doRegister(){
   const email  =(document.getElementById('regEmail').value||'').trim().toLowerCase();
   const country=(document.getElementById('regCountry').value||'').trim();
   const mobile =(document.getElementById('regMobile').value||'').trim();
-  const ok =document.getElementById('regOk');
+  const ok     = document.getElementById('regOk');
 
   // Validations
   if(!user||!pass||!pass2||!email||!country||!mobile){
@@ -736,40 +761,115 @@ async function doRegister(){
   if(!/^\d{7,15}$/.test(mobile)){
     showAuthMsg('regErr','Mobile: digits only, 7–15 characters.'); return; }
 
-  ok.style.display='block'; ok.textContent='⏳ Submitting registration...';
+  ok.style.display='block'; ok.textContent='⏳ Checking details...';
+
   try{
-    // Check duplicate username or email
+    // Check duplicates in Users sheet
     const vRes=await fetch(gsUrl('Users'));
     if(vRes.ok){
       const json=await vRes.json();
       const rows=(json.values||[]).slice(1);
       if(rows.find(r=>(r[0]||'').toLowerCase()===user)){
-        ok.style.display='none';
-        showAuthMsg('regErr','❌ Username already taken.'); return;
-      }
+        ok.style.display='none'; showAuthMsg('regErr','❌ Username already taken.'); return; }
       if(rows.find(r=>(r[2]||'').toLowerCase()===email)){
-        ok.style.display='none';
-        showAuthMsg('regErr','❌ Email already registered.'); return;
-      }
+        ok.style.display='none'; showAuthMsg('regErr','❌ Email already registered.'); return; }
     }
-    // Submit to Apps Script — status will be Pending until admin approves
+
+    ok.textContent='⏳ Sending OTP to your email...';
+
+    // Send OTP via Apps Script
     await fetch(GS_WRITE,{
       method:'POST', mode:'no-cors',
+      body:JSON.stringify({ action:'sendOtp', email, username:user })
+    });
+
+    // Store pending registration data
+    _pendingReg = { user, pass, email, mobile, country };
+
+    // Show Step 2
+    document.getElementById('regStep1').style.display='none';
+    document.getElementById('regStep2').style.display='block';
+    document.getElementById('otpEmailDisplay').textContent=email;
+    document.getElementById('regOtp').value='';
+    document.getElementById('regOtp').focus();
+    ok.style.display='none';
+
+  }catch(e){ ok.style.display='none'; showAuthMsg('regErr','❌ Error: '+e.message); }
+}
+
+// ── REGISTRATION — Step 2: verify OTP ───────────
+async function doVerifyOtp(){
+  const otp=(document.getElementById('regOtp').value||'').trim();
+  const ok =document.getElementById('otpOk');
+
+  if(!otp||otp.length!==6||!/^\d{6}$/.test(otp)){
+    showAuthMsg('otpErr','Please enter the 6-digit OTP.'); return; }
+
+  ok.style.display='block'; ok.textContent='⏳ Verifying OTP...';
+
+  try{
+    // Verify OTP + complete registration
+    const res=await fetch(GS_WRITE,{
+      method:'POST',
       body:JSON.stringify({
-        action:'register',
-        username:user, password:pass,
-        email:email, mobile:mobile, country:country
+        action:'verifyOtpAndRegister',
+        username : _pendingReg.user,
+        password : _pendingReg.pass,
+        email    : _pendingReg.email,
+        mobile   : _pendingReg.mobile,
+        country  : _pendingReg.country,
+        otp      : otp
       })
     });
-    ok.textContent='✅ Registration submitted! The admin will review and activate your account. You will receive an email once approved.';
-    // Clear form
-    ['regUser','regPass','regPass2','regEmail','regMobile'].forEach(id=>{
-      document.getElementById(id).value='';
-    });
-    document.getElementById('regCountry').value='';
-    // Switch to login tab after 4 seconds
-    setTimeout(()=>switchAuthTab('login'), 4000);
-  }catch(e){ ok.style.display='none'; showAuthMsg('regErr','❌ Error: '+e.message); }
+
+    // Parse response (no-cors blocks reading — use a GET verify instead)
+    // Since we can't read no-cors response, we use a read-back approach:
+    // Wait 2s then check Users sheet for Active status
+    ok.textContent='⏳ Creating your account...';
+    await new Promise(r=>setTimeout(r,2500));
+
+    const vRes=await fetch(gsUrl('Users'));
+    if(vRes.ok){
+      const json=await vRes.json();
+      const rows=(json.values||[]).slice(1);
+      const match=rows.find(r=>(r[0]||'').toLowerCase()===_pendingReg.user);
+      if(match && (match[7]||match[3]||'')===('Active')){
+        ok.textContent='✅ Account created! Logging you in...';
+        _currentUser=_pendingReg.user;
+        sessionStorage.setItem(AUTH_KEY,_pendingReg.user);
+        _pendingReg={};
+        setTimeout(()=>{
+          document.getElementById('pwGate').style.display='none';
+          showUserBadge(_currentUser);
+          autoLoad();
+        },1000);
+        return;
+      }
+    }
+    // If not Active yet — OTP wrong or expired
+    ok.style.display='none';
+    showAuthMsg('otpErr','❌ Incorrect or expired OTP. Please try again.');
+
+  }catch(e){ ok.style.display='none'; showAuthMsg('otpErr','❌ Error: '+e.message); }
+}
+
+async function resendOtp(){
+  if(!_pendingReg.email){ showAuthMsg('otpErr','Session expired. Please go back.'); return; }
+  document.getElementById('otpOk').style.display='block';
+  document.getElementById('otpOk').textContent='⏳ Resending OTP...';
+  await fetch(GS_WRITE,{
+    method:'POST', mode:'no-cors',
+    body:JSON.stringify({ action:'sendOtp', email:_pendingReg.email, username:_pendingReg.user })
+  });
+  document.getElementById('otpOk').textContent='✅ OTP resent! Check your email.';
+  setTimeout(()=>document.getElementById('otpOk').style.display='none',3000);
+}
+
+function backToRegForm(){
+  document.getElementById('regStep1').style.display='block';
+  document.getElementById('regStep2').style.display='none';
+  document.getElementById('otpErr').style.display='none';
+  document.getElementById('otpOk').style.display='none';
 }
 
 function doLogout(){
