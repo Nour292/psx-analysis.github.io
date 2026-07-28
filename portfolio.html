@@ -1020,19 +1020,25 @@ async function loadPricesSheet(){
     const json = await res.json();
     const rows = json.values||[];
     if(rows.length < 2) return;
-    // Skip header row (row[0]), data starts row[1]
-    // Columns: A=Symbol, B=Net Units, C=Current Price, D=Avg Buy Price, E=P&L/Unit, F=Total P&L, G=Return%
     let count = 0;
     rows.slice(1).forEach(r=>{
       const sym   = (r[0]||'').trim().toUpperCase();
       const price = parseFloat(r[2]); // Column C = Current Price
       if(sym && !isNaN(price) && price > 0){
         _prices[sym]      = price;
-        _priceSource[sym] = 'sheet'; // mark as coming from your Prices tab
+        _priceSource[sym] = 'sheet';
         count++;
       }
     });
-    console.log('Prices tab loaded: '+count+' live prices (override)');
+    // Read date from H2 (first data row, column index 7)
+    if(count > 0){
+      const h2val = (rows[1][7]||'').toString().trim();
+      if(h2val){
+        document.getElementById('asofBadge').style.display='inline-block';
+        document.getElementById('asofVal').textContent = h2val;
+      }
+    }
+    console.log('Prices tab loaded: '+count+' prices. As of: '+(rows[1][7]||''));
   }catch(e){
     console.log('Prices tab not loaded:', e.message);
   }
