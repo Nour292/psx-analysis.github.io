@@ -613,7 +613,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 ═══════════════════════════════════════════════ */
 const GS_ID    = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY   = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
-const GS_WRITE = 'https://script.google.com/macros/s/AKfycbxKq8r0kG-0wX6EOlWXMWoYQznLrzTb6fOPEM5U6R3ujdNTtSSvAPBxVq_JMwptjdZeIA/exec';
+const GS_WRITE = 'https://script.google.com/macros/s/AKfycbxJc2BTgFosDhNZ3z9zFNGPN69Po8Nowo8-ePPz6dBTNM2zyLNVygrauEyBQlCtIzMg2A/exec';
 
 function gsUrl(tab){
   return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`;
@@ -777,11 +777,34 @@ async function doRegister(){
 
     ok.textContent='⏳ Sending OTP to your email...';
 
-    // Send OTP via Apps Script
-    await fetch(GS_WRITE,{
-      method:'POST', mode:'no-cors',
-      body:JSON.stringify({ action:'sendOtp', email, username:user })
-    });
+    // Send OTP via Apps Script — use readable fetch (no mode:no-cors) so we can catch errors
+    let otpRes;
+    try{
+      otpRes = await fetch(GS_WRITE,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify({ action:'sendOtp', email, username:user })
+      });
+    }catch(fetchErr){
+      // CORS blocked — fall back to no-cors (email still sends, we just can't read response)
+      await fetch(GS_WRITE,{
+        method:'POST', mode:'no-cors',
+        body:JSON.stringify({ action:'sendOtp', email, username:user })
+      });
+      otpRes = null;
+    }
+
+    // Try to read response if available
+    if(otpRes && otpRes.ok){
+      try{
+        const result = await otpRes.json();
+        if(!result.ok){
+          ok.style.display='none';
+          showAuthMsg('regErr','❌ '+(result.error||'Failed to send OTP. Please try again.'));
+          return;
+        }
+      }catch(e){ /* response not JSON — continue anyway */ }
+    }
 
     // Store pending registration data
     _pendingReg = { user, pass, email, mobile, country };
@@ -855,14 +878,23 @@ async function doVerifyOtp(){
 
 async function resendOtp(){
   if(!_pendingReg.email){ showAuthMsg('otpErr','Session expired. Please go back.'); return; }
-  document.getElementById('otpOk').style.display='block';
-  document.getElementById('otpOk').textContent='⏳ Resending OTP...';
-  await fetch(GS_WRITE,{
-    method:'POST', mode:'no-cors',
-    body:JSON.stringify({ action:'sendOtp', email:_pendingReg.email, username:_pendingReg.user })
-  });
-  document.getElementById('otpOk').textContent='✅ OTP resent! Check your email.';
-  setTimeout(()=>document.getElementById('otpOk').style.display='none',3000);
+  const ok = document.getElementById('otpOk');
+  ok.style.display='block'; ok.textContent='⏳ Resending OTP...';
+  try{
+    const res = await fetch(GS_WRITE,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({ action:'sendOtp', email:_pendingReg.email, username:_pendingReg.user })
+    });
+    ok.textContent='✅ OTP resent! Check your email.';
+  }catch(e){
+    await fetch(GS_WRITE,{
+      method:'POST', mode:'no-cors',
+      body:JSON.stringify({ action:'sendOtp', email:_pendingReg.email, username:_pendingReg.user })
+    });
+    ok.textContent='✅ OTP resent! Check your email.';
+  }
+  setTimeout(()=>ok.style.display='none',3000);
 }
 
 function backToRegForm(){
