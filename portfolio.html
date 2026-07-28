@@ -41,7 +41,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 .btn-div:hover{ background:#d97706; }
 .btn-cf{ background:#1a3a5c; color:#7ab3d4; width:150px; border:1px solid #2e4060; }
 .btn-cf:hover{ background:#1e4a70; color:#fff; }
-.admin-only{ display:none; } /* hidden by default; shown only for admin */
+.admin-only{ display:none; } /* shown only for admin via applyRoleUI() */
 
 /* CASH FLOW PAGE */
 #pgCashFlow{
@@ -594,7 +594,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
 <!-- TABS -->
 <div class="tb" id="mainTabBar">
-  <button class="tb-btn admin-only" onclick="showTab('action',this)">🎯 Action Plan</button>
+  <button class="tb-btn admin-only" style="display:none" onclick="showTab('action',this)">🎯 Action Plan</button>
   <button class="tb-btn"            onclick="showTab('portfolio',this)">📋 Portfolio</button>
   <button class="tb-btn"            onclick="showTab('dividend',this)">💰 Dividend Income</button>
   <button class="tb-btn"            onclick="showTab('sector',this)">⚖️ Sector Balance</button>
@@ -664,7 +664,7 @@ function applyRoleUI(){
   const admin = isAdmin();
   // Show/hide Action Plan tab based on role
   document.querySelectorAll('.admin-only').forEach(el=>{
-    el.style.display = admin ? '' : 'none';
+    el.style.display = admin ? 'inline-block' : 'none';
   });
   // Clear all active states
   document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
