@@ -419,24 +419,46 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 }
 .pw-box{
   background:#1a2535; border:1px solid #2e4060; border-radius:12px;
-  padding:40px 48px; text-align:center; max-width:360px; width:90%;
+  padding:40px 48px; text-align:center; max-width:400px; width:90%;
 }
 .pw-logo{ font-size:32px; margin-bottom:8px; }
 .pw-title{ font-size:18px; font-weight:700; color:#4fc3f7; margin-bottom:4px; }
-.pw-sub{ font-size:13px; color:#7a9ab5; margin-bottom:24px; }
+.pw-sub{ font-size:13px; color:#7a9ab5; margin-bottom:20px; }
+.auth-tabs{ display:flex; gap:0; margin-bottom:24px; border-radius:8px; overflow:hidden; border:1px solid #2e4060; }
+.auth-tab{ flex:1; padding:10px; font-size:13px; font-weight:700; cursor:pointer;
+  background:#0f1923; color:#7a9ab5; border:none; transition:all .15s; }
+.auth-tab.active{ background:#1565c0; color:#fff; }
 .pw-input{
-  width:100%; padding:12px 16px; font-size:16px; letter-spacing:4px;
-  background:#0f1923; color:#4fc3f7; border:2px solid #2e4060;
-  border-radius:8px; text-align:center; outline:none; margin-bottom:12px;
+  width:100%; padding:12px 16px; font-size:14px; letter-spacing:1px;
+  background:#0f1923; color:#e0e6ed; border:2px solid #2e4060;
+  border-radius:8px; text-align:left; outline:none; margin-bottom:10px;
 }
 .pw-input:focus{ border-color:#4fc3f7; }
+.pw-input::placeholder{ color:#4a6a8a; letter-spacing:0; }
 .pw-btn{
   width:100%; padding:12px; background:#1565c0; color:#fff;
   border:none; border-radius:8px; font-size:15px; font-weight:700;
-  cursor:pointer; transition:background .15s;
+  cursor:pointer; transition:background .15s; margin-top:4px;
 }
 .pw-btn:hover{ background:#1976d2; }
+.pw-btn.green{ background:#2e7d32; }
+.pw-btn.green:hover{ background:#388e3c; }
 .pw-err{ font-size:13px; color:#ef5350; margin-top:10px; display:none; }
+.pw-ok { font-size:13px; color:#4caf50; margin-top:10px; display:none; }
+.auth-panel{ display:none; }
+.auth-panel.active{ display:block; }
+.user-badge{
+  background:#0d2240; border:1px solid #2e4060; border-radius:20px;
+  padding:4px 14px; font-size:12px; color:#4fc3f7; font-weight:600;
+  display:none; align-items:center; gap:6px;
+}
+.user-badge.show{ display:inline-flex; }
+.logout-btn{
+  background:transparent; border:1px solid #ef5350; color:#ef5350;
+  border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;
+  margin-left:6px;
+}
+.logout-btn:hover{ background:#ef5350; color:#fff; }
 
 /* PRICE SOURCE BADGE */
 .price-src-badge{
@@ -450,18 +472,42 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 <body>
 
 
-<!-- PASSWORD GATE -->
+<!-- AUTH GATE -->
 <div id="pwGate">
   <div class="pw-box">
-    <div class="pw-logo">🔒</div>
+    <div class="pw-logo">📈</div>
     <div class="pw-title">PSX Portfolio</div>
-    <div class="pw-sub">Enter password to access</div>
-    <input type="password" class="pw-input" id="pwInput"
-      placeholder="Password" maxlength="20"
-      onkeydown="if(event.key==='Enter') checkPW()">
-    <input type="hidden" id="ghToken" value="">
-    <button class="pw-btn" onclick="checkPW()">Unlock</button>
-    <div class="pw-err" id="pwErr">❌ Incorrect password</div>
+    <div class="pw-sub">Sign in to your portfolio</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN PANEL -->
+    <div class="auth-panel active" id="panelLogin">
+      <input type="text" class="pw-input" id="loginUser" placeholder="Username" maxlength="30"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <input type="password" class="pw-input" id="loginPass" placeholder="Password" maxlength="30"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <button class="pw-btn" onclick="doLogin()">🔓 Login</button>
+      <div class="pw-err" id="loginErr"></div>
+      <div class="pw-ok"  id="loginOk"></div>
+    </div>
+
+    <!-- REGISTER PANEL -->
+    <div class="auth-panel" id="panelRegister">
+      <input type="text" class="pw-input" id="regUser" placeholder="Choose a username" maxlength="30"
+        onkeydown="if(event.key==='Enter') doRegister()">
+      <input type="password" class="pw-input" id="regPass" placeholder="Choose a password" maxlength="30"
+        onkeydown="if(event.key==='Enter') doRegister()">
+      <input type="password" class="pw-input" id="regPass2" placeholder="Confirm password" maxlength="30"
+        onkeydown="if(event.key==='Enter') doRegister()">
+      <button class="pw-btn green" onclick="doRegister()">✅ Create Account</button>
+      <div class="pw-err" id="regErr"></div>
+      <div class="pw-ok"  id="regOk"></div>
+    </div>
+
   </div>
 </div>
 
@@ -473,6 +519,10 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <button class="btn btn-div" onclick="goDividends()">💵 Dividends</button>
   <button class="btn btn-cf" onclick="goCashFlow()">💳 Cash Flow</button>
   <span class="asof" id="asofBadge" style="display:none">📅 As of: <b id="asofVal"></b></span>
+  <span class="user-badge" id="userBadge">
+    👤 <span id="userBadgeName"></span>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </span>
 </div>
 
 <!-- KPI -->
@@ -512,7 +562,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 ═══════════════════════════════════════════════ */
 const GS_ID    = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY   = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
-const GS_WRITE = 'https://script.google.com/macros/s/AKfycbx9iuuBLDXYecY45EGVUYHeOEy1QBAqjJqjaQ6qjas7xQWmOixKaLIBANOTcWu2qi72cg/exec';
+const GS_WRITE = 'https://script.google.com/macros/s/AKfycbwTYzhhh9q02qr_Epw4xnDNFPKCOeRqzqw1H5bM5ndn6CwUBcQ6Zti-EnDhJLjq-kiuGA/exec';
 
 function gsUrl(tab){
   return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`;
@@ -527,37 +577,121 @@ async function gsWrite(action, tab, data){
 }
 
 
-// ── PASSWORD GATE ─────────────────────────────
+// ── MULTI-USER AUTH ───────────────────────────
+const AUTH_KEY = 'psx_user';
+let _currentUser = ''; // logged-in username — prefix for all tab reads/writes
+
+function gsTabFor(base){ return _currentUser + '_' + base; }
+
+// On page load — restore session
 (function(){
-  const PW  = 'rd172';
-  const KEY = 'psx_port_auth';
-  const REPO = 'Nour292/psx-analysis.github.io';
-  const FILE = 'holdings.csv';
-  let _ghToken = '';
-
-  if(sessionStorage.getItem(KEY)==='1'){
-    _ghToken = localStorage.getItem('psx_gh_token')||'';
+  const saved = sessionStorage.getItem(AUTH_KEY);
+  if(saved){
+    _currentUser = saved;
     document.getElementById('pwGate').style.display='none';
+    showUserBadge(saved);
   }
-
-  window.checkPW = function(){
-    const val = document.getElementById('pwInput').value;
-    if(val === PW){
-      sessionStorage.setItem(KEY,'1');
-      document.getElementById('pwGate').style.display='none';
-    } else {
-      const err=document.getElementById('pwErr');
-      err.style.display='block';
-      document.getElementById('pwInput').value='';
-      document.getElementById('pwInput').focus();
-      setTimeout(()=>err.style.display='none',2000);
-    }
-  };
-
-  window._ghToken = ()=>_ghToken;
-  window._REPO    = REPO;
-  window._FILE    = FILE;
 })();
+
+function switchAuthTab(tab){
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>{
+    t.classList.toggle('active',(tab==='login'&&i===0)||(tab==='register'&&i===1));
+  });
+  document.getElementById('panelLogin').classList.toggle('active',tab==='login');
+  document.getElementById('panelRegister').classList.toggle('active',tab==='register');
+}
+
+function showUserBadge(name){
+  const b=document.getElementById('userBadge');
+  document.getElementById('userBadgeName').textContent=name;
+  b.classList.add('show');
+}
+
+async function doLogin(){
+  const user=(document.getElementById('loginUser').value||'').trim().toLowerCase();
+  const pass=(document.getElementById('loginPass').value||'').trim();
+  const err=document.getElementById('loginErr');
+  const ok =document.getElementById('loginOk');
+  err.style.display='none'; ok.style.display='none';
+  if(!user||!pass){ showAuthMsg('loginErr','Please enter username and password.'); return; }
+  ok.style.display='block'; ok.textContent='⏳ Checking...';
+  try{
+    const vRes=await fetch(gsUrl('Users'));
+    if(!vRes.ok){ ok.style.display='none'; showAuthMsg('loginErr','❌ Cannot reach server.'); return; }
+    const json=await vRes.json();
+    const rows=(json.values||[]).slice(1);
+    const match=rows.find(r=>(r[0]||'').toLowerCase()===user&&(r[1]||'')===pass&&(r[3]||'Active')==='Active');
+    if(match){
+      _currentUser=user;
+      sessionStorage.setItem(AUTH_KEY,user);
+      ok.textContent='✅ Welcome '+user+'!';
+      setTimeout(()=>{
+        document.getElementById('pwGate').style.display='none';
+        showUserBadge(user);
+        autoLoad();
+      },800);
+    } else {
+      ok.style.display='none';
+      showAuthMsg('loginErr','❌ Invalid username or password.');
+    }
+  }catch(e){ ok.style.display='none'; showAuthMsg('loginErr','❌ Error: '+e.message); }
+}
+
+async function doRegister(){
+  const user=(document.getElementById('regUser').value||'').trim().toLowerCase();
+  const pass=(document.getElementById('regPass').value||'').trim();
+  const pass2=(document.getElementById('regPass2').value||'').trim();
+  const err=document.getElementById('regErr');
+  const ok =document.getElementById('regOk');
+  err.style.display='none'; ok.style.display='none';
+  if(!user||!pass||!pass2){ showAuthMsg('regErr','Please fill all fields.'); return; }
+  if(user.length<3){ showAuthMsg('regErr','Username must be at least 3 characters.'); return; }
+  if(!/^[a-z0-9_]+$/.test(user)){ showAuthMsg('regErr','Letters, numbers, underscore only.'); return; }
+  if(pass.length<4){ showAuthMsg('regErr','Password must be at least 4 characters.'); return; }
+  if(pass!==pass2){ showAuthMsg('regErr','Passwords do not match.'); return; }
+  ok.style.display='block'; ok.textContent='⏳ Creating your account...';
+  try{
+    const vRes=await fetch(gsUrl('Users'));
+    if(vRes.ok){
+      const json=await vRes.json();
+      const rows=(json.values||[]).slice(1);
+      if(rows.find(r=>(r[0]||'').toLowerCase()===user)){
+        ok.style.display='none';
+        showAuthMsg('regErr','❌ Username already taken.');
+        return;
+      }
+    }
+    await fetch(GS_WRITE,{
+      method:'POST', mode:'no-cors',
+      body:JSON.stringify({action:'register', username:user, password:pass})
+    });
+    ok.textContent='✅ Account created! Logging you in...';
+    _currentUser=user;
+    sessionStorage.setItem(AUTH_KEY,user);
+    setTimeout(()=>{
+      document.getElementById('pwGate').style.display='none';
+      showUserBadge(user);
+      autoLoad();
+    },1500);
+  }catch(e){ ok.style.display='none'; showAuthMsg('regErr','❌ Error: '+e.message); }
+}
+
+function doLogout(){
+  sessionStorage.removeItem(AUTH_KEY);
+  _currentUser='';
+  document.getElementById('userBadge').classList.remove('show');
+  document.getElementById('pwGate').style.display='flex';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginErr').style.display='none';
+  document.getElementById('loginOk').style.display='none';
+}
+
+function showAuthMsg(id,msg){
+  const el=document.getElementById(id);
+  el.textContent=msg; el.style.display='block';
+  setTimeout(()=>el.style.display='none',3500);
+}
 
 
 // ── CONSTANTS ─────────────────────────────────
@@ -649,7 +783,7 @@ async function loadDataCSV(){
 // This runs AFTER loadDataCSV so it overrides with your manually updated prices
 async function loadPricesSheet(){
   try{
-    const res = await fetch(gsUrl('Prices'));
+    const res = await fetch(gsUrl(gsTabFor('Prices')));
     if(!res.ok) return;
     const json = await res.json();
     const rows = json.values||[];
@@ -1428,7 +1562,7 @@ async function submitTrade(action){
 
   try{
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ action:'append', tab:'holdings', row: newRow.split(',') }) });
+      body: JSON.stringify({ action:'append', tab:gsTabFor('holdings'), row: newRow.split(',') }) });
 
     try{
       const currentBal = _cashFlow.length>0
@@ -1441,7 +1575,7 @@ async function submitTrade(action){
       const cfRow = [date, currentBal.toFixed(2), newActual.toFixed(2),
         netChange.toFixed(2), 0, action, autoDesc];
       await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-        body: JSON.stringify({ action:'append', tab:'Cashflow', row: cfRow }) });
+        body: JSON.stringify({ action:'append', tab:gsTabFor('Cashflow'), row: cfRow }) });
       const cfObj={}; CF_HDRS.forEach((h,i)=>cfObj[h]=String(cfRow[i]||''));
       _cashFlow.push(cfObj);
       CAPITAL.freeCash=newActual;
@@ -1624,7 +1758,7 @@ function dvClearForm(){
 
 async function loadDividendsCSV(){
   try{
-    const res=await fetch(gsUrl('Dividends'));
+    const res=await fetch(gsUrl(gsTabFor('Dividends')));
     if(!res.ok){ _dividends=[]; renderDividends(); return; }
     const json=await res.json();
     const rows=json.values||[];
@@ -1794,7 +1928,7 @@ async function rewriteDivCSV(msg){
   try{
     const allRows = [DIV_HDRS, ..._dividends.map(r=>DIV_HDRS.map(h=>r[h]||''))];
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ action:'replaceSheet', tab:'Dividends', rows: allRows }) });
+      body: JSON.stringify({ action:'replaceSheet', tab:gsTabFor('Dividends'), rows: allRows }) });
     dvSetStatus('✅ Saved!','#4caf50');
     setTimeout(()=>dvSetStatus('',''),3000);
     renderDividends();
@@ -1806,7 +1940,7 @@ async function saveToDivCSV(newRow, msg){
   try{
     const row = newRow.split(',');
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ action:'append', tab:'Dividends', row }) });
+      body: JSON.stringify({ action:'append', tab:gsTabFor('Dividends'), row }) });
     dvSetStatus('✅ Record saved!','#4caf50');
     setTimeout(()=>dvSetStatus('',''),3000);
     await loadDividendsCSV();
@@ -1931,7 +2065,7 @@ function cfDayCalc(){
 
 async function loadCashFlow(){
   try{
-    const res=await fetch(gsUrl('Cashflow'));
+    const res=await fetch(gsUrl(gsTabFor('Cashflow')));
     if(!res.ok){ _cashFlow=[]; renderCashFlow(); return; }
     const json=await res.json();
     const rows=json.values||[];
@@ -2046,7 +2180,7 @@ async function saveCfEntry(){
   try{
     const row = newRow.split(',');
     await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
-      body: JSON.stringify({ action:'append', tab:'Cashflow', row }) });
+      body: JSON.stringify({ action:'append', tab:gsTabFor('Cashflow'), row }) });
 
     CAPITAL.freeCash=close;
     updateCAPITAL(null,0,0,close);
@@ -2081,7 +2215,7 @@ async function autoLoad(){
 
   // 4. Load holdings and build dashboard
   try{
-    const res=await fetch(gsUrl('holdings'));
+    const res=await fetch(gsUrl(gsTabFor('holdings')));
     if(!res.ok) return;
     const json=await res.json();
     const rows=json.values||[];
@@ -2092,7 +2226,8 @@ async function autoLoad(){
   }catch(e){ console.log('holdings GS:',e.message); }
 }
 
-autoLoad();
+// autoLoad triggered after login/register — not on page load
+if(sessionStorage.getItem(AUTH_KEY)) autoLoad();
 </script>
 
 <!-- BUY/SELL MODAL -->
