@@ -582,7 +582,10 @@ async function gsWrite(action, tab, data){
 const AUTH_KEY = 'psx_user';
 let _currentUser = ''; // logged-in username — prefix for all tab reads/writes
 
-function gsTabFor(base){ return _currentUser + '_' + base; }
+function gsTabFor(base){ 
+  if(isAdmin()) return base; // admin uses original tab names
+  return _currentUser + '_' + base; 
+}
 
 // On page load — restore session
 (function(){
@@ -613,19 +616,22 @@ function applyRoleUI(){
   document.querySelectorAll('.admin-only').forEach(el=>{
     el.style.display = isAdmin() ? '' : 'none';
   });
-  // Set first visible tab as active
-  const firstBtn = document.querySelector('.tb-btn:not([style*="display: none"])');
-  const firstTabName = isAdmin() ? 'action' : 'portfolio';
+  // Clear all active states
   document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tb-btn').forEach(b=>b.classList.remove('active'));
+  // Set correct first tab
+  const firstTabName = isAdmin() ? 'action' : 'portfolio';
   const activeTab = document.getElementById('tab-'+firstTabName);
   if(activeTab) activeTab.classList.add('active');
-  if(firstBtn && !isAdmin()){
-    // activate Portfolio button (second button)
-    const btns = [...document.querySelectorAll('.tb-btn')].filter(b=>b.style.display!=='none');
-    if(btns[0]) btns[0].classList.add('active');
-  } else if(firstBtn){
-    firstBtn.classList.add('active');
+  // Activate correct button
+  const allBtns = [...document.querySelectorAll('.tb-btn')];
+  if(isAdmin()){
+    // First button (Action Plan) for admin
+    if(allBtns[0]) allBtns[0].classList.add('active');
+  } else {
+    // First visible button (Portfolio) for regular users
+    const visibleBtns = allBtns.filter(b=>b.style.display!=='none');
+    if(visibleBtns[0]) visibleBtns[0].classList.add('active');
   }
 }
 
