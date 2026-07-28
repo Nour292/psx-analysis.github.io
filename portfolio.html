@@ -643,9 +643,8 @@ function gsTabFor(base){
   if(saved){
     _currentUser = saved;
     document.getElementById('pwGate').style.display='none';
-    // showUserBadge calls applyRoleUI — but DOM may not be ready yet for tab logic
-    // so defer slightly
-    setTimeout(()=>showUserBadge(saved), 50);
+    // Delay to ensure DOM is fully ready before applying role UI
+    setTimeout(()=>showUserBadge(saved), 200);
   }
 })();
 
@@ -662,22 +661,26 @@ const ADMIN_USER = 'qasim'; // only this user sees Action Plan
 function isAdmin(){ return _currentUser === ADMIN_USER; }
 
 function applyRoleUI(){
+  const admin = isAdmin();
   // Show/hide Action Plan tab based on role
   document.querySelectorAll('.admin-only').forEach(el=>{
-    el.style.display = isAdmin() ? '' : 'none';
+    el.style.display = admin ? '' : 'none';
   });
   // Clear all active states
   document.querySelectorAll('.tp').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tb-btn').forEach(b=>b.classList.remove('active'));
   // Set correct first tab
-  const firstTabName = isAdmin() ? 'action' : 'portfolio';
+  const firstTabName = admin ? 'action' : 'portfolio';
   const activeTab = document.getElementById('tab-'+firstTabName);
   if(activeTab) activeTab.classList.add('active');
   // Activate correct button
   const allBtns = [...document.querySelectorAll('.tb-btn')];
-  if(isAdmin()){
-    // First button (Action Plan) for admin
-    if(allBtns[0]) allBtns[0].classList.add('active');
+  if(admin){
+    // First button (Action Plan) for admin — force display then activate
+    if(allBtns[0]){
+      allBtns[0].style.display = '';
+      allBtns[0].classList.add('active');
+    }
   } else {
     // First visible button (Portfolio) for regular users
     const visibleBtns = allBtns.filter(b=>b.style.display!=='none');
