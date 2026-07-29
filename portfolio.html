@@ -1514,22 +1514,32 @@ function buildPrices(){
 async function savePrices(dateStr){
   const symbols=[...new Set(_holdings.map(h=>h.symbol))].sort();
   const msg=document.getElementById('pricesSaveMsg');
-  const dataRows=[['Symbol','Price','Updated','','','','',dateStr]]; // H1=date for "As of"
+  
+  // Build rows: header in row 1, data from row 2
+  const dataRows=[['Symbol','Price','Updated']]; // header row 1
   let anyPrice=false;
   symbols.forEach(sym=>{
     const val=parseFloat(document.getElementById('price_'+sym)?.value||0);
     if(val>0){
-      dataRows.push([sym,val,dateStr]);
+      dataRows.push([sym, val, dateStr]);
       _prices[sym]=val;
       _priceSource[sym]='sheet';
       anyPrice=true;
     }
   });
+
   if(!anyPrice){
     msg.style.display='block'; msg.style.color='#ef5350';
     msg.textContent='❌ Please enter at least one price.';
     setTimeout(()=>msg.style.display='none',3000); return;
   }
+
+  // Put date in H2 for "As of" badge — extend row 2 with blanks up to col H
+  if(dataRows.length>1){
+    while(dataRows[1].length < 8) dataRows[1].push('');
+    dataRows[1][7] = dateStr; // column H (index 7)
+  }
+
   msg.style.display='block'; msg.style.color='#ffc107'; msg.textContent='⏳ Saving prices...';
   try{
     await fetch(GS_WRITE,{method:'POST',mode:'no-cors',
