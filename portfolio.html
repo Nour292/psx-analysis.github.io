@@ -676,6 +676,12 @@ function isAdmin(){ return _currentUser === ADMIN_USER; }
 
 function applyRoleUI(){
   const admin = isAdmin();
+  // Set correct CAPITAL data based on role
+  if(admin){
+    Object.assign(CAPITAL, CAPITAL_ADMIN);
+  } else {
+    Object.assign(CAPITAL, CAPITAL_USER);
+  }
   // Show/hide Action Plan tab button based on role
   const btnAP = document.getElementById('btnActionPlan');
   if(btnAP) btnAP.style.display = admin ? 'inline-block' : 'none';
@@ -893,13 +899,23 @@ const SECTOR = {
 const EXCLUDE_SEC = ['ENGROH','FCL'];
 
 // ── CAPITAL HISTORY ──────────────────────────
-const CAPITAL = {
+const CAPITAL_ADMIN = {
   started:    'Sep 2021',
   invested:   2690000,
   withdrawn:  3000000,
   freeCash:   0,
   cashAsOf:   ''
 };
+
+const CAPITAL_USER = {
+  started:    new Date().getFullYear().toString(),
+  invested:   0,
+  withdrawn:  0,
+  freeCash:   0,
+  cashAsOf:   ''
+};
+
+let CAPITAL = Object.assign({}, CAPITAL_USER);
 
 let _holdings    = [];
 let _prices      = {}; // symbol → price  (Data tab first, Prices tab overrides)
