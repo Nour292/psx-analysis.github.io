@@ -1811,7 +1811,7 @@ function runSearch(){
       <td style="color:${isBuy?'#ef9a9a':'#a5d6a7'};font-weight:600">
         ${isBuy?'-':'+'}${Math.round(amt).toLocaleString()}
       </td>
-      <td><button onclick="deleteTrade(${gIdx},'${sym}')" style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:5px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer" title="Delete this trade">🗑</button></td>
+      <td><button onclick="deleteTrade(${gIdx},'${sym}')" style="background:#991b1b;color:#fecaca;border:none;border-radius:6px;width:30px;height:26px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#991b1b'" title="Delete this trade"><svg width="13" height="14" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 3.5h11M4.5 3.5V2.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1M5.5 6.5v4M7.5 6.5v4M2 3.5l.7 7.5a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L11 3.5H2z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td>
     </tr>`;
   });
 
@@ -2177,7 +2177,7 @@ function renderDividends(){
       <td style="color:#7a9ab5;white-space:nowrap">${r.PayDate||'—'}</td>
       <td style="white-space:nowrap;display:flex;gap:6px;align-items:center">
         ${!isPaid?`<button class="pay-btn" onclick="markPaid(${i})">✅ Paid</button>`:'<span style="color:#4a6a8a;font-size:12px">Done</span>'}
-        <button onclick="deleteDividend(${i})" style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:5px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer" title="Delete record">🗑</button>
+        <button onclick="deleteDividend(${i})" style="background:#991b1b;color:#fecaca;border:none;border-radius:6px;width:30px;height:26px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#991b1b'" title="Delete record"><svg width="13" height="14" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 3.5h11M4.5 3.5V2.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1M5.5 6.5v4M7.5 6.5v4M2 3.5l.7 7.5a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L11 3.5H2z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </td>
     </tr>`;
   });
@@ -2474,7 +2474,7 @@ function renderCashFlow(){
         ${net>=0?'+':''}${Math.round(Math.abs(net)).toLocaleString()}
       </td>
       <td style="color:#7a9ab5;font-size:12px">${r.Notes||'—'}</td>
-      <td><button onclick="deleteCashFlow(${cfOrigIdx})" style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:5px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer" title="Delete entry">🗑</button></td>
+      <td><button onclick="deleteCashFlow(${cfOrigIdx})" style="background:#991b1b;color:#fecaca;border:none;border-radius:6px;width:30px;height:26px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;flex-shrink:0" onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#991b1b'" title="Delete entry"><svg width="13" height="14" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 3.5h11M4.5 3.5V2.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1M5.5 6.5v4M7.5 6.5v4M2 3.5l.7 7.5a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L11 3.5H2z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td>
     </tr>`;
   });
 
