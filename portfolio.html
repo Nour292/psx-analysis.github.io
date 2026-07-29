@@ -995,7 +995,7 @@ async function loadPricesSheet(){
     let count = 0;
     rows.slice(1).forEach(r=>{
       const sym   = (r[0]||'').trim().toUpperCase();
-      const price = parseFloat(r[2]); // Column C = Current Price
+      const price = parseFloat(r[1]); // Column B = Price
       if(sym && !isNaN(price) && price > 0){
         _prices[sym]      = price;
         _priceSource[sym] = 'sheet';
