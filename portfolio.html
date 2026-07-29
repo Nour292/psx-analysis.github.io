@@ -487,10 +487,14 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
     <!-- LOGIN PANEL -->
     <div class="auth-panel active" id="panelLogin">
-      <input type="text" class="pw-input" id="loginUser" placeholder="Username" maxlength="30"
+      <input type="text" class="pw-input" id="loginUser" placeholder="👤 Username" maxlength="30"
         onkeydown="if(event.key==='Enter') doLogin()">
-      <input type="password" class="pw-input" id="loginPass" placeholder="Password" maxlength="30"
-        onkeydown="if(event.key==='Enter') doLogin()">
+      <div style="position:relative">
+        <input type="password" class="pw-input" id="loginPass" placeholder="🔒 Password" maxlength="30"
+          onkeydown="if(event.key==='Enter') doLogin()" style="padding-right:44px">
+        <button onclick="togglePw('loginPass',this)" type="button"
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#4a6a8a;cursor:pointer;font-size:16px;padding:0">👁</button>
+      </div>
       <button class="pw-btn" onclick="doLogin()">🔓 Login</button>
       <div class="pw-err" id="loginErr"></div>
       <div class="pw-ok"  id="loginOk"></div>
@@ -501,10 +505,18 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
 
       <!-- STEP 1: Registration form -->
       <div id="regStep1">
-        <input type="text" class="pw-input" id="regUser" placeholder="Choose a username" maxlength="30">
-        <input type="password" class="pw-input" id="regPass" placeholder="Choose a password (min 6 chars)" maxlength="30">
-        <input type="password" class="pw-input" id="regPass2" placeholder="Confirm password" maxlength="30">
-        <input type="email" class="pw-input" id="regEmail" placeholder="Email address" maxlength="80">
+        <input type="text" class="pw-input" id="regUser" placeholder="👤 Choose a username" maxlength="30">
+        <div style="position:relative">
+          <input type="password" class="pw-input" id="regPass" placeholder="🔒 Choose a password (min 6 chars)" maxlength="30" style="padding-right:44px">
+          <button onclick="togglePw('regPass',this)" type="button"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#4a6a8a;cursor:pointer;font-size:16px;padding:0">👁</button>
+        </div>
+        <div style="position:relative">
+          <input type="password" class="pw-input" id="regPass2" placeholder="🔒 Confirm password" maxlength="30" style="padding-right:44px">
+          <button onclick="togglePw('regPass2',this)" type="button"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#4a6a8a;cursor:pointer;font-size:16px;padding:0">👁</button>
+        </div>
+        <input type="email" class="pw-input" id="regEmail" placeholder="📧 Email address" maxlength="80">
         <div style="display:flex;gap:6px">
           <select class="pw-input" id="regCountry" style="flex:1.2;margin-bottom:10px">
             <option value="">🌍 Country</option>
@@ -856,6 +868,12 @@ function showAuthMsg(id,msg){
   const el=document.getElementById(id);
   el.textContent=msg; el.style.display='block';
   setTimeout(()=>el.style.display='none',3500);
+}
+
+function togglePw(inputId, btn){
+  const inp=document.getElementById(inputId);
+  if(inp.type==='password'){ inp.type='text'; btn.textContent='🙈'; }
+  else { inp.type='password'; btn.textContent='👁'; }
 }
 
 
