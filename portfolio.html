@@ -496,10 +496,8 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
       <div class="pw-ok"  id="loginOk"></div>
     </div>
 
-    <!-- REGISTER PANEL — Step 1: Fill details -->
+    <!-- REGISTER PANEL -->
     <div class="auth-panel" id="panelRegister">
-
-      <!-- STEP 1: Registration form -->
       <div id="regStep1">
         <input type="text" class="pw-input" id="regUser" placeholder="Choose a username" maxlength="30">
         <input type="password" class="pw-input" id="regPass" placeholder="Choose a password (min 6 chars)" maxlength="30">
@@ -531,32 +529,13 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
           </select>
           <input type="tel" class="pw-input" id="regMobile" placeholder="Mobile number" maxlength="15" style="flex:2;margin-bottom:10px">
         </div>
-        <button class="pw-btn green" onclick="doRegister()">📧 Send OTP to Email</button>
+        <button class="pw-btn green" onclick="doRegister()">✅ Create Account</button>
+        <div style="font-size:11px;color:#4a6a8a;margin-top:10px;line-height:1.5">
+          ✅ Free to join — start tracking your portfolio instantly.
+        </div>
         <div class="pw-err" id="regErr"></div>
         <div class="pw-ok"  id="regOk"></div>
       </div>
-
-      <!-- STEP 2: OTP verification (hidden initially) -->
-      <div id="regStep2" style="display:none">
-        <div style="text-align:center;margin-bottom:16px">
-          <div style="font-size:28px">📬</div>
-          <div style="color:#4fc3f7;font-weight:700;font-size:15px;margin-top:6px">Check your email</div>
-          <div style="color:#7a9ab5;font-size:12px;margin-top:4px">We sent a 6-digit OTP to<br><span id="otpEmailDisplay" style="color:#e0e6ed"></span></div>
-        </div>
-        <input type="text" class="pw-input" id="regOtp" placeholder="Enter 6-digit OTP"
-          maxlength="6" style="text-align:center;font-size:22px;font-weight:700;letter-spacing:8px"
-          onkeydown="if(event.key==='Enter') doVerifyOtp()">
-        <button class="pw-btn green" onclick="doVerifyOtp()">✅ Verify & Create Account</button>
-        <div style="margin-top:10px;text-align:center">
-          <span style="font-size:12px;color:#4a6a8a">Didn't receive it? </span>
-          <button onclick="resendOtp()" style="background:none;border:none;color:#4fc3f7;font-size:12px;cursor:pointer;text-decoration:underline">Resend OTP</button>
-          <span style="font-size:12px;color:#4a6a8a"> | </span>
-          <button onclick="backToRegForm()" style="background:none;border:none;color:#7a9ab5;font-size:12px;cursor:pointer;text-decoration:underline">← Back</button>
-        </div>
-        <div class="pw-err" id="otpErr"></div>
-        <div class="pw-ok"  id="otpOk"></div>
-      </div>
-
     </div>
 
   </div>
@@ -716,11 +695,7 @@ async function doLogin(){
     const match=rows.find(r=>(r[0]||'').toLowerCase()===user&&(r[1]||'')===pass);
     if(match){
       const status=(match[7]||match[3]||'Active');
-      if(status==='Pending'){
-        ok.style.display='none';
-        showAuthMsg('loginErr','⏳ Your email is not verified yet. Please complete registration.');
-        return;
-      }
+      
       if(status!=='Active'){
         ok.style.display='none';
         showAuthMsg('loginErr','❌ Account inactive. Please contact admin.');
@@ -741,9 +716,7 @@ async function doLogin(){
   }catch(e){ ok.style.display='none'; showAuthMsg('loginErr','❌ Error: '+e.message); }
 }
 
-// ── REGISTRATION — Step 1: validate + send OTP ──
-let _pendingReg = {}; // holds form data while waiting for OTP
-
+// ── REGISTRATION — simple pending approval ──────────────────────
 async function doRegister(){
   const user   =(document.getElementById('regUser').value||'').trim().toLowerCase();
   const pass   =(document.getElementById('regPass').value||'').trim();
@@ -753,7 +726,6 @@ async function doRegister(){
   const mobile =(document.getElementById('regMobile').value||'').trim();
   const ok     = document.getElementById('regOk');
 
-  // Validations
   if(!user||!pass||!pass2||!email||!country||!mobile){
     showAuthMsg('regErr','Please fill all fields.'); return; }
   if(user.length<3){
@@ -767,150 +739,36 @@ async function doRegister(){
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
     showAuthMsg('regErr','Please enter a valid email address.'); return; }
   if(!/^\d{7,15}$/.test(mobile)){
-    showAuthMsg('regErr','Mobile: digits only, 7–15 characters.'); return; }
+    showAuthMsg('regErr','Mobile: digits only, 7-15 characters.'); return; }
 
-  ok.style.display='block'; ok.textContent='⏳ Checking details...';
-
+  ok.style.display='block'; ok.textContent='⏳ Submitting registration...';
   try{
-    // Check duplicates in Users sheet
     const vRes=await fetch(gsUrl('Users'));
     if(vRes.ok){
       const json=await vRes.json();
       const rows=(json.values||[]).slice(1);
-      if(rows.find(r=>(r[0]||'').toLowerCase()===user)){
+      const existingUser=rows.find(r=>(r[0]||'').toLowerCase()===user);
+      const existingEmail=rows.find(r=>(r[2]||'').toLowerCase()===email);
+      if(existingUser&&(existingUser[7]||existingUser[3]||'')==='Active'){
         ok.style.display='none'; showAuthMsg('regErr','❌ Username already taken.'); return; }
-      if(rows.find(r=>(r[2]||'').toLowerCase()===email)){
+      if(existingEmail&&(existingEmail[7]||existingEmail[3]||'')==='Active'){
         ok.style.display='none'; showAuthMsg('regErr','❌ Email already registered.'); return; }
     }
-
-    ok.textContent='⏳ Sending OTP to your email...';
-
-    // Send OTP via Apps Script — use readable fetch (no mode:no-cors) so we can catch errors
-    let otpRes;
-    try{
-      otpRes = await fetch(GS_WRITE,{
-        method:'POST',
-        headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({ action:'sendOtp', email, username:user })
-      });
-    }catch(fetchErr){
-      // CORS blocked — fall back to no-cors (email still sends, we just can't read response)
-      await fetch(GS_WRITE,{
-        method:'POST', mode:'no-cors',
-        body:JSON.stringify({ action:'sendOtp', email, username:user })
-      });
-      otpRes = null;
-    }
-
-    // Try to read response if available
-    if(otpRes && otpRes.ok){
-      try{
-        const result = await otpRes.json();
-        if(!result.ok){
-          ok.style.display='none';
-          showAuthMsg('regErr','❌ '+(result.error||'Failed to send OTP. Please try again.'));
-          return;
-        }
-      }catch(e){ /* response not JSON — continue anyway */ }
-    }
-
-    // Store pending registration data
-    _pendingReg = { user, pass, email, mobile, country };
-
-    // Show Step 2
-    document.getElementById('regStep1').style.display='none';
-    document.getElementById('regStep2').style.display='block';
-    document.getElementById('otpEmailDisplay').textContent=email;
-    document.getElementById('regOtp').value='';
-    document.getElementById('regOtp').focus();
-    ok.style.display='none';
-
+    await fetch(GS_WRITE,{
+      method:'POST', mode:'no-cors',
+      body:JSON.stringify({action:'register',username:user,password:pass,email:email,mobile:mobile,country:country,status:'Active'})
+    });
+    ok.textContent='✅ Account created! Logging you in...';
+    _currentUser=user;
+    sessionStorage.setItem(AUTH_KEY,user);
+    setTimeout(()=>{
+      document.getElementById('pwGate').style.display='none';
+      showUserBadge(user);
+      autoLoad();
+    },1500);
   }catch(e){ ok.style.display='none'; showAuthMsg('regErr','❌ Error: '+e.message); }
 }
 
-// ── REGISTRATION — Step 2: verify OTP ───────────
-async function doVerifyOtp(){
-  const otp=(document.getElementById('regOtp').value||'').trim();
-  const ok =document.getElementById('otpOk');
-
-  if(!otp||otp.length!==6||!/^\d{6}$/.test(otp)){
-    showAuthMsg('otpErr','Please enter the 6-digit OTP.'); return; }
-
-  ok.style.display='block'; ok.textContent='⏳ Verifying OTP...';
-
-  try{
-    // Verify OTP + complete registration
-    const res=await fetch(GS_WRITE,{
-      method:'POST',
-      body:JSON.stringify({
-        action:'verifyOtpAndRegister',
-        username : _pendingReg.user,
-        password : _pendingReg.pass,
-        email    : _pendingReg.email,
-        mobile   : _pendingReg.mobile,
-        country  : _pendingReg.country,
-        otp      : otp
-      })
-    });
-
-    // Parse response (no-cors blocks reading — use a GET verify instead)
-    // Since we can't read no-cors response, we use a read-back approach:
-    // Wait 2s then check Users sheet for Active status
-    ok.textContent='⏳ Creating your account...';
-    await new Promise(r=>setTimeout(r,2500));
-
-    const vRes=await fetch(gsUrl('Users'));
-    if(vRes.ok){
-      const json=await vRes.json();
-      const rows=(json.values||[]).slice(1);
-      const match=rows.find(r=>(r[0]||'').toLowerCase()===_pendingReg.user);
-      if(match && (match[7]||match[3]||'')===('Active')){
-        ok.textContent='✅ Account created! Logging you in...';
-        _currentUser=_pendingReg.user;
-        sessionStorage.setItem(AUTH_KEY,_pendingReg.user);
-        _pendingReg={};
-        setTimeout(()=>{
-          document.getElementById('pwGate').style.display='none';
-          showUserBadge(_currentUser);
-          autoLoad();
-        },1000);
-        return;
-      }
-    }
-    // If not Active yet — OTP wrong or expired
-    ok.style.display='none';
-    showAuthMsg('otpErr','❌ Incorrect or expired OTP. Please try again.');
-
-  }catch(e){ ok.style.display='none'; showAuthMsg('otpErr','❌ Error: '+e.message); }
-}
-
-async function resendOtp(){
-  if(!_pendingReg.email){ showAuthMsg('otpErr','Session expired. Please go back.'); return; }
-  const ok = document.getElementById('otpOk');
-  ok.style.display='block'; ok.textContent='⏳ Resending OTP...';
-  try{
-    const res = await fetch(GS_WRITE,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({ action:'sendOtp', email:_pendingReg.email, username:_pendingReg.user })
-    });
-    ok.textContent='✅ OTP resent! Check your email.';
-  }catch(e){
-    await fetch(GS_WRITE,{
-      method:'POST', mode:'no-cors',
-      body:JSON.stringify({ action:'sendOtp', email:_pendingReg.email, username:_pendingReg.user })
-    });
-    ok.textContent='✅ OTP resent! Check your email.';
-  }
-  setTimeout(()=>ok.style.display='none',3000);
-}
-
-function backToRegForm(){
-  document.getElementById('regStep1').style.display='block';
-  document.getElementById('regStep2').style.display='none';
-  document.getElementById('otpErr').style.display='none';
-  document.getElementById('otpOk').style.display='none';
-}
 
 function doLogout(){
   sessionStorage.removeItem(AUTH_KEY);
