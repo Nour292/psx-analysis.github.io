@@ -957,7 +957,7 @@ async function loadDataCSV(){
       const c=l;
       const sym=(c[si]||'').trim(); if(!sym) return;
       const n=i=>parseFloat(c[i])||null;
-      const p=n(pi); // prices from Data tab intentionally ignored — Prices tab Column C is the only price source
+      const p=n(pi); // prices from Data tab intentionally ignored — Prices tab Column B is the only price source
       const ma50d=n(ma50di),ma200d=n(ma200di),rsid=n(rsidi);
       const macdD=n(macddi),macdW=n(macdwi),sigW=n(sigwi);
       const ma50w=n(ma50wi),ma200w=n(ma200wi),h52=n(h52i);
@@ -1295,7 +1295,8 @@ function buildPortfolio(){
   if(hasSheetPrices || hasDataPrices){
     legendHtml=`<div class="price-note" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <span>📡 Price sources:</span>
-      ${hasSheetPrices?'<span class="price-src-badge psb-sheet">🟢 Sheet</span> <span style="font-size:11px;color:#4a6a8a">= Your Prices tab (Column C)</span>':''}
+      ${hasSheetPrices?`<span class="price-src-badge psb-sheet">🟢 Sheet</span> <span style="font-size:11px;color:#4a6a8a">= Your Prices tab (Column B)</span>`:''}
+
       ${hasDataPrices?'<span class="price-src-badge psb-data">🔵 Data</span> <span style="font-size:11px;color:#4a6a8a">= Last TA data update</span>':''}
     </div>`;
   } else {
