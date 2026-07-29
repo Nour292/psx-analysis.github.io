@@ -1061,7 +1061,7 @@ function parseHoldings(text){
       const netAmt = d.buyAmt - d.sellAmt;
       const qty    = Math.round(d.qty);
       const rawAvg = qty>0?netAmt/qty:0;
-      const avg    = parseFloat(Math.max(0, rawAvg).toFixed(2));
+      const avg    = parseFloat(rawAvg.toFixed(2)); // ✅ FIX: keep negative avg (FOC + surplus)
       return {
         symbol:sym,
         qty,
@@ -1766,9 +1766,10 @@ function runSearch(){
       <div class="sc-val">${holdingUnits.toLocaleString()}</div>
       <div class="sc-sub" style="font-size:13px;margin-top:4px">units</div>
       <div style="margin-top:8px;background:#0d47a1;border-radius:6px;padding:6px 10px;
-           font-size:15px;font-weight:800;color:#fff;letter-spacing:.5px">
-        Avg Cost: ${avgCost.toFixed(2)}
+           font-size:15px;font-weight:800;color:${avgCost<0?'#4caf50':'#fff'};letter-spacing:.5px">
+        Avg Cost: ${avgCost.toFixed(2)}${avgCost<0?' ✅ FOC':''}
       </div>
+      <div class="sc-sub" style="margin-top:4px">Net: PKR ${Math.round(netAmt).toLocaleString()}</div>
     </div>
     <div class="sr-card" style="background:${realPL>=0?'#0d1f0d':'#1f0d0d'};
          border:1px solid ${realPL>=0?'#2e7d32':'#b71c1c'}">
@@ -1944,11 +1945,13 @@ function searchHistory(){
     if((r.action||'').toLowerCase()==='buy'){ buyUnits+=u; buyAmt+=u*rt; }
     else{ sellUnits+=u; sellAmt+=u*rt; }
   });
-  const avgBuy  = buyUnits>0?buyAmt/buyUnits:0;
-  const avgSell = sellUnits>0?sellAmt/sellUnits:0;
-  const netUnits= buyUnits-sellUnits;
-  const netCost = buyAmt-sellAmt;
-  const realized= sellAmt - (avgBuy*sellUnits);
+  const avgBuy    = buyUnits>0?buyAmt/buyUnits:0;
+  const avgSell   = sellUnits>0?sellAmt/sellUnits:0;
+  const netUnits  = buyUnits-sellUnits;
+  const netCost   = buyAmt-sellAmt;
+  // ✅ FIX: Avg Cost = (Total Buy Cost - Total Sell Proceeds) / Net Units — can be negative (FOC+surplus)
+  const avgCostH  = netUnits>0 ? netCost/netUnits : 0;
+  const realized  = sellAmt - (avgBuy*sellUnits);
 
   let html=`
   <div style="font-size:22px;font-weight:800;color:#e0e6ed;margin-bottom:14px">
@@ -1974,8 +1977,8 @@ function searchHistory(){
     <div class="hist-card hc-avg">
       <div class="hc-label">Holding Now</div>
       <div class="hc-val">${Math.round(netUnits).toLocaleString()}</div>
-      <div class="hc-sub">Avg cost @ ${avgBuy.toFixed(2)}</div>
-      <div class="hc-sub">Invested PKR ${Math.round(Math.max(netCost,0)).toLocaleString()}</div>
+      <div class="hc-sub">Avg cost @ <b style="color:${avgCostH<0?'#4caf50':'#fff'}">${avgCostH.toFixed(2)}${avgCostH<0?' ✅ FOC':''}</b></div>
+      <div class="hc-sub">Net PKR ${Math.round(netCost).toLocaleString()}</div>
     </div>
   </div>
 
