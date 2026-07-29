@@ -1343,14 +1343,20 @@ function buildPortfolio(){
       ? `<td class="${plpct>=0?'c-green':'c-red'}">${plpct>=0?'+':''}${plpct.toFixed(1)}%</td>`
       : `<td class="c-gray">—</td>`;
 
+    const avgCell = h.avg < 0
+      ? `<td class="c-red bold">${fmtD(h.avg)}</td>`
+      : `<td>${fmtD(h.avg)}</td>`;
+    const invCell = inv < 0
+      ? `<td class="c-red bold">${fmtN(inv)}</td>`
+      : `<td>${fmtN(inv)}</td>`;
     html+=`<tr>
       <td class="c-gray">${i+1}</td>
       <td class="sym">${h.symbol}</td>
       <td>${h.qty.toLocaleString()}</td>
       ${priceCell}
       <td>${srcBadge}</td>
-      <td>${fmtD(h.avg)}</td>
-      <td>${fmtN(inv)}</td>
+      ${avgCell}
+      ${invCell}
       ${worthCell}
       ${plCell}
       ${plpctCell}
