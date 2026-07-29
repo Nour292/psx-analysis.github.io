@@ -593,12 +593,12 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <div class="kpi c5"><div class="kv" id="kPL">—</div><div class="kl">Unrealised P/L</div></div>
   <div class="kpi c2"><div class="kv" id="kDivIncome">—</div><div class="kl">Annual Dividend</div></div>
   <div class="kpi c6"><div class="kv" id="kFreeCash">—</div><div class="kl">Free Cash</div></div>
-  <div class="kpi c4"><div class="kv" id="kProgress">—</div><div class="kl">To PKR 1M Target</div></div>
+  <div class="kpi c4"><div class="kv" id="kProgress">—</div><div class="kl" id="kProgressLbl">To Target</div></div>
 </div>
 
 <!-- PROGRESS -->
 <div class="pw">
-  <div class="pl">Dividend Income Progress → PKR 1,000,000 / year</div>
+  <div class="pl" id="divProgressLbl">Dividend Income Progress → PKR 0 / year</div>
   <div class="pb"><div class="pf" id="progFill" style="width:0%"><span class="pp" id="progPct"></span></div></div>
 </div>
 
@@ -904,7 +904,8 @@ const CAPITAL_ADMIN = {
   invested:   2690000,
   withdrawn:  3000000,
   freeCash:   0,
-  cashAsOf:   ''
+  cashAsOf:   '',
+  divTarget:  1000000
 };
 
 const CAPITAL_USER = {
@@ -912,7 +913,8 @@ const CAPITAL_USER = {
   invested:   0,
   withdrawn:  0,
   freeCash:   0,
-  cashAsOf:   ''
+  cashAsOf:   '',
+  divTarget:  100000
 };
 
 let CAPITAL = Object.assign({}, CAPITAL_USER);
@@ -1076,11 +1078,18 @@ function parseHoldings(text){
 function buildAll(){
   if(!_holdings.length) return;
 
+  // Update dynamic target labels
+  const tgt = CAPITAL.divTarget;
+  const lbl = document.getElementById('kProgressLbl');
+  const plbl = document.getElementById('divProgressLbl');
+  if(lbl)  lbl.textContent  = 'To PKR '+fmtN(tgt)+' Target';
+  if(plbl) plbl.textContent = 'Dividend Income Progress → PKR '+fmtN(tgt)+' / year';
+
   const totalInv  =_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
   const totalDiv  =_holdings.reduce((s,h)=>s+h.qty*h.dps,0);
   const totalWorth=_holdings.reduce((s,h)=>s+h.qty*(h.price||h.avg),0);
   const totalPL   =totalWorth-totalInv;
-  const pct       =Math.min((totalDiv/1000000)*100,100);
+  const pct       =Math.min((totalDiv/CAPITAL.divTarget)*100,100);
 
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set('kInvested','PKR '+fmtN(totalInv));
@@ -1124,7 +1133,7 @@ function buildAction(){
   };
 
   const totalAnnualDiv = _holdings.reduce((s,h)=>s+h.qty*h.dps, 0);
-  const divGap         = Math.max(0, 1000000 - totalAnnualDiv);
+  const divGap         = Math.max(0, CAPITAL.divTarget - totalAnnualDiv);
 
   const rows = _holdings.map(h=>{
     const price    = h.price || h.avg || 0;
@@ -1213,7 +1222,7 @@ function buildAction(){
       <div style="font-size:20px;font-weight:800;color:#4caf50">PKR ${fmtN(totalAnnualDiv)}</div>
     </div>
     <div style="background:#1a1500;border:1px solid #f57f17;border-radius:8px;padding:12px 16px;text-align:center">
-      <div style="font-size:11px;color:#7a9ab5;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Gap to PKR 1M</div>
+      <div style="font-size:11px;color:#7a9ab5;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Gap to Target</div>
       <div style="font-size:20px;font-weight:800;color:#ffc107">PKR ${fmtN(divGap)}</div>
     </div>
     <div style="background:#051525;border:1px solid #1565c0;border-radius:8px;padding:12px 16px;text-align:center">
@@ -1398,8 +1407,8 @@ function buildDividend(){
   <div class="div-prog">
     <div class="dp-row">
       <span class="c-green">Earned: PKR ${fmtN(total)}</span>
-      <span class="c-gold">Gap: PKR ${fmtN(Math.max(0,1000000-total))}</span>
-      <span style="color:#ff9800">Target: PKR 1,000,000</span>
+      <span class="c-gold">Gap: PKR ${fmtN(Math.max(0,CAPITAL.divTarget-total))}</span>
+      <span style="color:#ff9800">Target: PKR '+fmtN(CAPITAL.divTarget)+'</span>
     </div>
     <div class="pb"><div class="pf" style="width:${Math.min(total/10000,100)}%">
       <span class="pp">${(total/10000).toFixed(1)}%</span>
@@ -1538,8 +1547,8 @@ function buildCapital(){
           <div style="font-size:13px;color:#7a9ab5;margin-top:4px">Annual dividend income</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:15px;font-weight:700;color:#ffc107">Gap: PKR ${fmtN(Math.max(0,1000000-annualDiv))}</div>
-          <div style="font-size:13px;color:#7a9ab5">to reach PKR 1,000,000 target</div>
+          <div style="font-size:15px;font-weight:700;color:#ffc107">Gap: PKR ${fmtN(Math.max(0,CAPITAL.divTarget-annualDiv))}</div>
+          <div style="font-size:13px;color:#7a9ab5">to reach PKR '+fmtN(CAPITAL.divTarget)+' target</div>
         </div>
       </div>
       <div style="margin-top:12px;background:#0f1923;border-radius:20px;height:18px;overflow:hidden;border:1px solid #2e4060">
