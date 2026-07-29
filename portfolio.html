@@ -1002,15 +1002,15 @@ async function loadPricesSheet(){
         count++;
       }
     });
-    // Read date from H2 (first data row, column index 7)
+    // Read date from col C (Updated) of first data row
     if(count > 0){
-      const h2val = (rows[1][7]||'').toString().trim();
+      const h2val = (rows[1][2]||'').toString().trim();
       if(h2val){
         document.getElementById('asofBadge').style.display='inline-block';
         document.getElementById('asofVal').textContent = h2val;
       }
     }
-    console.log('Prices tab loaded: '+count+' prices. As of: '+(rows[1][7]||''));
+    console.log('Prices tab loaded: '+count+' prices. As of: '+(rows[1][2]||''));
   }catch(e){
     console.log('Prices tab not loaded:', e.message);
   }
@@ -1515,7 +1515,7 @@ async function savePrices(dateStr){
   const symbols=[...new Set(_holdings.map(h=>h.symbol))].sort();
   const msg=document.getElementById('pricesSaveMsg');
   
-  // Build rows: header in row 1, data from row 2
+  // Build rows: header + data — all 3 columns only
   const dataRows=[['Symbol','Price','Updated']]; // header row 1
   let anyPrice=false;
   symbols.forEach(sym=>{
@@ -1532,12 +1532,6 @@ async function savePrices(dateStr){
     msg.style.display='block'; msg.style.color='#ef5350';
     msg.textContent='❌ Please enter at least one price.';
     setTimeout(()=>msg.style.display='none',3000); return;
-  }
-
-  // Put date in H2 for "As of" badge — extend row 2 with blanks up to col H
-  if(dataRows.length>1){
-    while(dataRows[1].length < 8) dataRows[1].push('');
-    dataRows[1][7] = dateStr; // column H (index 7)
   }
 
   msg.style.display='block'; msg.style.color='#ffc107'; msg.textContent='⏳ Saving prices...';
