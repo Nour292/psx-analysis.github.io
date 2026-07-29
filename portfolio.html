@@ -1791,7 +1791,7 @@ function runSearch(){
   <table class="sr-tbl">
     <tr>
       <th>#</th><th>Date</th><th>Action</th>
-      <th>Units</th><th>Rate</th><th>Amount</th>
+      <th>Units</th><th>Rate</th><th>Amount</th><th>Del</th>
     </tr>`;
 
   trades.forEach((r,i)=>{
@@ -1801,6 +1801,7 @@ function runSearch(){
     const isBuy= (r.action||'').toLowerCase()==='buy';
     const cls  = isBuy?'buy-tr':'sell-tr';
     const aclr = isBuy?'#4caf50':'#ef5350';
+    const gIdx = _allTrades.findIndex(t=>t===r);
     html+=`<tr class="${cls}">
       <td class="c-gray">${i+1}</td>
       <td style="color:#a0c4e8;white-space:nowrap">${r.date}</td>
@@ -1810,6 +1811,7 @@ function runSearch(){
       <td style="color:${isBuy?'#ef9a9a':'#a5d6a7'};font-weight:600">
         ${isBuy?'-':'+'}${Math.round(amt).toLocaleString()}
       </td>
+      <td><button onclick="deleteTrade(${gIdx},'${sym}')" style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:5px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer" title="Delete this trade">🗑</button></td>
     </tr>`;
   });
 
@@ -2173,8 +2175,10 @@ function renderDividends(){
         <span class="${isPaid?'badge-paid':'badge-wait'}">${isPaid?'✅ Paid':'⏳ Waiting'}</span>
       </td>
       <td style="color:#7a9ab5;white-space:nowrap">${r.PayDate||'—'}</td>
-      <td>${!isPaid?`<button class="pay-btn" onclick="markPaid(${i})">✅ Mark Paid</button>`:
-        '<span style="color:#4a6a8a;font-size:12px">Done</span>'}</td>
+      <td style="white-space:nowrap;display:flex;gap:6px;align-items:center">
+        ${!isPaid?`<button class="pay-btn" onclick="markPaid(${i})">✅ Paid</button>`:'<span style="color:#4a6a8a;font-size:12px">Done</span>'}
+        <button onclick="deleteDividend(${i})" style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:5px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer" title="Delete record">🗑</button>
+      </td>
     </tr>`;
   });
 
@@ -2448,7 +2452,7 @@ function renderCashFlow(){
     <tr>
       <th>#</th><th>Date</th><th>Type</th>
       <th>Opening Cash</th><th>Closing Cash</th>
-      <th>Net Change</th><th>Notes</th>
+      <th>Net Change</th><th>Notes</th><th>Del</th>
     </tr>`;
 
   sorted.forEach((r,i)=>{
@@ -2457,6 +2461,7 @@ function renderCashFlow(){
     const cls  = typeCls[r.Type]||'';
     const netClr=net>=0?'#a5d6a7':'#ef9a9a';
 
+    const cfOrigIdx = _cashFlow.length - 1 - i;
     html+=`<tr class="${cls}">
       <td class="c-gray">${sorted.length-i}</td>
       <td style="color:#a0c4e8;white-space:nowrap;font-weight:600">${r.Date}</td>
@@ -2469,6 +2474,7 @@ function renderCashFlow(){
         ${net>=0?'+':''}${Math.round(Math.abs(net)).toLocaleString()}
       </td>
       <td style="color:#7a9ab5;font-size:12px">${r.Notes||'—'}</td>
+      <td><button onclick="deleteCashFlow(${cfOrigIdx})" style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:5px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer" title="Delete entry">🗑</button></td>
     </tr>`;
   });
 
@@ -2522,6 +2528,68 @@ function cfSetStatus(msg,color){
 
 
 // ══════════════════════════════════════════════
+// ── DELETE TRADE (holdings tab) ─────────────────────────────
+async function deleteTrade(idx, sym){
+  if(!confirm('Delete this trade entry?\nThis cannot be undone.')) return;
+  const filtered = _allTrades.filter((_,i)=>i!==idx);
+  const HDRS = ['Symbol','Date','Action','Units','Rate'];
+  const rows  = [HDRS, ...filtered.map(r=>[r.symbol,r.date,r.action,r.units,r.rate])];
+  try{
+    const res = await fetch(GS_WRITE,{method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'replaceSheet',tab:gsTabFor('holdings'),rows})});
+    const result = await res.json();
+    if(!result.ok){ alert('Delete failed: '+(result.error||'unknown error')); return; }
+    _allTrades = filtered;
+    runSearch();
+    autoLoad();
+  }catch(e){ alert('Error: '+e.message); }
+}
+
+// ── DELETE DIVIDEND ───────────────────────────────────────────
+async function deleteDividend(sortedIdx){
+  if(!confirm('Delete this dividend record?\nThis cannot be undone.')) return;
+  const sorted=[..._dividends].sort((a,b)=>{
+    if(a.Status==='Waiting'&&b.Status!=='Waiting') return -1;
+    if(b.Status==='Waiting'&&a.Status!=='Waiting') return 1;
+    return (b.XDate||'').localeCompare(a.XDate||'');
+  });
+  const toDelete = sorted[sortedIdx];
+  if(!toDelete){ alert('Record not found.'); return; }
+  _dividends = _dividends.filter(r=>r!==toDelete);
+  const allRows = [DIV_HDRS, ..._dividends.map(r=>DIV_HDRS.map(h=>r[h]||''))];
+  try{
+    const res = await fetch(GS_WRITE,{method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'replaceSheet',tab:gsTabFor('Dividends'),rows:allRows})});
+    const result = await res.json();
+    if(!result.ok){ alert('Delete failed: '+(result.error||'unknown error')); return; }
+    renderDividends();
+  }catch(e){ alert('Error: '+e.message); }
+}
+
+// ── DELETE CASH FLOW ENTRY ────────────────────────────────────
+async function deleteCashFlow(origIdx){
+  if(!confirm('Delete this cash flow entry?\nThis cannot be undone.')) return;
+  const entry = _cashFlow[origIdx];
+  if(!entry){ alert('Entry not found.'); return; }
+  _cashFlow = _cashFlow.filter((_,i)=>i!==origIdx);
+  const allRows = [CF_HDRS, ..._cashFlow.map(r=>CF_HDRS.map(h=>r[h]||''))];
+  try{
+    const res = await fetch(GS_WRITE,{method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'replaceSheet',tab:gsTabFor('Cashflow'),rows:allRows})});
+    const result = await res.json();
+    if(!result.ok){ alert('Delete failed: '+(result.error||'unknown error')); return; }
+    if(_cashFlow.length>0){
+      CAPITAL.freeCash=parseFloat(_cashFlow[_cashFlow.length-1].ClosingCash||0);
+      const el=document.getElementById('kFreeCash');
+      if(el) el.textContent='PKR '+Math.round(CAPITAL.freeCash).toLocaleString();
+    }
+    renderCashFlow();
+  }catch(e){ alert('Error: '+e.message); }
+}
+
 //  AUTO LOAD — Data tab first, then Prices tab
 //  override, then Holdings
 // ══════════════════════════════════════════════
