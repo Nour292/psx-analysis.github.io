@@ -758,6 +758,19 @@ async function doRegister(){
       method:'POST', mode:'no-cors',
       body:JSON.stringify({action:'register',username:user,password:pass,email:email,mobile:mobile,country:country,status:'Active'})
     });
+    ok.textContent='⏳ Setting up your account...';
+    // Wait for Apps Script to save, then verify
+    await new Promise(r=>setTimeout(r,3000));
+    const chk=await fetch(gsUrl('Users'));
+    if(chk.ok){
+      const cjson=await chk.json();
+      const crow=(cjson.values||[]).slice(1).find(r=>(r[0]||'').toLowerCase()===user);
+      if(!crow){
+        ok.style.display='none';
+        showAuthMsg('regErr','❌ Registration failed. Please try again.');
+        return;
+      }
+    }
     ok.textContent='✅ Account created! Logging you in...';
     _currentUser=user;
     sessionStorage.setItem(AUTH_KEY,user);
@@ -765,7 +778,7 @@ async function doRegister(){
       document.getElementById('pwGate').style.display='none';
       showUserBadge(user);
       autoLoad();
-    },1500);
+    },1000);
   }catch(e){ ok.style.display='none'; showAuthMsg('regErr','❌ Error: '+e.message); }
 }
 
