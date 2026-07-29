@@ -1542,8 +1542,17 @@ async function savePrices(dateStr){
 
   msg.style.display='block'; msg.style.color='#ffc107'; msg.textContent='⏳ Saving prices...';
   try{
-    await fetch(GS_WRITE,{method:'POST',mode:'no-cors',
-      body:JSON.stringify({action:'replaceSheet',tab:gsTabFor('Prices'),rows:dataRows})});
+    const res = await fetch(GS_WRITE,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'replaceSheet',tab:gsTabFor('Prices'),rows:dataRows})
+    });
+    const result = await res.json();
+    if(!result.ok){ 
+      msg.style.color='#ef5350'; 
+      msg.textContent='❌ '+(result.error||'Save failed.'); 
+      return; 
+    }
     msg.style.color='#4caf50'; msg.textContent='✅ Prices saved! Refreshing portfolio...';
     const asofEl=document.getElementById('asofVal');
     const asofBadge=document.getElementById('asofBadge');
@@ -1870,7 +1879,7 @@ async function submitTrade(action){
   setStatus('⏳ Saving to Google Sheets...','#ffc107');
 
   try{
-    await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+    await fetch(GS_WRITE, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'append', tab:gsTabFor('holdings'), row: newRow.split(',') }) });
 
     try{
@@ -1883,7 +1892,7 @@ async function submitTrade(action){
       const autoDesc   = `${action} ${units} ${sym} @ ${rate}`;
       const cfRow = [date, currentBal.toFixed(2), newActual.toFixed(2),
         netChange.toFixed(2), 0, action, autoDesc];
-      await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+      await fetch(GS_WRITE, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
         body: JSON.stringify({ action:'append', tab:gsTabFor('Cashflow'), row: cfRow }) });
       const cfObj={}; CF_HDRS.forEach((h,i)=>cfObj[h]=String(cfRow[i]||''));
       _cashFlow.push(cfObj);
@@ -2236,7 +2245,7 @@ async function rewriteDivCSV(msg){
   dvSetStatus('⏳ Saving to Google Sheets...','#ffc107');
   try{
     const allRows = [DIV_HDRS, ..._dividends.map(r=>DIV_HDRS.map(h=>r[h]||''))];
-    await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+    await fetch(GS_WRITE, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'replaceSheet', tab:gsTabFor('Dividends'), rows: allRows }) });
     dvSetStatus('✅ Saved!','#4caf50');
     setTimeout(()=>dvSetStatus('',''),3000);
@@ -2248,7 +2257,7 @@ async function saveToDivCSV(newRow, msg){
   dvSetStatus('⏳ Saving to Google Sheets...','#ffc107');
   try{
     const row = newRow.split(',');
-    await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+    await fetch(GS_WRITE, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'append', tab:gsTabFor('Dividends'), row }) });
     dvSetStatus('✅ Record saved!','#4caf50');
     setTimeout(()=>dvSetStatus('',''),3000);
@@ -2488,7 +2497,7 @@ async function saveCfEntry(){
   cfSetStatus('⏳ Saving to Google Sheets...','#ffc107');
   try{
     const row = newRow.split(',');
-    await fetch(GS_WRITE, { method:'POST', mode:'no-cors',
+    await fetch(GS_WRITE, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'append', tab:gsTabFor('Cashflow'), row }) });
 
     CAPITAL.freeCash=close;
