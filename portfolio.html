@@ -1436,34 +1436,59 @@ function buildDividend(){
 // ── SECTOR BALANCE ────────────────────────────
 function buildSector(){
   const map={};
-  const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
+  const totalInv=_holdings.reduce((s,h)=>s+Math.max(0,h.qty*h.avg),0);
   _holdings.filter(h=>!EXCLUDE_SEC.includes(h.symbol)).forEach(h=>{
-    map[h.sector]=(map[h.sector]||0)+h.qty*h.avg;
+    map[h.sector]=(map[h.sector]||0)+Math.max(0,h.qty*h.avg);
   });
   const sectors=Object.entries(map)
     .map(([sec,inv])=>({sec,inv,pct:totalInv>0?(inv/totalInv)*100:0}))
     .sort((a,b)=>b.pct-a.pct);
 
+  // Bar scale: 100% bar width = 100% allocation (each % of allocation = 1% of bar width)
+  // Target line at 20% of bar
+  const TARGET = 20; // %
+
   let html='<div class="sec-wrap">';
   sectors.forEach(({sec,inv,pct})=>{
-    const over=pct>22,under=pct<18;
-    const cls=over?'sf-over':under?'sf-under':'sf-ok';
-    const flag=over?'🔴 Over':under?'🟡 Under':'✅ OK';
-    const fc=over?'#ef5350':under?'#ffc107':'#4caf50';
+    const over  = pct > 22;
+    const under = pct < 18;
+    const flag  = over ? '🔴 Over' : under ? '🟡 Under' : '✅ OK';
+    const fc    = over ? '#ef5350' : under ? '#ffc107' : '#4caf50';
+
+    // Zone widths (bar is 100% wide = 100% allocation scale)
+    const greenW = Math.min(pct, TARGET);          // green: 0 → min(actual, 20%)
+    const redW   = pct > TARGET ? pct - TARGET : 0; // red:   20% → actual (only if over)
+    const totalBarW = Math.min(pct, 100);           // total filled portion
+
+    // Label position: show % inside whichever zone is wider, or after the bar
+    const labelInBar = pct >= 3;
+
     html+=`<div class="sec-row">
       <div class="sec-lbl">${sec}</div>
-      <div class="sec-bar">
-        <div class="sec-fill ${cls}" style="width:${Math.min(pct*4,100)}%">${pct.toFixed(1)}%</div>
-        <div class="sec-tgt" style="left:${Math.min(80,100)}%"></div>
+      <div class="sec-bar" style="position:relative;background:#0f1923;border-radius:6px;height:28px;overflow:hidden;border:1px solid #2e4060">
+        <!-- Green zone: 0 → min(actual,20%) -->
+        <div style="position:absolute;left:0;top:0;bottom:0;width:${greenW}%;background:#1b5e20;border-radius:${redW>0?'6px 0 0 6px':'6px'}"></div>
+        <!-- Red zone: 20% → actual% (only when over target) -->
+        ${redW>0?`<div style="position:absolute;left:${TARGET}%;top:0;bottom:0;width:${Math.min(redW,100-TARGET)}%;background:#b71c1c;border-radius:0 6px 6px 0"></div>`:''}
+        <!-- Target line at 20% -->
+        <div style="position:absolute;left:${TARGET}%;top:0;bottom:0;width:2px;background:#ffc107;opacity:.9;z-index:2"></div>
+        <!-- Percentage label -->
+        <div style="position:absolute;left:0;top:0;bottom:0;right:0;display:flex;align-items:center;padding-left:${Math.max(totalBarW+0.5,1)}%;z-index:3">
+          <span style="font-size:12px;font-weight:700;color:${over?'#fca5a5':under?'#fde68a':'#a7f3d0'};white-space:nowrap;padding-left:4px">${pct.toFixed(1)}%</span>
+        </div>
       </div>
-      <div class="sec-flag" style="color:${fc}">${flag}</div>
+      <div class="sec-flag" style="color:${fc};min-width:90px">${flag}</div>
       <div class="sec-amt">PKR ${fmtN(inv)}</div>
     </div>`;
   });
-  html+=`<div style="font-size:12px;color:#7a9ab5;margin-top:12px;padding:10px 14px;
-    background:#1a2535;border-radius:6px;border-left:3px solid #ffc107">
-    🎯 Target 20% per sector &nbsp;·&nbsp; 🔴 Over >22% &nbsp;·&nbsp; 🟡 Under <18%
-    &nbsp;·&nbsp; ENGROH &amp; FCL excluded
+
+  html+=`<div style="font-size:12px;color:#7a9ab5;margin-top:14px;padding:10px 14px;
+    background:#1a2535;border-radius:6px;border-left:3px solid #ffc107;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+    <span>🎯 Target 20% per sector</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:12px;height:12px;background:#1b5e20;border-radius:2px"></span> Within target</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:12px;height:12px;background:#b71c1c;border-radius:2px"></span> Over 22%</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:2px;height:12px;background:#ffc107"></span> 20% target line</span>
+    <span style="color:#4a6a8a">ENGROH &amp; FCL excluded</span>
   </div></div>`;
 
   document.getElementById('tab-sector').innerHTML=html;
