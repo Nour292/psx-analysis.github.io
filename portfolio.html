@@ -1423,7 +1423,7 @@ function buildDividend(){
     <div class="dp-row">
       <span class="c-green">Earned: PKR ${fmtN(total)}</span>
       <span class="c-gold">Gap: PKR ${fmtN(Math.max(0,CAPITAL.divTarget-total))}</span>
-      <span style="color:#ff9800">Target: PKR '+fmtN(CAPITAL.divTarget)+'</span>
+      <span style="color:#ff9800">Target: PKR ${fmtN(CAPITAL.divTarget)}</span>
     </div>
     <div class="pb"><div class="pf" style="width:${Math.min(total/10000,100)}%">
       <span class="pp">${(total/10000).toFixed(1)}%</span>
@@ -1661,7 +1661,7 @@ function buildCapital(){
         </div>
         <div style="text-align:right">
           <div style="font-size:15px;font-weight:700;color:#ffc107">Gap: PKR ${fmtN(Math.max(0,CAPITAL.divTarget-annualDiv))}</div>
-          <div style="font-size:13px;color:#7a9ab5">to reach PKR '+fmtN(CAPITAL.divTarget)+' target</div>
+          <div style="font-size:13px;color:#7a9ab5">to reach PKR ${fmtN(CAPITAL.divTarget)} target</div>
         </div>
       </div>
       <div style="margin-top:12px;background:#0f1923;border-radius:20px;height:18px;overflow:hidden;border:1px solid #2e4060">
