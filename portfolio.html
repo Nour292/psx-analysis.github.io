@@ -592,6 +592,7 @@ body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed
   <div class="kpi c3"><div class="kv" id="kWorth">—</div><div class="kl">Portfolio Worth</div></div>
   <div class="kpi c5"><div class="kv" id="kPL">—</div><div class="kl">Unrealised P/L</div></div>
   <div class="kpi c2"><div class="kv" id="kDivIncome">—</div><div class="kl">Annual Dividend</div></div>
+  <div class="kpi" style="border:1px solid #2e4060"><div class="kv" id="kDivReceivable" style="color:#a78bfa">—</div><div class="kl">Dividends Receivable</div></div>
   <div class="kpi c6"><div class="kv" id="kFreeCash">—</div><div class="kl">Free Cash</div></div>
   <div class="kpi c4"><div class="kv" id="kProgress">—</div><div class="kl" id="kProgressLbl">To Target</div></div>
 </div>
@@ -907,7 +908,7 @@ const CAPITAL_ADMIN = {
   withdrawn:  3000000,
   freeCash:   0,
   cashAsOf:   '',
-  divTarget:  1000000
+  divTarget:  500000
 };
 
 const CAPITAL_USER = {
@@ -916,7 +917,7 @@ const CAPITAL_USER = {
   withdrawn:  0,
   freeCash:   0,
   cashAsOf:   '',
-  divTarget:  100000
+  divTarget:  50000
 };
 
 let CAPITAL = Object.assign({}, CAPITAL_USER);
@@ -1099,6 +1100,9 @@ function buildAll(){
   set('kDivIncome','PKR '+fmtN(totalDiv));
   set('kWorth','PKR '+fmtN(totalWorth));
   set('kPL',(totalPL>=0?'+':'')+fmtN(totalPL));
+  // Dividends receivable = sum of Waiting net amounts
+  const totalReceivable = _dividends.filter(d=>(d.Status||'').toLowerCase()!=='paid').reduce((s,d)=>s+parseFloat(d.NetAmount||0),0);
+  set('kDivReceivable', totalReceivable>0 ? 'PKR '+fmtN(totalReceivable) : '—');
   set('kFreeCash','PKR '+fmtN(CAPITAL.freeCash));
   set('kProgress',pct.toFixed(1)+'%');
   document.getElementById('kPL').className='kv '+(totalPL>=0?'c-green':'c-red');
@@ -1122,7 +1126,7 @@ function showErr(id,e){
 }
 
 // ── ACTION PLAN — Dividend Accumulation Logic ─
-// Goal: PKR 1,000,000/year dividend income
+// Goal: PKR 500,000/year dividend income
 // Rules: YoC, price vs avg cost, free-of-cost status
 function buildAction(){
 
@@ -2097,6 +2101,11 @@ async function loadDividendsCSV(){
   }catch(e){ _dividends=[]; renderDividends(); }
 }
 
+function updateReceivableKPI(){
+  const total = _dividends.filter(d=>(d.Status||'').toLowerCase()!=='paid').reduce((s,d)=>s+parseFloat(d.NetAmount||0),0);
+  const el = document.getElementById('kDivReceivable');
+  if(el) el.textContent = total>0 ? 'PKR '+Math.round(total).toLocaleString() : '—';
+}
 function renderDividends(){
   const sorted=[..._dividends].sort((a,b)=>{
     if(a.Status==='Waiting'&&b.Status!=='Waiting') return -1;
@@ -2202,6 +2211,7 @@ function renderDividends(){
   </table></div>`;
 
   document.getElementById('dvTableWrap').innerHTML=html;
+  updateReceivableKPI();
 }
 
 function showDvForm(){
