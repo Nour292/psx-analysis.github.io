@@ -4,443 +4,770 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PSX Technical Analysis</title>
-<link rel="icon" type="image/svg+xml" href="favicon-ta.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════════════
-   BASE
-═══════════════════════════════════════════════ */
-*{ box-sizing:border-box; margin:0; padding:0; }
-body{ font-family:'Segoe UI',Arial,sans-serif; background:#0f1923; color:#e0e6ed; min-height:100vh; }
+/* ═══════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════ */
+:root{
+  --bg:        #070C18;
+  --surface:   #0D1424;
+  --surface2:  #131D30;
+  --border:    #1E2D44;
+  --border2:   #26395A;
+  --text:      #E2E8F4;
+  --text2:     #8A9BBF;
+  --text3:     #4A5A7A;
+  --accent:    #38BDF8;
+  --accent-dim:#0C3A52;
+  --emerald:   #10B981;
+  --emerald-dim:#062B1C;
+  --rose:      #F43F5E;
+  --rose-dim:  #2B0A14;
+  --amber:     #F59E0B;
+  --amber-dim: #2B1F04;
+  --orange:    #FB923C;
+  --orange-dim:#2B1304;
+  --slate:     #64748B;
+  --radius:    8px;
+  --radius-sm: 5px;
+  --font:      'Inter', sans-serif;
+  --mono:      'DM Mono', monospace;
+  --sidebar-w: 220px;
+  --header-h:  52px;
+}
 
-/* ═══════════════════════════════════════════════
-   PAGE SYSTEM — only one page visible at a time
-═══════════════════════════════════════════════ */
-.page{ display:none; min-height:100vh; }
+/* ── LIGHT MODE ── */
+:root.light{
+  --bg:        #F0F4F8;
+  --surface:   #FFFFFF;
+  --surface2:  #F1F5F9;
+  --border:    #DDE3ED;
+  --border2:   #C4CFDF;
+  --text:      #0F172A;
+  --text2:     #475569;
+  --text3:     #94A3B8;
+  --accent:    #0284C7;
+  --accent-dim:#E0F2FE;
+  --emerald:   #059669;
+  --emerald-dim:#ECFDF5;
+  --rose:      #E11D48;
+  --rose-dim:  #FFF1F2;
+  --amber:     #D97706;
+  --amber-dim: #FFFBEB;
+  --orange:    #EA580C;
+  --orange-dim:#FFF7ED;
+  --slate:     #64748B;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+/* ═══════════════════════════════════════════
+   LAYOUT SHELL
+═══════════════════════════════════════════ */
+.shell{ display:flex; min-height:100vh; }
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar-w); background:var(--surface); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh;
+  z-index:100; flex-shrink:0;
+}
+.sidebar-logo{
+  padding:18px 20px 14px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+}
+.logo-icon{ width:28px; height:28px; background:var(--accent); border-radius:6px;
+  display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+.logo-text{ font-size:14px; font-weight:700; color:var(--text); letter-spacing:.3px; }
+.logo-sub{ font-size:10px; color:var(--text3); margin-top:1px; }
+
+.sidebar-nav{ flex:1; padding:12px 10px; display:flex; flex-direction:column; gap:2px; overflow-y:auto; }
+.nav-item{
+  display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--radius-sm);
+  font-size:13px; font-weight:500; color:var(--text2); cursor:pointer;
+  border:none; background:transparent; width:100%; text-align:left;
+  transition:background .12s, color .12s;
+}
+.nav-item:hover{ background:var(--surface2); color:var(--text); }
+.nav-item.active{ background:var(--accent-dim); color:var(--accent); }
+.nav-icon{ font-size:15px; flex-shrink:0; width:18px; text-align:center; }
+.nav-divider{ height:1px; background:var(--border); margin:8px 10px; }
+
+.sidebar-footer{
+  padding:12px 10px; border-top:1px solid var(--border);
+}
+.footer-btn{
+  display:flex; align-items:center; gap:9px; padding:9px 12px; border-radius:var(--radius-sm);
+  font-size:12px; font-weight:500; color:var(--text2); cursor:pointer;
+  border:none; background:transparent; width:100%; text-align:left;
+  transition:background .12s, color .12s;
+}
+.footer-btn:hover{ background:var(--surface2); color:var(--text); }
+
+/* MAIN CONTENT */
+.main{
+  margin-left:var(--sidebar-w); flex:1; min-height:100vh;
+  display:flex; flex-direction:column;
+}
+.topbar{
+  height:var(--header-h); background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 24px; gap:12px; flex-shrink:0; position:sticky; top:0; z-index:50;
+}
+.topbar-title{ font-size:14px; font-weight:600; color:var(--text); flex:1; }
+.topbar-date{ font-size:12px; color:var(--text3); font-family:var(--mono); }
+.topbar-badge{
+  display:none; font-size:11px; color:var(--accent); background:var(--accent-dim);
+  padding:3px 10px; border-radius:20px; font-family:var(--mono);
+}
+.content{ padding:24px; flex:1; }
+
+/* ═══════════════════════════════════════════
+   PAGE SYSTEM
+═══════════════════════════════════════════ */
+.page{ display:none; }
 .page.active{ display:block; }
 
-/* ═══════════════════════════════════════════════
-   NAV BAR
-═══════════════════════════════════════════════ */
-.nav{
-  background:#1a2535; border-bottom:2px solid #2e4060;
-  padding:10px 20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-}
-.nav-logo{ font-size:18px; font-weight:700; color:#4fc3f7; margin-right:10px; }
-.btn{
-  padding:8px 18px; border:none; border-radius:6px; font-size:13px;
-  font-weight:600; cursor:pointer; transition:all .15s; letter-spacing:.3px;
-}
-.btn-home   { background:#2e4060; color:#a0c4e8; }
-.btn-home:hover { background:#3a5070; }
-.btn-weekly { background:#1565c0; color:#fff; }
-.btn-weekly:hover { background:#1976d2; }
-.btn-single { background:#6a1b9a; color:#fff; }
-.btn-single:hover { background:#7b1fa2; }
-.btn-import { background:#2e7d32; color:#fff; }
-.btn-import:hover { background:#388e3c; }
-.btn-nav, .btn-home, .btn-weekly, .btn-single, .btn-import {
-  width:200px; min-width:200px; height:40px;
-  text-align:center; font-size:13px; font-weight:600;
-  display:inline-flex; align-items:center; justify-content:center;
-  border-radius:6px; cursor:pointer; transition:all .15s;
-}
-.btn-nav    { background:#1a2f4a; color:#c8ddf0; border:1px solid #2e4060; }
-.btn-nav:hover    { background:#1e3a5a; color:#fff; border-color:#4fc3f7; }
-.btn-home   { background:#2e4060; color:#a0c4e8; border:1px solid #3a5070; }
-.btn-home:hover   { background:#3a5070; color:#fff; }
-.btn-weekly { background:#1565c0; color:#fff; border:1px solid #1976d2; }
-.btn-weekly:hover { background:#1976d2; }
-.btn-single { background:#6a1b9a; color:#fff; border:1px solid #7b1fa2; }
-.btn-single:hover { background:#7b1fa2; }
-.btn-import { background:#2e7d32; color:#fff; border:1px solid #388e3c; }
-.btn-import:hover { background:#388e3c; }
-.btn-export { background:#4a4a00; color:#e8e800; }
-.btn-export:hover { background:#5a5a00; }
-.btn-action { background:#e65100; color:#fff; }
-.btn-action:hover { background:#f57c00; }
-.btn-run    { background:#0d47a1; color:#fff; font-size:14px; padding:10px 24px; }
-.btn-run:hover{ background:#1565c0; }
+/* ═══════════════════════════════════════════
+   HOME PAGE — signal cards + tables
+═══════════════════════════════════════════ */
+.page-header{ margin-bottom:20px; }
+.page-header h1{ font-size:22px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.page-header p{ font-size:13px; color:var(--text2); }
 
-#pgHome .hero{ padding:30px 24px 16px; }
-#pgHome h1{ font-size:26px; color:#4fc3f7; margin-bottom:4px; }
-#pgHome .sub{ color:#7a9ab5; font-size:14px; margin-bottom:20px; }
-
-.home-section{ padding:0 24px 30px; }
-.home-section h2{ font-size:16px; color:#a0c4e8; margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid #2e4060; }
-
-#pgAnalysis .page-header{
-  background:#1a2535; padding:14px 24px;
-  border-bottom:1px solid #2e4060;
-  display:flex; align-items:center; gap:10px;
+.signal-strip{ display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap; }
+.sig-card{
+  flex:1; min-width:100px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:12px 16px;
 }
-#pgAnalysis .page-header h2{ font-size:16px; color:#4fc3f7; flex:1; }
-#pgAnalysis .content{ padding:20px 24px; }
+.sig-card .sv{ font-size:18px; font-weight:700; font-family:var(--mono); color:var(--text); margin-bottom:2px; }
+.sig-card .sl{ font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.8px; }
+.sig-card.buy .sv{ color:var(--emerald); }
+.sig-card.watch .sv{ color:var(--amber); }
+.sig-card.caution .sv{ color:var(--orange); }
+.sig-card.exit .sv{ color:var(--rose); }
+.sig-card.wait .sv{ color:var(--slate); }
 
-#pgImport .page-header{
-  background:#1a2535; padding:14px 24px;
-  border-bottom:1px solid #2e4060;
-  display:flex; align-items:center; gap:10px;
+.section-label{
+  font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px;
+  color:var(--text3); margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:8px;
 }
-#pgImport .page-header h2{ font-size:16px; color:#4fc3f7; flex:1; }
-#pgImport .content{ padding:20px 24px; max-width:1100px; }
+.section-label span{ height:6px; width:6px; border-radius:50%; display:inline-block; }
+.section-label.sl-buy span{ background:var(--emerald); }
+.section-label.sl-exit span{ background:var(--rose); }
 
-.tab-bar{ display:flex; gap:6px; margin-bottom:16px; }
-.tab-btn{ padding:7px 18px; font-size:13px; border:1px solid #2e4060; border-radius:5px; background:#1a2535; color:#7a9ab5; cursor:pointer; font-weight:600; }
-.tab-btn.active{ background:#1565c0; color:#fff; border-color:#1565c0; }
+/* ═══════════════════════════════════════════
+   DATA TABLES
+═══════════════════════════════════════════ */
+.tbl-wrap{ overflow-x:auto; border-radius:var(--radius); border:1px solid var(--border); margin-bottom:24px; }
+.dtbl{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.dtbl th{
+  background:var(--surface); color:var(--text3); padding:9px 12px; text-align:left;
+  font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.7px;
+  border-bottom:1px solid var(--border); white-space:nowrap; position:sticky; top:0;
+}
+.dtbl td{ border-bottom:1px solid var(--border); padding:9px 12px; color:var(--text2); }
+.dtbl tbody tr:last-child td{ border-bottom:none; }
+.dtbl tbody tr:hover td{ background:var(--surface2); }
 
-#pasteTab textarea, #pgImport textarea{
-  width:100%; height:150px; background:#0f1923; color:#e0e6ed;
-  border:1px solid #2e4060; border-radius:6px; padding:10px;
-  font-family:monospace; font-size:12px; resize:vertical;
-}
-.hint{ font-size:12px; color:#7a9ab5; margin:6px 0 12px; line-height:1.6; }
-.hint b{ color:#a0c4e8; }
-.hint kbd{ background:#2e4060; padding:1px 5px; border-radius:3px; font-size:11px; }
+/* Verdict accent bars */
+.dtbl tbody tr.buy-row td:first-child{ border-left:2px solid var(--emerald); }
+.dtbl tbody tr.exit-row td:first-child{ border-left:2px solid var(--rose); }
+.dtbl tbody tr.watch-row td:first-child{ border-left:2px solid var(--amber); }
+.dtbl tbody tr.caution-row td:first-child{ border-left:2px solid var(--orange); }
 
-.form-row{ display:flex; flex-wrap:nowrap; gap:8px; overflow-x:auto; padding-bottom:6px; }
-.form-cell{ display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
-.form-cell label{ font-size:11px; color:#7a9ab5; white-space:nowrap; margin-bottom:3px; }
-.form-cell input{
-  width:76px; padding:5px 4px; font-size:12px; text-align:center;
-  background:#0f1923; color:#e0e6ed; border:1px solid #2e4060; border-radius:4px;
-}
-.form-cell input:focus{ outline:none; border-color:#4fc3f7; }
+.sym-cell{ font-weight:700; color:var(--text); font-size:13px; }
+.price-cell{ font-family:var(--mono); color:var(--text); font-weight:500; }
+.zone-cell{ font-family:var(--mono); font-size:11.5px; color:var(--text3); }
+.score-cell{ font-family:var(--mono); font-weight:700; color:var(--text); }
+.trend-cell{ text-align:center; font-size:14px; }
 
-.csv-box{ margin-top:16px; }
-.csv-box label{ font-size:12px; color:#7a9ab5; display:block; margin-bottom:6px; }
-.csv-box textarea{
-  width:100%; height:100px; background:#0f1923; color:#a0c4e8;
-  border:1px solid #2e4060; border-radius:6px; padding:8px;
-  font-family:monospace; font-size:11px; resize:vertical;
-}
+.badge-buy     { color:var(--emerald); font-weight:700; font-size:12px; }
+.badge-exit    { color:var(--rose); font-weight:700; font-size:12px; }
+.badge-watch   { color:var(--amber); font-weight:600; font-size:12px; }
+.badge-caution { color:var(--orange); font-weight:700; font-size:12px; }
+.badge-wait    { color:var(--slate); font-size:12px; }
+.badge-avoid   { color:var(--rose-dim); font-size:12px; }
 
-#pastePreview{ margin-top:12px; overflow-x:auto; }
-#pastePreview table{ border-collapse:collapse; width:100%; font-size:11px; }
-#pastePreview th{ background:#1565c0; color:#fff; padding:5px 8px; }
-#pastePreview td{ border-bottom:1px solid #1a2535; padding:4px 8px; color:#c0d4e8; }
-#pastePreview tr:hover td{ background:#1a2535; }
+/* ═══════════════════════════════════════════
+   ANALYSIS PAGE
+═══════════════════════════════════════════ */
+.analysis-header{ display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+.sig-pill{
+  background:var(--surface2); border:1px solid var(--border); border-radius:20px;
+  padding:4px 14px; font-size:12px; display:flex; align-items:center; gap:6px;
+}
+.sig-pill .s-label{ color:var(--text3); font-size:11px; }
+.sig-pill .s-val{ font-weight:700; font-family:var(--mono); }
 
-#importStatus{ font-size:13px; font-weight:600; color:#4caf50; }
+.plans-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:24px; }
+.plans-col-label{
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+  margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border);
+}
+.plans-col-label.buy-lbl{ color:var(--emerald); border-color:var(--emerald); }
+.plans-col-label.exit-lbl{ color:var(--rose); border-color:var(--rose); }
 
-#pgSingle .page-header{
-  background:#1a2535; padding:14px 24px;
-  border-bottom:1px solid #2e4060;
-  display:flex; align-items:center; gap:10px;
+.plan-card{
+  background:var(--surface); border-radius:var(--radius); padding:14px 16px;
+  margin-bottom:10px; border:1px solid var(--border);
 }
-#pgSingle .page-header h2{ font-size:16px; color:#4fc3f7; flex:1; }
-#pgSingle .content{
-  padding:24px; display:grid;
-  grid-template-columns:320px 1fr; gap:28px; align-items:start;
+.plan-card.buy{ border-left:3px solid var(--emerald); }
+.plan-card.exit{ border-left:3px solid var(--rose); }
+.plan-card.caution{ border-left:3px solid var(--orange); }
+.plan-card h4{ font-size:13px; font-weight:700; margin-bottom:8px; line-height:1.4; color:var(--text); }
+.plan-card code{
+  display:block; background:var(--bg); padding:8px 12px; border-radius:var(--radius-sm);
+  font-size:12px; color:var(--accent); margin-bottom:6px; font-family:var(--mono); line-height:1.6;
 }
-@media(max-width:900px){ #pgSingle .content{ grid-template-columns:1fr; } }
+.plan-card p{ font-size:12px; color:var(--text2); line-height:1.5; }
 
-.input-panel{
-  background:#1a2535; border-radius:10px; border:1px solid #2e4060;
-  overflow:hidden;
+/* ═══════════════════════════════════════════
+   SINGLE TICKER PAGE
+═══════════════════════════════════════════ */
+.single-layout{ display:grid; grid-template-columns:300px 1fr; gap:20px; align-items:start; }
+@media(max-width:900px){ .single-layout{ grid-template-columns:1fr; } }
+
+.input-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.card-header{
+  padding:14px 16px; border-bottom:1px solid var(--border);
+  font-size:13px; font-weight:600; color:var(--text);
 }
-.input-panel .panel-hdr{
-  background:#0d47a1; padding:14px 18px;
-  font-size:15px; font-weight:700; color:#fff; letter-spacing:.5px;
+.input-rows{ }
+.input-row{
+  display:flex; align-items:center; border-bottom:1px solid var(--border); padding:0;
 }
-.input-table{ width:100%; border-collapse:collapse; }
-.input-table td{
-  padding:5px 10px; border-bottom:1px solid #1e3050; font-size:13px;
+.input-row:last-of-type{ border-bottom:none; }
+.input-row-label{
+  width:45%; padding:9px 14px; font-size:12px; color:var(--text2);
+  font-weight:500; flex-shrink:0;
 }
-.input-table tr:last-child td{ border-bottom:none; }
-.input-table td:first-child{ color:#a0c4e8; font-weight:600; width:35%; }
-.input-table td input{
-  width:100%; background:#0f1923; color:#4fc3f7; border:1px solid #2e4060;
-  border-radius:4px; padding:4px 8px; font-size:13px; font-weight:600;
-  text-align:right;
+.input-row-fields{ flex:1; display:flex; gap:0; }
+.input-row-fields input{
+  flex:1; background:transparent; color:var(--accent); border:none;
+  border-left:1px solid var(--border); padding:9px 10px; font-size:12.5px;
+  font-family:var(--mono); font-weight:500; text-align:center; outline:none;
+  transition:background .1s;
 }
-.input-table td input:focus{ outline:none; border-color:#4fc3f7; }
+.input-row-fields input:focus{ background:var(--surface2); }
+.col-header{
+  display:flex; gap:0; border-bottom:1px solid var(--border);
+}
+.col-hdr{ flex:1; padding:6px 10px; font-size:10px; font-weight:600; text-transform:uppercase;
+  letter-spacing:.6px; color:var(--text3); text-align:center;
+  border-left:1px solid var(--border); }
+.col-hdr:first-child{ border-left:none; }
+
 .analyse-btn{
-  width:100%; padding:10px; background:#0d47a1; color:#fff;
-  border:none; font-size:14px; font-weight:700; cursor:pointer;
-  letter-spacing:.5px; transition:background .15s;
+  width:100%; padding:12px; background:var(--accent); color:#000;
+  border:none; font-size:13px; font-weight:700; cursor:pointer;
+  transition:opacity .15s; letter-spacing:.3px;
 }
-.analyse-btn:hover{ background:#1565c0; }
+.analyse-btn:hover{ opacity:.85; }
 
-.result-panel{ background:#1a2535; border-radius:10px; border:1px solid #2e4060; overflow:hidden; }
-.result-panel .panel-hdr{ background:#1b5e20; padding:14px 18px; font-size:15px; font-weight:700; color:#fff; }
-.result-panel .empty{ padding:40px; text-align:center; color:#4a6a8a; font-size:15px; }
+.result-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.result-empty{ padding:40px; text-align:center; color:var(--text3); font-size:14px; }
 
-.verdict-block{ padding:12px 16px; }
-.verdict-main{ font-size:26px; font-weight:800; margin-bottom:3px; line-height:1; }
-.verdict-score{ font-size:14px; color:#a0c4e8; margin-bottom:10px; }
-.verdict-buy  .verdict-main{ color:#4caf50; }
-.verdict-exit .verdict-main{ color:#ef5350; }
-.verdict-watch .verdict-main{ color:#ffc107; }
-.verdict-wait  .verdict-main{ color:#78909c; }
-.verdict-avoid .verdict-main{ color:#b71c1c; }
+.verdict-block{ padding:20px; }
+.verdict-main{ font-size:28px; font-weight:800; margin-bottom:2px; line-height:1; }
+.verdict-score{ font-size:13px; color:var(--text2); margin-bottom:14px; font-family:var(--mono); }
+.verdict-buy  .verdict-main{ color:var(--emerald); }
+.verdict-exit .verdict-main{ color:var(--rose); }
+.verdict-watch .verdict-main{ color:var(--amber); }
+.verdict-wait  .verdict-main{ color:var(--slate); }
+.verdict-avoid .verdict-main{ color:var(--text3); }
 
-.zone-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px; }
-.zone-card{ background:#0f1923; border-radius:6px; padding:7px 10px; border-left:3px solid #2e4060; }
-.zone-card.sup  { border-color:#4caf50; }
-.zone-card.sup2 { border-color:#ff9800; }
-.zone-card.res  { border-color:#ef5350; }
-.zone-card.tgt  { border-color:#4fc3f7; }
-.zone-card .zlbl{ font-size:11px; color:#7a9ab5; margin-bottom:2px; }
-.zone-card .zval{ font-size:15px; font-weight:700; color:#e0e6ed; }
+.zone-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.zone-card{
+  background:var(--bg); border-radius:var(--radius-sm); padding:10px 12px;
+  border-left:2px solid var(--border);
+}
+.zone-card.sup  { border-color:var(--emerald); }
+.zone-card.sup2 { border-color:var(--orange); }
+.zone-card.res  { border-color:var(--rose); }
+.zone-card.tgt  { border-color:var(--accent); }
+.zone-card .zlbl{ font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:4px; }
+.zone-card .zval{ font-size:16px; font-weight:700; font-family:var(--mono); color:var(--text); }
 
-.trade-plan{ background:#0f1923; border-radius:6px; padding:8px 12px; margin-bottom:8px; border-left:3px solid #2e4060; }
-.trade-plan.buy  { border-color:#4caf50; }
-.trade-plan.exit { border-color:#ef5350; }
-.trade-plan .tp-head{ font-size:13px; font-weight:700; margin-bottom:4px; }
-.trade-plan .tp-code{ font-family:monospace; font-size:12px; background:#1a2535; padding:5px 10px; border-radius:4px; color:#4fc3f7; margin-bottom:4px; }
-.trade-plan .tp-note{ font-size:11px; color:#a0c4e8; font-style:italic; }
+.tp-card{ background:var(--bg); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:10px; border-left:2px solid var(--border); }
+.tp-card.buy{ border-color:var(--emerald); }
+.tp-card.exit{ border-color:var(--rose); }
+.tp-head{ font-size:12px; font-weight:700; margin-bottom:5px; }
+.tp-code{ font-family:var(--mono); font-size:12px; background:var(--surface2); padding:6px 10px; border-radius:4px; color:var(--accent); margin-bottom:4px; }
+.tp-note{ font-size:11px; color:var(--text2); font-style:italic; }
 
-.indicator-grid{ display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:10px; }
-.ind-row{ background:#0f1923; border-radius:5px; padding:5px 8px; display:flex; justify-content:space-between; align-items:center; }
-.ind-row .ind-name{ font-size:12px; color:#7a9ab5; }
-.ind-row .ind-val { font-size:12px; font-weight:700; }
-.ind-val.bull{ color:#4caf50; }
-.ind-val.bear{ color:#ef5350; }
-.ind-val.neut{ color:#ffc107; }
+.ind-grid{ display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:12px; }
+.ind-row{
+  background:var(--bg); border-radius:4px; padding:7px 10px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.ind-name{ font-size:11px; color:var(--text3); }
+.ind-val{ font-size:11.5px; font-weight:700; font-family:var(--mono); }
+.ind-val.bull{ color:var(--emerald); }
+.ind-val.bear{ color:var(--rose); }
+.ind-val.neut{ color:var(--amber); }
 
-.momentum-badge{ display:inline-block; padding:6px 14px; border-radius:20px; font-size:14px; font-weight:700; margin-bottom:16px; }
-.mbadge-strong-up  { background:#1b5e20; color:#4caf50; }
-.mbadge-mod-up     { background:#1a3a1a; color:#81c784; }
-.mbadge-form-up    { background:#1a2a1a; color:#a5d6a7; }
-.mbadge-strong-dn  { background:#4a1010; color:#ef5350; }
-.mbadge-mod-dn     { background:#3a1010; color:#ef9a9a; }
-.mbadge-mild-dn    { background:#2a1a10; color:#ffb74d; }
-.mbadge-watch      { background:#1a1a00; color:#ffc107; }
+.mbadge{ display:inline-block; padding:5px 12px; border-radius:16px; font-size:12px; font-weight:700; margin-bottom:14px; }
+.mbadge-strong-up{ background:var(--emerald-dim); color:var(--emerald); }
+.mbadge-mod-up   { background:var(--emerald-dim); color:#6ee7b7; }
+.mbadge-form-up  { background:var(--emerald-dim); color:#a7f3d0; }
+.mbadge-strong-dn{ background:var(--rose-dim); color:var(--rose); }
+.mbadge-mod-dn   { background:var(--rose-dim); color:#fca5a5; }
+.mbadge-mild-dn  { background:var(--amber-dim); color:var(--amber); }
+.mbadge-watch    { background:var(--surface2); color:var(--text2); }
 
-.data-table{ width:100%; border-collapse:collapse; font-size:13px; }
-.data-table th{ background:#1e3050; color:#a0c4e8; padding:9px 12px; text-align:left; font-weight:600; white-space:nowrap; position:sticky; top:0; }
-.data-table td{ border-bottom:1px solid #1a2535; padding:8px 12px; }
-.data-table tr:hover td{ background:#1a2535; }
-.data-table tr.buy-row td{ border-left:3px solid #4caf50; }
-.data-table tr.exit-row td{ border-left:3px solid #ef5350; }
-.data-table tr.watch-row td{ border-left:3px solid #ffc107; }
+/* ═══════════════════════════════════════════
+   IMPORT PAGE
+═══════════════════════════════════════════ */
+.import-actions{
+  display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px 16px;
+}
+.date-input{
+  background:var(--surface2); color:var(--accent); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:7px 12px; font-size:13px; outline:none;
+  font-family:var(--mono); cursor:pointer;
+}
+.date-input:focus{ border-color:var(--accent); }
+.save-status{ font-size:12px; font-weight:600; font-family:var(--mono); }
 
-.badge-buy  { color:#4caf50; font-weight:700; }
-.badge-exit { color:#ef5350; font-weight:700; }
-.badge-watch{ color:#ffc107; font-weight:600; }
-.badge-wait { color:#78909c; }
-.badge-avoid{ color:#b71c1c; }
+.archive-bar{
+  display:none; align-items:center; gap:10px; margin-bottom:14px;
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:12px 16px; flex-wrap:wrap;
+}
+.archive-bar.show{ display:flex; }
+.arch-label{ font-size:12px; color:var(--text3); font-weight:600; white-space:nowrap; }
+.arch-select{
+  flex:1; min-width:180px; background:var(--bg); color:var(--accent);
+  border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:7px 12px; font-size:12px; outline:none; font-family:var(--mono);
+}
 
-.signal-summary{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:20px; }
-.sig-pill{ background:#1a2535; border-radius:20px; padding:6px 16px; font-size:13px; border:1px solid #2e4060; }
-.sig-pill .s-label{ color:#7a9ab5; }
-.sig-pill .s-val  { font-weight:700; margin-left:6px; }
+.import-tbl-wrap{ overflow-x:auto; border-radius:var(--radius); border:1px solid var(--border); }
+.imp-tbl{ width:100%; border-collapse:collapse; font-size:12px; }
+.imp-th{
+  background:var(--surface); color:var(--text3); font-size:10px; font-weight:700;
+  padding:9px 6px; text-align:center; border:1px solid var(--border);
+  text-transform:uppercase; letter-spacing:.5px; white-space:nowrap;
+}
+.imp-th.ticker-h{ text-align:left; padding-left:12px; min-width:70px; }
+.imp-th.group-d{ background:var(--surface2); color:var(--accent); font-size:11px; }
+.imp-th.group-w{ background:var(--bg); color:var(--text3); }
+.imp-sym{ font-weight:700; color:var(--accent); font-size:13px; padding:8px 12px; border:1px solid var(--border); background:var(--surface); white-space:nowrap; }
+.imp-td{ border:1px solid var(--border); padding:3px; }
+.imp-in{
+  width:100%; background:transparent; color:var(--amber); border:none;
+  padding:7px 4px; font-size:12px; font-family:var(--mono); font-weight:500;
+  text-align:center; outline:none; min-width:58px;
+  transition:background .1s;
+}
+.imp-in:focus{ background:var(--surface2); color:var(--accent); }
+.imp-in::placeholder{ color:var(--text3); font-size:11px; font-weight:400; }
+.imp-row:nth-child(odd) .imp-td,
+.imp-row:nth-child(odd) .imp-sym{ background:var(--bg); }
+.imp-row:nth-child(even) .imp-td,
+.imp-row:nth-child(even) .imp-sym{ background:var(--surface); }
+.imp-row:hover .imp-td,
+.imp-row:hover .imp-sym{ background:var(--surface2) !important; }
 
-.plans-section{ margin-top:20px; }
-.plan-block{ background:#1a2535; border-radius:8px; padding:14px 18px; margin-bottom:10px; border-left:4px solid #2e4060; width:100%; box-sizing:border-box; }
-.plan-block.buy  { border-color:#4caf50; }
-.plan-block.exit { border-color:#ef5350; }
-.plan-block h4   { font-size:14px; font-weight:700; margin-bottom:8px; line-height:1.4; }
-.plan-block code { display:block; background:#0f1923; padding:8px 12px; border-radius:5px; font-size:13px; color:#4fc3f7; margin-bottom:6px; font-family:monospace; line-height:1.6; }
-.plan-block p    { font-size:13px; color:#a0c4e8; font-style:italic; line-height:1.5; }
+.csv-out{
+  margin-top:14px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 16px; display:none;
+}
+.csv-out label{ font-size:11px; color:var(--text3); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:.6px; }
+.csv-out textarea{
+  width:100%; height:90px; background:var(--bg); color:var(--accent);
+  border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px;
+  font-family:var(--mono); font-size:11px; resize:vertical; outline:none;
+}
 
-.table-wrap{ overflow-x:auto; }
+/* ═══════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════ */
+.btn{ 
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:8px 16px; border:none; border-radius:var(--radius-sm);
+  font-size:12.5px; font-weight:600; cursor:pointer; transition:opacity .15s, background .15s;
+  font-family:var(--font); white-space:nowrap;
+}
+.btn:hover{ opacity:.85; }
+.btn-primary{ background:var(--accent); color:#000; }
+.btn-success{ background:var(--emerald); color:#000; }
+.btn-danger { background:var(--rose); color:#fff; }
+.btn-ghost  { background:var(--surface2); color:var(--text2); border:1px solid var(--border); }
+.btn-ghost:hover{ color:var(--text); opacity:1; background:var(--border); }
+.btn-warn   { background:var(--amber-dim); color:var(--amber); border:1px solid #4A380A; }
+.btn-port   { background:#1A1030; color:#A78BFA; border:1px solid #3B2A70; }
 
-.imp-wrap { background:#1a2535; border-radius:12px; overflow:hidden; border:1px solid #2e4060; margin-bottom:20px; width:100%; }
-.imp-tbl3 { width:100%; border-collapse:collapse; table-layout:fixed; }
-.imp-th { background:#0d2a4a; color:#4fc3f7; font-size:12px; font-weight:700; padding:14px 4px; text-align:center; border:1px solid #1e3050; letter-spacing:0; word-break:break-word; }
-.imp-th-label { background:#0a1a2e; color:#3a6a9a; font-size:11px; width:70px; }
-.imp-hdr-row th { border-bottom:2px solid #1565c0; }
-.imp-data-row:nth-child(1) .imp-cell,
-.imp-data-row:nth-child(1) .imp-row-lbl { background:#0f1d2d; }
-.imp-data-row:nth-child(2) .imp-cell,
-.imp-data-row:nth-child(2) .imp-row-lbl { background:#0a1520; }
-.imp-row-lbl { padding:14px 4px; font-size:12px; font-weight:800; color:#4fc3f7; text-align:center; border:1px solid #1e3050; letter-spacing:0; white-space:nowrap; background:#0d2240; width:70px; }
-.imp-cell { padding:10px 4px; border:1px solid #1e3050; vertical-align:middle; }
-.imp-in3 { width:100%; background:#0f1923; color:#e0c060; border:1px solid #2a3f58; border-radius:4px; padding:10px 2px; font-size:13px; font-weight:700; text-align:center; transition:border-color .15s; box-sizing:border-box; }
-.imp-in3:focus { outline:none; border-color:#4fc3f7; background:#0a1520; color:#4fc3f7; }
-.imp-in3::placeholder { color:#2a3f58; font-weight:400; font-size:13px; }
-
-.data-table tr.caution-row td{ border-left:3px solid #ff9800; }
-.badge-caution{ color:#ff9800; font-weight:700; }
-
-.imp-main-tbl { border-collapse:collapse; width:100%; font-size:12px; }
-.imt-h { background:#1e3050; color:#a0c4e8; font-size:11px; font-weight:700; padding:7px 6px; text-align:center; border:1px solid #1a2840; white-space:nowrap; }
-.imt-ticker { background:#2c3e50; color:#4fc3f7; text-align:left; padding-left:10px; }
-.imt-price  { background:#1a2535; color:#e0e6ed; }
-.imt-group  { background:#0d2a4a; color:#4fc3f7; font-size:12px; font-weight:800; border-bottom:2px solid #1565c0; letter-spacing:.5px; }
-.imt-week   { background:#0a1a35; color:#7ab3d4 !important; }
-.sym-row:nth-child(odd)  td { background:#0f1923; }
-.sym-row:nth-child(even) td { background:#121c2a; }
-.sym-row:hover td { background:#1a2840 !important; }
-.sym-name { font-weight:700; color:#4fc3f7; font-size:13px; padding:6px 10px; border:1px solid #1a2840; white-space:nowrap; }
-.sym-td { padding:4px 3px; border:1px solid #1a2840; }
-.sym-in { width:100%; background:transparent; color:#e0c060; border:1px solid #2a3f58; border-radius:3px; padding:5px 3px; font-size:12px; font-weight:600; text-align:center; box-sizing:border-box; min-width:62px; }
-.sym-in:focus { outline:none; border-color:#4fc3f7; color:#4fc3f7; background:#0a1520; }
-
-#importGate{ position:fixed; inset:0; background:#0f1923; z-index:9999; display:none; align-items:center; justify-content:center; }
+/* ═══════════════════════════════════════════
+   LOCK GATE
+═══════════════════════════════════════════ */
+#importGate{
+  position:fixed; inset:0; background:rgba(7,12,24,.95); z-index:9999;
+  display:none; align-items:center; justify-content:center; backdrop-filter:blur(6px);
+}
 #importGate.open{ display:flex; }
-.ig-box{ background:#1a2535; border:1px solid #2e4060; border-radius:12px; padding:36px 44px; text-align:center; max-width:380px; width:90%; }
-.ig-logo{ font-size:28px; margin-bottom:8px; }
-.ig-title{ font-size:17px; font-weight:700; color:#4fc3f7; margin-bottom:4px; }
-.ig-sub{ font-size:13px; color:#7a9ab5; margin-bottom:20px; }
-.ig-input{ width:100%; padding:11px 14px; font-size:15px; letter-spacing:4px; background:#0f1923; color:#4fc3f7; border:2px solid #2e4060; border-radius:7px; text-align:center; outline:none; margin-bottom:10px; box-sizing:border-box; }
-.ig-input:focus{ border-color:#4fc3f7; }
-.ig-btn{ width:100%; padding:11px; background:#1565c0; color:#fff; border:none; border-radius:7px; font-size:14px; font-weight:700; cursor:pointer; }
-.ig-btn:hover{ background:#1976d2; }
-.ig-err{ font-size:12px; color:#ef5350; margin-top:8px; display:none; }
+.gate-box{
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:36px 40px; text-align:center; max-width:360px; width:90%;
+}
+.gate-icon{ font-size:28px; margin-bottom:10px; }
+.gate-title{ font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.gate-sub{ font-size:13px; color:var(--text3); margin-bottom:22px; }
+.gate-input{
+  width:100%; padding:12px 14px; font-size:16px; letter-spacing:5px;
+  background:var(--bg); color:var(--accent); border:1px solid var(--border);
+  border-radius:var(--radius-sm); text-align:center; outline:none; margin-bottom:10px;
+  font-family:var(--mono);
+}
+.gate-input:focus{ border-color:var(--accent); }
+.gate-err{ font-size:12px; color:var(--rose); margin-top:6px; display:none; font-family:var(--mono); }
+
+/* ═══════════════════════════════════════════
+   STAGGER ANIMATION — the signature element
+═══════════════════════════════════════════ */
+@keyframes rowReveal{
+  from{ opacity:0; transform:translateX(-6px); }
+  to  { opacity:1; transform:translateX(0); }
+}
+.dtbl tbody tr{
+  animation:rowReveal .25s ease both;
+}
+/* JS sets --delay per row */
+
+/* ── Light mode specific overrides ── */
+:root.light .sidebar{ box-shadow:2px 0 12px rgba(0,0,0,.06); }
+:root.light .topbar{ box-shadow:0 1px 4px rgba(0,0,0,.06); }
+:root.light .tbl-wrap{ box-shadow:0 1px 4px rgba(0,0,0,.05); }
+:root.light .dtbl th{ background:var(--surface2); }
+:root.light .dtbl td{ color:var(--text2); }
+:root.light .dtbl tbody tr:hover td{ background:#EDF2F7; }
+:root.light .sym-cell{ color:var(--text); }
+:root.light .price-cell{ color:var(--text); }
+:root.light .score-cell{ color:var(--text); }
+:root.light .imp-in{ color:#B45309; }
+:root.light .imp-in:focus{ color:var(--accent); background:#EFF6FF; }
+:root.light .imp-sym{ background:var(--surface2); color:var(--accent); }
+:root.light .imp-row:nth-child(odd) .imp-td,
+:root.light .imp-row:nth-child(odd) .imp-sym{ background:var(--surface2); }
+:root.light .imp-row:nth-child(even) .imp-td,
+:root.light .imp-row:nth-child(even) .imp-sym{ background:var(--surface); }
+:root.light .imp-row:hover .imp-td,
+:root.light .imp-row:hover .imp-sym{ background:#EFF6FF !important; }
+:root.light .plan-card{ background:var(--surface2); }
+:root.light .plan-card code{ background:var(--surface); color:var(--accent); }
+:root.light .gate-box{ box-shadow:0 8px 32px rgba(0,0,0,.12); }
+:root.light .input-row-fields input{ color:var(--accent); }
+:root.light .zone-card{ background:var(--surface2); }
+:root.light .ind-row{ background:var(--surface2); }
+:root.light .tp-card{ background:var(--surface2); }
+:root.light .tp-code{ background:var(--surface); }
+:root.light .analyse-btn{ background:var(--accent); }
+:root.light .sig-pill{ background:var(--surface2); }
+:root.light .csv-out textarea{ background:var(--surface2); color:var(--accent); }
+
+/* ── Theme transition ── */
+*, *::before, *::after{
+  transition: background-color .2s ease, border-color .2s ease, color .15s ease;
+}
+/* Don't animate layout properties */
+.page, .nav-item, .btn, input, select, textarea{
+  transition: background-color .2s ease, border-color .2s ease, color .15s ease, opacity .15s;
+}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════ */
+::-webkit-scrollbar{ width:5px; height:5px; }
+::-webkit-scrollbar-track{ background:var(--bg); }
+::-webkit-scrollbar-thumb{ background:var(--border2); border-radius:3px; }
 </style>
 </head>
 <body>
 
-<div id="pgHome" class="page active">
-  <div class="nav">
-    <span class="nav-logo">📊 PSX TA</span>
-    <button class="btn btn-nav" onclick="goHome()">🏠 Home</button>
-    <button class="btn btn-nav" onclick="goAnalysis()">▶ Run Analysis — Weekly</button>
-    <button class="btn btn-nav" onclick="goSingle()">🔍 Analysis One Ticker</button>
-    <button class="btn btn-nav" onclick="goImport()">＋ Add / Update Row</button>
-    <button class="btn btn-port" onclick="window.location.href='portfolio.html'" style="width:180px;height:40px;background:#4a2000;color:#ffb74d;border:1px solid #7a4010;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">📈 Portfolio</button>
-  </div>
-  <div class="hero">
-    <h1>PSX Technical Analysis</h1>
-    <p class="sub">Showing BUY candidates and EXIT signals only — run weekly analysis for full table</p>
-    <p id="homeDataDate" style="font-size:13px;color:#4fc3f7;margin-top:4px;display:none">
-      📅 Data as of: <b id="homeDataDateVal"></b>
-    </p>
-  </div>
-  <div class="home-section">
-    <h2>🟢 BUY Candidates</h2>
-    <div class="table-wrap"><table class="data-table" id="homeBuyTable"></table></div>
-  </div>
-  <div class="home-section" style="margin-top:10px">
-    <h2>🔴 EXIT Signals &amp; ⚠️ Caution</h2>
-    <div class="table-wrap"><table class="data-table" id="homeExitTable"></table></div>
-  </div>
-</div>
+<div class="shell">
 
-<div id="pgAnalysis" class="page">
-  <div class="nav">
-    <span class="nav-logo">📊 PSX TA</span>
-    <button class="btn btn-home" onclick="goHome()">🏠 Home</button>
-    <button class="btn btn-weekly" onclick="runWeekly()">▶ Run Analysis — Weekly</button>
-    <button class="btn btn-single" onclick="goSingle()">🔍 Analysis One Ticker</button>
-    <button class="btn btn-import" onclick="goImport()">＋ Add / Update Row</button>
-  </div>
-  <div class="content" style="padding:20px 24px">
-    <div id="analysisDataDate" style="font-size:13px;color:#4fc3f7;margin-bottom:6px;display:none">
-      📅 Data as of: <b id="analysisDataDateVal"></b>
-      <span id="analysisPrevDate" style="color:#4a6a8a;margin-left:12px;font-size:12px"></span>
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">📊</div>
+    <div>
+      <div class="logo-text">PSX Analysis</div>
+      <div class="logo-sub">Technical Screener</div>
     </div>
-    <div class="signal-summary" id="signalSummary"></div>
-    <div class="table-wrap"><table class="data-table" id="fullTable"></table></div>
-    <div class="plans-section" id="tradePlans"></div>
   </div>
-</div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" id="navHome" onclick="goHome()">
+      <span class="nav-icon">⌂</span> Dashboard
+    </button>
+    <button class="nav-item" id="navAnalysis" onclick="goAnalysis()">
+      <span class="nav-icon">▶</span> Weekly Analysis
+    </button>
+    <button class="nav-item" id="navSingle" onclick="goSingle()">
+      <span class="nav-icon">◎</span> Single Ticker
+    </button>
+    <div class="nav-divider"></div>
+    <button class="nav-item" id="navImport" onclick="goImport()">
+      <span class="nav-icon">＋</span> Add / Update Data
+    </button>
+    <div class="nav-divider"></div>
+    <button class="nav-item" onclick="window.location.href='portfolio.html'">
+      <span class="nav-icon">📈</span> Portfolio
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="footer-btn" onclick="toggleTheme()" id="themeBtn" style="margin-bottom:6px">
+      <span id="themeIcon" style="font-size:15px">☀️</span>
+      <span id="themeLabel" style="font-size:12px">Light Mode</span>
+    </button>
+    <button class="footer-btn" onclick="hardRefresh()" style="margin-bottom:6px">
+      <span style="font-size:15px">↺</span>
+      <span style="font-size:12px">Hard Refresh</span>
+    </button>
+    <div class="footer-btn" style="flex-direction:column;align-items:flex-start;gap:2px;cursor:default">
+      <span id="homeDataDate" style="display:none">
+        <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Data as of</span><br>
+        <span id="homeDataDateVal" style="font-size:11px;color:var(--accent);font-family:var(--mono)"></span>
+      </span>
+      <span style="font-size:10px;color:var(--text3)">PSX · Pakistan Stock Exchange</span>
+    </div>
+  </div>
+</aside>
 
-<div id="pgImport" class="page">
-  <div class="nav">
-    <span class="nav-logo">📊 PSX TA</span>
-    <button class="btn btn-home" onclick="goHome()">🏠 Home</button>
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div id="analysisDataDate" style="display:none;font-size:11px;color:var(--text3);font-family:var(--mono)">
+      as of <span id="analysisDataDateVal" style="color:var(--accent)"></span>
+      <span id="analysisPrevDate" style="color:var(--text3);margin-left:8px"></span>
+    </div>
+    <div class="topbar-date" id="topbarDate"></div>
+    <span id="topbarBadge" class="topbar-badge"></span>
+    <button class="btn btn-port" onclick="window.location.href='portfolio.html'" style="height:32px;font-size:12px">📈 Portfolio</button>
   </div>
-  <div style="padding:20px 24px">
-    <input type="hidden" id="idxGhToken">
-    <span id="tokenStatus" style="display:none"></span>
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
-      <span style="font-size:15px;color:#4fc3f7;font-weight:700">📅 Data as of:</span>
-      <input type="date" id="fDataDate" style="background:#1a2535;color:#4fc3f7;border:1px solid #2e4060;border-radius:6px;padding:7px 12px;font-size:14px;cursor:pointer">
-      <button class="btn btn-weekly" onclick="saveAllData()" style="height:40px;width:200px;font-size:14px">💾 Save All to Google Sheets</button>
-      <button class="btn btn-export" onclick="exportCSV()" style="height:40px;width:180px;font-size:14px">⬇ Export CSV</button>
-      <span id="saveStatus" style="font-size:13px;color:#4caf50;font-weight:700"></span>
+
+  <!-- ══════════ HOME PAGE ══════════ -->
+  <div id="pgHome" class="page active content">
+    <div class="page-header">
+      <h1>Market Dashboard</h1>
+      <p>BUY candidates & EXIT signals — updated weekly</p>
     </div>
-    <div id="archiveWrap" style="display:none;align-items:center;gap:12px;margin-bottom:16px;background:#1a2535;border-radius:8px;padding:10px 16px;border:1px solid #2e4060;flex-wrap:wrap">
-      <span style="font-size:13px;color:#7a9ab5;font-weight:600;white-space:nowrap">🗂️ Past Fridays:</span>
-      <select id="archiveSelect" style="flex:1;min-width:200px;background:#0f1923;color:#4fc3f7;border:1px solid #2e4060;border-radius:6px;padding:8px 12px;font-size:13px;outline:none">
-        <option value="">📅 Load past Friday...</option>
-      </select>
-      <button onclick="loadArchive()" style="background:#6a1b9a;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">📊 View Analysis</button>
-      <button onclick="clearArchive()" style="background:#2e4060;color:#a0c4e8;border:none;border-radius:6px;padding:8px 12px;font-size:13px;cursor:pointer;white-space:nowrap">✕ Back to Current</button>
+    <div class="signal-strip" id="homeSignalStrip" style="display:none"></div>
+
+    <div class="section-label sl-buy"><span></span> BUY Candidates</div>
+    <div class="tbl-wrap"><table class="dtbl" id="homeBuyTable"><tbody></tbody></table></div>
+
+    <div class="section-label sl-exit" style="margin-top:6px"><span></span> EXIT Signals &amp; Caution</div>
+    <div class="tbl-wrap"><table class="dtbl" id="homeExitTable"><tbody></tbody></table></div>
+  </div>
+
+  <!-- ══════════ ANALYSIS PAGE ══════════ -->
+  <div id="pgAnalysis" class="page content">
+    <div class="analysis-header">
+      <div class="page-header" style="margin:0;flex:1">
+        <h1>Weekly Analysis</h1>
+      </div>
+      <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
     </div>
-    <div style="overflow-x:auto;margin-bottom:16px">
-      <table class="imp-main-tbl">
-        <thead>
-          <tr>
-            <th class="imt-h imt-ticker" rowspan="2">Ticker</th>
-            <th class="imt-h imt-price" rowspan="2">Price</th>
-            <th class="imt-group" colspan="6">1 Day</th>
-            <th class="imt-group imt-week" colspan="6">1 Week</th>
-            <th class="imt-h" colspan="2">52 Week</th>
-          </tr>
-          <tr>
-            <th class="imt-h">MA50</th><th class="imt-h">MA200</th><th class="imt-h">RSI</th>
-            <th class="imt-h">MACD-H</th><th class="imt-h">Signal</th><th class="imt-h">Volume</th>
-            <th class="imt-h imt-week">MA50</th><th class="imt-h imt-week">MA200</th><th class="imt-h imt-week">RSI</th>
-            <th class="imt-h imt-week">MACD-H</th><th class="imt-h imt-week">Signal</th><th class="imt-h imt-week">Volume</th>
-            <th class="imt-h">High</th><th class="imt-h">Low</th>
-          </tr>
-        </thead>
-        <tbody>
-<tr class="sym-row"><td class="sym-td sym-name">ABL</td><td class="sym-td"><input id="i_ABL_Price" class="sym-in"></td><td class="sym-td"><input id="i_ABL_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_ABL_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_ABL_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_ABL_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_ABL_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_ABL_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_ABL_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_ABL_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_ABL_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_ABL_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_ABL_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_ABL_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_ABL_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_ABL_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">BAFL</td><td class="sym-td"><input id="i_BAFL_Price" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_BAFL_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">BOP</td><td class="sym-td"><input id="i_BOP_Price" class="sym-in"></td><td class="sym-td"><input id="i_BOP_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_BOP_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_BOP_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_BOP_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_BOP_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_BOP_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_BOP_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_BOP_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_BOP_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_BOP_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_BOP_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_BOP_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_BOP_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_BOP_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">EFERT</td><td class="sym-td"><input id="i_EFERT_Price" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_EFERT_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">ENGROH</td><td class="sym-td"><input id="i_ENGROH_Price" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_ENGROH_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">FCL</td><td class="sym-td"><input id="i_FCL_Price" class="sym-in"></td><td class="sym-td"><input id="i_FCL_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_FCL_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_FCL_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_FCL_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_FCL_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_FCL_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_FCL_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_FCL_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_FCL_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_FCL_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_FCL_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_FCL_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_FCL_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_FCL_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">FFC</td><td class="sym-td"><input id="i_FFC_Price" class="sym-in"></td><td class="sym-td"><input id="i_FFC_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_FFC_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_FFC_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_FFC_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_FFC_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_FFC_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_FFC_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_FFC_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_FFC_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_FFC_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_FFC_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_FFC_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_FFC_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_FFC_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">HBL</td><td class="sym-td"><input id="i_HBL_Price" class="sym-in"></td><td class="sym-td"><input id="i_HBL_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_HBL_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_HBL_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_HBL_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_HBL_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_HBL_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_HBL_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_HBL_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_HBL_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_HBL_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_HBL_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_HBL_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_HBL_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_HBL_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">HUBC</td><td class="sym-td"><input id="i_HUBC_Price" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_HUBC_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">ISL</td><td class="sym-td"><input id="i_ISL_Price" class="sym-in"></td><td class="sym-td"><input id="i_ISL_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_ISL_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_ISL_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_ISL_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_ISL_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_ISL_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_ISL_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_ISL_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_ISL_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_ISL_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_ISL_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_ISL_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_ISL_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_ISL_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">KAPCO</td><td class="sym-td"><input id="i_KAPCO_Price" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_KAPCO_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">LUCK</td><td class="sym-td"><input id="i_LUCK_Price" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_LUCK_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">MCB</td><td class="sym-td"><input id="i_MCB_Price" class="sym-in"></td><td class="sym-td"><input id="i_MCB_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_MCB_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_MCB_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_MCB_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_MCB_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_MCB_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_MCB_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_MCB_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_MCB_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_MCB_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_MCB_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_MCB_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_MCB_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_MCB_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">MEBL</td><td class="sym-td"><input id="i_MEBL_Price" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_MEBL_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">MTL</td><td class="sym-td"><input id="i_MTL_Price" class="sym-in"></td><td class="sym-td"><input id="i_MTL_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_MTL_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_MTL_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_MTL_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_MTL_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_MTL_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_MTL_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_MTL_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_MTL_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_MTL_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_MTL_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_MTL_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_MTL_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_MTL_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">NBP</td><td class="sym-td"><input id="i_NBP_Price" class="sym-in"></td><td class="sym-td"><input id="i_NBP_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_NBP_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_NBP_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_NBP_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_NBP_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_NBP_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_NBP_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_NBP_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_NBP_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_NBP_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_NBP_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_NBP_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_NBP_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_NBP_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">OGDC</td><td class="sym-td"><input id="i_OGDC_Price" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_OGDC_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">POL</td><td class="sym-td"><input id="i_POL_Price" class="sym-in"></td><td class="sym-td"><input id="i_POL_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_POL_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_POL_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_POL_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_POL_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_POL_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_POL_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_POL_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_POL_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_POL_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_POL_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_POL_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_POL_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_POL_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">PPL</td><td class="sym-td"><input id="i_PPL_Price" class="sym-in"></td><td class="sym-td"><input id="i_PPL_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_PPL_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_PPL_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_PPL_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_PPL_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_PPL_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_PPL_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_PPL_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_PPL_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_PPL_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_PPL_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_PPL_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_PPL_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_PPL_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">SYS</td><td class="sym-td"><input id="i_SYS_Price" class="sym-in"></td><td class="sym-td"><input id="i_SYS_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_SYS_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_SYS_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_SYS_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_SYS_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_SYS_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_SYS_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_SYS_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_SYS_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_SYS_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_SYS_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_SYS_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_SYS_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_SYS_52W_Low" class="sym-in"></td></tr>
-<tr class="sym-row"><td class="sym-td sym-name">UBL</td><td class="sym-td"><input id="i_UBL_Price" class="sym-in"></td><td class="sym-td"><input id="i_UBL_MA50_D" class="sym-in"></td><td class="sym-td"><input id="i_UBL_MA200_D" class="sym-in"></td><td class="sym-td"><input id="i_UBL_RSI_D" class="sym-in"></td><td class="sym-td"><input id="i_UBL_MACD_H_D" class="sym-in"></td><td class="sym-td"><input id="i_UBL_Signal_D" class="sym-in"></td><td class="sym-td"><input id="i_UBL_Volume_D" class="sym-in"></td><td class="sym-td"><input id="i_UBL_MA50_W" class="sym-in"></td><td class="sym-td"><input id="i_UBL_MA200_W" class="sym-in"></td><td class="sym-td"><input id="i_UBL_RSI_W" class="sym-in"></td><td class="sym-td"><input id="i_UBL_MACD_H_W" class="sym-in"></td><td class="sym-td"><input id="i_UBL_Signal_W" class="sym-in"></td><td class="sym-td"><input id="i_UBL_Volume_W" class="sym-in"></td><td class="sym-td"><input id="i_UBL_52W_High" class="sym-in"></td><td class="sym-td"><input id="i_UBL_52W_Low" class="sym-in"></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div id="csvSection" style="display:none;margin-top:16px">
-      <div style="font-size:13px;color:#7a9ab5;margin-bottom:6px">📄 <b style="color:#a0c4e8">data.csv</b> — copy into your GitHub repo:</div>
-      <textarea id="csvOut" readonly style="width:100%;height:120px;background:#0a1520;color:#4fc3f7;border:1px solid #2e4060;border-radius:6px;padding:10px;font-family:monospace;font-size:12px;resize:vertical;box-sizing:border-box;"></textarea>
-      <div style="margin-top:8px;display:flex;gap:10px">
-        <button onclick="copyCsv()" class="btn btn-action" style="width:200px;height:38px">📋 Copy to Clipboard</button>
+    <div class="signal-strip" id="signalSummary" style="margin-bottom:16px"></div>
+    <div class="tbl-wrap"><table class="dtbl" id="fullTable"><tbody></tbody></table></div>
+    <div class="plans-grid" id="tradePlans" style="display:none"></div>
+  </div>
+
+  <!-- ══════════ SINGLE TICKER ══════════ -->
+  <div id="pgSingle" class="page content">
+    <div class="page-header"><h1>Single Ticker</h1><p>Analyse any symbol with custom indicator values</p></div>
+    <div class="single-layout">
+      <div class="input-card">
+        <div class="card-header">📋 Enter Indicators</div>
+        <div class="col-header" style="padding-left:0;margin:0;">
+          <div style="width:45%;padding:6px 14px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Field</div>
+          <div class="col-hdr">1D</div>
+          <div class="col-hdr">1W</div>
+        </div>
+        <div class="input-rows">
+          <div class="input-row"><div class="input-row-label">Symbol</div><div class="input-row-fields" style="grid-column:span 2"><input id="sSymbol" placeholder="MCB" style="border-left:1px solid var(--border);width:100%"></div></div>
+          <div class="input-row"><div class="input-row-label">Price</div><div class="input-row-fields"><input id="sPrice" placeholder="403.86" style="border-left:none;width:200%"></div></div>
+          <div class="input-row"><div class="input-row-label">MA50</div><div class="input-row-fields"><input id="sMA50D" placeholder="401.2"><input id="sMA50W" placeholder="399.1"></div></div>
+          <div class="input-row"><div class="input-row-label">MA200</div><div class="input-row-fields"><input id="sMA200D" placeholder="385.5"><input id="sMA200W" placeholder="280.4"></div></div>
+          <div class="input-row"><div class="input-row-label">RSI</div><div class="input-row-fields"><input id="sRSID" placeholder="52.1"><input id="sRSIW" placeholder="58.3"></div></div>
+          <div class="input-row"><div class="input-row-label">MACD-H</div><div class="input-row-fields"><input id="sMACDHD" placeholder="-1.2"><input id="sMACDHW" placeholder="4.2"></div></div>
+          <div class="input-row"><div class="input-row-label">Signal</div><div class="input-row-fields"><input id="sSignalD" placeholder="0.8"><input id="sSignalW" placeholder="3.1"></div></div>
+          <div class="input-row"><div class="input-row-label">Volume</div><div class="input-row-fields"><input id="sVolume" placeholder="1D vol"><input id="sVolumeW" placeholder="1W vol"></div></div>
+          <div class="input-row"><div class="input-row-label">52W High</div><div class="input-row-fields"><input id="s52High" placeholder="452" style="border-left:1px solid var(--border);width:200%"></div></div>
+          <div class="input-row"><div class="input-row-label">52W Low</div><div class="input-row-fields"><input id="s52Low" placeholder="280" style="border-left:1px solid var(--border);width:200%"></div></div>
+        </div>
+        <button class="analyse-btn" onclick="analyseSingle()">Analyse Symbol</button>
+      </div>
+      <div class="result-card" id="singleResult">
+        <div class="card-header">Analysis Result</div>
+        <div class="result-empty">Enter indicator values on the left<br>and click <b>Analyse Symbol</b></div>
       </div>
     </div>
   </div>
-</div>
 
-<div id="pgSingle" class="page">
-  <div class="nav">
-    <span class="nav-logo">📊 PSX TA</span>
-    <button class="btn btn-home" onclick="goHome()">🏠 Home</button>
-    <button class="btn btn-weekly" onclick="goAnalysis()">▶ Weekly Analysis</button>
-    <button class="btn btn-import" onclick="goImport()">＋ Add / Update Row</button>
-  </div>
-  <div class="content" style="padding:24px; display:grid; grid-template-columns:320px 1fr; gap:28px; align-items:start;">
-    <div class="input-panel">
-      <div class="panel-hdr">📋 Enter Indicators</div>
-      <table class="input-table">
-        <tr style="background:#0d2a4a">
-          <td style="font-size:11px;color:#4fc3f7;font-weight:700;padding:5px 10px">INDICATOR</td>
-          <td style="font-size:11px;color:#4fc3f7;font-weight:700;padding:5px 10px;text-align:right">1D VALUE</td>
-          <td style="font-size:11px;color:#4fc3f7;font-weight:700;padding:5px 10px;text-align:right">1W VALUE</td>
-        </tr>
-        <tr><td>Symbol</td>   <td colspan="2"><input id="sSymbol"  placeholder="MCB" style="width:100%"></td></tr>
-        <tr><td>Price</td>    <td colspan="2"><input id="sPrice"   placeholder="403.86" style="width:100%"></td></tr>
-        <tr><td>MA50</td>     <td><input id="sMA50D"  placeholder="401.2"></td><td><input id="sMA50W"  placeholder="399.1"></td></tr>
-        <tr><td>MA200</td>    <td><input id="sMA200D" placeholder="385.5"></td><td><input id="sMA200W" placeholder="280.4"></td></tr>
-        <tr><td>RSI</td>      <td><input id="sRSID"   placeholder="52.1"></td> <td><input id="sRSIW"   placeholder="58.3"></td></tr>
-        <tr><td>MACD-H</td>   <td><input id="sMACDHD" placeholder="-1.2"></td> <td><input id="sMACDHW" placeholder="4.2"></td></tr>
-        <tr><td>Signal</td>   <td><input id="sSignalD" placeholder="0.8"></td> <td><input id="sSignalW" placeholder="3.1"></td></tr>
-        <tr><td>Volume</td>   <td><input id="sVolume"   placeholder="1D vol"></td><td><input id="sVolumeW" placeholder="1W vol"></td></tr>
-        <tr><td>52W-High</td> <td colspan="2"><input id="s52High"  placeholder="452" style="width:100%"></td></tr>
-        <tr><td>52W-Low</td>  <td colspan="2"><input id="s52Low"   placeholder="280" style="width:100%"></td></tr>
+  <!-- ══════════ IMPORT PAGE ══════════ -->
+  <div id="pgImport" class="page content">
+    <div class="page-header"><h1>Add / Update Data</h1><p>Enter indicator values for all symbols and save to Google Sheets</p></div>
+    <input type="hidden" id="idxGhToken">
+    <div class="import-actions">
+      <span style="font-size:12px;color:var(--text3);font-weight:600">Data as of</span>
+      <input type="date" id="fDataDate" class="date-input">
+      <button class="btn btn-success" onclick="saveAllData()">💾 Save to Sheets</button>
+      <button class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
+      <span id="saveStatus" class="save-status"></span>
+    </div>
+    <div class="archive-bar" id="archiveWrap">
+      <span class="arch-label">🗂 Past Fridays</span>
+      <select id="archiveSelect" class="arch-select"><option value="">Load past Friday…</option></select>
+      <button class="btn btn-ghost" onclick="loadArchive()">View</button>
+      <button class="btn btn-ghost" onclick="clearArchive()">✕ Current</button>
+    </div>
+
+    <div class="import-tbl-wrap">
+      <table class="imp-tbl">
+        <thead>
+          <tr>
+            <th class="imp-th ticker-h" rowspan="2">Ticker</th>
+            <th class="imp-th" rowspan="2">Price</th>
+            <th class="imp-th group-d" colspan="6">1 Day</th>
+            <th class="imp-th group-w" colspan="6">1 Week</th>
+            <th class="imp-th" colspan="2">52 Week</th>
+          </tr>
+          <tr>
+            <th class="imp-th">MA50</th><th class="imp-th">MA200</th><th class="imp-th">RSI</th>
+            <th class="imp-th">MACD-H</th><th class="imp-th">Signal</th><th class="imp-th">Vol</th>
+            <th class="imp-th group-w">MA50</th><th class="imp-th group-w">MA200</th><th class="imp-th group-w">RSI</th>
+            <th class="imp-th group-w">MACD-H</th><th class="imp-th group-w">Signal</th><th class="imp-th group-w">Vol</th>
+            <th class="imp-th">High</th><th class="imp-th">Low</th>
+          </tr>
+        </thead>
+        <tbody>
+<tr class="imp-row"><td class="imp-sym">ABL</td><td class="imp-td"><input id="i_ABL_Price" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_ABL_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">BAFL</td><td class="imp-td"><input id="i_BAFL_Price" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">BOP</td><td class="imp-td"><input id="i_BOP_Price" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_BOP_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">EFERT</td><td class="imp-td"><input id="i_EFERT_Price" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">ENGROH</td><td class="imp-td"><input id="i_ENGROH_Price" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">FCL</td><td class="imp-td"><input id="i_FCL_Price" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_FCL_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">FFC</td><td class="imp-td"><input id="i_FFC_Price" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_FFC_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">HBL</td><td class="imp-td"><input id="i_HBL_Price" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_HBL_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">HUBC</td><td class="imp-td"><input id="i_HUBC_Price" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">ISL</td><td class="imp-td"><input id="i_ISL_Price" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_ISL_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">KAPCO</td><td class="imp-td"><input id="i_KAPCO_Price" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">LUCK</td><td class="imp-td"><input id="i_LUCK_Price" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">MCB</td><td class="imp-td"><input id="i_MCB_Price" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_MCB_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">MEBL</td><td class="imp-td"><input id="i_MEBL_Price" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">MTL</td><td class="imp-td"><input id="i_MTL_Price" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_MTL_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">NBP</td><td class="imp-td"><input id="i_NBP_Price" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_NBP_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">OGDC</td><td class="imp-td"><input id="i_OGDC_Price" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">POL</td><td class="imp-td"><input id="i_POL_Price" class="imp-in"></td><td class="imp-td"><input id="i_POL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_POL_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">PPL</td><td class="imp-td"><input id="i_PPL_Price" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_PPL_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">SYS</td><td class="imp-td"><input id="i_SYS_Price" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_SYS_52W_Low" class="imp-in"></td></tr>
+<tr class="imp-row"><td class="imp-sym">UBL</td><td class="imp-td"><input id="i_UBL_Price" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_UBL_52W_Low" class="imp-in"></td></tr>
+        </tbody>
       </table>
-      <button class="analyse-btn" onclick="analyseSingle()">🔍 Analyse Symbol</button>
     </div>
-    <div class="result-panel" id="singleResult">
-      <div class="panel-hdr">📈 Analysis Result</div>
-      <div class="empty">Enter indicator values on the left and click<br><b>Analyse Symbol</b></div>
+
+    <div class="csv-out" id="csvSection">
+      <label>data.csv — copy into your GitHub repo</label>
+      <textarea id="csvOut" readonly></textarea>
+      <div style="margin-top:10px;display:flex;gap:10px">
+        <button onclick="copyCsv()" class="btn btn-ghost">📋 Copy to Clipboard</button>
+      </div>
     </div>
+  </div>
+
+</main><!-- /main -->
+</div><!-- /shell -->
+
+<!-- LOCK GATE -->
+<div id="importGate">
+  <div class="gate-box">
+    <div class="gate-icon">🔒</div>
+    <div class="gate-title">Data Entry</div>
+    <div class="gate-sub">Enter password to access</div>
+    <input type="password" class="gate-input" id="igPwInput" placeholder="••••••" maxlength="20"
+      onkeydown="if(event.key==='Enter') checkImportPW()">
+    <button class="btn btn-primary" style="width:100%;padding:12px" onclick="checkImportPW()">Unlock</button>
+    <div class="gate-err" id="igErr">Incorrect password</div>
   </div>
 </div>
 
 <script>
+/* ════════════════════════════════════════════
+   TOPBAR DATE
+════════════════════════════════════════════ */
+(function(){
+  const d=new Date();
+  document.getElementById('topbarDate').textContent=
+    d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+})();
+
+function hardRefresh(){
+  // Clear all cached data then force reload bypassing browser cache
+  try{ localStorage.removeItem('psx_dataAsOf'); }catch(e){}
+  window.location.reload(true);
+}
+
+/* ════════════════════════════════════════════
+   THEME TOGGLE
+════════════════════════════════════════════ */
+(function(){
+  const saved = localStorage.getItem('psx_theme');
+  if(saved === 'light') applyLight();
+})();
+
+function applyLight(){
+  document.documentElement.classList.add('light');
+  const icon = document.getElementById('themeIcon');
+  const lbl  = document.getElementById('themeLabel');
+  if(icon) icon.textContent = '🌙';
+  if(lbl)  lbl.textContent  = 'Dark Mode';
+}
+function applyDark(){
+  document.documentElement.classList.remove('light');
+  const icon = document.getElementById('themeIcon');
+  const lbl  = document.getElementById('themeLabel');
+  if(icon) icon.textContent = '☀️';
+  if(lbl)  lbl.textContent  = 'Light Mode';
+}
+function toggleTheme(){
+  const isLight = document.documentElement.classList.contains('light');
+  if(isLight){ applyDark(); localStorage.setItem('psx_theme','dark'); }
+  else        { applyLight(); localStorage.setItem('psx_theme','light'); }
+}
+
+/* ════════════════════════════════════════════
+   NAV
+════════════════════════════════════════════ */
+function setNav(id,title){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el) el.classList.add('active');
+  document.getElementById('topbarTitle').textContent=title;
+}
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goHome()    { showPage('pgHome');     setNav('navHome','Dashboard');      renderHome(); }
+function goAnalysis(){ showPage('pgAnalysis'); setNav('navAnalysis','Weekly Analysis'); runWeekly(); }
+function goImport()  { showImportPage();       setNav('navImport','Add / Update Data'); setTimeout(loadArchiveList,500); }
+function goSingle()  { showPage('pgSingle');   setNav('navSingle','Single Ticker'); }
+
+/* ════════════════════════════════════════════
+   ORIGINAL LOGIC — unchanged from your working app
+════════════════════════════════════════════ */
 const GS_ID      = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY     = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
 const GS_WRITE   = 'https://script.google.com/macros/s/AKfycbx9iuuBLDXYecY45EGVUYHeOEy1QBAqjJqjaQ6qjas7xQWmOixKaLIBANOTcWu2qi72cg/exec';
@@ -449,11 +776,6 @@ function gsUrl(tab){ return `https://sheets.googleapis.com/v4/spreadsheets/${GS_
 function num(v){ return(v===''||v===undefined||v===null)?null:Number(v); }
 function fmt(v){ const n=parseFloat(v);return isNaN(n)?v:parseFloat(n.toFixed(2)).toString(); }
 function fmtRange(lo,hi){ return `${Math.floor(lo)}\u2013${Math.floor(hi)}`; }
-function showPage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
-function goHome()    { showPage('pgHome');     renderHome(); }
-function goAnalysis(){ showPage('pgAnalysis'); runWeekly(); }
-function goImport()  { showImportPage(); setTimeout(loadArchiveList, 500); }
-function goSingle()  { showPage('pgSingle'); }
 function zoneWidth(p){ return p<=50?3:p<=150?5:p<=300?8:p<=500?8:p<=700?10:12; }
 function computeZones(s){
   const p=num(s.Price),ma50=num(s['MA50-D']),ma200=num(s['MA200-D']);
@@ -534,10 +856,10 @@ function verdictFn(s,sc,z){
 }
 function momentumLabel(s,verdict){
   const macdD=num(s['MACD-H-D']),macdW=num(s['MACD-H-W']),sigW=num(s['Signal-W']),rsid=num(s['RSI-D']);
-  if(verdict==='BUY'){ const wR=macdW!==null&&sigW!==null&&macdW>sigW; if(macdW!==null&&macdW>3&&wR) return '<b style="color:#4caf50">Strong ↑</b>'; if(macdW!==null&&macdW>0&&wR) return '<b style="color:#81c784">Moderate ↑</b>'; return '<b style="color:#a5d6a7">Forming ↑</b>'; }
-  if(verdict==='EXIT'){ if(rsid!==null&&rsid<35&&macdD!==null&&macdD<-1.5) return '<b style="color:#ef5350">Strong ↓</b>'; if(rsid!==null&&rsid<42&&macdD!==null&&macdD<-0.5) return '<b style="color:#ef9a9a">Moderate ↓</b>'; return '<b style="color:#ffb74d">Mild ↓</b>'; }
-  if(verdict==='CAUTION') return '<b style="color:#ff9800">⚠️ MA50 Broken</b>';
-  if(macdW!==null){ const wR=sigW!==null&&macdW>sigW; return macdW>0&&wR?'<span style="color:#4fc3f7">MACD-W ▲ Building</span>':macdW>0?'<span style="color:#78909c">MACD-W ▲ Slowing</span>':'<span style="color:#ef5350">MACD-W ▼ Weak</span>'; }
+  if(verdict==='BUY'){ const wR=macdW!==null&&sigW!==null&&macdW>sigW; if(macdW!==null&&macdW>3&&wR) return '<b style="color:#10B981">Strong ↑</b>'; if(macdW!==null&&macdW>0&&wR) return '<b style="color:#6ee7b7">Moderate ↑</b>'; return '<b style="color:#a7f3d0">Forming ↑</b>'; }
+  if(verdict==='EXIT'){ if(rsid!==null&&rsid<35&&macdD!==null&&macdD<-1.5) return '<b style="color:#F43F5E">Strong ↓</b>'; if(rsid!==null&&rsid<42&&macdD!==null&&macdD<-0.5) return '<b style="color:#fca5a5">Moderate ↓</b>'; return '<b style="color:#F59E0B">Mild ↓</b>'; }
+  if(verdict==='CAUTION') return '<b style="color:#FB923C">⚠️ MA50 Broken</b>';
+  if(macdW!==null){ const wR=sigW!==null&&macdW>sigW; return macdW>0&&wR?'<span style="color:#38BDF8">MACD-W ▲ Building</span>':macdW>0?'<span style="color:#64748B">MACD-W ▲ Slowing</span>':'<span style="color:#F43F5E">MACD-W ▼ Weak</span>'; }
   return '—';
 }
 function processAll(){
@@ -573,39 +895,103 @@ function verdictFnEnhanced(s,sc,z,scoreDelta,macdImproving,rsiImproving,priceChg
   if(base.verdict==='EXIT'&&trendClass==='sustained-down') return {v:'🔴 EXIT ⬇️ Confirmed',verdict:'EXIT',target:base.target};
   return base;
 }
-function tableHeader(){ const prevNote=_prevDate?`<span style="font-size:10px;color:#4a6a8a;margin-left:6px">vs ${_prevDate}</span>`:''; return `<tr><th>#</th><th>Symbol</th><th>Price</th><th>Support</th><th>Support 2</th><th>Resistance</th><th>Target</th><th>Score${prevNote}</th><th>Trend</th><th>Verdict</th><th>Momentum</th></tr>`; }
+
+/* ── Redesigned table renderers ── */
+function tableHeader(){
+  const prevNote=_prevDate?`<span style="font-size:10px;color:var(--text3);margin-left:6px">vs ${_prevDate}</span>`:'';
+  return `<tr>
+    <th style="width:32px">#</th>
+    <th>Symbol</th>
+    <th>Price</th>
+    <th>Support</th>
+    <th>S2</th>
+    <th>Resistance</th>
+    <th>Target</th>
+    <th>Score${prevNote}</th>
+    <th style="width:40px">Trend</th>
+    <th>Verdict</th>
+    <th>Momentum</th>
+  </tr>`;
+}
 function tableRow(r,i){
   const cls=r.Verdict==='BUY'?'buy-row':r.Verdict==='EXIT'?'exit-row':r.Verdict==='CAUTION'?'caution-row':r.Verdict==='WATCH'?'watch-row':'';
   const vcls=r.Verdict==='BUY'?'badge-buy':r.Verdict==='EXIT'?'badge-exit':r.Verdict==='CAUTION'?'badge-caution':r.Verdict==='WATCH'?'badge-watch':r.Verdict==='WAIT'?'badge-wait':'badge-avoid';
-  const deltaStr=r.ScoreDelta!==null?`<span style="font-size:10px;color:${r.ScoreDelta>0?'#4caf50':r.ScoreDelta<0?'#ef5350':'#78909c'};margin-left:3px">${r.ScoreDelta>0?'+':''}${r.ScoreDelta}</span>`:'';
-  const spark=r.Sparkline?'<div style="font-size:9px;color:#4a6a8a;margin-top:2px;letter-spacing:0px">'+r.Sparkline.map((v,i)=>{const isLast=(i===r.Sparkline.length-1);const clr=isLast?'#e0e6ed':v==='?'?'#2e4060':v>=(r.Score-2)?'#4caf50':'#78909c';return `<span style="color:${clr};font-weight:${isLast?'700':'400'}">${v}</span>`;}).join('<span style="color:#2e4060">›</span>')+'</div>':'';
-  const pchg=r.PriceChg!==null?`<span style="font-size:10px;color:${r.PriceChg>0?'#4caf50':r.PriceChg<0?'#ef5350':'#78909c'};margin-left:3px">${r.PriceChg>0?'+':''}${r.PriceChg.toFixed(1)}%</span>`:'';
-  return `<tr class="${cls}"><td>${i+1}</td><td><b>${r.Symbol}</b></td><td>${fmt(r.Price)}${pchg}</td><td>${r.Support}</td><td>${r.S2||'—'}</td><td>${r.Resistance}</td><td>${fmt(r.Target)}</td><td><b>${r.Score}</b>${deltaStr}${spark}</td><td style="font-size:16px;text-align:center">${r.Trend||'—'}</td><td class="${vcls}">${r.VLabel}</td><td>${r.Momentum}</td></tr>`;
+  const deltaStr=r.ScoreDelta!==null?`<span style="font-size:10px;font-family:var(--mono);color:${r.ScoreDelta>0?'#10B981':r.ScoreDelta<0?'#F43F5E':'#64748B'};margin-left:4px">${r.ScoreDelta>0?'+':''}${r.ScoreDelta}</span>`:'';
+  const spark=r.Sparkline?'<div style="font-size:9px;margin-top:2px;letter-spacing:0;font-family:var(--mono)">'+r.Sparkline.map((v,idx)=>{const isLast=(idx===r.Sparkline.length-1);const clr=isLast?'#E2E8F4':v==='?'?'#1E2D44':v>=(r.Score-2)?'#10B981':'#64748B';return `<span style="color:${clr};font-weight:${isLast?'700':'400'}">${v}</span>`;}).join('<span style="color:#1E2D44">›</span>')+'</div>':'';
+  const pchg=r.PriceChg!==null?`<span style="font-size:10px;font-family:var(--mono);color:${r.PriceChg>0?'#10B981':r.PriceChg<0?'#F43F5E':'#64748B'};margin-left:4px">${r.PriceChg>0?'+':''}${r.PriceChg.toFixed(1)}%</span>`:'';
+  // Stagger animation
+  const delay=(i*30)+'ms';
+  return `<tr class="${cls}" style="animation-delay:${delay}">
+    <td style="color:var(--text3);font-size:11px;font-family:var(--mono)">${i+1}</td>
+    <td class="sym-cell">${r.Symbol}</td>
+    <td class="price-cell">${fmt(r.Price)}${pchg}</td>
+    <td class="zone-cell">${r.Support}</td>
+    <td class="zone-cell">${r.S2||'—'}</td>
+    <td class="zone-cell">${r.Resistance}</td>
+    <td class="zone-cell" style="color:var(--accent)">${fmt(r.Target)}</td>
+    <td class="score-cell">${r.Score}${deltaStr}${spark}</td>
+    <td class="trend-cell">${r.Trend||'—'}</td>
+    <td class="${vcls}">${r.VLabel}</td>
+    <td style="font-size:12px">${r.Momentum}</td>
+  </tr>`;
 }
+
 function renderHome(){
   if(!_rawData.length) return;
   const rows=processAll();
   const buys=rows.filter(r=>r.Verdict==='BUY');
   const exits=rows.filter(r=>r.Verdict==='EXIT'||r.Verdict==='CAUTION');
+
+  // Home signal strip
+  const g=v=>rows.filter(r=>r.Verdict===v).length;
+  const strip=document.getElementById('homeSignalStrip');
+  if(strip){
+    strip.style.display='flex';
+    strip.innerHTML=`
+      <div class="sig-card buy"><div class="sv">${g('BUY')}</div><div class="sl">Buy</div></div>
+      <div class="sig-card watch"><div class="sv">${g('WATCH')}</div><div class="sl">Watch</div></div>
+      <div class="sig-card caution"><div class="sv">${g('CAUTION')}</div><div class="sl">Caution</div></div>
+      <div class="sig-card exit"><div class="sv">${g('EXIT')}</div><div class="sl">Exit</div></div>
+      <div class="sig-card wait"><div class="sv">${g('WAIT')+g('AVOID')}</div><div class="sl">Wait/Avoid</div></div>`;
+  }
+
   const bt=document.getElementById('homeBuyTable');
-  bt.innerHTML=buys.length?tableHeader()+buys.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="10" style="padding:16px;color:#4a6a8a;text-align:center">No BUY candidates this week</td></tr>';
+  bt.innerHTML=buys.length?tableHeader()+buys.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="11" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No BUY candidates this week</td></tr>';
   const et=document.getElementById('homeExitTable');
-  et.innerHTML=exits.length?tableHeader()+exits.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="10" style="padding:16px;color:#4a6a8a;text-align:center">No EXIT signals this week</td></tr>';
+  et.innerHTML=exits.length?tableHeader()+exits.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="11" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No EXIT signals this week</td></tr>';
 }
+
 function runWeekly(){
   showPage('pgAnalysis');
-  if(!_rawData.length){ document.getElementById('fullTable').innerHTML='<tr><td style="padding:20px;color:#4a6a8a">No data loaded.</td></tr>'; return; }
+  if(!_rawData.length){ document.getElementById('fullTable').innerHTML='<tr><td style="padding:20px;color:var(--text3)">No data loaded yet.</td></tr>'; return; }
   const rows=processAll();
   const g=v=>rows.filter(r=>r.Verdict===v).map(r=>r.Symbol).join(', ')||'—';
-  document.getElementById('signalSummary').innerHTML=`<div class="sig-pill"><span class="s-label">📈 BUY</span><span class="s-val" style="color:#4caf50">${g('BUY')}</span></div><div class="sig-pill"><span class="s-label">👀 WATCH</span><span class="s-val" style="color:#ffc107">${g('WATCH')}</span></div><div class="sig-pill"><span class="s-label">⚠️ CAUTION</span><span class="s-val" style="color:#ff9800">${g('CAUTION')}</span></div><div class="sig-pill"><span class="s-label">⏳ WAIT</span><span class="s-val" style="color:#78909c">${g('WAIT')}</span></div><div class="sig-pill"><span class="s-label">🔴 EXIT</span><span class="s-val" style="color:#ef5350">${g('EXIT')}</span></div>`;
+  document.getElementById('signalSummary').innerHTML=`
+    <div class="sig-pill"><span class="s-label">BUY</span><span class="s-val" style="color:#10B981">${g('BUY')}</span></div>
+    <div class="sig-pill"><span class="s-label">WATCH</span><span class="s-val" style="color:#F59E0B">${g('WATCH')}</span></div>
+    <div class="sig-pill"><span class="s-label">CAUTION</span><span class="s-val" style="color:#FB923C">${g('CAUTION')}</span></div>
+    <div class="sig-pill"><span class="s-label">WAIT</span><span class="s-val" style="color:#64748B">${g('WAIT')}</span></div>
+    <div class="sig-pill"><span class="s-label">EXIT</span><span class="s-val" style="color:#F43F5E">${g('EXIT')}</span></div>`;
   document.getElementById('fullTable').innerHTML=tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('');
+
   const planRows=rows.filter(r=>['BUY','EXIT','CAUTION'].includes(r.Verdict));
-  function buildPlanHtml(rows){ return rows.map(r=>{ const p=parseFloat(r.Price),supHi=parseFloat(r.Support.split('–')[1]); if(r.Verdict==='BUY'){ const action=p<=supHi*1.02?'BUY NOW — price is at MA support zone':'WAIT — watch for pullback to '+r.Support; return `<div class="plan-block buy"><h4>🟢 ${r.Symbol} — Buy Plan | Score: ${r.Score}</h4><code>Entry: ${r.Support} | Target: ₨${fmt(r.Target)} | R:R ≈ ${r.RR}</code><p>At ₨${p}: ${action}</p></div>`; } else if(r.Verdict==='CAUTION'){ return `<div class="plan-block" style="border-color:#ff9800"><h4>⚠️ ${r.Symbol} — CAUTION | Score: ${r.Score}</h4><code>Current: ₨${fmt(r.Price)} | Watch level: ₨${fmt(r.Target)}</code><p>Price broke below MA50. Monitor — if MA200 breaks, exit position.</p></div>`; } else { return `<div class="plan-block exit"><h4>🔴 ${r.Symbol} — EXIT SIGNAL | Score: ${r.Score}</h4><code>Current: ₨${fmt(r.Price)} | Downside Risk: ₨${fmt(r.Target)}</code><p>⚠️ MA50 broken. Consider closing position.</p></div>`; } }).join(''); }
-  const buyPlans=planRows.filter(r=>r.Verdict==='BUY'); const otherPlans=planRows.filter(r=>r.Verdict!=='BUY');
-  const leftHtml=otherPlans.length?buildPlanHtml(otherPlans):'<p style="color:#4a6a8a;font-size:13px">No EXIT or CAUTION signals</p>';
-  const rightHtml=buyPlans.length?buildPlanHtml(buyPlans):'<p style="color:#4a6a8a;font-size:13px">No BUY signals</p>';
-  document.getElementById('tradePlans').innerHTML=planRows.length?`<h3 style="color:#a0c4e8;margin:20px 0 10px;font-size:13px">Trade Plans</h3><div style="display:flex;gap:0;align-items:flex-start"><div style="width:50%;padding-right:10px;box-sizing:border-box"><div style="font-size:12px;color:#ef5350;font-weight:800;margin-bottom:10px;letter-spacing:.8px;border-bottom:2px solid #ef5350;padding-bottom:6px">🔴 EXIT / CAUTION</div>${leftHtml}</div><div style="width:50%;padding-left:10px;box-sizing:border-box;border-left:1px solid #2e4060"><div style="font-size:12px;color:#4caf50;font-weight:800;margin-bottom:10px;letter-spacing:.8px;border-bottom:2px solid #4caf50;padding-bottom:6px">🟢 BUY SIGNALS</div>${rightHtml}</div></div>`:'';
+  const tp=document.getElementById('tradePlans');
+  if(!planRows.length){ tp.style.display='none'; return; }
+  tp.style.display='grid';
+  function buildPlanHtml(rows){ return rows.map(r=>{ const p=parseFloat(r.Price),supHi=parseFloat(r.Support.split('–')[1]); if(r.Verdict==='BUY'){ const action=p<=supHi*1.02?'BUY NOW — price is at support zone':'WAIT — watch for pullback to '+r.Support; return `<div class="plan-card buy"><h4>🟢 ${r.Symbol} · Score ${r.Score}</h4><code>Entry: ${r.Support} | Target: ₨${fmt(r.Target)} | R:R ≈ ${r.RR}</code><p>At ₨${p}: ${action}</p></div>`; } else if(r.Verdict==='CAUTION'){ return `<div class="plan-card caution"><h4>⚠️ ${r.Symbol} · Score ${r.Score}</h4><code>Current: ₨${fmt(r.Price)} | Watch: ₨${fmt(r.Target)}</code><p>Price broke below MA50. If MA200 breaks, exit.</p></div>`; } else { return `<div class="plan-card exit"><h4>🔴 ${r.Symbol} · Score ${r.Score}</h4><code>Current: ₨${fmt(r.Price)} | Downside: ₨${fmt(r.Target)}</code><p>MA50 broken. Consider closing position.</p></div>`; } }).join('')||'<p style="color:var(--text3);font-size:13px">None</p>'; }
+  const buys=planRows.filter(r=>r.Verdict==='BUY');
+  const others=planRows.filter(r=>r.Verdict!=='BUY');
+  tp.innerHTML=`
+    <div>
+      <div class="plans-col-label exit-lbl">🔴 EXIT / CAUTION</div>
+      ${buildPlanHtml(others)}
+    </div>
+    <div>
+      <div class="plans-col-label buy-lbl">🟢 BUY SIGNALS</div>
+      ${buildPlanHtml(buys)}
+    </div>`;
 }
+
 function analyseSingle(){
   const ids=['sSymbol','sPrice','sMA50D','sMA200D','sRSID','sMACDHD','sSignalD','sMA50W','sMA200W','sRSIW','sMACDHW','sSignalW','sVolume','s52High','s52Low'];
   const keys=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume','52W-High','52W-Low'];
@@ -619,17 +1005,40 @@ function analyseSingle(){
   const ma50d=num(s['MA50-D']),ma200d=num(s['MA200-D']),rsid=num(s['RSI-D']),macdD=num(s['MACD-H-D']),sigD=num(s['Signal-D']),macdW=num(s['MACD-H-W']),sigW=num(s['Signal-W']),ma50w=num(s['MA50-W']),ma200w=num(s['MA200-W']);
   function iv(v,bull,bear){ return `<span class="ind-val ${v?'bull':'bear'}">${v?bull:bear}</span>`; }
   let planHtml='';
-  if(vr.verdict==='BUY'){ const supHi=parseFloat(z.supportZone.split('\u2013')[1]); const action=p<=supHi*1.02?'BUY NOW — price is at MA support':'WAIT — watch for pullback to '+z.supportZone; planHtml=`<div class="trade-plan buy"><div class="tp-head">🟢 Buy Plan</div><div class="tp-code">Entry: ${z.supportZone} | Target: ₨${fmt(vr.target)} | R:R ≈ ${rr}</div><div class="tp-note">At ₨${p}: ${action}</div></div>`; }
-  else if(vr.verdict==='EXIT'){ planHtml=`<div class="trade-plan exit"><div class="tp-head">🔴 Exit Signal</div><div class="tp-code">Current: ₨${fmt(p)} | Downside Risk: ₨${fmt(vr.target)}</div><div class="tp-note">⚠️ MA50 support broken. Consider closing position.</div></div>`; }
-  document.getElementById('singleResult').innerHTML=`<div class="panel-hdr">📈 ${s.Symbol} — Analysis Result</div><div class="verdict-block"><div class="${vcls}"><div class="verdict-main">${vr.v}</div><div class="verdict-score">Score: ${sc} / 100</div></div><span class="momentum-badge ${mbcls}">${mom}</span><div class="zone-grid"><div class="zone-card sup"><div class="zlbl">Support (S1)</div><div class="zval">${z.supportZone}</div></div><div class="zone-card sup2"><div class="zlbl">Support 2 (S2)</div><div class="zval">${z.s2Zone||'—'}</div></div><div class="zone-card res"><div class="zlbl">Resistance</div><div class="zval">${z.resistanceZone}</div></div><div class="zone-card tgt"><div class="zlbl">${vr.verdict==='EXIT'?'Downside Risk':'Target'}</div><div class="zval">₨${fmt(vr.target)}</div></div></div>${planHtml}<div style="font-size:13px;color:#7a9ab5;margin:16px 0 8px;font-weight:600">INDICATOR SIGNALS</div><div class="indicator-grid"><div class="ind-row"><span class="ind-name">Price vs MA50-D</span>${iv(ma50d!==null&&p>ma50d,'Above ✓','Below ✗')}</div><div class="ind-row"><span class="ind-name">Price vs MA200-D</span>${iv(ma200d!==null&&p>ma200d,'Above ✓','Below ✗')}</div><div class="ind-row"><span class="ind-name">MA50-D vs MA200-D</span>${iv(ma50d!==null&&ma200d!==null&&ma50d>=ma200d,'Golden ✓','Death ✗')}</div><div class="ind-row"><span class="ind-name">MA50-W vs MA200-W</span>${iv(ma50w!==null&&ma200w!==null&&ma50w>ma200w,'Golden ✓','Death ✗')}</div><div class="ind-row"><span class="ind-name">RSI-D (${rsid||'—'})</span><span class="ind-val ${rsid!==null&&rsid>=30&&rsid<=53?'bull':rsid!==null&&rsid>70?'bear':'neut'}">${rsid!==null?(rsid<30?'Oversold':rsid<=53?'Cool Zone':rsid<=70?'Rising':'Overbought'):'—'}</span></div><div class="ind-row"><span class="ind-name">MACD-D</span><span class="ind-val ${macdD!==null&&macdD>0?'bull':'bear'}">${macdD!==null?(macdD>0&&sigD!==null&&macdD>sigD?'Pos + Rising':macdD>0?'Pos':'Neg'):'—'}</span></div><div class="ind-row"><span class="ind-name">MACD-W</span><span class="ind-val ${macdW!==null&&macdW>0?'bull':'bear'}">${macdW!==null?(macdW>0&&sigW!==null&&macdW>sigW?'Pos + Rising':macdW>0?'Pos':'Neg'):'—'}</span></div><div class="ind-row"><span class="ind-name">R:R Ratio</span><span class="ind-val ${parseFloat(rr)>=2?'bull':parseFloat(rr)>=1.5?'neut':'bear'}">${rr}:1</span></div></div></div>`;
+  if(vr.verdict==='BUY'){ const supHi=parseFloat(z.supportZone.split('\u2013')[1]); const action=p<=supHi*1.02?'BUY NOW — price is at support':'WAIT — pullback to '+z.supportZone; planHtml=`<div class="tp-card buy"><div class="tp-head" style="color:#10B981">🟢 Buy Plan</div><div class="tp-code">Entry: ${z.supportZone} | Target: ₨${fmt(vr.target)} | R:R ≈ ${rr}</div><div class="tp-note">At ₨${p}: ${action}</div></div>`; }
+  else if(vr.verdict==='EXIT'){ planHtml=`<div class="tp-card exit"><div class="tp-head" style="color:#F43F5E">🔴 Exit Signal</div><div class="tp-code">Current: ₨${fmt(p)} | Downside Risk: ₨${fmt(vr.target)}</div><div class="tp-note">MA50 broken. Consider closing.</div></div>`; }
+  document.getElementById('singleResult').innerHTML=`
+    <div class="card-header">📈 ${s.Symbol}</div>
+    <div class="verdict-block">
+      <div class="${vcls}">
+        <div class="verdict-main">${vr.v}</div>
+        <div class="verdict-score">Score: ${sc} / 100 · R:R ${rr}:1</div>
+      </div>
+      <span class="mbadge ${mbcls}">${mom}</span>
+      <div class="zone-grid">
+        <div class="zone-card sup"><div class="zlbl">Support S1</div><div class="zval">${z.supportZone}</div></div>
+        <div class="zone-card sup2"><div class="zlbl">Support S2</div><div class="zval">${z.s2Zone||'—'}</div></div>
+        <div class="zone-card res"><div class="zlbl">Resistance</div><div class="zval">${z.resistanceZone}</div></div>
+        <div class="zone-card tgt"><div class="zlbl">${vr.verdict==='EXIT'?'Downside':'Target'}</div><div class="zval">₨${fmt(vr.target)}</div></div>
+      </div>
+      ${planHtml}
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin:14px 0 8px">Indicators</div>
+      <div class="ind-grid">
+        <div class="ind-row"><span class="ind-name">Price vs MA50-D</span>${iv(ma50d!==null&&p>ma50d,'Above ✓','Below ✗')}</div>
+        <div class="ind-row"><span class="ind-name">Price vs MA200-D</span>${iv(ma200d!==null&&p>ma200d,'Above ✓','Below ✗')}</div>
+        <div class="ind-row"><span class="ind-name">MA50-D vs MA200-D</span>${iv(ma50d!==null&&ma200d!==null&&ma50d>=ma200d,'Golden ✓','Death ✗')}</div>
+        <div class="ind-row"><span class="ind-name">MA50-W vs MA200-W</span>${iv(ma50w!==null&&ma200w!==null&&ma50w>ma200w,'Golden ✓','Death ✗')}</div>
+        <div class="ind-row"><span class="ind-name">RSI-D (${rsid||'—'})</span><span class="ind-val ${rsid!==null&&rsid>=30&&rsid<=53?'bull':rsid!==null&&rsid>70?'bear':'neut'}">${rsid!==null?(rsid<30?'Oversold':rsid<=53?'Cool Zone':rsid<=70?'Rising':'Overbought'):'—'}</span></div>
+        <div class="ind-row"><span class="ind-name">MACD-D</span><span class="ind-val ${macdD!==null&&macdD>0?'bull':'bear'}">${macdD!==null?(macdD>0&&sigD!==null&&macdD>sigD?'Pos + Rising':macdD>0?'Pos':'Neg'):'—'}</span></div>
+        <div class="ind-row"><span class="ind-name">MACD-W</span><span class="ind-val ${macdW!==null&&macdW>0?'bull':'bear'}">${macdW!==null?(macdW>0&&sigW!==null&&macdW>sigW?'Pos + Rising':macdW>0?'Pos':'Neg'):'—'}</span></div>
+        <div class="ind-row"><span class="ind-name">R:R Ratio</span><span class="ind-val ${parseFloat(rr)>=2?'bull':parseFloat(rr)>=1.5?'neut':'bear'}">${rr}:1</span></div>
+      </div>
+    </div>`;
 }
+
+/* ── Import / Save ── */
 const FIELDS=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume','52W-High','52W-Low','Swing-Low','Swing-High'];
 let _rawData=[],_archiveWeeks=[],_prevData={},_prevDate='',_parsedRows=[];
-const KNOWN_HDR=['symbol','price','ma50','ma200','rsi','macd','signal','volume','high','low','ma50-d','ma200-d','rsi-d','macd-h-d','signal-d','ma50-w','ma200-w','rsi-w','macd-h-w','signal-w','52w-high','52w-low'];
-function addRow(){ const ids=['fSymbol','fPrice','fMA50D','fMA200D','fRSID','fMACDHD','fSignalD','fMA50W','fMA200W','fRSIW','fMACDHW','fSignalW','fVolume','f52High','f52Low']; const keys=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume','52W-High','52W-Low']; const nr={'Swing-Low':'','Swing-High':''}; keys.forEach((f,i)=>nr[f]=(document.getElementById(ids[i]).value||'').trim()); if(!nr.Symbol||!nr.Price){ alert('Symbol and Price are required.'); return; } _rawData=_rawData.filter(r=>r.Symbol.toUpperCase()!==nr.Symbol.toUpperCase()); _rawData.push(nr); const dateEl=document.getElementById('fDataDate'); if(dateEl&&dateEl.value) setDataDate(dateEl.value); exportToTextarea(); document.getElementById('csvSection').style.display='block'; renderHome(); }
-function exportToTextarea(){ const lines=[FIELDS.join(',')]; _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(','))); document.getElementById('csvOut').value=lines.join('\n'); }
-function copyCsv(){ const ta=document.getElementById('csvOut'); ta.select(); document.execCommand('copy'); alert('CSV copied to clipboard'); }
-function exportCSV(){ const lines=[FIELDS.join(',')]; _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(','))); const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='data.csv'; a.click(); }
 const ALL_SYMBOLS=["ABL","BAFL","BOP","EFERT","ENGROH","FCL","FFC","HBL","HUBC","ISL","KAPCO","LUCK","MCB","MEBL","MTL","NBP","OGDC","POL","PPL","SYS","UBL"];
 const D_FIELDS=["Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D","Volume-D"];
 const W_FIELDS=["MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume-W"];
@@ -638,42 +1047,47 @@ function getVal(sym,field){ const el=document.getElementById(inputId(sym,field))
 let _idxToken='';
 const REPO='Nour292/psx-analysis.github.io';
 async function saveToSheets(csvContent){
-  try{ setSaveStatus('⏳ Saving to Google Sheets...','#ffc107'); const lines=csvContent.trim().split(/\r?\n/); const headers=lines[0].split(',').map(h=>h.trim()); const dataRows=lines.slice(1).map(l=>l.split(',')); const archDate=_dataAsOf||new Date().toISOString().slice(0,10); const allRows=[headers,...dataRows]; await fetch(GS_WRITE,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'replaceSheet',tab:GS_TAB_DATA,rows:allRows,archDate})}); setSaveStatus('✅ Saved to Google Sheets!','#4caf50'); setTimeout(()=>setSaveStatus('',''),5000); loadArchiveList(); return true; }catch(err){ setSaveStatus('❌ '+err.message,'#ef5350'); return false; }
+  try{ setSaveStatus('⏳ Saving…','#F59E0B'); const lines=csvContent.trim().split(/\r?\n/); const headers=lines[0].split(',').map(h=>h.trim()); const dataRows=lines.slice(1).map(l=>l.split(',')); const archDate=_dataAsOf||new Date().toISOString().slice(0,10); const allRows=[headers,...dataRows]; await fetch(GS_WRITE,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'replaceSheet',tab:GS_TAB_DATA,rows:allRows,archDate})}); setSaveStatus('✅ Saved','#10B981'); setTimeout(()=>setSaveStatus('',''),5000); loadArchiveList(); return true; }catch(err){ setSaveStatus('❌ '+err.message,'#F43F5E'); return false; }
 }
 let _archiveDates=[];
 async function loadArchiveList(){ const token=_idxToken||document.getElementById('idxGhToken').value.trim(); try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`,{headers:token?{Authorization:`token ${token}`}:{}}); if(!res.ok){ updateArchiveDropdown([]); return; } const files=await res.json(); _archiveDates=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse(); updateArchiveDropdown(_archiveDates); }catch(e){ updateArchiveDropdown([]); } }
-function updateArchiveDropdown(dates){ const sel=document.getElementById('archiveSelect'); if(!sel) return; sel.innerHTML='<option value="">📅 Load past Friday...</option>'+dates.map(d=>`<option value="${d}">${d}</option>`).join(''); const wrap=document.getElementById('archiveWrap'); if(wrap) wrap.style.display=dates.length?'flex':'none'; }
-async function loadArchive(){ const sel=document.getElementById('archiveSelect'); if(!sel||!sel.value) return; const date=sel.value; setSaveStatus(`⏳ Loading archive: ${date}...`,'#ffc107'); try{ const res=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!res.ok) throw new Error('Archive not found'); const text=(await res.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const headers=lines[0].split(',').map(h=>h.trim()); _rawData=lines.slice(1).filter(l=>l.trim()).map(line=>{ const cols=line.split(','); const obj={}; headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); return obj; }); setSaveStatus(`✅ Showing archive: ${date}`,'#4fc3f7'); runWeekly(); showPage('pgAnalysis'); }catch(e){ setSaveStatus('❌ '+e.message,'#ef5350'); } }
+function updateArchiveDropdown(dates){ const sel=document.getElementById('archiveSelect'); if(!sel) return; sel.innerHTML='<option value="">Load past Friday…</option>'+dates.map(d=>`<option value="${d}">${d}</option>`).join(''); const wrap=document.getElementById('archiveWrap'); if(wrap){ if(dates.length) wrap.classList.add('show'); else wrap.classList.remove('show'); } }
+async function loadArchive(){ const sel=document.getElementById('archiveSelect'); if(!sel||!sel.value) return; const date=sel.value; setSaveStatus(`⏳ Loading ${date}…`,'#F59E0B'); try{ const res=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!res.ok) throw new Error('Archive not found'); const text=(await res.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const headers=lines[0].split(',').map(h=>h.trim()); _rawData=lines.slice(1).filter(l=>l.trim()).map(line=>{ const cols=line.split(','); const obj={}; headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); return obj; }); setSaveStatus(`✅ Archive: ${date}`,'#38BDF8'); runWeekly(); showPage('pgAnalysis'); setNav('navAnalysis','Weekly Analysis'); }catch(e){ setSaveStatus('❌ '+e.message,'#F43F5E'); } }
 function clearArchive(){ const sel=document.getElementById('archiveSelect'); if(sel) sel.value=''; setSaveStatus('',''); runWeekly(); }
 function setSaveStatus(msg,color){ const el=document.getElementById('saveStatus'); if(el){ el.textContent=msg; el.style.color=color; } }
-function saveAllData(){ const rows=ALL_SYMBOLS.map(sym=>{ const row={Symbol:sym}; D_FIELDS.forEach(f=>row[f]=getVal(sym,f)); W_FIELDS.forEach(f=>row[f]=getVal(sym,f)); row['52W-High']=getVal(sym,'52W-High'); row['52W-Low']=getVal(sym,'52W-Low'); return row; }); _rawData=rows; const dateEl=document.getElementById('fDataDate'); if(dateEl&&dateEl.value) setDataDate(dateEl.value); const headers=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low']; const lines=[headers.join(',')]; rows.forEach(r=>lines.push(headers.map(h=>r[h]||'').join(','))); const csv=lines.join('\n'); document.getElementById('csvOut').value=csv; document.getElementById('csvSection').style.display='block'; const token=_idxToken||document.getElementById('idxGhToken').value.trim(); if(token){ const today=new Date().toISOString().slice(0,10); saveToSheets(csv); } else { setSaveStatus('⚠️ No token — copy CSV below','#ffc107'); } renderHome(); }
+function saveAllData(){ const rows=ALL_SYMBOLS.map(sym=>{ const row={Symbol:sym}; D_FIELDS.forEach(f=>row[f]=getVal(sym,f)); W_FIELDS.forEach(f=>row[f]=getVal(sym,f)); row['52W-High']=getVal(sym,'52W-High'); row['52W-Low']=getVal(sym,'52W-Low'); return row; }); _rawData=rows; const dateEl=document.getElementById('fDataDate'); if(dateEl&&dateEl.value) setDataDate(dateEl.value); const headers=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low']; const lines=[headers.join(',')]; rows.forEach(r=>lines.push(headers.map(h=>r[h]||'').join(','))); const csv=lines.join('\n'); document.getElementById('csvOut').value=csv; document.getElementById('csvSection').style.display='block'; const token=_idxToken||document.getElementById('idxGhToken').value.trim(); if(token){ saveToSheets(csv); } else { setSaveStatus('⚠️ No token — copy CSV below','#F59E0B'); } renderHome(); }
 function loadIntoForm(){ if(!_rawData.length) return; _rawData.forEach(r=>{ const sym=r.Symbol; if(!sym) return; D_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); W_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); ['52W-High','52W-Low'].forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); }); }
+function exportToTextarea(){ const lines=[FIELDS.join(',')]; _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(','))); document.getElementById('csvOut').value=lines.join('\n'); }
+function copyCsv(){ const ta=document.getElementById('csvOut'); ta.select(); document.execCommand('copy'); }
+function exportCSV(){ const lines=[FIELDS.join(',')]; _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(','))); const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='data.csv'; a.click(); }
+
+/* ── Import gate ── */
 const IMPORT_PW='rd172',IMPORT_KEY='psx_import_auth',TOKEN_KEY='psx_idx_token_perm';
 function showImportPage(){ if(sessionStorage.getItem(IMPORT_KEY)==='1'){ showPage('pgImport'); setTimeout(loadIntoForm,50); return; } document.getElementById('importGate').classList.add('open'); setTimeout(()=>document.getElementById('igPwInput').focus(),100); }
 function checkImportPW(){ const val=document.getElementById('igPwInput').value; if(val===IMPORT_PW){ sessionStorage.setItem(IMPORT_KEY,'1'); document.getElementById('importGate').classList.remove('open'); showPage('pgImport'); setTimeout(loadIntoForm,50); loadSavedToken(); } else { const err=document.getElementById('igErr'); err.style.display='block'; document.getElementById('igPwInput').value=''; document.getElementById('igPwInput').focus(); setTimeout(()=>err.style.display='none',2000); } }
 function loadSavedToken(){ try{ const t=localStorage.getItem(TOKEN_KEY); if(t){ _idxToken=t; const el=document.getElementById('idxGhToken'); if(el){ el.value=t; } } }catch(e){} }
+
+/* ── Date handling ── */
 let _dataAsOf='';
 function setDataDate(d){ _dataAsOf=d; try{ localStorage.setItem('psx_dataAsOf',d); }catch(e){} showDataDate(); }
-function showDataDate(){ if(!_dataAsOf) return; const dt=new Date(_dataAsOf+'T00:00:00'); const nice=dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'}); ['homeDataDate','analysisDataDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';}); const hv=document.getElementById('homeDataDateVal'); const av=document.getElementById('analysisDataDateVal'); if(hv) hv.textContent=nice; if(av) av.textContent=nice; }
-async function loadCSV(){ try{ const res=await fetch(gsUrl(GS_TAB_DATA)); if(!res.ok) throw new Error('Sheets API error: '+res.status); const json=await res.json(); const rows=json.values||[]; if(rows.length<2){ console.log('No data in Sheet'); return; } const headers=rows[0].map(h=>h.trim()); _rawData=rows.slice(1).filter(r=>r.length>0).map(row=>{ const obj={}; headers.forEach((h,i)=>obj[h]=(row[i]||'').trim()); return obj; }); try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){} renderHome(); loadLatestArchive(); }catch(e){ console.log('Sheets not loaded:',e.message); } }
+function showDataDate(){
+  if(!_dataAsOf) return;
+  const dt=new Date(_dataAsOf+'T00:00:00');
+  const nice=dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'});
+  const hd=document.getElementById('homeDataDate'); if(hd) hd.style.display='block';
+  const hv=document.getElementById('homeDataDateVal'); if(hv) hv.textContent=nice;
+  const ad=document.getElementById('analysisDataDate'); if(ad) ad.style.display='block';
+  const av=document.getElementById('analysisDataDateVal'); if(av) av.textContent=nice;
+}
+
+/* ── Data loading ── */
+async function loadCSV(){ try{ const res=await fetch(gsUrl(GS_TAB_DATA)); if(!res.ok) throw new Error('Sheets error: '+res.status); const json=await res.json(); const rows=json.values||[]; if(rows.length<2) return; const headers=rows[0].map(h=>h.trim()); _rawData=rows.slice(1).filter(r=>r.length>0).map(row=>{ const obj={}; headers.forEach((h,i)=>obj[h]=(row[i]||'').trim()); return obj; }); try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){} renderHome(); loadLatestArchive(); }catch(e){ console.log('Sheets not loaded:',e.message); } }
 async function loadLatestArchive(){ await loadArchiveWeeks(); }
 async function loadArchiveWeeks(){ try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`); if(!res.ok) return; const files=await res.json(); const sorted=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse().slice(0,4); if(!sorted.length) return; const results=await Promise.all(sorted.map(async date=>{ try{ const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!r.ok) return null; const text=(await r.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const hdrs=lines[0].split(',').map(h=>h.trim()); const data={}; lines.slice(1).filter(l=>l.trim()).forEach(line=>{ const cols=line.split(','); const obj={}; hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); if(obj.Symbol) data[obj.Symbol]=obj; }); return {date,data}; }catch(e){ return null; } })); _archiveWeeks=results.filter(Boolean); if(_archiveWeeks.length){ _prevData=_archiveWeeks[0].data; _prevDate=_archiveWeeks[0].date; } if(_rawData.length) renderHome(); }catch(e){ console.log('Archive weeks error:',e.message); } }
 function archiveScore(sym,weekIdx){ if(weekIdx>=_archiveWeeks.length) return null; const row=_archiveWeeks[weekIdx].data[sym]; return row?scoreRow(row):null; }
-function runAnalysisFromData(){ if(_rawData.length) renderHome(); }
+
 loadCSV();
 setTimeout(loadArchiveList,2000);
 </script>
-
-<div id="importGate">
-  <div class="ig-box">
-    <div class="ig-logo">🔒</div>
-    <div class="ig-title">Add / Update Row</div>
-    <div class="ig-sub">Enter password to access data entry</div>
-    <input type="password" class="ig-input" id="igPwInput" placeholder="••••••" maxlength="20" onkeydown="if(event.key==='Enter') checkImportPW()">
-    <button class="ig-btn" onclick="checkImportPW()">Unlock</button>
-    <div class="ig-err" id="igErr">❌ Incorrect password</div>
-  </div>
-</div>
-
 </body>
 </html>
