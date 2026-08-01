@@ -440,6 +440,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .btn-ghost:hover{ color:var(--text); opacity:1; background:var(--border); }
 .btn-warn   { background:var(--amber-dim); color:var(--amber); border:1px solid #4A380A; }
 .btn-port   { background:#1A1030; color:#A78BFA; border:1px solid #3B2A70; }
+.btn-ta     { background:var(--accent-dim); color:var(--accent); border:1px solid var(--border2); }
 
 /* ═══════════════════════════════════════════
    LOCK GATE
@@ -661,7 +662,8 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
     <div class="import-actions">
       <span style="font-size:12px;color:var(--text3);font-weight:600">Data as of</span>
       <input type="date" id="fDataDate" class="date-input">
-      <button class="btn btn-success" onclick="saveAllData()">💾 Save to Sheets</button>
+      <button class="btn btn-success" onclick="saveAllData()">💾 Save to Sheet</button>
+      <button class="btn btn-ta" onclick="getData()" title="Load values from Data out sheet into form">📥 Get Data</button>
       <button class="btn btn-ghost" onclick="manualArchive()" title="Save archive snapshot now">📦 Archive Now</button>
       <span id="saveStatus" class="save-status"></span>
     </div>
@@ -820,7 +822,8 @@ function goSingle()  { showPage('pgSingle');   setNav('navSingle','Single Ticker
 const GS_ID      = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY     = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
 const GS_WRITE   = 'https://script.google.com/macros/s/AKfycbx9iuuBLDXYecY45EGVUYHeOEy1QBAqjJqjaQ6qjas7xQWmOixKaLIBANOTcWu2qi72cg/exec';
-const GS_TAB_DATA = 'Data';
+const GS_TAB_DATA    = 'Data out';   // source for analysis/dashboard
+const GS_TAB_DATA_IN = 'Data in';    // where manual entry saves to
 function gsUrl(tab){ return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`; }
 function num(v){ return(v===''||v===undefined||v===null)?null:Number(v); }
 function fmt(v){ const n=parseFloat(v);return isNaN(n)?v:parseFloat(n.toFixed(2)).toString(); }
@@ -1095,29 +1098,19 @@ function inputId(sym,field){ return 'i_'+sym+'_'+field.replace(/-/g,'_'); }
 function getVal(sym,field){ const el=document.getElementById(inputId(sym,field)); return el?el.value.trim():''; }
 let _idxToken='';
 const REPO='Nour292/psx-analysis.github.io';
-async function saveToSheets(csvContent){
+async function saveToSheets(csvContent, tab){
+  tab = tab || GS_TAB_DATA_IN;
   try{
     setSaveStatus('⏳ Saving…','#F59E0B');
     const lines=csvContent.trim().split(/\r?\n/);
     const headers=lines[0].split(',').map(h=>h.trim());
-    const archDate=_dataAsOf||new Date().toISOString().slice(0,10);
-
-    // Exact same format as original — 16 columns, no extras
     const dataRows=lines.slice(1).map(l=>l.split(','));
+    const archDate=_dataAsOf||new Date().toISOString().slice(0,10);
     const allRows=[headers,...dataRows];
-
-    // Save all data rows
     await fetch(GS_WRITE,{method:'POST',mode:'no-cors',body:JSON.stringify({
-      action:'replaceSheet',tab:GS_TAB_DATA,rows:allRows,archDate
+      action:'replaceSheet',tab:tab,rows:allRows,archDate
     })});
-
-    // Write date to Q2 via a separate append/update call
-    await fetch(GS_WRITE,{method:'POST',mode:'no-cors',body:JSON.stringify({
-      action:'setCellQ2',tab:GS_TAB_DATA,value:archDate
-    })});
-
     setSaveStatus('✅ Saved — '+dataRows.length+' symbols','#10B981');
-
     // Auto-archive on Fridays
     const today=new Date();
     const isFriday=today.getDay()===5;
@@ -1127,7 +1120,6 @@ async function saveToSheets(csvContent){
     } else if(isFriday&&!token){
       setSaveStatus('✅ Saved · Add GitHub token for auto-archive on Fridays','#10B981');
     }
-
     setTimeout(()=>setSaveStatus('',''),6000);
     loadArchiveList();
     return true;
@@ -1199,15 +1191,40 @@ function saveAllData(){
   rows.forEach(r=>lines.push(headers.map(h=>r[h]||'').join(',')));
   const csv=lines.join('\n');
   const token=_idxToken||document.getElementById('idxGhToken').value.trim();
-  if(token){
-    saveToSheets(csv);
-  } else {
-    // Save to Sheets without token (no-cors, no archive)
-    saveToSheets(csv);
-  }
+  saveToSheets(csv, GS_TAB_DATA_IN);
   renderHome();
 }
 function loadIntoForm(){ if(!_rawData.length) return; _rawData.forEach(r=>{ const sym=r.Symbol; if(!sym) return; D_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); W_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); ['52W-High','52W-Low'].forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); }); }
+
+async function getData(){
+  setSaveStatus('⏳ Fetching from Data out…','#38BDF8');
+  try{
+    const res=await fetch(gsUrl(GS_TAB_DATA));
+    if(!res.ok) throw new Error('Cannot read Data out tab');
+    const json=await res.json();
+    const rows=json.values||[];
+    if(rows.length<2){ setSaveStatus('⚠️ Data out is empty','#F59E0B'); return; }
+    const headers=rows[0].map(h=>h.trim());
+    const parsed=rows.slice(1).filter(r=>r.length>0&&r[0]).map(row=>{
+      const obj={};
+      headers.forEach((h,i)=>{ if(h) obj[h]=(row[i]||'').trim(); });
+      return obj;
+    }).filter(r=>r.Symbol);
+    if(!parsed.length){ setSaveStatus('⚠️ No data rows found','#F59E0B'); return; }
+    // Fill all inputs
+    parsed.forEach(r=>{
+      const sym=r.Symbol;
+      D_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el) el.value=r[f]||''; });
+      W_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el) el.value=r[f]||''; });
+      ['52W-High','52W-Low'].forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el) el.value=r[f]||''; });
+    });
+    // Set date if available in Q2
+    const q2=rows[1]&&rows[1][16]?rows[1][16].toString().trim():'';
+    if(q2){ let d=q2; if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(q2)){const p=q2.split('/');d=`${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}`;} const dateEl=document.getElementById('fDataDate'); if(dateEl&&d) dateEl.value=d; setDataDate(d); }
+    setSaveStatus('✅ Loaded '+parsed.length+' symbols from Data out','#10B981');
+    setTimeout(()=>setSaveStatus('',''),5000);
+  }catch(e){ setSaveStatus('❌ '+e.message,'#F43F5E'); }
+}
 function exportCSV(){ const lines=[FIELDS.join(',')]; _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(','))); const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='data.csv'; a.click(); }
 
 /* ── Import gate ── */
