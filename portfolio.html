@@ -42,13 +42,30 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;flex-shrink:0;transition:width .22s cubic-bezier(.4,0,.2,1),box-shadow .22s;}
 .sidebar.collapsed{width:var(--sidebar-w-collapsed);}
 :root.light .sidebar{box-shadow:2px 0 12px rgba(0,0,0,.06);}
-.sidebar-logo{padding:0 12px;height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;overflow:hidden;white-space:nowrap;}
-.sidebar-logo .logo-text-wrap{opacity:1;transition:opacity .15s .05s;}
+.sidebar-logo{padding:0 14px;height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;overflow:hidden;white-space:nowrap;}
+.sidebar-logo .logo-text-wrap{opacity:1;transition:opacity .15s .05s;flex:1;min-width:0;}
 .sidebar.collapsed .logo-text-wrap{opacity:0;pointer-events:none;}
-.sidebar-toggle{margin-left:auto;flex-shrink:0;width:28px;height:28px;border:none;background:var(--surface2);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:background .12s,color .12s;}
-.sidebar-toggle:hover{background:var(--border);color:var(--text);}
-.sidebar-toggle svg{transition:transform .22s;}
-.sidebar.collapsed .sidebar-toggle svg{transform:rotate(180deg);}
+/* Floating toggle tab — always visible on left edge */
+.sb-toggle-tab{
+  position:fixed;top:50%;
+  left:calc(var(--sidebar-w) - 1px);
+  transform:translateY(-50%);
+  z-index:200;
+  width:18px;height:48px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:none;
+  border-radius:0 8px 8px 0;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text3);
+  transition:left .22s cubic-bezier(.4,0,.2,1),background .12s,color .12s;
+  box-shadow:2px 0 6px rgba(0,0,0,.15);
+}
+.sb-toggle-tab:hover{background:var(--surface2);color:var(--text);}
+.sb-toggle-tab svg{transition:transform .22s;flex-shrink:0;}
+:root.sb-collapsed .sb-toggle-tab{left:calc(var(--sidebar-w-collapsed) - 1px);}
+:root.sb-collapsed .sb-toggle-tab svg{transform:rotate(180deg);}
 .sidebar-nav{flex:1;padding:8px 6px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overflow-x:hidden;}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;transition:background .12s,color .12s;white-space:nowrap;overflow:hidden;}
 .nav-item:hover{background:var(--surface2);color:var(--text);}
@@ -315,9 +332,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="sidebar-logo">
     <div class="logo-icon">📈</div>
     <div class="logo-text-wrap"><div class="logo-text">PSX Portfolio</div><div class="logo-sub">Dividend Dashboard</div></div>
-    <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
   </div>
   <nav class="sidebar-nav">
     <button class="nav-item" id="navAction" style="display:none" data-tip="Action Plan" onclick="switchTab('action',this,'navAction')"><span class="nav-icon">🎯</span><span class="nav-label"> Action Plan</span></button>
@@ -341,7 +355,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </aside>
 
-<!-- MAIN -->
+<!-- Floating sidebar toggle — always visible -->
+<button class="sb-toggle-tab" onclick="toggleSidebar()" title="Toggle sidebar">
+  <svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M7 2L2 8l5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+
 <main class="main" id="mainContent">
   <div class="topbar">
     <div class="topbar-title">Portfolio Dashboard</div>
