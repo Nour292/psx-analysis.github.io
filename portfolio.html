@@ -337,12 +337,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="logo-text-wrap"><div class="logo-text">PSX Portfolio</div><div class="logo-sub">Dividend Dashboard</div></div>
   </div>
   <nav class="sidebar-nav">
-    <button class="nav-item" id="navAction" style="display:none" data-tip="Action Plan" onclick="switchTab('action',this,'navAction')"><span class="nav-icon">🎯</span><span class="nav-label"> Action Plan</span></button>
-    <button class="nav-item active" id="navPortfolio" data-tip="Portfolio" onclick="switchTab('portfolio',this,'navPortfolio')"><span class="nav-icon">📋</span><span class="nav-label"> Portfolio</span></button>
-    <button class="nav-item" id="navDividend" data-tip="Dividend Income" onclick="switchTab('dividend',this,'navDividend')"><span class="nav-icon">💰</span><span class="nav-label"> Dividend Income</span></button>
-    <button class="nav-item" id="navSector" data-tip="Sector Balance" onclick="switchTab('sector',this,'navSector')"><span class="nav-icon">⚖️</span><span class="nav-label"> Sector Balance</span></button>
-    <button class="nav-item" id="navCapital" data-tip="Capital Summary" onclick="switchTab('capital',this,'navCapital')"><span class="nav-icon">💼</span><span class="nav-label"> Capital Summary</span></button>
-    <button class="nav-item" id="navPrices" data-tip="Update Prices" onclick="switchTab('prices',this,'navPrices')"><span class="nav-icon">💹</span><span class="nav-label"> Update Prices</span></button>
+    <button class="nav-item" id="navAction" style="display:none" data-tip="Action Plan" onclick="switchTab('action',this,null)"><span class="nav-icon">🎯</span><span class="nav-label"> Action Plan</span></button>
     <div class="nav-divider"></div>
     <button class="nav-item" data-tip="Buy / Sell" onclick="showBuySell()"><span class="nav-icon">💱</span><span class="nav-label"> Buy / Sell</span></button>
     <button class="nav-item" id="navHistory" data-tip="Trade History" onclick="toggleOverlay('pgHistory','navHistory',initHistory)"><span class="nav-icon">🔍</span><span class="nav-label"> Trade History</span></button>
@@ -605,19 +600,18 @@ function isAdmin(){return _currentUser===ADMIN_USER;}
 function applyRoleUI(){
   const admin=isAdmin();
   if(admin){Object.assign(CAPITAL,CAPITAL_ADMIN);}else{Object.assign(CAPITAL,CAPITAL_USER);}
-  const btnAP=document.getElementById('tabBtnAction'),navAP=document.getElementById('navAction');
+  const btnAP=document.getElementById('tabBtnAction');
+  const navAP=document.getElementById('navAction');
   if(btnAP)btnAP.style.display=admin?'block':'none';
   if(navAP)navAP.style.display=admin?'flex':'none';
   if(admin){
     document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
     document.getElementById('tab-action').classList.add('active');
-    if(btnAP)btnAP.classList.add('active');if(navAP)navAP.classList.add('active');
+    if(btnAP)btnAP.classList.add('active');
   }else{
     document.getElementById('tab-portfolio').classList.add('active');
     document.getElementById('tabBtnPortfolio').classList.add('active');
-    document.getElementById('navPortfolio').classList.add('active');
   }
 }
 function showUserBadge(name){document.getElementById('userBadgeName').textContent=name;document.getElementById('userBadge').classList.add('show');applyRoleUI();}
@@ -708,10 +702,8 @@ function switchTab(name,clickedBtn,navId){
   closeAllOverlays();
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if(clickedBtn)clickedBtn.classList.add('active');
-  const navEl=navId?document.getElementById(navId):null;if(navEl)navEl.classList.add('active');
   const cap=name.charAt(0).toUpperCase()+name.slice(1);
   const tabBtn=document.getElementById('tabBtn'+cap);if(tabBtn&&tabBtn!==clickedBtn)tabBtn.classList.add('active');
 }
