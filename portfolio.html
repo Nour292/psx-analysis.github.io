@@ -71,7 +71,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .logo-sub{font-size:10px;color:var(--text3);margin-top:1px;}
 /* MAIN */
 .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;transition:margin-left .22s cubic-bezier(.4,0,.2,1);}
-.main.sb-collapsed{margin-left:var(--sidebar-w-collapsed);}
 .topbar{height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;flex-shrink:0;position:sticky;top:0;z-index:50;}
 :root.light .topbar{box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .topbar-title{font-size:14px;font-weight:600;color:var(--text);flex:1;}
@@ -167,7 +166,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 /* OVERLAYS */
 #pgDividends,#pgCashFlow,#pgHistory{position:fixed;top:0;left:var(--sidebar-w);right:0;bottom:0;background:var(--bg);z-index:7777;display:none;flex-direction:column;overflow-y:auto;transition:left .22s cubic-bezier(.4,0,.2,1);}
 #pgDividends.open,#pgCashFlow.open,#pgHistory.open{display:flex;}
-#pgDividends.sb-collapsed,#pgCashFlow.sb-collapsed,#pgHistory.sb-collapsed{left:var(--sidebar-w-collapsed);}
+/* sidebar collapsed — update overlay left + main margin via :root class */
+:root.sb-collapsed #pgDividends,:root.sb-collapsed #pgCashFlow,:root.sb-collapsed #pgHistory{left:var(--sidebar-w-collapsed);}
+:root.sb-collapsed .main{margin-left:var(--sidebar-w-collapsed);}
 .overlay-nav{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .overlay-title{font-size:15px;font-weight:700;color:var(--text);flex:1;}
 .overlay-content{padding:20px 24px;flex:1;max-width:1200px;margin:0 auto;width:100%;}
@@ -503,7 +504,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </div>
 
 <script>
-(function(){const s=localStorage.getItem('psx_theme');if(s==='light')applyLight();})();
+(function(){
+  const s=localStorage.getItem('psx_theme');if(s==='light')document.documentElement.classList.add('light');
+  // apply sidebar collapsed state immediately — prevents layout flash
+  if(localStorage.getItem('psx_sb_collapsed')==='1')document.documentElement.classList.add('sb-collapsed');
+})();
 function applyLight(){document.documentElement.classList.add('light');const i=document.getElementById('themeIcon'),l=document.getElementById('themeLabel');if(i)i.textContent='🌙';if(l)l.textContent='Dark Mode';}
 function applyDark(){document.documentElement.classList.remove('light');const i=document.getElementById('themeIcon'),l=document.getElementById('themeLabel');if(i)i.textContent='☀️';if(l)l.textContent='Light Mode';}
 function toggleTheme(){const isLight=document.documentElement.classList.contains('light');if(isLight){applyDark();localStorage.setItem('psx_theme','dark');}else{applyLight();localStorage.setItem('psx_theme','light');}}
@@ -511,14 +516,8 @@ function hardRefresh(){window.location.reload(true);}
 
 function toggleSidebar(){
   const sb=document.getElementById('sidebar');
-  const main=document.getElementById('mainContent');
   const collapsed=sb.classList.toggle('collapsed');
-  if(main)main.classList.toggle('sb-collapsed',collapsed);
-  // update all open overlays
-  ['pgHistory','pgDividends','pgCashFlow'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.classList.toggle('sb-collapsed',collapsed);
-  });
+  document.documentElement.classList.toggle('sb-collapsed',collapsed);
   localStorage.setItem('psx_sb_collapsed',collapsed?'1':'0');
 }
 
@@ -553,15 +552,14 @@ function hideSearch(){goBack();}
 function closeDividends(){document.getElementById('pgDividends').classList.remove('open');const n=document.getElementById('navDivPage');if(n)n.classList.remove('active');}
 function closeCashFlow(){document.getElementById('pgCashFlow').classList.remove('open');const n=document.getElementById('navCashFlow');if(n)n.classList.remove('active');}
 
-// restore collapsed state
-(function(){
+// restore collapsed state — run after DOM ready
+document.addEventListener('DOMContentLoaded',function(){
   if(localStorage.getItem('psx_sb_collapsed')==='1'){
     const sb=document.getElementById('sidebar');
-    const main=document.getElementById('mainContent');
-    if(sb){sb.classList.add('collapsed');}
-    if(main){main.classList.add('sb-collapsed');}
+    if(sb)sb.classList.add('collapsed');
+    document.documentElement.classList.add('sb-collapsed');
   }
-})();
+});
 
 const GS_ID='1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY='AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
