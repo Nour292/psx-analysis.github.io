@@ -392,7 +392,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 }
 
 .import-tbl-wrap{ overflow-x:auto; border-radius:var(--radius); border:1px solid var(--border); }
-.imp-tbl{ width:100%; border-collapse:collapse; font-size:12px; }
+
 .imp-th{
   background:var(--surface); color:var(--text3); font-size:10px; font-weight:700;
   padding:9px 6px; text-align:center; border:1px solid var(--border);
@@ -411,12 +411,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 }
 .imp-in:focus{ background:var(--surface2); color:var(--accent); }
 .imp-in::placeholder{ color:var(--text3); font-size:11px; font-weight:400; }
-.imp-row:nth-child(odd) .imp-td,
-.imp-row:nth-child(odd) .imp-sym{ background:var(--bg); }
-.imp-row:nth-child(even) .imp-td,
-.imp-row:nth-child(even) .imp-sym{ background:var(--surface); }
-.imp-row:hover .imp-td,
-.imp-row:hover .imp-sym{ background:var(--surface2) !important; }
+
 
   margin-top:14px; background:var(--surface); border:1px solid var(--border);
   border-radius:var(--radius); padding:14px 16px; display:none;
@@ -442,29 +437,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .btn-port   { background:#1A1030; color:#A78BFA; border:1px solid #3B2A70; }
 .btn-ta     { background:var(--accent-dim); color:var(--accent); border:1px solid var(--border2); }
 
-/* ═══════════════════════════════════════════
-   LOCK GATE
-═══════════════════════════════════════════ */
-#importGate{
-  position:fixed; inset:0; background:rgba(7,12,24,.95); z-index:9999;
-  display:none; align-items:center; justify-content:center; backdrop-filter:blur(6px);
-}
-#importGate.open{ display:flex; }
-.gate-box{
-  background:var(--surface); border:1px solid var(--border); border-radius:12px;
-  padding:36px 40px; text-align:center; max-width:360px; width:90%;
-}
-.gate-icon{ font-size:28px; margin-bottom:10px; }
-.gate-title{ font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px; }
-.gate-sub{ font-size:13px; color:var(--text3); margin-bottom:22px; }
-.gate-input{
-  width:100%; padding:12px 14px; font-size:16px; letter-spacing:5px;
-  background:var(--bg); color:var(--accent); border:1px solid var(--border);
-  border-radius:var(--radius-sm); text-align:center; outline:none; margin-bottom:10px;
-  font-family:var(--mono);
-}
-.gate-input:focus{ border-color:var(--accent); }
-.gate-err{ font-size:12px; color:var(--rose); margin-top:6px; display:none; font-family:var(--mono); }
 
 /* ═══════════════════════════════════════════
    STAGGER ANIMATION — the signature element
@@ -491,12 +463,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 :root.light .imp-in{ color:#B45309; }
 :root.light .imp-in:focus{ color:var(--accent); background:#EFF6FF; }
 :root.light .imp-sym{ background:var(--surface2); color:var(--accent); }
-:root.light .imp-row:nth-child(odd) .imp-td,
-:root.light .imp-row:nth-child(odd) .imp-sym{ background:var(--surface2); }
-:root.light .imp-row:nth-child(even) .imp-td,
-:root.light .imp-row:nth-child(even) .imp-sym{ background:var(--surface); }
-:root.light .imp-row:hover .imp-td,
-:root.light .imp-row:hover .imp-sym{ background:#EFF6FF !important; }
+
 :root.light .plan-card{ background:var(--surface2); }
 :root.light .plan-card code{ background:var(--surface); color:var(--accent); }
 :root.light .gate-box{ box-shadow:0 8px 32px rgba(0,0,0,.12); }
@@ -549,9 +516,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       <span class="nav-icon">◎</span><span class="nav-label"> Single Ticker</span>
     </button>
     <div class="nav-divider"></div>
-    <button class="nav-item" id="navImport" data-tip="Add / Update Data" onclick="goImport()">
-      <span class="nav-icon">＋</span><span class="nav-label"> Add / Update Data</span>
-    </button>
     <button class="nav-item" data-tip="Portfolio" onclick="window.location.href='portfolio.html'">
       <span class="nav-icon">📈</span><span class="nav-label"> Portfolio</span>
     </button>
@@ -571,6 +535,10 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         <span id="homeDataDateVal" style="font-size:11px;color:var(--accent);font-family:var(--mono)"></span>
       </span>
       <span class="footer-label" style="font-size:10px;color:var(--text3)">PSX · Pakistan Stock Exchange</span>
+    </div>
+    <div class="footer-btn" style="cursor:default;flex-direction:column;align-items:flex-start;gap:4px;padding:8px 14px">
+      <span class="footer-label" style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">GitHub Token</span>
+      <input id="idxGhToken" type="password" placeholder="ghp_xxxx (for auto-archive)" style="width:100%;padding:5px 8px;font-size:11px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;outline:none;font-family:var(--mono);transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" oninput="saveToken(this.value)" class="footer-label">
     </div>
   </div>
 </aside>
@@ -616,8 +584,15 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       <div class="page-header" style="margin:0;flex:1">
         <h1>Weekly Analysis</h1>
       </div>
-      <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <select id="weekPicker" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;font-family:var(--mono);cursor:pointer;outline:none" onchange="loadWeekFromPicker(this.value)">
+          <option value="">📅 Current week</option>
+        </select>
+        <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
+        <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
+      </div>
     </div>
+    <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
     <div class="signal-strip" id="signalSummary" style="margin-bottom:16px"></div>
     <div class="tbl-wrap"><table class="dtbl" id="fullTable"><tbody></tbody></table></div>
     <div class="plans-grid" id="tradePlans" style="display:none"></div>
@@ -656,84 +631,9 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
   </div>
 
   <!-- ══════════ IMPORT PAGE ══════════ -->
-  <div id="pgImport" class="page content">
-    <div class="page-header"><h1>Add / Update Data</h1><p>Enter indicator values for all symbols and save to Google Sheets</p></div>
-    <input type="hidden" id="idxGhToken">
-    <div class="import-actions">
-      <span style="font-size:12px;color:var(--text3);font-weight:600">Data as of</span>
-      <input type="date" id="fDataDate" class="date-input">
-      <button class="btn btn-success" onclick="saveAllData()">💾 Save to Sheet</button>
-      <button class="btn btn-ta" onclick="getData()" title="Load values from Data out sheet into form">📥 Get Data</button>
-      <button class="btn btn-ghost" onclick="manualArchive()" title="Save archive snapshot now">📦 Archive Now</button>
-      <span id="saveStatus" class="save-status"></span>
-    </div>
-    <div class="archive-bar" id="archiveWrap">
-      <span class="arch-label">🗂 Past Fridays</span>
-      <select id="archiveSelect" class="arch-select"><option value="">Load past Friday…</option></select>
-      <button class="btn btn-ghost" onclick="loadArchive()">View</button>
-      <button class="btn btn-ghost" onclick="clearArchive()">✕ Current</button>
-    </div>
-
-    <div class="import-tbl-wrap">
-      <table class="imp-tbl">
-        <thead>
-          <tr>
-            <th class="imp-th ticker-h" rowspan="2">Ticker</th>
-            <th class="imp-th" rowspan="2">Price</th>
-            <th class="imp-th group-d" colspan="6">1 Day</th>
-            <th class="imp-th group-w" colspan="6">1 Week</th>
-            <th class="imp-th" colspan="2">52 Week</th>
-          </tr>
-          <tr>
-            <th class="imp-th">MA50</th><th class="imp-th">MA200</th><th class="imp-th">RSI</th>
-            <th class="imp-th">MACD-H</th><th class="imp-th">Signal</th><th class="imp-th">Vol</th>
-            <th class="imp-th group-w">MA50</th><th class="imp-th group-w">MA200</th><th class="imp-th group-w">RSI</th>
-            <th class="imp-th group-w">MACD-H</th><th class="imp-th group-w">Signal</th><th class="imp-th group-w">Vol</th>
-            <th class="imp-th">High</th><th class="imp-th">Low</th>
-          </tr>
-        </thead>
-        <tbody>
-<tr class="imp-row"><td class="imp-sym">ABL</td><td class="imp-td"><input id="i_ABL_Price" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_ABL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_ABL_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">BAFL</td><td class="imp-td"><input id="i_BAFL_Price" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_BAFL_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">BOP</td><td class="imp-td"><input id="i_BOP_Price" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_BOP_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_BOP_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">EFERT</td><td class="imp-td"><input id="i_EFERT_Price" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_EFERT_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">ENGROH</td><td class="imp-td"><input id="i_ENGROH_Price" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_ENGROH_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">FCL</td><td class="imp-td"><input id="i_FCL_Price" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_FCL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_FCL_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">FFC</td><td class="imp-td"><input id="i_FFC_Price" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_FFC_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_FFC_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">HBL</td><td class="imp-td"><input id="i_HBL_Price" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_HBL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_HBL_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">HUBC</td><td class="imp-td"><input id="i_HUBC_Price" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_HUBC_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">ISL</td><td class="imp-td"><input id="i_ISL_Price" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_ISL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_ISL_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">KAPCO</td><td class="imp-td"><input id="i_KAPCO_Price" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_KAPCO_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">LUCK</td><td class="imp-td"><input id="i_LUCK_Price" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_LUCK_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">MCB</td><td class="imp-td"><input id="i_MCB_Price" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_MCB_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_MCB_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">MEBL</td><td class="imp-td"><input id="i_MEBL_Price" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_MEBL_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">MTL</td><td class="imp-td"><input id="i_MTL_Price" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_MTL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_MTL_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">NBP</td><td class="imp-td"><input id="i_NBP_Price" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_NBP_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_NBP_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">OGDC</td><td class="imp-td"><input id="i_OGDC_Price" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_OGDC_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">POL</td><td class="imp-td"><input id="i_POL_Price" class="imp-in"></td><td class="imp-td"><input id="i_POL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_POL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_POL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_POL_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">PPL</td><td class="imp-td"><input id="i_PPL_Price" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_PPL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_PPL_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">SYS</td><td class="imp-td"><input id="i_SYS_Price" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_SYS_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_SYS_52W_Low" class="imp-in"></td></tr>
-<tr class="imp-row"><td class="imp-sym">UBL</td><td class="imp-td"><input id="i_UBL_Price" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_UBL_52W_Low" class="imp-in"></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
 
 </main><!-- /main -->
 </div><!-- /shell -->
-
-<!-- LOCK GATE -->
-<div id="importGate">
-  <div class="gate-box">
-    <div class="gate-icon">🔒</div>
-    <div class="gate-title">Data Entry</div>
-    <div class="gate-sub">Enter password to access</div>
-    <input type="password" class="gate-input" id="igPwInput" placeholder="••••••" maxlength="20"
-      onkeydown="if(event.key==='Enter') checkImportPW()">
-    <button class="btn btn-primary" style="width:100%;padding:12px" onclick="checkImportPW()">Unlock</button>
-    <div class="gate-err" id="igErr">Incorrect password</div>
-  </div>
-</div>
 
 <script>
 /* ════════════════════════════════════════════
@@ -822,8 +722,7 @@ function goSingle()  { showPage('pgSingle');   setNav('navSingle','Single Ticker
 const GS_ID      = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY     = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
 const GS_WRITE   = 'https://script.google.com/macros/s/AKfycbx9iuuBLDXYecY45EGVUYHeOEy1QBAqjJqjaQ6qjas7xQWmOixKaLIBANOTcWu2qi72cg/exec';
-const GS_TAB_DATA    = 'Data out';   // analysis reads from here (clean output)
-const GS_TAB_DATA_IN = 'Data in';    // manual entry saves here
+const GS_TAB_DATA = 'Data';   // single source of truth
 function gsUrl(tab){
   // No row limit — supports any number of symbols in future
   return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`;
@@ -1099,186 +998,97 @@ const D_FIELDS=["Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D","Volume
 const W_FIELDS=["MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume-W"];
 function inputId(sym,field){ return 'i_'+sym+'_'+field.replace(/-/g,'_'); }
 function getVal(sym,field){ const el=document.getElementById(inputId(sym,field)); return el?el.value.trim():''; }
-let _idxToken='';
 const REPO='Nour292/psx-analysis.github.io';
-async function saveToSheets(csvContent, tab){
-  tab = tab || GS_TAB_DATA_IN;
-  try{
-    setSaveStatus('⏳ Saving…','#F59E0B');
-    const lines=csvContent.trim().split(/\r?\n/);
-    const headers=lines[0].split(',').map(h=>h.trim());
-    const dataRows=lines.slice(1).map(l=>l.split(','));
-    const archDate=_dataAsOf||new Date().toISOString().slice(0,10);
-    const allRows=[headers,...dataRows];
-    await fetch(GS_WRITE,{method:'POST',mode:'no-cors',body:JSON.stringify({
-      action:'replaceSheet',tab:tab,rows:allRows,archDate,
-      startCell: tab==='Data in'?'B1':null
-    })});
-    setSaveStatus('✅ Saved — '+dataRows.length+' symbols','#10B981');
-    // Auto-archive on Fridays
-    const today=new Date();
-    const isFriday=today.getDay()===5;
-    const token=_idxToken||document.getElementById('idxGhToken')?.value.trim();
-    if(isFriday&&token){
-      await autoArchiveToGitHub(csvContent,archDate,token);
-    } else if(isFriday&&!token){
-      setSaveStatus('✅ Saved · Add GitHub token for auto-archive on Fridays','#10B981');
-    }
-    setTimeout(()=>setSaveStatus('',''),6000);
-    loadArchiveList();
-    return true;
-  }catch(err){ setSaveStatus('❌ '+err.message,'#F43F5E'); return false; }
-}
+// ── TOKEN ──────────────────────────────
+const TOKEN_KEY='psx_idx_token_perm';
+let _idxToken='';
+function saveToken(val){ _idxToken=val; try{localStorage.setItem(TOKEN_KEY,val);}catch(e){} }
+function loadSavedToken(){ try{ const t=localStorage.getItem(TOKEN_KEY); if(t){ _idxToken=t; const el=document.getElementById('idxGhToken'); if(el) el.value=t; } }catch(e){} }
 
-function manualArchive(){
-  const token=_idxToken||document.getElementById("idxGhToken")?.value.trim();
-  if(!token){setSaveStatus("⚠️ Enter GitHub token first","#F59E0B");return;}
-  if(!_rawData.length){setSaveStatus("⚠️ No data to archive","#F59E0B");return;}
-  const headers=["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D","Volume-D","MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume-W","52W-High","52W-Low"];
-  const lines=[headers.join(",")];
-  _rawData.forEach(r=>lines.push(headers.map(h=>r[h]||"").join(",")));
-  const csv=lines.join("\n");
-  const dateStr=_dataAsOf||new Date().toISOString().slice(0,10);
-  autoArchiveToGitHub(csv,dateStr,token);
-}
-async function autoArchiveToGitHub(csvContent,dateStr,token){
-  try{
-    setSaveStatus('⏳ Archiving to GitHub…','#38BDF8');
-    const filename=`archive/${dateStr}.csv`;
-    const encoded=btoa(unescape(encodeURIComponent(csvContent)));
-
-    // Check if file exists (to get SHA for update)
-    let sha='';
-    try{
-      const check=await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`,{
-        headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}
-      });
-      if(check.ok){ const j=await check.json(); sha=j.sha||''; }
-    }catch(e){}
-
-    const body={message:`Archive: ${dateStr}`,content:encoded};
-    if(sha) body.sha=sha;
-
-    const res=await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`,{
-      method:'PUT',
-      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
-      body:JSON.stringify(body)
-    });
-    if(res.ok){
-      setSaveStatus(`✅ Saved & Archived → ${dateStr}`,'#10B981');
-    } else {
-      const err=await res.json();
-      setSaveStatus('✅ Saved · Archive: '+(err.message||'failed'),'#F59E0B');
-    }
-  }catch(e){ setSaveStatus('✅ Saved · Archive error: '+e.message,'#F59E0B'); }
-}
-let _archiveDates=[];
-async function loadArchiveList(){ const token=_idxToken||document.getElementById('idxGhToken').value.trim(); try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`,{headers:token?{Authorization:`token ${token}`}:{}}); if(!res.ok){ updateArchiveDropdown([]); return; } const files=await res.json(); _archiveDates=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse(); updateArchiveDropdown(_archiveDates); }catch(e){ updateArchiveDropdown([]); } }
-function updateArchiveDropdown(dates){ const sel=document.getElementById('archiveSelect'); if(!sel) return; sel.innerHTML='<option value="">Load past Friday…</option>'+dates.map(d=>`<option value="${d}">${d}</option>`).join(''); const wrap=document.getElementById('archiveWrap'); if(wrap){ if(dates.length) wrap.classList.add('show'); else wrap.classList.remove('show'); } }
-async function loadArchive(){ const sel=document.getElementById('archiveSelect'); if(!sel||!sel.value) return; const date=sel.value; setSaveStatus(`⏳ Loading ${date}…`,'#F59E0B'); try{ const res=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!res.ok) throw new Error('Archive not found'); const text=(await res.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const headers=lines[0].split(',').map(h=>h.trim()); _rawData=lines.slice(1).filter(l=>l.trim()).map(line=>{ const cols=line.split(','); const obj={}; headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); return obj; }); setSaveStatus(`✅ Archive: ${date}`,'#38BDF8'); runWeekly(); showPage('pgAnalysis'); setNav('navAnalysis','Weekly Analysis'); }catch(e){ setSaveStatus('❌ '+e.message,'#F43F5E'); } }
-function clearArchive(){ const sel=document.getElementById('archiveSelect'); if(sel) sel.value=''; setSaveStatus('',''); runWeekly(); }
-function setSaveStatus(msg,color){ const el=document.getElementById('saveStatus'); if(el){ el.textContent=msg; el.style.color=color; } }
-function saveAllData(){
-  const rows=ALL_SYMBOLS.map(sym=>{
-    const row={Symbol:sym};
-    D_FIELDS.forEach(f=>row[f]=getVal(sym,f));
-    W_FIELDS.forEach(f=>row[f]=getVal(sym,f));
-    row['52W-High']=getVal(sym,'52W-High');
-    row['52W-Low']=getVal(sym,'52W-Low');
-    return row;
-  });
-  _rawData=rows;
-  const dateEl=document.getElementById('fDataDate');
-  if(dateEl&&dateEl.value) setDataDate(dateEl.value);
+// ── AUTO-ARCHIVE ────────────────────────
+const ARCH_LAST_KEY='psx_last_archived';
+async function autoArchive(dateStr){
+  const token=_idxToken;
+  if(!token||!dateStr) return;
+  const lastArch=localStorage.getItem(ARCH_LAST_KEY)||'';
+  if(lastArch===dateStr){ console.log('Already archived:',dateStr); return; }
+  // Build CSV from current _rawData
   const headers=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low'];
   const lines=[headers.join(',')];
-  rows.forEach(r=>lines.push(headers.map(h=>r[h]||'').join(',')));
+  _rawData.forEach(r=>lines.push(headers.map(h=>r[h]||'').join(',')));
   const csv=lines.join('\n');
-  const token=_idxToken||document.getElementById('idxGhToken').value.trim();
-  saveToSheets(csv, GS_TAB_DATA_IN);
-  renderHome();
-}
-function loadIntoForm(){ if(!_rawData.length) return; _rawData.forEach(r=>{ const sym=r.Symbol; if(!sym) return; D_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); W_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); ['52W-High','52W-Low'].forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); }); }
-
-function addSymbolRow(sym){
-  const tbody=document.querySelector('.imp-tbl tbody');
-  if(!tbody) return;
-  const allFields=['Price',...D_FIELDS.slice(1),...W_FIELDS,'52W-High','52W-Low'];
-  let html=`<tr class="imp-row"><td class="imp-sym" style="color:var(--amber)">${sym} ✦</td>`;
-  const fieldsOrder=['Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low'];
-  fieldsOrder.forEach(f=>{
-    html+=`<td class="imp-td"><input id="${inputId(sym,f)}" class="imp-in"></td>`;
-  });
-  html+='</tr>';
-  tbody.insertAdjacentHTML('beforeend',html);
-}
-
-async function getData(){
-  setSaveStatus('⏳ Fetching data…','#38BDF8');
+  console.log('Auto-archiving:',dateStr);
   try{
-    // Try Data out first, then Data in — unlimited symbols supported
-    let rows=[], sourceTab='';
-    for(const tabName of ['Data out','Data in']){
-      const res=await fetch(gsUrl(tabName));
-      if(!res.ok) continue;
-      const json=await res.json();
-      const v=json.values||[];
-      if(v.length>=2){ rows=v; sourceTab=tabName; break; }
+    const filename=`archive/${dateStr}.csv`;
+    const encoded=btoa(unescape(encodeURIComponent(csv)));
+    let sha='';
+    try{ const chk=await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`,{headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}}); if(chk.ok){const j=await chk.json();sha=j.sha||'';} }catch(e){}
+    const body={message:`Auto-archive: ${dateStr}`,content:encoded};
+    if(sha) body.sha=sha;
+    const res=await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`,{method:'PUT',headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(res.ok){
+      localStorage.setItem(ARCH_LAST_KEY,dateStr);
+      console.log('✅ Auto-archived:',dateStr);
+      loadWeekPicker(); // refresh dropdown
     }
-    if(rows.length<2){ setSaveStatus('⚠️ No data found in sheet','#F59E0B'); return; }
-
-    // Auto-detect header row (first row containing 'Price' or 'MA50')
-    let headerIdx=0;
-    for(let i=0;i<Math.min(rows.length,3);i++){
-      const joined=rows[i].join(' ').toLowerCase();
-      if(joined.includes('price')||joined.includes('ma50')){headerIdx=i;break;}
-    }
-    const headers=rows[headerIdx].map(h=>(h||'').trim());
-
-    // Map col index by header name for robust matching
-    const hIdx={};
-    headers.forEach((h,i)=>{ if(h) hIdx[h]=i; });
-    const symCol = hIdx['Symbol']!==undefined ? hIdx['Symbol'] : 0;
-
-    // Parse all data rows — no hardcoded limit, works with any number of symbols
-    const parsed=rows.slice(headerIdx+1).map(row=>{
-      const obj={};
-      headers.forEach((h,i)=>{ if(h) obj[h]=(row[i]||'').trim(); });
-      // Ensure Symbol always reads from correct column
-      obj['Symbol']=(row[symCol]||'').trim().toUpperCase();
-      return obj;
-    }).filter(r=>r.Symbol&&r.Symbol.length>1);
-
-    if(!parsed.length){ setSaveStatus('⚠️ No symbol rows found','#F59E0B'); return; }
-
-    // Fill inputs — auto-add row if symbol not in form yet
-    let filled=0, notInForm=0;
-    parsed.forEach(r=>{
-      const sym=r.Symbol;
-      // Check if symbol row exists; if not, add it dynamically
-      if(!document.getElementById(inputId(sym,'Price'))){
-        addSymbolRow(sym);
-        if(!ALL_SYMBOLS.includes(sym)) ALL_SYMBOLS.push(sym);
-        notInForm++;
-      }
-      D_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el){el.value=r[f]||'';} });
-      W_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el){el.value=r[f]||'';} });
-      ['52W-High','52W-Low'].forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el){el.value=r[f]||'';} });
-      filled++;
-    });
-
-    const note = notInForm>0 ? ` · ${notInForm} new symbols added` : '';
-    setSaveStatus(`✅ Loaded ${filled} symbols from ${sourceTab}${note}`,'#10B981');
-    setTimeout(()=>setSaveStatus('',''),6000);
-  }catch(e){ setSaveStatus('❌ '+e.message,'#F43F5E'); }
+  }catch(e){ console.log('Auto-archive error:',e.message); }
 }
-function exportCSV(){ const lines=[FIELDS.join(',')]; _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(','))); const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='data.csv'; a.click(); }
 
-/* ── Import gate ── */
-const IMPORT_PW='rd172',IMPORT_KEY='psx_import_auth',TOKEN_KEY='psx_idx_token_perm';
-function showImportPage(){ if(sessionStorage.getItem(IMPORT_KEY)==='1'){ showPage('pgImport'); setTimeout(loadIntoForm,50); return; } document.getElementById('importGate').classList.add('open'); setTimeout(()=>document.getElementById('igPwInput').focus(),100); }
-function checkImportPW(){ const val=document.getElementById('igPwInput').value; if(val===IMPORT_PW){ sessionStorage.setItem(IMPORT_KEY,'1'); document.getElementById('importGate').classList.remove('open'); showPage('pgImport'); setTimeout(loadIntoForm,50); loadSavedToken(); } else { const err=document.getElementById('igErr'); err.style.display='block'; document.getElementById('igPwInput').value=''; document.getElementById('igPwInput').focus(); setTimeout(()=>err.style.display='none',2000); } }
-function loadSavedToken(){ try{ const t=localStorage.getItem(TOKEN_KEY); if(t){ _idxToken=t; const el=document.getElementById('idxGhToken'); if(el){ el.value=t; } } }catch(e){} }
+// ── WEEK PICKER ─────────────────────────
+let _archiveDates=[];
+let _viewingWeek=''; // '' = current, date string = past week
+
+async function loadWeekPicker(){
+  try{
+    const token=_idxToken;
+    const headers=token?{Authorization:`token ${token}`}:{};
+    const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`,{headers});
+    if(!res.ok){ return; }
+    const files=await res.json();
+    _archiveDates=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse();
+    const sel=document.getElementById('weekPicker');
+    if(!sel) return;
+    sel.innerHTML='<option value="">📅 Current week</option>'+_archiveDates.map(d=>`<option value="${d}">📆 ${d}</option>`).join('');
+    if(_viewingWeek) sel.value=_viewingWeek;
+  }catch(e){ console.log('weekPicker:',e.message); }
+}
+
+async function loadWeekFromPicker(dateStr){
+  const banner=document.getElementById('weekBanner');
+  if(!dateStr){
+    // Return to current data
+    _viewingWeek='';
+    await loadCSV();
+    if(banner) banner.style.display='none';
+    runWeekly();
+    return;
+  }
+  _viewingWeek=dateStr;
+  try{
+    const res=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${dateStr}.csv?${Date.now()}`);
+    if(!res.ok) throw new Error('Archive not found for '+dateStr);
+    const text=(await res.text()).replace(/^\uFEFF/,'');
+    const lines=text.trim().split(/\r?\n/);
+    const headers=lines[0].split(',').map(h=>h.trim());
+    _rawData=lines.slice(1).filter(l=>l.trim()).map(line=>{
+      const cols=line.split(',');const obj={};
+      headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
+      return obj;
+    }).filter(r=>r.Symbol);
+    if(banner){ banner.style.display='block'; banner.textContent=`📆 Viewing archive: ${dateStr} — click ↩ Current to return`; }
+    runWeekly();
+  }catch(e){ console.log('loadWeek error:',e.message); }
+}
+
+// legacy stubs (kept so no broken refs)
+function goImport(){ goAnalysis(); }
+function showImportPage(){ goAnalysis(); }
+function checkImportPW(){}
+function saveAllData(){}
+function loadIntoForm(){}
+function addSymbolRow(){}
+async function getData(){}
+function exportCSV(){}
 
 /* ── Date handling ── */
 let _dataAsOf='';
@@ -1296,53 +1106,49 @@ function showDataDate(){
 /* ── Data loading ── */
 async function loadCSV(){
   try{
-    // Read from Data out for analysis (clean data), fall back to Data in
-    let rows=[], usedTab='';
-    for(const tabName of ['Data out','Data in']){
-      const res=await fetch(gsUrl(tabName));
-      if(!res.ok) continue;
-      const json=await res.json();
-      const v=json.values||[];
-      if(v.length>=2){ rows=v; usedTab=tabName; break; }
-    }
-    if(rows.length<2){ console.log('No data in sheets'); return; }
+    const res=await fetch(gsUrl(GS_TAB_DATA));
+    if(!res.ok) throw new Error('Sheets error: '+res.status);
+    const json=await res.json();
+    const rows=json.values||[];
+    if(rows.length<2) return;
 
-    // Auto-detect header row: find first row where a cell equals 'Symbol' or 'Price'
+    // Auto-detect header row
     let headerIdx=0;
     for(let i=0;i<Math.min(rows.length,3);i++){
-      if(rows[i].some(c=>(c||'').trim()==='Symbol'||(c||'').trim()==='Price')){
-        headerIdx=i; break;
-      }
+      if(rows[i].some(c=>(c||'').trim()==='Symbol'||(c||'').trim()==='Price')){headerIdx=i;break;}
     }
     const headers=rows[headerIdx].map(h=>(h||'').trim());
-
-    // Find Symbol column index (may not always be col 0)
     const symColIdx=headers.findIndex(h=>h==='Symbol');
     const effectiveSymCol=symColIdx>=0?symColIdx:0;
 
     // Restore date from localStorage
     try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){}
 
-    // Parse all data rows — unlimited symbols
+    // Parse all symbols
     _rawData=rows.slice(headerIdx+1).filter(r=>r.length>0&&(r[effectiveSymCol]||'').trim()).map(row=>{
       const obj={};
       headers.forEach((h,i)=>{ if(h) obj[h]=(row[i]||'').trim(); });
-      // Ensure Symbol key always set
       if(!obj.Symbol) obj.Symbol=(row[effectiveSymCol]||'').trim().toUpperCase();
       return obj;
     }).filter(r=>r.Symbol&&r.Symbol.length>1&&r.Symbol!=='Symbol');
 
-    console.log(`Loaded ${_rawData.length} symbols from ${usedTab}`);
+    console.log(`Loaded ${_rawData.length} symbols from ${GS_TAB_DATA}`);
+
+    // Auto-archive if token set and data date is new
+    if(_dataAsOf && _idxToken){
+      setTimeout(()=>autoArchive(_dataAsOf),1500);
+    }
+
     renderHome();
     loadLatestArchive();
   }catch(e){ console.log('Sheets not loaded:',e.message); }
 }
-async function loadLatestArchive(){ await loadArchiveWeeks(); }
+async function loadLatestArchive(){ await loadArchiveWeeks(); loadWeekPicker(); }
 async function loadArchiveWeeks(){ try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`); if(!res.ok) return; const files=await res.json(); const sorted=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse().slice(0,4); if(!sorted.length) return; const results=await Promise.all(sorted.map(async date=>{ try{ const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!r.ok) return null; const text=(await r.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const hdrs=lines[0].split(',').map(h=>h.trim()); const data={}; lines.slice(1).filter(l=>l.trim()).forEach(line=>{ const cols=line.split(','); const obj={}; hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); if(obj.Symbol) data[obj.Symbol]=obj; }); return {date,data}; }catch(e){ return null; } })); _archiveWeeks=results.filter(Boolean); if(_archiveWeeks.length){ _prevData=_archiveWeeks[0].data; _prevDate=_archiveWeeks[0].date; } if(_rawData.length) renderHome(); }catch(e){ console.log('Archive weeks error:',e.message); } }
 function archiveScore(sym,weekIdx){ if(weekIdx>=_archiveWeeks.length) return null; const row=_archiveWeeks[weekIdx].data[sym]; return row?scoreRow(row):null; }
 
+loadSavedToken();
 loadCSV();
-setTimeout(loadArchiveList,2000);
 </script>
 </body>
 </html>
