@@ -822,8 +822,8 @@ function goSingle()  { showPage('pgSingle');   setNav('navSingle','Single Ticker
 const GS_ID      = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY     = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
 const GS_WRITE   = 'https://script.google.com/macros/s/AKfycbx9iuuBLDXYecY45EGVUYHeOEy1QBAqjJqjaQ6qjas7xQWmOixKaLIBANOTcWu2qi72cg/exec';
-const GS_TAB_DATA    = 'Data in';    // source for analysis/dashboard (actual data)
-const GS_TAB_DATA_IN = 'Data in';    // where manual entry saves to
+const GS_TAB_DATA    = 'Data out';   // analysis reads from here (clean output)
+const GS_TAB_DATA_IN = 'Data in';    // manual entry saves here
 function gsUrl(tab){
   // No row limit — supports any number of symbols in future
   return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`;
@@ -1296,35 +1296,43 @@ function showDataDate(){
 /* ── Data loading ── */
 async function loadCSV(){
   try{
-    const res=await fetch(gsUrl(GS_TAB_DATA));
-    if(!res.ok) throw new Error('Sheets error: '+res.status);
-    const json=await res.json();
-    const rows=json.values||[];
-    if(rows.length<2) return;
-    const headers=rows[0].map(h=>h.trim());
-
-    // Read date from Q2 = rows[1][16] if present (written by setCellQ2 action)
-    const q2Date=rows[1]&&rows[1][16]?rows[1][16].toString().trim():'';
-    if(q2Date){
-      // Normalise from Sheets date format M/D/YYYY or YYYY-MM-DD
-      let parsed=q2Date;
-      if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(q2Date)){
-        const p=q2Date.split('/');
-        parsed=`${p[2]}-${String(p[0]).padStart(2,'0')}-${String(p[1]).padStart(2,'0')}`;
-      }
-      setDataDate(parsed);
-    } else {
-      try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){}
+    // Read from Data out for analysis (clean data), fall back to Data in
+    let rows=[], usedTab='';
+    for(const tabName of ['Data out','Data in']){
+      const res=await fetch(gsUrl(tabName));
+      if(!res.ok) continue;
+      const json=await res.json();
+      const v=json.values||[];
+      if(v.length>=2){ rows=v; usedTab=tabName; break; }
     }
+    if(rows.length<2){ console.log('No data in sheets'); return; }
 
-    // Parse only the 16 standard data columns — ignore Q onwards
-    const dataHeaders=headers.slice(0,16);
-    _rawData=rows.slice(1).filter(r=>r.length>0&&r[0]).map(row=>{
+    // Auto-detect header row: find first row where a cell equals 'Symbol' or 'Price'
+    let headerIdx=0;
+    for(let i=0;i<Math.min(rows.length,3);i++){
+      if(rows[i].some(c=>(c||'').trim()==='Symbol'||(c||'').trim()==='Price')){
+        headerIdx=i; break;
+      }
+    }
+    const headers=rows[headerIdx].map(h=>(h||'').trim());
+
+    // Find Symbol column index (may not always be col 0)
+    const symColIdx=headers.findIndex(h=>h==='Symbol');
+    const effectiveSymCol=symColIdx>=0?symColIdx:0;
+
+    // Restore date from localStorage
+    try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){}
+
+    // Parse all data rows — unlimited symbols
+    _rawData=rows.slice(headerIdx+1).filter(r=>r.length>0&&(r[effectiveSymCol]||'').trim()).map(row=>{
       const obj={};
-      dataHeaders.forEach((h,i)=>{ if(h) obj[h]=(row[i]||'').trim(); });
+      headers.forEach((h,i)=>{ if(h) obj[h]=(row[i]||'').trim(); });
+      // Ensure Symbol key always set
+      if(!obj.Symbol) obj.Symbol=(row[effectiveSymCol]||'').trim().toUpperCase();
       return obj;
-    }).filter(r=>r.Symbol);
+    }).filter(r=>r.Symbol&&r.Symbol.length>1&&r.Symbol!=='Symbol');
 
+    console.log(`Loaded ${_rawData.length} symbols from ${usedTab}`);
     renderHome();
     loadLatestArchive();
   }catch(e){ console.log('Sheets not loaded:',e.message); }
