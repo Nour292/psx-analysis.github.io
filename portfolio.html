@@ -692,7 +692,17 @@ function doLogout(){sessionStorage.removeItem(AUTH_KEY);localStorage.removeItem(
 function showAuthMsg(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',3500);}
 function togglePw(inputId,btn){const inp=document.getElementById(inputId);if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁';}}
 
+function closeAllOverlays(){
+  ['pgHistory','pgDividends','pgCashFlow'].forEach(id=>{
+    document.getElementById(id).classList.remove('open');
+  });
+  ['navHistory','navDivPage','navCashFlow'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.classList.remove('active');
+  });
+  _activeOverlay=null;
+}
 function switchTab(name,clickedBtn,navId){
+  closeAllOverlays();
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
@@ -967,9 +977,6 @@ function buildCapital(){
 }
 
 let _allTrades=[];
-function goBack(){document.getElementById('pgHistory').classList.remove('open');}
-function hideSearch(){document.getElementById('pgHistory').classList.remove('open');}
-function goHistory(){document.getElementById('pgHistory').classList.add('open');populateSymbolDropdown();document.getElementById('srchSym').value='';document.getElementById('srchResult').innerHTML='';}
 function populateSymbolDropdown(){const sel=document.getElementById('srchSym');const syms=[...new Set(_allTrades.map(r=>r.symbol.toUpperCase()).filter(Boolean))].sort();sel.innerHTML='<option value="">— Select Symbol —</option>';syms.forEach(sym=>{const opt=document.createElement('option');opt.value=sym;opt.textContent=sym;sel.appendChild(opt);});}
 function runSearch(){
   const sym=(document.getElementById('srchSym').value||'').trim().toUpperCase();
@@ -1065,8 +1072,6 @@ function setStatus(msg,color){const el=document.getElementById('bsStatus');el.te
 
 const TAX_RATE=0.15,DIV_HDRS=['Symbol','Units','DPS','AnnouncementDate','XDate','GrossAmount','TaxAmount','NetAmount','Status','PayDate'];
 let _dividends=[];
-function goDividends(){document.getElementById('pgDividends').classList.add('open');loadDividendsCSV();}
-function closeDividends(){document.getElementById('pgDividends').classList.remove('open');}
 function dvAutoFill(){const sym=document.getElementById('dvSym').value.toUpperCase();const h=_holdings.find(h=>h.symbol===sym);if(h){document.getElementById('dvUnits').value=h.qty;document.getElementById('dvDPS').value=h.dps||'';dvCalc();}}
 function dvCalc(){const units=parseFloat(document.getElementById('dvUnits').value)||0,dps=parseFloat(document.getElementById('dvDPS').value)||0,box=document.getElementById('dvCalcBox');if(!units||!dps){box.style.display='none';return;}const gross=units*dps,tax=gross*TAX_RATE,net=gross-tax;box.style.display='block';box.innerHTML=`<span style="color:var(--accent)">Gross: <b>PKR ${Math.round(gross).toLocaleString()}</b></span> · <span style="color:var(--rose)">Tax 15%: <b>PKR ${Math.round(tax).toLocaleString()}</b></span> · <span style="color:var(--emerald)">Net: <b>PKR ${Math.round(net).toLocaleString()}</b></span>`;}
 function dvClearForm(){['dvSym','dvUnits','dvDPS','dvPayDate','dvAnnDate','dvXDate'].forEach(id=>document.getElementById(id).value='');document.getElementById('dvPayStatus').value='Waiting';document.getElementById('dvCalcBox').style.display='none';document.getElementById('dvFormStatus').textContent='';}
@@ -1110,8 +1115,6 @@ function dvSetStatus(msg,color){['dvStatus','dvFormStatus'].forEach(id=>{const e
 
 const CF_HDRS=['Date','OpeningCash','ClosingCash','NetChange','Fees','Type','Notes'];
 let _cashFlow=[];
-function goCashFlow(){document.getElementById('pgCashFlow').classList.add('open');loadCashFlow();}
-function closeCashFlow(){document.getElementById('pgCashFlow').classList.remove('open');}
 function toggleCfForm(){
   const f=document.getElementById('cfForm'),isOpen=f.classList.contains('open');f.classList.toggle('open');
   if(!isOpen){
