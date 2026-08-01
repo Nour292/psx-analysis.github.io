@@ -1224,7 +1224,7 @@ async function autoLoad(){
   }catch(e){console.log('holdings GS:',e.message);}
 }
 
-if(sessionStorage.getItem(AUTH_KEY))autoLoad();
+if(sessionStorage.getItem(AUTH_KEY)||localStorage.getItem(AUTH_KEY+'_r'))autoLoad();
 </script>
 </body>
 </html>
