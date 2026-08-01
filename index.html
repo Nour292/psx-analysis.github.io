@@ -1100,25 +1100,23 @@ async function saveToSheets(csvContent){
     setSaveStatus('⏳ Saving…','#F59E0B');
     const lines=csvContent.trim().split(/\r?\n/);
     const headers=lines[0].split(',').map(h=>h.trim());
-    const dataRows=lines.slice(1).map(l=>l.split(','));
     const archDate=_dataAsOf||new Date().toISOString().slice(0,10);
 
-    // Build rows: header row has date in column Q (index 16)
-    const headerRow=[...headers];
-    while(headerRow.length<17) headerRow.push('');
-    headerRow[16]='UpdatedDate';
+    // Exact same format as original — 16 columns, no extras
+    const dataRows=lines.slice(1).map(l=>l.split(','));
+    const allRows=[headers,...dataRows];
 
-    const firstDataRow=dataRows[0]?[...dataRows[0]]:[];
-    while(firstDataRow.length<17) firstDataRow.push('');
-    firstDataRow[16]=archDate; // Q2 = date
-
-    const allRows=[headerRow, firstDataRow, ...dataRows.slice(1)];
-
+    // Save all data rows
     await fetch(GS_WRITE,{method:'POST',mode:'no-cors',body:JSON.stringify({
       action:'replaceSheet',tab:GS_TAB_DATA,rows:allRows,archDate
     })});
 
-    setSaveStatus('✅ Saved to Sheets','#10B981');
+    // Write date to Q2 via a separate append/update call
+    await fetch(GS_WRITE,{method:'POST',mode:'no-cors',body:JSON.stringify({
+      action:'setCellQ2',tab:GS_TAB_DATA,value:archDate
+    })});
+
+    setSaveStatus('✅ Saved — '+dataRows.length+' symbols','#10B981');
 
     // Auto-archive on Fridays
     const today=new Date();
@@ -1241,23 +1239,25 @@ async function loadCSV(){
     if(rows.length<2) return;
     const headers=rows[0].map(h=>h.trim());
 
-    // Read date from Q2 = rows[1][16]
-    const q2=rows[1]&&rows[1][16]?rows[1][16].trim():'';
-    if(q2){
-      // Parse the date (could be YYYY-MM-DD or M/D/YYYY from Sheets)
-      let parsed=q2;
-      if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(q2)){
-        const parts=q2.split('/');
-        parsed=`${parts[2]}-${String(parts[0]).padStart(2,'0')}-${String(parts[1]).padStart(2,'0')}`;
+    // Read date from Q2 = rows[1][16] if present (written by setCellQ2 action)
+    const q2Date=rows[1]&&rows[1][16]?rows[1][16].toString().trim():'';
+    if(q2Date){
+      // Normalise from Sheets date format M/D/YYYY or YYYY-MM-DD
+      let parsed=q2Date;
+      if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(q2Date)){
+        const p=q2Date.split('/');
+        parsed=`${p[2]}-${String(p[0]).padStart(2,'0')}-${String(p[1]).padStart(2,'0')}`;
       }
       setDataDate(parsed);
     } else {
       try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){}
     }
 
-    _rawData=rows.slice(1).filter(r=>r.length>0).map(row=>{
+    // Parse only the 16 standard data columns — ignore Q onwards
+    const dataHeaders=headers.slice(0,16);
+    _rawData=rows.slice(1).filter(r=>r.length>0&&r[0]).map(row=>{
       const obj={};
-      headers.forEach((h,i)=>{if(h&&h!=='UpdatedDate') obj[h]=(row[i]||'').trim();});
+      dataHeaders.forEach((h,i)=>{ if(h) obj[h]=(row[i]||'').trim(); });
       return obj;
     }).filter(r=>r.Symbol);
 
