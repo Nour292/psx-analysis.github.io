@@ -418,16 +418,10 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .imp-row:hover .imp-td,
 .imp-row:hover .imp-sym{ background:var(--surface2) !important; }
 
-.csv-out{
   margin-top:14px; background:var(--surface); border:1px solid var(--border);
   border-radius:var(--radius); padding:14px 16px; display:none;
 }
-.csv-out label{ font-size:11px; color:var(--text3); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:.6px; }
-.csv-out textarea{
-  width:100%; height:90px; background:var(--bg); color:var(--accent);
-  border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px;
-  font-family:var(--mono); font-size:11px; resize:vertical; outline:none;
-}
+
 
 /* ═══════════════════════════════════════════
    BUTTONS
@@ -512,7 +506,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 :root.light .tp-code{ background:var(--surface); }
 :root.light .analyse-btn{ background:var(--accent); }
 :root.light .sig-pill{ background:var(--surface2); }
-:root.light .csv-out textarea{ background:var(--surface2); color:var(--accent); }
 
 /* ── Theme transition ── */
 *, *::before, *::after{
@@ -721,14 +714,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 <tr class="imp-row"><td class="imp-sym">UBL</td><td class="imp-td"><input id="i_UBL_Price" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA50_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA200_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_RSI_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MACD_H_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Signal_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Volume_D" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA50_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MA200_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_RSI_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_MACD_H_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Signal_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_Volume_W" class="imp-in"></td><td class="imp-td"><input id="i_UBL_52W_High" class="imp-in"></td><td class="imp-td"><input id="i_UBL_52W_Low" class="imp-in"></td></tr>
         </tbody>
       </table>
-    </div>
-
-    <div class="csv-out" id="csvSection">
-      <label>data.csv — copy into your GitHub repo</label>
-      <textarea id="csvOut" readonly></textarea>
-      <div style="margin-top:10px;display:flex;gap:10px">
-        <button onclick="copyCsv()" class="btn btn-ghost">📋 Copy to Clipboard</button>
-      </div>
     </div>
   </div>
 
@@ -1142,7 +1127,7 @@ async function saveToSheets(csvContent){
     if(isFriday&&token){
       await autoArchiveToGitHub(csvContent,archDate,token);
     } else if(isFriday&&!token){
-      setSaveStatus('✅ Saved · ⚠️ Add GitHub token to auto-archive','#F59E0B');
+      setSaveStatus('✅ Saved · Add GitHub token for auto-archive on Fridays','#10B981');
     }
 
     setTimeout(()=>setSaveStatus('',''),6000);
@@ -1199,10 +1184,32 @@ function updateArchiveDropdown(dates){ const sel=document.getElementById('archiv
 async function loadArchive(){ const sel=document.getElementById('archiveSelect'); if(!sel||!sel.value) return; const date=sel.value; setSaveStatus(`⏳ Loading ${date}…`,'#F59E0B'); try{ const res=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!res.ok) throw new Error('Archive not found'); const text=(await res.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const headers=lines[0].split(',').map(h=>h.trim()); _rawData=lines.slice(1).filter(l=>l.trim()).map(line=>{ const cols=line.split(','); const obj={}; headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); return obj; }); setSaveStatus(`✅ Archive: ${date}`,'#38BDF8'); runWeekly(); showPage('pgAnalysis'); setNav('navAnalysis','Weekly Analysis'); }catch(e){ setSaveStatus('❌ '+e.message,'#F43F5E'); } }
 function clearArchive(){ const sel=document.getElementById('archiveSelect'); if(sel) sel.value=''; setSaveStatus('',''); runWeekly(); }
 function setSaveStatus(msg,color){ const el=document.getElementById('saveStatus'); if(el){ el.textContent=msg; el.style.color=color; } }
-function saveAllData(){ const rows=ALL_SYMBOLS.map(sym=>{ const row={Symbol:sym}; D_FIELDS.forEach(f=>row[f]=getVal(sym,f)); W_FIELDS.forEach(f=>row[f]=getVal(sym,f)); row['52W-High']=getVal(sym,'52W-High'); row['52W-Low']=getVal(sym,'52W-Low'); return row; }); _rawData=rows; const dateEl=document.getElementById('fDataDate'); if(dateEl&&dateEl.value) setDataDate(dateEl.value); const headers=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low']; const lines=[headers.join(',')]; rows.forEach(r=>lines.push(headers.map(h=>r[h]||'').join(','))); const csv=lines.join('\n'); document.getElementById('csvOut').value=csv; document.getElementById('csvSection').style.display='block'; const token=_idxToken||document.getElementById('idxGhToken').value.trim(); if(token){ saveToSheets(csv); } else { setSaveStatus('⚠️ No token — copy CSV below','#F59E0B'); } renderHome(); }
+function saveAllData(){
+  const rows=ALL_SYMBOLS.map(sym=>{
+    const row={Symbol:sym};
+    D_FIELDS.forEach(f=>row[f]=getVal(sym,f));
+    W_FIELDS.forEach(f=>row[f]=getVal(sym,f));
+    row['52W-High']=getVal(sym,'52W-High');
+    row['52W-Low']=getVal(sym,'52W-Low');
+    return row;
+  });
+  _rawData=rows;
+  const dateEl=document.getElementById('fDataDate');
+  if(dateEl&&dateEl.value) setDataDate(dateEl.value);
+  const headers=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low'];
+  const lines=[headers.join(',')];
+  rows.forEach(r=>lines.push(headers.map(h=>r[h]||'').join(',')));
+  const csv=lines.join('\n');
+  const token=_idxToken||document.getElementById('idxGhToken').value.trim();
+  if(token){
+    saveToSheets(csv);
+  } else {
+    // Save to Sheets without token (no-cors, no archive)
+    saveToSheets(csv);
+  }
+  renderHome();
+}
 function loadIntoForm(){ if(!_rawData.length) return; _rawData.forEach(r=>{ const sym=r.Symbol; if(!sym) return; D_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); W_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); ['52W-High','52W-Low'].forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); }); }
-function exportToTextarea(){ const lines=[FIELDS.join(',')]; _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(','))); document.getElementById('csvOut').value=lines.join('\n'); }
-function copyCsv(){ const ta=document.getElementById('csvOut'); ta.select(); document.execCommand('copy'); }
 function exportCSV(){ const lines=[FIELDS.join(',')]; _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(','))); const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='data.csv'; a.click(); }
 
 /* ── Import gate ── */
