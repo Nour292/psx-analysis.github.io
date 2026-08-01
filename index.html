@@ -822,9 +822,12 @@ function goSingle()  { showPage('pgSingle');   setNav('navSingle','Single Ticker
 const GS_ID      = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY     = 'AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
 const GS_WRITE   = 'https://script.google.com/macros/s/AKfycbx9iuuBLDXYecY45EGVUYHeOEy1QBAqjJqjaQ6qjas7xQWmOixKaLIBANOTcWu2qi72cg/exec';
-const GS_TAB_DATA    = 'Data out';   // source for analysis/dashboard
+const GS_TAB_DATA    = 'Data in';    // source for analysis/dashboard (actual data)
 const GS_TAB_DATA_IN = 'Data in';    // where manual entry saves to
-function gsUrl(tab){ return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`; }
+function gsUrl(tab){
+  // No row limit — supports any number of symbols in future
+  return `https://sheets.googleapis.com/v4/spreadsheets/${GS_ID}/values/${encodeURIComponent(tab)}?key=${GS_KEY}`;
+}
 function num(v){ return(v===''||v===undefined||v===null)?null:Number(v); }
 function fmt(v){ const n=parseFloat(v);return isNaN(n)?v:parseFloat(n.toFixed(2)).toString(); }
 function fmtRange(lo,hi){ return `${Math.floor(lo)}\u2013${Math.floor(hi)}`; }
@@ -1108,7 +1111,8 @@ async function saveToSheets(csvContent, tab){
     const archDate=_dataAsOf||new Date().toISOString().slice(0,10);
     const allRows=[headers,...dataRows];
     await fetch(GS_WRITE,{method:'POST',mode:'no-cors',body:JSON.stringify({
-      action:'replaceSheet',tab:tab,rows:allRows,archDate
+      action:'replaceSheet',tab:tab,rows:allRows,archDate,
+      startCell: tab==='Data in'?'B1':null
     })});
     setSaveStatus('✅ Saved — '+dataRows.length+' symbols','#10B981');
     // Auto-archive on Fridays
@@ -1196,33 +1200,76 @@ function saveAllData(){
 }
 function loadIntoForm(){ if(!_rawData.length) return; _rawData.forEach(r=>{ const sym=r.Symbol; if(!sym) return; D_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); W_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); ['52W-High','52W-Low'].forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el&&r[f]) el.value=r[f]; }); }); }
 
+function addSymbolRow(sym){
+  const tbody=document.querySelector('.imp-tbl tbody');
+  if(!tbody) return;
+  const allFields=['Price',...D_FIELDS.slice(1),...W_FIELDS,'52W-High','52W-Low'];
+  let html=`<tr class="imp-row"><td class="imp-sym" style="color:var(--amber)">${sym} ✦</td>`;
+  const fieldsOrder=['Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low'];
+  fieldsOrder.forEach(f=>{
+    html+=`<td class="imp-td"><input id="${inputId(sym,f)}" class="imp-in"></td>`;
+  });
+  html+='</tr>';
+  tbody.insertAdjacentHTML('beforeend',html);
+}
+
 async function getData(){
-  setSaveStatus('⏳ Fetching from Data out…','#38BDF8');
+  setSaveStatus('⏳ Fetching data…','#38BDF8');
   try{
-    const res=await fetch(gsUrl(GS_TAB_DATA));
-    if(!res.ok) throw new Error('Cannot read Data out tab');
-    const json=await res.json();
-    const rows=json.values||[];
-    if(rows.length<2){ setSaveStatus('⚠️ Data out is empty','#F59E0B'); return; }
-    const headers=rows[0].map(h=>h.trim());
-    const parsed=rows.slice(1).filter(r=>r.length>0&&r[0]).map(row=>{
+    // Try Data out first, then Data in — unlimited symbols supported
+    let rows=[], sourceTab='';
+    for(const tabName of ['Data out','Data in']){
+      const res=await fetch(gsUrl(tabName));
+      if(!res.ok) continue;
+      const json=await res.json();
+      const v=json.values||[];
+      if(v.length>=2){ rows=v; sourceTab=tabName; break; }
+    }
+    if(rows.length<2){ setSaveStatus('⚠️ No data found in sheet','#F59E0B'); return; }
+
+    // Auto-detect header row (first row containing 'Price' or 'MA50')
+    let headerIdx=0;
+    for(let i=0;i<Math.min(rows.length,3);i++){
+      const joined=rows[i].join(' ').toLowerCase();
+      if(joined.includes('price')||joined.includes('ma50')){headerIdx=i;break;}
+    }
+    const headers=rows[headerIdx].map(h=>(h||'').trim());
+
+    // Map col index by header name for robust matching
+    const hIdx={};
+    headers.forEach((h,i)=>{ if(h) hIdx[h]=i; });
+    const symCol = hIdx['Symbol']!==undefined ? hIdx['Symbol'] : 0;
+
+    // Parse all data rows — no hardcoded limit, works with any number of symbols
+    const parsed=rows.slice(headerIdx+1).map(row=>{
       const obj={};
       headers.forEach((h,i)=>{ if(h) obj[h]=(row[i]||'').trim(); });
+      // Ensure Symbol always reads from correct column
+      obj['Symbol']=(row[symCol]||'').trim().toUpperCase();
       return obj;
-    }).filter(r=>r.Symbol);
-    if(!parsed.length){ setSaveStatus('⚠️ No data rows found','#F59E0B'); return; }
-    // Fill all inputs
+    }).filter(r=>r.Symbol&&r.Symbol.length>1);
+
+    if(!parsed.length){ setSaveStatus('⚠️ No symbol rows found','#F59E0B'); return; }
+
+    // Fill inputs — auto-add row if symbol not in form yet
+    let filled=0, notInForm=0;
     parsed.forEach(r=>{
       const sym=r.Symbol;
-      D_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el) el.value=r[f]||''; });
-      W_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el) el.value=r[f]||''; });
-      ['52W-High','52W-Low'].forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el) el.value=r[f]||''; });
+      // Check if symbol row exists; if not, add it dynamically
+      if(!document.getElementById(inputId(sym,'Price'))){
+        addSymbolRow(sym);
+        if(!ALL_SYMBOLS.includes(sym)) ALL_SYMBOLS.push(sym);
+        notInForm++;
+      }
+      D_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el){el.value=r[f]||'';} });
+      W_FIELDS.forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el){el.value=r[f]||'';} });
+      ['52W-High','52W-Low'].forEach(f=>{ const el=document.getElementById(inputId(sym,f)); if(el){el.value=r[f]||'';} });
+      filled++;
     });
-    // Set date if available in Q2
-    const q2=rows[1]&&rows[1][16]?rows[1][16].toString().trim():'';
-    if(q2){ let d=q2; if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(q2)){const p=q2.split('/');d=`${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}`;} const dateEl=document.getElementById('fDataDate'); if(dateEl&&d) dateEl.value=d; setDataDate(d); }
-    setSaveStatus('✅ Loaded '+parsed.length+' symbols from Data out','#10B981');
-    setTimeout(()=>setSaveStatus('',''),5000);
+
+    const note = notInForm>0 ? ` · ${notInForm} new symbols added` : '';
+    setSaveStatus(`✅ Loaded ${filled} symbols from ${sourceTab}${note}`,'#10B981');
+    setTimeout(()=>setSaveStatus('',''),6000);
   }catch(e){ setSaveStatus('❌ '+e.message,'#F43F5E'); }
 }
 function exportCSV(){ const lines=[FIELDS.join(',')]; _rawData.forEach(r=>lines.push(FIELDS.map(h=>r[h]||'').join(','))); const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='data.csv'; a.click(); }
