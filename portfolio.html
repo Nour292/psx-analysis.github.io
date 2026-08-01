@@ -150,7 +150,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .pw-err{font-size:12px;color:var(--rose);margin-top:8px;display:none;font-family:var(--mono);}
 .pw-ok{font-size:12px;color:var(--emerald);margin-top:6px;display:none;}
 /* OVERLAYS */
-#pgDividends,#pgCashFlow,#pgHistory{position:fixed;inset:0;background:var(--bg);z-index:7777;display:none;flex-direction:column;overflow-y:auto;}
+#pgDividends,#pgCashFlow,#pgHistory{position:fixed;top:0;left:var(--sidebar-w);right:0;bottom:0;background:var(--bg);z-index:7777;display:none;flex-direction:column;overflow-y:auto;}
 #pgDividends.open,#pgCashFlow.open,#pgHistory.open{display:flex;}
 .overlay-nav{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .overlay-title{font-size:15px;font-weight:700;color:var(--text);flex:1;}
@@ -259,6 +259,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="auth-panel active" id="panelLogin">
       <input type="text" class="pw-input" id="loginUser" placeholder="👤 Username" maxlength="30" onkeydown="if(event.key==='Enter') doLogin()">
       <div style="position:relative"><input type="password" class="pw-input" id="loginPass" placeholder="🔒 Password" maxlength="30" onkeydown="if(event.key==='Enter') doLogin()" style="padding-right:44px"><button onclick="togglePw('loginPass',this)" type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0">👁</button></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <input type="checkbox" id="rememberMe" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
+        <label for="rememberMe" style="font-size:13px;color:var(--text2);cursor:pointer">Remember me</label>
+      </div>
       <button class="pw-btn" onclick="doLogin()">🔓 Login</button>
       <div class="pw-err" id="loginErr"></div><div class="pw-ok" id="loginOk"></div>
     </div>
@@ -495,7 +499,15 @@ function gsUrl(tab){return `https://sheets.googleapis.com/v4/spreadsheets/${GS_I
 const AUTH_KEY='psx_user';
 let _currentUser='';
 function gsTabFor(base){if(isAdmin())return base;return _currentUser+'_'+base;}
-(function(){const saved=sessionStorage.getItem(AUTH_KEY);if(saved){_currentUser=saved;document.getElementById('pwGate').style.display='none';setTimeout(()=>showUserBadge(saved),200);}})();
+(function(){
+  const sess=sessionStorage.getItem(AUTH_KEY);
+  const perm=localStorage.getItem(AUTH_KEY+'_r');
+  const saved=sess||perm;
+  if(saved){_currentUser=saved;document.getElementById('pwGate').style.display='none';setTimeout(()=>showUserBadge(saved),200);}
+  // pre-fill username if remembered
+  const ru=localStorage.getItem(AUTH_KEY+'_u');
+  if(ru){const el=document.getElementById('loginUser');if(el)el.value=ru;const cb=document.getElementById('rememberMe');if(cb)cb.checked=true;}
+})();
 function switchAuthTab(tab){document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',(tab==='login'&&i===0)||(tab==='register'&&i===1)));document.getElementById('panelLogin').classList.toggle('active',tab==='login');document.getElementById('panelRegister').classList.toggle('active',tab==='register');}
 const ADMIN_USER='qasim';
 function isAdmin(){return _currentUser===ADMIN_USER;}
@@ -534,6 +546,9 @@ async function doLogin(){
       const status=(match[7]||match[3]||'Active');
       if(status!=='Active'){ok.style.display='none';showAuthMsg('loginErr','❌ Account inactive.');return;}
       _currentUser=user;sessionStorage.setItem(AUTH_KEY,user);
+      const remCb=document.getElementById('rememberMe');
+      if(remCb&&remCb.checked){localStorage.setItem(AUTH_KEY+'_r',user);localStorage.setItem(AUTH_KEY+'_u',user);}
+      else{localStorage.removeItem(AUTH_KEY+'_r');localStorage.removeItem(AUTH_KEY+'_u');}
       ok.textContent='✅ Welcome '+user+'!';
       setTimeout(()=>{document.getElementById('pwGate').style.display='none';showUserBadge(user);autoLoad();},800);
     }else{ok.style.display='none';showAuthMsg('loginErr','❌ Invalid username or password.');}
@@ -585,7 +600,7 @@ async function doVerifyOtp(){
 }
 async function resendOtp(){if(!_pendingReg.email){showAuthMsg('otpErr','Session expired.');return;}const ok=document.getElementById('otpOk');ok.style.display='block';ok.textContent='⏳ Resending...';try{const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'sendOtp',email:_pendingReg.email,username:_pendingReg.user})});const result=await res.json();ok.textContent=result.ok?'✅ OTP resent!':'❌ Failed.';setTimeout(()=>ok.style.display='none',3000);}catch(e){ok.textContent='❌ '+e.message;setTimeout(()=>ok.style.display='none',3000);}}
 function backToRegForm(){document.getElementById('regStep1').style.display='block';document.getElementById('regStep2').style.display='none';document.getElementById('otpErr').style.display='none';document.getElementById('otpOk').style.display='none';}
-function doLogout(){sessionStorage.removeItem(AUTH_KEY);_currentUser='';document.getElementById('userBadge').classList.remove('show');document.getElementById('pwGate').style.display='flex';document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';document.getElementById('loginErr').style.display='none';document.getElementById('loginOk').style.display='none';}
+function doLogout(){sessionStorage.removeItem(AUTH_KEY);localStorage.removeItem(AUTH_KEY+'_r');localStorage.removeItem(AUTH_KEY+'_u');_currentUser='';document.getElementById('userBadge').classList.remove('show');document.getElementById('pwGate').style.display='flex';document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';const cb=document.getElementById('rememberMe');if(cb)cb.checked=false;document.getElementById('loginErr').style.display='none';document.getElementById('loginOk').style.display='none';}
 function showAuthMsg(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',3500);}
 function togglePw(inputId,btn){const inp=document.getElementById(inputId);if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁';}}
 
@@ -781,8 +796,8 @@ function buildPrices(){
   const symbols=[...new Set(_holdings.map(h=>h.symbol))].sort();
   const today=new Date();const dateStr=String(today.getDate()).padStart(2,'0')+'-'+today.toLocaleString('en-GB',{month:'short'})+'-'+String(today.getFullYear()).slice(-2);
   let rows='';
-  symbols.forEach(sym=>{const cur=_prices[sym]||'';rows+=`<tr><td style="padding:10px 16px;font-weight:700;color:var(--text);font-size:14px">${sym}</td><td style="padding:8px 12px"><input type="number" id="price_${sym}" value="${cur}" step="0.01" min="0" placeholder="Enter price" class="price-input" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></td><td style="padding:8px;color:var(--text3);font-size:12px">PKR</td></tr>`;});
-  tab.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px"><div><div style="font-size:16px;font-weight:700;color:var(--text)">💹 Update Current Prices</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Date: ${dateStr}</div></div><button onclick="savePrices('${dateStr}')" class="btn btn-success">💾 Save Prices</button></div><div id="pricesSaveMsg" style="margin-bottom:10px;font-size:12px;font-family:var(--mono);display:none"></div><div class="tbl-wrap"><table style="width:100%;border-collapse:collapse"><thead><tr style="background:var(--surface2)"><th style="padding:10px 16px;text-align:left;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.7px">Symbol</th><th style="padding:10px 16px;text-align:left;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.7px">Current Price (PKR)</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  symbols.forEach(sym=>{const cur=_prices[sym]||'';rows+=`<tr><td style="padding:7px 14px;font-weight:700;color:var(--text);font-size:13px;white-space:nowrap">${sym}</td><td style="padding:5px 10px;text-align:center"><input type="number" id="price_${sym}" value="${cur}" step="0.01" min="0" placeholder="—" class="price-input" style="width:110px;text-align:center" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></td><td style="padding:5px 8px;color:var(--text3);font-size:11px">PKR</td></tr>`;});
+  tab.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px"><div><div style="font-size:15px;font-weight:700;color:var(--text)">💹 Update Current Prices</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Date: ${dateStr}</div></div><button onclick="savePrices('${dateStr}')" class="btn btn-success">💾 Save Prices</button></div><div id="pricesSaveMsg" style="margin-bottom:10px;font-size:12px;font-family:var(--mono);display:none"></div><div style="overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);display:inline-block;min-width:300px"><table style="border-collapse:collapse;font-size:13px"><thead><tr style="background:var(--surface2)"><th style="padding:8px 14px;text-align:left;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border)">Symbol</th><th style="padding:8px 14px;text-align:center;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border)">Current Price</th><th style="border-bottom:1px solid var(--border)"></th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 async function savePrices(dateStr){
   const symbols=[...new Set(_holdings.map(h=>h.symbol))].sort();
