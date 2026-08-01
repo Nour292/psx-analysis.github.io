@@ -36,6 +36,7 @@
   --font:      'Inter', sans-serif;
   --mono:      'DM Mono', monospace;
   --sidebar-w: 220px;
+  --sidebar-w-collapsed: 52px;
   --header-h:  52px;
 }
 
@@ -74,45 +75,86 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .sidebar{
   width:var(--sidebar-w); background:var(--surface); border-right:1px solid var(--border);
   display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh;
-  z-index:100; flex-shrink:0;
+  z-index:100; flex-shrink:0; transition:width .22s cubic-bezier(.4,0,.2,1);
 }
+.sidebar.collapsed{ width:var(--sidebar-w-collapsed); }
 .sidebar-logo{
-  padding:18px 20px 14px; border-bottom:1px solid var(--border);
-  display:flex; align-items:center; gap:10px;
+  padding:0 14px; height:52px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px; overflow:hidden; white-space:nowrap;
 }
+.sidebar-logo .logo-text-wrap{ opacity:1; transition:opacity .15s .05s; flex:1; min-width:0; }
+.sidebar.collapsed .logo-text-wrap{ opacity:0; pointer-events:none; }
 .logo-icon{ width:28px; height:28px; background:var(--accent); border-radius:6px;
   display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
 .logo-text{ font-size:14px; font-weight:700; color:var(--text); letter-spacing:.3px; }
 .logo-sub{ font-size:10px; color:var(--text3); margin-top:1px; }
 
-.sidebar-nav{ flex:1; padding:12px 10px; display:flex; flex-direction:column; gap:2px; overflow-y:auto; }
+/* Floating toggle tab — always visible */
+.sb-toggle-tab{
+  position:fixed; top:50%;
+  left:calc(var(--sidebar-w) - 1px);
+  transform:translateY(-50%);
+  z-index:200;
+  width:18px; height:48px;
+  background:var(--surface);
+  border:1px solid var(--border); border-left:none;
+  border-radius:0 8px 8px 0;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--text3);
+  transition:left .22s cubic-bezier(.4,0,.2,1), background .12s, color .12s;
+  box-shadow:2px 0 6px rgba(0,0,0,.15);
+}
+.sb-toggle-tab:hover{ background:var(--surface2); color:var(--text); }
+.sb-toggle-tab svg{ transition:transform .22s; flex-shrink:0; }
+:root.sb-collapsed .sb-toggle-tab{ left:calc(var(--sidebar-w-collapsed) - 1px); }
+:root.sb-collapsed .sb-toggle-tab svg{ transform:rotate(180deg); }
+
+.sidebar-nav{ flex:1; padding:8px 6px; display:flex; flex-direction:column; gap:2px; overflow-y:auto; overflow-x:hidden; }
 .nav-item{
   display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--radius-sm);
   font-size:13px; font-weight:500; color:var(--text2); cursor:pointer;
   border:none; background:transparent; width:100%; text-align:left;
-  transition:background .12s, color .12s;
+  transition:background .12s, color .12s; white-space:nowrap; overflow:hidden;
 }
 .nav-item:hover{ background:var(--surface2); color:var(--text); }
 .nav-item.active{ background:var(--accent-dim); color:var(--accent); }
-.nav-icon{ font-size:15px; flex-shrink:0; width:18px; text-align:center; }
-.nav-divider{ height:1px; background:var(--border); margin:8px 10px; }
+.nav-icon{ font-size:15px; flex-shrink:0; width:20px; text-align:center; }
+.nav-label{ transition:opacity .15s .05s; white-space:nowrap; }
+.sidebar.collapsed .nav-label{ opacity:0; }
+.sidebar.collapsed .nav-item{ padding:9px 0; justify-content:center; gap:0; }
+.nav-divider{ height:1px; background:var(--border); margin:6px 8px; }
+.sidebar.collapsed .nav-divider{ margin:6px 4px; }
 
-.sidebar-footer{
-  padding:12px 10px; border-top:1px solid var(--border);
+/* Tooltip on collapsed icons */
+.sidebar.collapsed .nav-item{ position:relative; }
+.sidebar.collapsed .nav-item:hover::after{
+  content:attr(data-tip); position:absolute;
+  left:calc(var(--sidebar-w-collapsed) + 6px); top:50%; transform:translateY(-50%);
+  background:var(--surface2); border:1px solid var(--border); color:var(--text);
+  font-size:12px; font-weight:600; padding:5px 10px; border-radius:6px;
+  white-space:nowrap; z-index:200; pointer-events:none;
 }
+
+.sidebar-footer{ padding:8px 6px; border-top:1px solid var(--border); overflow:hidden; }
 .footer-btn{
   display:flex; align-items:center; gap:9px; padding:9px 12px; border-radius:var(--radius-sm);
   font-size:12px; font-weight:500; color:var(--text2); cursor:pointer;
-  border:none; background:transparent; width:100%; text-align:left;
-  transition:background .12s, color .12s;
+  border:none; background:transparent; width:100%; text-align:left; white-space:nowrap; overflow:hidden;
 }
 .footer-btn:hover{ background:var(--surface2); color:var(--text); }
+.footer-label{ transition:opacity .15s .05s; white-space:nowrap; }
+.sidebar.collapsed .footer-label{ opacity:0; }
+.sidebar.collapsed .footer-btn{ padding:9px 0; justify-content:center; gap:0; }
 
 /* MAIN CONTENT */
 .main{
   margin-left:var(--sidebar-w); flex:1; min-height:100vh;
   display:flex; flex-direction:column;
+  transition:margin-left .22s cubic-bezier(.4,0,.2,1);
 }
+:root.sb-collapsed .main{ margin-left:var(--sidebar-w-collapsed); }
+:root.light .sidebar{ box-shadow:2px 0 12px rgba(0,0,0,.06); }
 .topbar{
   height:var(--header-h); background:var(--surface); border-bottom:1px solid var(--border);
   display:flex; align-items:center; padding:0 24px; gap:12px; flex-shrink:0; position:sticky; top:0; z-index:50;
@@ -494,51 +536,55 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 <div class="shell">
 
 <!-- ═══ SIDEBAR ═══ -->
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon">📊</div>
-    <div>
+    <div class="logo-text-wrap">
       <div class="logo-text">PSX Analysis</div>
       <div class="logo-sub">Technical Screener</div>
     </div>
   </div>
   <nav class="sidebar-nav">
-    <button class="nav-item active" id="navHome" onclick="goHome()">
-      <span class="nav-icon">⌂</span> Dashboard
+    <button class="nav-item active" id="navHome" data-tip="Dashboard" onclick="goHome()">
+      <span class="nav-icon">⌂</span><span class="nav-label"> Dashboard</span>
     </button>
-    <button class="nav-item" id="navAnalysis" onclick="goAnalysis()">
-      <span class="nav-icon">▶</span> Weekly Analysis
+    <button class="nav-item" id="navAnalysis" data-tip="Weekly Analysis" onclick="goAnalysis()">
+      <span class="nav-icon">▶</span><span class="nav-label"> Weekly Analysis</span>
     </button>
-    <button class="nav-item" id="navSingle" onclick="goSingle()">
-      <span class="nav-icon">◎</span> Single Ticker
-    </button>
-    <div class="nav-divider"></div>
-    <button class="nav-item" id="navImport" onclick="goImport()">
-      <span class="nav-icon">＋</span> Add / Update Data
+    <button class="nav-item" id="navSingle" data-tip="Single Ticker" onclick="goSingle()">
+      <span class="nav-icon">◎</span><span class="nav-label"> Single Ticker</span>
     </button>
     <div class="nav-divider"></div>
-    <button class="nav-item" onclick="window.location.href='portfolio.html'">
-      <span class="nav-icon">📈</span> Portfolio
+    <button class="nav-item" id="navImport" data-tip="Add / Update Data" onclick="goImport()">
+      <span class="nav-icon">＋</span><span class="nav-label"> Add / Update Data</span>
+    </button>
+    <button class="nav-item" data-tip="Portfolio" onclick="window.location.href='portfolio.html'">
+      <span class="nav-icon">📈</span><span class="nav-label"> Portfolio</span>
     </button>
   </nav>
   <div class="sidebar-footer">
-    <button class="footer-btn" onclick="toggleTheme()" id="themeBtn" style="margin-bottom:6px">
+    <button class="footer-btn" onclick="toggleTheme()" id="themeBtn" style="margin-bottom:4px">
       <span id="themeIcon" style="font-size:15px">☀️</span>
-      <span id="themeLabel" style="font-size:12px">Light Mode</span>
+      <span class="footer-label" id="themeLbl"> Light Mode</span>
     </button>
-    <button class="footer-btn" onclick="hardRefresh()" style="margin-bottom:6px">
+    <button class="footer-btn" onclick="hardRefresh()" style="margin-bottom:4px">
       <span style="font-size:15px">↺</span>
-      <span style="font-size:12px">Hard Refresh</span>
+      <span class="footer-label"> Hard Refresh</span>
     </button>
-    <div class="footer-btn" style="flex-direction:column;align-items:flex-start;gap:2px;cursor:default">
+    <div class="footer-btn" style="cursor:default;flex-direction:column;align-items:flex-start;gap:2px">
       <span id="homeDataDate" style="display:none">
-        <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Data as of</span><br>
+        <span class="footer-label" style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Data as of</span><br>
         <span id="homeDataDateVal" style="font-size:11px;color:var(--accent);font-family:var(--mono)"></span>
       </span>
-      <span style="font-size:10px;color:var(--text3)">PSX · Pakistan Stock Exchange</span>
+      <span class="footer-label" style="font-size:10px;color:var(--text3)">PSX · Pakistan Stock Exchange</span>
     </div>
   </div>
 </aside>
+
+<!-- Floating sidebar toggle — always visible -->
+<button class="sb-toggle-tab" onclick="toggleSidebar()" title="Toggle sidebar">
+  <svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M7 2L2 8l5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
 
 <!-- ═══ MAIN ═══ -->
 <main class="main">
@@ -718,25 +764,43 @@ function hardRefresh(){
   window.location.reload(true);
 }
 
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const collapsed=sb.classList.toggle('collapsed');
+  document.documentElement.classList.toggle('sb-collapsed',collapsed);
+  localStorage.setItem('psx_sb_collapsed',collapsed?'1':'0');
+}
+
+// restore sidebar collapsed state
+document.addEventListener('DOMContentLoaded',function(){
+  if(localStorage.getItem('psx_sb_collapsed')==='1'){
+    const sb=document.getElementById('sidebar');
+    if(sb)sb.classList.add('collapsed');
+    document.documentElement.classList.add('sb-collapsed');
+  }
+});
+
 /* ════════════════════════════════════════════
    THEME TOGGLE
 ════════════════════════════════════════════ */
 (function(){
   const saved = localStorage.getItem('psx_theme');
   if(saved === 'light') applyLight();
+  // apply sidebar state immediately to prevent layout flash
+  if(localStorage.getItem('psx_sb_collapsed')==='1') document.documentElement.classList.add('sb-collapsed');
 })();
 
 function applyLight(){
   document.documentElement.classList.add('light');
   const icon = document.getElementById('themeIcon');
-  const lbl  = document.getElementById('themeLabel');
+  const lbl  = document.getElementById('themeLbl');
   if(icon) icon.textContent = '🌙';
   if(lbl)  lbl.textContent  = 'Dark Mode';
 }
 function applyDark(){
   document.documentElement.classList.remove('light');
   const icon = document.getElementById('themeIcon');
-  const lbl  = document.getElementById('themeLabel');
+  const lbl  = document.getElementById('themeLbl');
   if(icon) icon.textContent = '☀️';
   if(lbl)  lbl.textContent  = 'Light Mode';
 }
