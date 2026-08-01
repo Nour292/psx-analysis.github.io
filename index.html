@@ -669,7 +669,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       <span style="font-size:12px;color:var(--text3);font-weight:600">Data as of</span>
       <input type="date" id="fDataDate" class="date-input">
       <button class="btn btn-success" onclick="saveAllData()">💾 Save to Sheets</button>
-      <button class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-ghost" onclick="manualArchive()" title="Save archive snapshot now">📦 Archive Now</button>
       <span id="saveStatus" class="save-status"></span>
     </div>
     <div class="archive-bar" id="archiveWrap">
@@ -1111,7 +1111,87 @@ function getVal(sym,field){ const el=document.getElementById(inputId(sym,field))
 let _idxToken='';
 const REPO='Nour292/psx-analysis.github.io';
 async function saveToSheets(csvContent){
-  try{ setSaveStatus('⏳ Saving…','#F59E0B'); const lines=csvContent.trim().split(/\r?\n/); const headers=lines[0].split(',').map(h=>h.trim()); const dataRows=lines.slice(1).map(l=>l.split(',')); const archDate=_dataAsOf||new Date().toISOString().slice(0,10); const allRows=[headers,...dataRows]; await fetch(GS_WRITE,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'replaceSheet',tab:GS_TAB_DATA,rows:allRows,archDate})}); setSaveStatus('✅ Saved','#10B981'); setTimeout(()=>setSaveStatus('',''),5000); loadArchiveList(); return true; }catch(err){ setSaveStatus('❌ '+err.message,'#F43F5E'); return false; }
+  try{
+    setSaveStatus('⏳ Saving…','#F59E0B');
+    const lines=csvContent.trim().split(/\r?\n/);
+    const headers=lines[0].split(',').map(h=>h.trim());
+    const dataRows=lines.slice(1).map(l=>l.split(','));
+    const archDate=_dataAsOf||new Date().toISOString().slice(0,10);
+
+    // Build rows: header row has date in column Q (index 16)
+    const headerRow=[...headers];
+    while(headerRow.length<17) headerRow.push('');
+    headerRow[16]='UpdatedDate';
+
+    const firstDataRow=dataRows[0]?[...dataRows[0]]:[];
+    while(firstDataRow.length<17) firstDataRow.push('');
+    firstDataRow[16]=archDate; // Q2 = date
+
+    const allRows=[headerRow, firstDataRow, ...dataRows.slice(1)];
+
+    await fetch(GS_WRITE,{method:'POST',mode:'no-cors',body:JSON.stringify({
+      action:'replaceSheet',tab:GS_TAB_DATA,rows:allRows,archDate
+    })});
+
+    setSaveStatus('✅ Saved to Sheets','#10B981');
+
+    // Auto-archive on Fridays
+    const today=new Date();
+    const isFriday=today.getDay()===5;
+    const token=_idxToken||document.getElementById('idxGhToken')?.value.trim();
+    if(isFriday&&token){
+      await autoArchiveToGitHub(csvContent,archDate,token);
+    } else if(isFriday&&!token){
+      setSaveStatus('✅ Saved · ⚠️ Add GitHub token to auto-archive','#F59E0B');
+    }
+
+    setTimeout(()=>setSaveStatus('',''),6000);
+    loadArchiveList();
+    return true;
+  }catch(err){ setSaveStatus('❌ '+err.message,'#F43F5E'); return false; }
+}
+
+function manualArchive(){
+  const token=_idxToken||document.getElementById("idxGhToken")?.value.trim();
+  if(!token){setSaveStatus("⚠️ Enter GitHub token first","#F59E0B");return;}
+  if(!_rawData.length){setSaveStatus("⚠️ No data to archive","#F59E0B");return;}
+  const headers=["Symbol","Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D","Volume-D","MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume-W","52W-High","52W-Low"];
+  const lines=[headers.join(",")];
+  _rawData.forEach(r=>lines.push(headers.map(h=>r[h]||"").join(",")));
+  const csv=lines.join("\n");
+  const dateStr=_dataAsOf||new Date().toISOString().slice(0,10);
+  autoArchiveToGitHub(csv,dateStr,token);
+}
+async function autoArchiveToGitHub(csvContent,dateStr,token){
+  try{
+    setSaveStatus('⏳ Archiving to GitHub…','#38BDF8');
+    const filename=`archive/${dateStr}.csv`;
+    const encoded=btoa(unescape(encodeURIComponent(csvContent)));
+
+    // Check if file exists (to get SHA for update)
+    let sha='';
+    try{
+      const check=await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`,{
+        headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}
+      });
+      if(check.ok){ const j=await check.json(); sha=j.sha||''; }
+    }catch(e){}
+
+    const body={message:`Archive: ${dateStr}`,content:encoded};
+    if(sha) body.sha=sha;
+
+    const res=await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`,{
+      method:'PUT',
+      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    if(res.ok){
+      setSaveStatus(`✅ Saved & Archived → ${dateStr}`,'#10B981');
+    } else {
+      const err=await res.json();
+      setSaveStatus('✅ Saved · Archive: '+(err.message||'failed'),'#F59E0B');
+    }
+  }catch(e){ setSaveStatus('✅ Saved · Archive error: '+e.message,'#F59E0B'); }
 }
 let _archiveDates=[];
 async function loadArchiveList(){ const token=_idxToken||document.getElementById('idxGhToken').value.trim(); try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`,{headers:token?{Authorization:`token ${token}`}:{}}); if(!res.ok){ updateArchiveDropdown([]); return; } const files=await res.json(); _archiveDates=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse(); updateArchiveDropdown(_archiveDates); }catch(e){ updateArchiveDropdown([]); } }
@@ -1145,7 +1225,39 @@ function showDataDate(){
 }
 
 /* ── Data loading ── */
-async function loadCSV(){ try{ const res=await fetch(gsUrl(GS_TAB_DATA)); if(!res.ok) throw new Error('Sheets error: '+res.status); const json=await res.json(); const rows=json.values||[]; if(rows.length<2) return; const headers=rows[0].map(h=>h.trim()); _rawData=rows.slice(1).filter(r=>r.length>0).map(row=>{ const obj={}; headers.forEach((h,i)=>obj[h]=(row[i]||'').trim()); return obj; }); try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){} renderHome(); loadLatestArchive(); }catch(e){ console.log('Sheets not loaded:',e.message); } }
+async function loadCSV(){
+  try{
+    const res=await fetch(gsUrl(GS_TAB_DATA));
+    if(!res.ok) throw new Error('Sheets error: '+res.status);
+    const json=await res.json();
+    const rows=json.values||[];
+    if(rows.length<2) return;
+    const headers=rows[0].map(h=>h.trim());
+
+    // Read date from Q2 = rows[1][16]
+    const q2=rows[1]&&rows[1][16]?rows[1][16].trim():'';
+    if(q2){
+      // Parse the date (could be YYYY-MM-DD or M/D/YYYY from Sheets)
+      let parsed=q2;
+      if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(q2)){
+        const parts=q2.split('/');
+        parsed=`${parts[2]}-${String(parts[0]).padStart(2,'0')}-${String(parts[1]).padStart(2,'0')}`;
+      }
+      setDataDate(parsed);
+    } else {
+      try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){}
+    }
+
+    _rawData=rows.slice(1).filter(r=>r.length>0).map(row=>{
+      const obj={};
+      headers.forEach((h,i)=>{if(h&&h!=='UpdatedDate') obj[h]=(row[i]||'').trim();});
+      return obj;
+    }).filter(r=>r.Symbol);
+
+    renderHome();
+    loadLatestArchive();
+  }catch(e){ console.log('Sheets not loaded:',e.message); }
+}
 async function loadLatestArchive(){ await loadArchiveWeeks(); }
 async function loadArchiveWeeks(){ try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`); if(!res.ok) return; const files=await res.json(); const sorted=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse().slice(0,4); if(!sorted.length) return; const results=await Promise.all(sorted.map(async date=>{ try{ const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!r.ok) return null; const text=(await r.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const hdrs=lines[0].split(',').map(h=>h.trim()); const data={}; lines.slice(1).filter(l=>l.trim()).forEach(line=>{ const cols=line.split(','); const obj={}; hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); if(obj.Symbol) data[obj.Symbol]=obj; }); return {date,data}; }catch(e){ return null; } })); _archiveWeeks=results.filter(Boolean); if(_archiveWeeks.length){ _prevData=_archiveWeeks[0].data; _prevDate=_archiveWeeks[0].date; } if(_rawData.length) renderHome(); }catch(e){ console.log('Archive weeks error:',e.message); } }
 function archiveScore(sym,weekIdx){ if(weekIdx>=_archiveWeeks.length) return null; const row=_archiveWeeks[weekIdx].data[sym]; return row?scoreRow(row):null; }
