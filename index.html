@@ -833,10 +833,25 @@ function processAll(){
     let trend='';
     if(hist.length<2) trend='—'; else if(trendClass==='sustained-up') trend='⬆️'; else if(trendClass==='improving') trend='↗️'; else if(trendClass==='sustained-down') trend='⬇️'; else if(trendClass==='weakening') trend='↘️'; else trend='→';
     const sparkScores=[sc4,sc3,sc2,sc1,sc].map((v,i)=>v!==null?v:'?');
-    const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:momentumLabel(s,vr.verdict),RR:'0',PriceChg:priceChg};
+    const mom=momentumLabel(s,vr.verdict);
+    // MomentumOrder: for BUY higher=stronger (Strong↑=3,Moderate↑=2,Forming↑=1); for EXIT higher=stronger (Strong↓=3,Moderate↓=2,Mild↓=1)
+    let momOrd=0;
+    if(vr.verdict==='BUY'){ momOrd=mom.includes('Strong ↑')?3:mom.includes('Moderate ↑')?2:1; }
+    else if(vr.verdict==='EXIT'){ momOrd=mom.includes('Strong ↓')?3:mom.includes('Moderate ↓')?2:1; }
+    const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:mom,MomentumOrder:momOrd,RR:'0',PriceChg:priceChg};
     const supLo=parseFloat(z.supportZone.split('\u2013')[0]); row.RR=((Math.abs(vr.target-p))/(Math.abs(p-supLo)||1)).toFixed(2);
     return row;
-  }).sort((a,b)=>{ const o={BUY:1,WATCH:2,CAUTION:3,WAIT:4,EXIT:5,AVOID:6}; return (o[a.Verdict]||9)-(o[b.Verdict]||9)||b.Score-a.Score; });
+  }).sort((a,b)=>{
+    const o={BUY:1,WATCH:2,CAUTION:3,WAIT:4,EXIT:5,AVOID:6};
+    const vDiff=(o[a.Verdict]||9)-(o[b.Verdict]||9);
+    if(vDiff!==0) return vDiff;
+    // BUY: Strong on top → descending MomentumOrder, then descending Score
+    if(a.Verdict==='BUY') return b.MomentumOrder-a.MomentumOrder||b.Score-a.Score;
+    // EXIT: Strong on bottom → ascending MomentumOrder, then ascending Score
+    if(a.Verdict==='EXIT') return a.MomentumOrder-b.MomentumOrder||a.Score-b.Score;
+    // All others: descending Score
+    return b.Score-a.Score;
+  });
 }
 function verdictFnEnhanced(s,sc,z,scoreDelta,macdImproving,rsiImproving,priceChg,trendClass,trendSlope){
   const base=verdictFn(s,sc,z);
