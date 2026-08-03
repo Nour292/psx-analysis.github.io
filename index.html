@@ -126,6 +126,44 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .nav-divider{ height:1px; background:var(--border); margin:6px 8px; }
 .sidebar.collapsed .nav-divider{ margin:6px 4px; }
 
+/* ── Accordion nav ── */
+.nav-grp{ display:flex; flex-direction:column; }
+.nav-grp-btn{
+  display:flex; align-items:center; gap:10px; padding:9px 14px;
+  border-radius:var(--radius-sm); font-size:13px; font-weight:600;
+  color:var(--text2); cursor:pointer; border:none; background:transparent;
+  width:100%; text-align:left; white-space:nowrap;
+  transition:background .12s,color .12s;
+}
+.nav-grp-btn:hover{ background:var(--surface2); color:var(--text); }
+.nav-grp-btn.open{ color:var(--accent); background:var(--accent-dim); }
+.nav-grp-chevron{
+  margin-left:auto; font-size:9px; opacity:.5; flex-shrink:0; line-height:1;
+  transition:transform .2s cubic-bezier(.4,0,.2,1), opacity .2s;
+}
+.nav-grp-btn.open .nav-grp-chevron{ transform:rotate(180deg); opacity:1; }
+.sidebar.collapsed .nav-grp-btn{ padding:9px 0; justify-content:center; gap:0; }
+.sidebar.collapsed .nav-grp-btn .nav-label{ opacity:0; max-width:0; pointer-events:none; }
+.sidebar.collapsed .nav-grp-chevron{ display:none; }
+/* Sub-list */
+.nav-sub{
+  display:flex; flex-direction:column;
+  overflow:hidden; max-height:0;
+  transition:max-height .22s cubic-bezier(.4,0,.2,1);
+}
+.nav-sub.open{ max-height:220px; }
+.sidebar.collapsed .nav-sub{ display:none; }
+.nav-sub-btn{
+  display:flex; align-items:center; gap:8px;
+  padding:7px 12px 7px 42px;
+  font-size:12.5px; font-weight:500; color:var(--text3);
+  cursor:pointer; border:none; background:transparent;
+  width:100%; text-align:left; border-radius:var(--radius-sm);
+  white-space:nowrap; transition:background .12s,color .12s;
+}
+.nav-sub-btn:hover{ background:var(--surface2); color:var(--text); }
+.nav-sub-btn.active{ color:var(--accent); background:var(--accent-dim); }
+
 /* Tooltip on collapsed icons */
 .sidebar.collapsed .nav-item{ position:relative; }
 .sidebar.collapsed .nav-item:hover::after{
@@ -506,19 +544,37 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
     </div>
   </div>
   <nav class="sidebar-nav">
-    <button class="nav-item active" id="navHome" data-tip="Dashboard" onclick="goHome()">
-      <span class="nav-icon">⌂</span><span class="nav-label"> Dashboard</span>
-    </button>
-    <button class="nav-item" id="navAnalysis" data-tip="Weekly Analysis" onclick="goAnalysis()">
-      <span class="nav-icon">▶</span><span class="nav-label"> Weekly Analysis</span>
-    </button>
-    <button class="nav-item" id="navSingle" data-tip="Single Ticker" onclick="goSingle()">
-      <span class="nav-icon">◎</span><span class="nav-label"> Single Ticker</span>
-    </button>
+
+    <!-- Technical Analysis group -->
+    <div class="nav-grp">
+      <button class="nav-grp-btn open" id="navTABtn" data-tip="Technical Analysis"
+              onclick="toggleGrp('ta')">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label"> Technical Analysis</span>
+        <span class="nav-grp-chevron">▼</span>
+      </button>
+      <div class="nav-sub open" id="navTASub">
+        <button class="nav-sub-btn active" id="navHome"     onclick="goHome()">⌂ Dashboard</button>
+        <button class="nav-sub-btn"        id="navAnalysis" onclick="goAnalysis()">▶ Weekly Analysis</button>
+        <button class="nav-sub-btn"        id="navSingle"   onclick="goSingle()">◎ Single Ticker</button>
+      </div>
+    </div>
+
     <div class="nav-divider"></div>
-    <button class="nav-item" data-tip="Portfolio" onclick="window.location.href='portfolio.html'">
-      <span class="nav-icon">📈</span><span class="nav-label"> Portfolio</span>
-    </button>
+
+    <!-- Portfolio group -->
+    <div class="nav-grp">
+      <button class="nav-grp-btn" id="navPortBtn" data-tip="Portfolio"
+              onclick="toggleGrp('port')">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label"> Portfolio</span>
+        <span class="nav-grp-chevron">▼</span>
+      </button>
+      <div class="nav-sub" id="navPortSub">
+        <button class="nav-sub-btn" onclick="window.location.href='portfolio.html'">📊 Dashboard</button>
+      </div>
+    </div>
+
   </nav>
   <div class="sidebar-footer">
     <button class="footer-btn" onclick="toggleTheme()" id="themeBtn" style="margin-bottom:4px">
@@ -701,10 +757,36 @@ function toggleTheme(){
    NAV
 ════════════════════════════════════════════ */
 function setNav(id,title){
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-sub-btn').forEach(n=>n.classList.remove('active'));
   const el=document.getElementById(id);
   if(el) el.classList.add('active');
   document.getElementById('topbarTitle').textContent=title;
+}
+/* ── Accordion toggle ── */
+function toggleGrp(grp){
+  if(grp==='ta'){
+    const btn=document.getElementById('navTABtn');
+    const sub=document.getElementById('navTASub');
+    const open=sub.classList.contains('open');
+    if(open){
+      // 2nd click — collapse only, keep current page
+      sub.classList.remove('open'); btn.classList.remove('open');
+    } else {
+      // 1st click — expand and show Dashboard
+      sub.classList.add('open'); btn.classList.add('open');
+      goHome();
+    }
+  } else {
+    const btn=document.getElementById('navPortBtn');
+    const sub=document.getElementById('navPortSub');
+    const open=sub.classList.contains('open');
+    if(open){
+      sub.classList.remove('open'); btn.classList.remove('open');
+    } else {
+      sub.classList.add('open'); btn.classList.add('open');
+      window.location.href='portfolio.html';
+    }
+  }
 }
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -1164,6 +1246,12 @@ function archiveScore(sym,weekIdx){ if(weekIdx>=_archiveWeeks.length) return nul
 
 loadSavedToken();
 loadCSV();
+/* Deep-link from portfolio sub-items */
+(function(){
+  const h=window.location.hash;
+  if(h==='#weekly')      setTimeout(goAnalysis,120);
+  else if(h==='#single') setTimeout(goSingle,120);
+})();
 </script>
 </body>
 </html>
