@@ -1242,16 +1242,22 @@ async function loadCSV(){
 
     // Read Date from sheet (first data row) and set _dataAsOf
     const dateFromSheet=(_rawData[0]&&_rawData[0]['Date'])||'';
+    console.log('Date from sheet:',dateFromSheet);
     if(dateFromSheet) setDataDate(dateFromSheet);
     else { try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){} }
-
-    // Auto-archive if token set and data date is new
-    if(_dataAsOf && _idxToken){
-      setTimeout(()=>autoArchive(_dataAsOf),1500);
-    }
+    console.log('_dataAsOf after set:',_dataAsOf, '| token present:',!!_idxToken);
 
     renderHome();
-    loadLatestArchive();
+
+    // Load archive then trigger autoArchive
+    loadLatestArchive().then(()=>{
+      if(_dataAsOf && _idxToken){
+        console.log('Triggering autoArchive for:',_dataAsOf);
+        setTimeout(()=>autoArchive(_dataAsOf),500);
+      } else {
+        console.log('autoArchive skipped — _dataAsOf:',_dataAsOf,'token:',!!_idxToken);
+      }
+    });
   }catch(e){ console.log('Sheets not loaded:',e.message); }
 }
 async function loadLatestArchive(){ await loadArchiveWeeks(); loadWeekPicker(); }
