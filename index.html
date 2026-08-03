@@ -1230,9 +1230,6 @@ async function loadCSV(){
     const symColIdx=headers.findIndex(h=>h==='Symbol');
     const effectiveSymCol=symColIdx>=0?symColIdx:0;
 
-    // Restore date from localStorage
-    try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){}
-
     // Parse all symbols
     _rawData=rows.slice(headerIdx+1).filter(r=>r.length>0&&(r[effectiveSymCol]||'').trim()).map(row=>{
       const obj={};
@@ -1242,6 +1239,11 @@ async function loadCSV(){
     }).filter(r=>r.Symbol&&r.Symbol.length>1&&r.Symbol!=='Symbol');
 
     console.log(`Loaded ${_rawData.length} symbols from ${GS_TAB_DATA}`);
+
+    // Read Date from sheet (first data row) and set _dataAsOf
+    const dateFromSheet=(_rawData[0]&&_rawData[0]['Date'])||'';
+    if(dateFromSheet) setDataDate(dateFromSheet);
+    else { try{const saved=localStorage.getItem('psx_dataAsOf');if(saved){_dataAsOf=saved;showDataDate();}}catch(e){} }
 
     // Auto-archive if token set and data date is new
     if(_dataAsOf && _idxToken){
