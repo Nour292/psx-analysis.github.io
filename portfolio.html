@@ -78,6 +78,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .sidebar.collapsed .nav-item{padding:9px 0;justify-content:center;gap:0;}
 .nav-divider{height:1px;background:var(--border);margin:6px 8px;}
 .sidebar.collapsed .nav-divider{margin:6px 4px;}
+/* ── Accordion nav ── */
+.nav-grp{display:flex;flex-direction:column;}
+.nav-grp-btn{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;white-space:nowrap;transition:background .12s,color .12s;}
+.nav-grp-btn:hover{background:var(--surface2);color:var(--text);}
+.nav-grp-btn.open{color:var(--accent);background:var(--accent-dim);}
+.nav-grp-chevron{margin-left:auto;font-size:9px;opacity:.5;flex-shrink:0;line-height:1;transition:transform .2s cubic-bezier(.4,0,.2,1),opacity .2s;}
+.nav-grp-btn.open .nav-grp-chevron{transform:rotate(180deg);opacity:1;}
+.sidebar.collapsed .nav-grp-btn{padding:9px 0;justify-content:center;gap:0;}
+.sidebar.collapsed .nav-grp-btn .nav-label{opacity:0;max-width:0;pointer-events:none;}
+.sidebar.collapsed .nav-grp-chevron{display:none;}
+.nav-sub{display:flex;flex-direction:column;overflow:hidden;max-height:0;transition:max-height .22s cubic-bezier(.4,0,.2,1);}
+.nav-sub.open{max-height:300px;}
+.sidebar.collapsed .nav-sub{display:none;}
+.nav-sub-btn{display:flex;align-items:center;gap:8px;padding:7px 12px 7px 42px;font-size:12.5px;font-weight:500;color:var(--text3);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;border-radius:var(--radius-sm);white-space:nowrap;transition:background .12s,color .12s;}
+.nav-sub-btn:hover{background:var(--surface2);color:var(--text);}
+.nav-sub-btn.active{color:var(--accent);background:var(--accent-dim);}
+.nav-sub-btn.action-active{color:var(--emerald);background:var(--emerald-dim);}
 /* Tooltip on collapsed icons */
 .sidebar.collapsed .nav-item{position:relative;}
 .sidebar.collapsed .nav-item:hover::after{content:attr(data-tip);position:absolute;left:calc(var(--sidebar-w-collapsed) + 8px);top:50%;transform:translateY(-50%);background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;white-space:nowrap;z-index:300;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.2);}
@@ -338,14 +355,42 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="logo-text-wrap"><div class="logo-text">PSX Portfolio</div><div class="logo-sub">Dividend Dashboard</div></div>
   </div>
   <nav class="sidebar-nav">
-    <button class="nav-item" id="navAction" style="display:none" data-tip="Action Plan" onclick="switchTab('action',this,null)"><span class="nav-icon">🎯</span><span class="nav-label"> Action Plan</span></button>
+
+    <!-- Portfolio group (open by default) -->
+    <div class="nav-grp">
+      <button class="nav-grp-btn open" id="navPortBtn" data-tip="Portfolio"
+              onclick="toggleGrp('port')">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label"> Portfolio</span>
+        <span class="nav-grp-chevron">▼</span>
+      </button>
+      <div class="nav-sub open" id="navPortSub">
+        <button class="nav-sub-btn active" id="navPortDash" onclick="goPortDash()">📊 Dashboard</button>
+        <button class="nav-sub-btn" id="navAction" style="display:none" onclick="switchTab('action',this,null)">🎯 Action Plan</button>
+        <button class="nav-sub-btn" onclick="showBuySell()">💱 Buy / Sell</button>
+        <button class="nav-sub-btn" id="navHistory"  onclick="toggleOverlay('pgHistory','navHistory',initHistory)">🔍 Trade History</button>
+        <button class="nav-sub-btn" id="navDivPage"  onclick="toggleOverlay('pgDividends','navDivPage',loadDividendsCSV)">💵 Dividends</button>
+        <button class="nav-sub-btn" id="navCashFlow" onclick="toggleOverlay('pgCashFlow','navCashFlow',loadCashFlow)">💳 Cash Flow</button>
+      </div>
+    </div>
+
     <div class="nav-divider"></div>
-    <button class="nav-item" data-tip="Buy / Sell" onclick="showBuySell()"><span class="nav-icon">💱</span><span class="nav-label"> Buy / Sell</span></button>
-    <button class="nav-item" id="navHistory" data-tip="Trade History" onclick="toggleOverlay('pgHistory','navHistory',initHistory)"><span class="nav-icon">🔍</span><span class="nav-label"> Trade History</span></button>
-    <button class="nav-item" id="navDivPage" data-tip="Dividends" onclick="toggleOverlay('pgDividends','navDivPage',loadDividendsCSV)"><span class="nav-icon">💵</span><span class="nav-label"> Dividends</span></button>
-    <button class="nav-item" id="navCashFlow" data-tip="Cash Flow" onclick="toggleOverlay('pgCashFlow','navCashFlow',loadCashFlow)"><span class="nav-icon">💳</span><span class="nav-label"> Cash Flow</span></button>
-    <div class="nav-divider"></div>
-    <button class="nav-item" data-tip="Technical Analysis" onclick="window.location.href='index.html'"><span class="nav-icon">📊</span><span class="nav-label"> Technical Analysis</span></button>
+
+    <!-- Technical Analysis group (closed by default) -->
+    <div class="nav-grp">
+      <button class="nav-grp-btn" id="navTABtn" data-tip="Technical Analysis"
+              onclick="toggleGrp('ta')">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label"> Technical Analysis</span>
+        <span class="nav-grp-chevron">▼</span>
+      </button>
+      <div class="nav-sub" id="navTASub">
+        <button class="nav-sub-btn" onclick="window.location.href='index.html'">⌂ Dashboard</button>
+        <button class="nav-sub-btn" onclick="window.location.href='index.html#weekly'">▶ Weekly Analysis</button>
+        <button class="nav-sub-btn" onclick="window.location.href='index.html#single'">◎ Single Ticker</button>
+      </div>
+    </div>
+
   </nav>
   <div class="sidebar-footer">
     <button class="footer-btn" onclick="toggleTheme()" id="themeBtn" style="margin-bottom:4px"><span id="themeIcon" style="font-size:15px">☀️</span><span class="footer-label" id="themeLabel"> Light Mode</span></button>
@@ -536,6 +581,43 @@ function toggleSidebar(){
   const collapsed=sb.classList.toggle('collapsed');
   document.documentElement.classList.toggle('sb-collapsed',collapsed);
   localStorage.setItem('psx_sb_collapsed',collapsed?'1':'0');
+}
+
+/* Close all overlays, highlight Portfolio > Dashboard */
+function goPortDash(){
+  ['pgHistory','pgDividends','pgCashFlow'].forEach(id=>{
+    document.getElementById(id).classList.remove('open');
+  });
+  document.querySelectorAll('.nav-sub-btn').forEach(n=>n.classList.remove('active'));
+  const d=document.getElementById('navPortDash');if(d)d.classList.add('active');
+  _activeOverlay=null;
+}
+
+/* Accordion toggle */
+function toggleGrp(grp){
+  if(grp==='port'){
+    const btn=document.getElementById('navPortBtn');
+    const sub=document.getElementById('navPortSub');
+    const open=sub.classList.contains('open');
+    if(open){
+      // 2nd click — collapse only, keep page
+      sub.classList.remove('open'); btn.classList.remove('open');
+    } else {
+      // 1st click — expand + show dashboard
+      sub.classList.add('open'); btn.classList.add('open');
+      goPortDash();
+    }
+  } else {
+    const btn=document.getElementById('navTABtn');
+    const sub=document.getElementById('navTASub');
+    const open=sub.classList.contains('open');
+    if(open){
+      sub.classList.remove('open'); btn.classList.remove('open');
+    } else {
+      sub.classList.add('open'); btn.classList.add('open');
+      window.location.href='index.html';
+    }
+  }
 }
 
 // overlay open IDs currently active
