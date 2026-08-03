@@ -920,7 +920,7 @@ function processAll(){
     let momOrd=0;
     if(vr.verdict==='BUY'){ momOrd=mom.includes('Strong ↑')?3:mom.includes('Moderate ↑')?2:1; }
     else if(vr.verdict==='EXIT'){ momOrd=mom.includes('Strong ↓')?3:mom.includes('Moderate ↓')?2:1; }
-    const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:mom,MomentumOrder:momOrd,RR:'0',PriceChg:priceChg};
+    const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,SheetTrend:(s['Trend']||'').trim(),Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:mom,MomentumOrder:momOrd,RR:'0',PriceChg:priceChg};
     const supLo=parseFloat(z.supportZone.split('\u2013')[0]); row.RR=((Math.abs(vr.target-p))/(Math.abs(p-supLo)||1)).toFixed(2);
     return row;
   }).sort((a,b)=>{
@@ -972,6 +972,14 @@ function tableRow(r,i){
   const pchg=r.PriceChg!==null?`<span style="font-size:10px;font-family:var(--mono);color:${r.PriceChg>0?'#10B981':r.PriceChg<0?'#F43F5E':'#64748B'};margin-left:4px">${r.PriceChg>0?'+':''}${r.PriceChg.toFixed(1)}%</span>`:'';
   // Stagger animation
   const delay=(i*30)+'ms';
+  const st=r.SheetTrend;
+  const trendCell=st==='Uptrend'
+    ?`<span style="color:#10B981;font-weight:600;font-size:12px">▲ Uptrend</span>`
+    :st==='Downtrend'
+    ?`<span style="color:#F43F5E;font-weight:600;font-size:12px">▼ Downtrend</span>`
+    :st==='Sideways'
+    ?`<span style="color:#94A3B8;font-weight:600;font-size:12px">→ Sideways</span>`
+    :`<span style="color:var(--text3);font-size:12px">${r.Trend||'—'}</span>`;
   return `<tr class="${cls}" style="animation-delay:${delay}">
     <td style="color:var(--text3);font-size:11px;font-family:var(--mono)">${i+1}</td>
     <td class="sym-cell">${r.Symbol}</td>
@@ -981,7 +989,7 @@ function tableRow(r,i){
     <td class="zone-cell">${r.Resistance}</td>
     <td class="zone-cell" style="color:var(--accent)">${fmt(r.Target)}</td>
     <td class="score-cell">${r.Score}${deltaStr}${spark}</td>
-    <td class="trend-cell">${r.Trend||'—'}</td>
+    <td class="trend-cell">${trendCell}</td>
     <td class="${vcls}">${r.VLabel}</td>
     <td style="font-size:12px">${r.Momentum}</td>
   </tr>`;
@@ -1109,10 +1117,14 @@ async function autoArchive(dateStr){
   if(!token||!dateStr) return;
   const lastArch=localStorage.getItem(ARCH_LAST_KEY)||'';
   if(lastArch===dateStr){ console.log('Already archived:',dateStr); return; }
-  // Build CSV from current _rawData
-  const headers=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low'];
+  // Build CSV — include Trend (from sheet) and Date
+  const headers=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D',
+                 'MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low','Trend','Date'];
   const lines=[headers.join(',')];
-  _rawData.forEach(r=>lines.push(headers.map(h=>r[h]||'').join(',')));
+  _rawData.forEach(r=>lines.push(headers.map(h=>{
+    if(h==='Date') return dateStr;
+    return r[h]||'';
+  }).join(',')));
   const csv=lines.join('\n');
   console.log('Auto-archiving:',dateStr);
   try{
@@ -1126,7 +1138,7 @@ async function autoArchive(dateStr){
     if(res.ok){
       localStorage.setItem(ARCH_LAST_KEY,dateStr);
       console.log('✅ Auto-archived:',dateStr);
-      loadWeekPicker(); // refresh dropdown
+      loadWeekPicker();
     }
   }catch(e){ console.log('Auto-archive error:',e.message); }
 }
