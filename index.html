@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- ── PSX Auth Guard — must be first script in <head> ── -->
+<script>
+(function(){
+  var u=sessionStorage.getItem('psx_user')||localStorage.getItem('psx_user_r');
+  if(!u){sessionStorage.setItem('psx_auth_redirect','index.html');window.location.replace('portfolio.html');}
+})();
+</script>
   <script>
   (function(){
     var AUTH='psx_user';
