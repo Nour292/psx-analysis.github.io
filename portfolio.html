@@ -603,7 +603,14 @@ async function doLogin(){
       if(remCb&&remCb.checked){localStorage.setItem(AUTH_KEY+'_r',user);localStorage.setItem(AUTH_KEY+'_u',user);}
       else{localStorage.removeItem(AUTH_KEY+'_r');localStorage.removeItem(AUTH_KEY+'_u');}
       ok.textContent='✅ Welcome '+user+'!';
-      setTimeout(()=>{document.getElementById('pwGate').style.display='none';showUserBadge(user);autoLoad();},800);
+      setTimeout(()=>{
+        document.getElementById('pwGate').style.display='none';
+        showUserBadge(user);
+        // If we were redirected here from another page, go back there
+        var redir=sessionStorage.getItem('psx_auth_redirect');
+        if(redir){sessionStorage.removeItem('psx_auth_redirect');window.location.href=redir;return;}
+        autoLoad();
+      },800);
     }else{ok.style.display='none';showAuthMsg('loginErr','❌ Invalid username or password.');}
   }catch(e){ok.style.display='none';showAuthMsg('loginErr','❌ Error: '+e.message);}
 }
@@ -649,7 +656,13 @@ async function doVerifyOtp(){
     if(!result.ok){ok.style.display='none';showAuthMsg('otpErr','❌ '+(result.error||'Invalid OTP.'));return;}
     ok.textContent='✅ Account created! Logging you in...';
     _currentUser=_pendingReg.user;sessionStorage.setItem(AUTH_KEY,_pendingReg.user);_pendingReg={};
-    setTimeout(()=>{document.getElementById('pwGate').style.display='none';showUserBadge(_currentUser);autoLoad();},1000);
+    setTimeout(()=>{
+      document.getElementById('pwGate').style.display='none';
+      showUserBadge(_currentUser);
+      var redir=sessionStorage.getItem('psx_auth_redirect');
+      if(redir){sessionStorage.removeItem('psx_auth_redirect');window.location.href=redir;return;}
+      autoLoad();
+    },1000);
   }catch(e){ok.style.display='none';showAuthMsg('otpErr','❌ '+e.message);}
 }
 async function resendOtp(){if(!_pendingReg.email){showAuthMsg('otpErr','Session expired.');return;}const ok=document.getElementById('otpOk');ok.style.display='block';ok.textContent='⏳ Resending...';try{const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'sendOtp',email:_pendingReg.email,username:_pendingReg.user})});const result=await res.json();ok.textContent=result.ok?'✅ OTP resent!':'❌ Failed.';setTimeout(()=>ok.style.display='none',3000);}catch(e){ok.textContent='❌ '+e.message;setTimeout(()=>ok.style.display='none',3000);}}
@@ -797,18 +810,11 @@ async function autoLoad(){
   try{
     const res=await fetch(gsUrl(gsTabFor('holdings')));if(!res.ok)return;
     const json=await res.json();const rows=json.values||[];if(rows.length<2)return;
-    // FIX: parse raw arrays directly — no join/split roundtrip
-    const rawHdrs=rows[0].map(h=>(h||'').trim().toLowerCase());
-    const iSym=rawHdrs.indexOf('symbol');
-    const iDt =rawHdrs.indexOf('date');
-    const iAct=rawHdrs.indexOf('action');
-    const iUni=rawHdrs.indexOf('units');
-    const iRat=rawHdrs.indexOf('rate');
-    // positional fallback: Symbol=0,Date=1,Action=2,Units=3,Rate=4
-    const gI=(i,fb)=>i>=0?i:fb;
-    const cS=gI(iSym,0),cD=gI(iDt,1),cA=gI(iAct,2),cU=gI(iUni,3),cR=gI(iRat,4);
-    // Build _allTrades directly from raw arrays
-    const tradeRows=rows.slice(1)
+    // Parse directly from raw Sheets arrays — no join/split (fixes unit count)
+    const rh=rows[0].map(h=>(h||'').trim().toLowerCase());
+    const fi=(name,fb)=>{const i=rh.indexOf(name);return i>=0?i:fb;};
+    const cS=fi('symbol',0),cD=fi('date',1),cA=fi('action',2),cU=fi('units',3),cR=fi('rate',4);
+    const trades=rows.slice(1)
       .filter(r=>r&&(r[cS]||'').trim())
       .map(r=>({
         symbol:(r[cS]||'').trim().toUpperCase(),
@@ -817,29 +823,29 @@ async function autoLoad(){
         units: (r[cU]||'').trim(),
         rate:  (r[cR]||'').trim()
       }));
-    // Build holdings map with correct avg-cost on sell
-    const hMap={};
-    tradeRows.forEach(r=>{
-      const sym=r.symbol; if(!sym)return;
+    // Build holdings: proportional avg-cost reduction on sell
+    const mp={};
+    trades.forEach(r=>{
+      const s=r.symbol;if(!s)return;
       const u=parseFloat(r.units)||0;
       const rt=parseFloat(r.rate)||0;
-      const act=r.action.toLowerCase();
-      if(!hMap[sym])hMap[sym]={qty:0,buyAmt:0,totBuyU:0};
-      if(act==='buy'){
-        hMap[sym].qty+=u; hMap[sym].buyAmt+=u*rt; hMap[sym].totBuyU+=u;
-      }else if(act==='sell'){
-        const avgBP=hMap[sym].totBuyU>0?hMap[sym].buyAmt/hMap[sym].totBuyU:0;
-        hMap[sym].qty=Math.max(0,hMap[sym].qty-u);
-        hMap[sym].buyAmt=Math.max(0,hMap[sym].buyAmt-(u*avgBP));
+      const ac=r.action.toLowerCase();
+      if(!mp[s])mp[s]={qty:0,buyAmt:0,totBuy:0};
+      if(ac==='buy'){mp[s].qty+=u;mp[s].buyAmt+=u*rt;mp[s].totBuy+=u;}
+      else if(ac==='sell'){
+        const ab=mp[s].totBuy>0?mp[s].buyAmt/mp[s].totBuy:0;
+        mp[s].qty=Math.max(0,mp[s].qty-u);
+        mp[s].buyAmt=Math.max(0,mp[s].buyAmt-(u*ab));
       }
     });
-    _allTrades=tradeRows;
-    _holdings=Object.entries(hMap)
+    _allTrades=trades;
+    _holdings=Object.entries(mp)
       .filter(([s,d])=>d.qty>0.5&&s)
       .map(([s,d])=>{
         const qty=Math.round(d.qty);
         const avg=parseFloat((qty>0?d.buyAmt/qty:0).toFixed(2));
-        return{symbol:s,qty,avg,dps:DPS[s]||0,sector:SECTOR[s]||'Other',price:_prices[s]||null,priceSource:_priceSource[s]||null};
+        return{symbol:s,qty,avg,dps:DPS[s]||0,sector:SECTOR[s]||'Other',
+               price:_prices[s]||null,priceSource:_priceSource[s]||null};
       }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
     buildAll();
   }catch(e){console.log('holdings GS:',e.message);}
