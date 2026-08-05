@@ -783,25 +783,26 @@ async function autoLoad(){
         units: (r[cU]||'').trim(),
         rate:  (r[cR]||'').trim()
       }));
-    // Two-pass build: accumulate totals first (order-independent, matches Trade History)
+    // Two-pass build — identical math to Trade History runSearch
+    // qty  = totalBuyUnits - totalSellUnits  (order-independent)
+    // avg  = (buyAmt - sellAmt) / qty         (matches runSearch exactly)
     const hm={};
     trades.forEach(r=>{
       const s=r.symbol; if(!s)return;
       const u=parseFloat(r.units)||0;
       const rt=parseFloat(r.rate)||0;
       const ac=(r.action||'').toLowerCase().replace(/[^a-z]/g,'');
-      if(!hm[s])hm[s]={buyU:0,buyAmt:0,sellU:0};
+      if(!hm[s])hm[s]={buyU:0,buyAmt:0,sellU:0,sellAmt:0};
       if(ac==='buy'){hm[s].buyU+=u;hm[s].buyAmt+=u*rt;}
-      else if(ac==='sell'||ac==='sold'){hm[s].sellU+=u;}
+      else if(ac==='sell'||ac==='sold'){hm[s].sellU+=u;hm[s].sellAmt+=u*rt;}
     });
     _allTrades=trades;
     _holdings=Object.entries(hm)
       .filter(([s,d])=>(d.buyU-d.sellU)>0.5&&s)
       .map(([s,d])=>{
         const qty=Math.round(d.buyU-d.sellU);
-        const avgBuyPx=d.buyU>0?d.buyAmt/d.buyU:0;
-        const remainCost=Math.max(0,d.buyAmt-(d.sellU*avgBuyPx));
-        const avg=parseFloat((qty>0?remainCost/qty:0).toFixed(2));
+        const netCost=d.buyAmt-d.sellAmt;
+        const avg=parseFloat((qty>0?netCost/qty:0).toFixed(2));
         return{symbol:s,qty,avg,dps:DPS[s]||0,sector:SECTOR[s]||'Other',
                price:_prices[s]||null,priceSource:_priceSource[s]||null};
       }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
