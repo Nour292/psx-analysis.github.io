@@ -355,7 +355,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <main class="main" id="mainContent">
   <div class="topbar">
-    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.3</span></div>
+    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.4</span></div>
     <span class="asof-badge" id="asofBadge">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
   </div>
@@ -775,7 +775,7 @@ async function autoLoad(){
     const fi=(nm,fb)=>{const i=rh.indexOf(nm);return i>=0?i:fb;};
     const cS=fi('symbol',0),cD=fi('date',1),cA=fi('action',2),cU=fi('units',3),cR=fi('rate',4);
     const trades=rows.slice(1)
-      .filter(r=>r&&(r[cS]||'').trim())
+      .filter(r=>r&&(r[cS]||'').trim()&&(r[cA]||'').trim())
       .map(r=>({
         symbol:(r[cS]||'').trim().toUpperCase(),
         date:  (r[cD]||'').trim(),
@@ -783,37 +783,25 @@ async function autoLoad(){
         units: (r[cU]||'').trim(),
         rate:  (r[cR]||'').trim()
       }));
-    // DEBUG: log unique action values to find mismatch
-    const _uniqueActs=[...new Set(trades.map(t=>JSON.stringify({a:t.action,al:t.action.toLowerCase()})))];
-    console.log('[PSX v3.2] Headers:',rh,'Cols:',{cS,cD,cA,cU,cR});
-    console.log('[PSX v3.2] Unique actions in sheet:',_uniqueActs);
-    const _bafl=trades.filter(t=>t.symbol==='BAFL');
-    console.log('[PSX v3.2] BAFL rows:',_bafl.length,'sells:',_bafl.filter(t=>t.action.toLowerCase()==='sell').length);
-    // Build holdings — match ANY case variant of buy/sell
+    // Two-pass build: accumulate totals first (order-independent, matches Trade History)
     const hm={};
     trades.forEach(r=>{
       const s=r.symbol; if(!s)return;
       const u=parseFloat(r.units)||0;
       const rt=parseFloat(r.rate)||0;
-      const ac=(r.action||'').toLowerCase().trim()
-               .replace(/\s+/g,'')   // strip spaces
-               .replace(/[^a-z]/g,''); // strip non-alpha
-      if(!hm[s])hm[s]={qty:0,cost:0,totBuyU:0};
-      if(ac==='buy'){
-        hm[s].qty+=u; hm[s].cost+=u*rt; hm[s].totBuyU+=u;
-      } else if(ac==='sell'||ac==='sold'){
-        const avgBuy=hm[s].totBuyU>0?hm[s].cost/hm[s].totBuyU:0;
-        hm[s].qty=Math.max(0,hm[s].qty-u);
-        hm[s].cost=Math.max(0,hm[s].cost-(u*avgBuy));
-      }
-      console.log('[PSX]',s,ac,'u='+u,'qty='+hm[s].qty.toFixed(0));
+      const ac=(r.action||'').toLowerCase().replace(/[^a-z]/g,'');
+      if(!hm[s])hm[s]={buyU:0,buyAmt:0,sellU:0};
+      if(ac==='buy'){hm[s].buyU+=u;hm[s].buyAmt+=u*rt;}
+      else if(ac==='sell'||ac==='sold'){hm[s].sellU+=u;}
     });
     _allTrades=trades;
     _holdings=Object.entries(hm)
-      .filter(([s,d])=>d.qty>0.5&&s)
+      .filter(([s,d])=>(d.buyU-d.sellU)>0.5&&s)
       .map(([s,d])=>{
-        const qty=Math.round(d.qty);
-        const avg=parseFloat((qty>0?d.cost/qty:0).toFixed(2));
+        const qty=Math.round(d.buyU-d.sellU);
+        const avgBuyPx=d.buyU>0?d.buyAmt/d.buyU:0;
+        const remainCost=Math.max(0,d.buyAmt-(d.sellU*avgBuyPx));
+        const avg=parseFloat((qty>0?remainCost/qty:0).toFixed(2));
         return{symbol:s,qty,avg,dps:DPS[s]||0,sector:SECTOR[s]||'Other',
                price:_prices[s]||null,priceSource:_priceSource[s]||null};
       }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
