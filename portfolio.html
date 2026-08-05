@@ -355,7 +355,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <main class="main" id="mainContent">
   <div class="topbar">
-    <div class="topbar-title">Portfolio Dashboard</div>
+    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.1</span></div>
     <span class="asof-badge" id="asofBadge">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
   </div>
@@ -604,11 +604,9 @@ async function doLogin(){
       else{localStorage.removeItem(AUTH_KEY+'_r');localStorage.removeItem(AUTH_KEY+'_u');}
       ok.textContent='✅ Welcome '+user+'!';
       setTimeout(()=>{
-        document.getElementById('pwGate').style.display='none';
-        showUserBadge(user);
-        // If we were redirected here from another page, go back there
-        var redir=sessionStorage.getItem('psx_auth_redirect');
-        if(redir){sessionStorage.removeItem('psx_auth_redirect');window.location.href=redir;return;}
+        document.getElementById('pwGate').style.display='none';showUserBadge(user);
+        var rd=sessionStorage.getItem('psx_auth_redirect');
+        if(rd){sessionStorage.removeItem('psx_auth_redirect');window.location.href=rd;return;}
         autoLoad();
       },800);
     }else{ok.style.display='none';showAuthMsg('loginErr','❌ Invalid username or password.');}
@@ -656,13 +654,7 @@ async function doVerifyOtp(){
     if(!result.ok){ok.style.display='none';showAuthMsg('otpErr','❌ '+(result.error||'Invalid OTP.'));return;}
     ok.textContent='✅ Account created! Logging you in...';
     _currentUser=_pendingReg.user;sessionStorage.setItem(AUTH_KEY,_pendingReg.user);_pendingReg={};
-    setTimeout(()=>{
-      document.getElementById('pwGate').style.display='none';
-      showUserBadge(_currentUser);
-      var redir=sessionStorage.getItem('psx_auth_redirect');
-      if(redir){sessionStorage.removeItem('psx_auth_redirect');window.location.href=redir;return;}
-      autoLoad();
-    },1000);
+    setTimeout(()=>{document.getElementById('pwGate').style.display='none';showUserBadge(_currentUser);autoLoad();},1000);
   }catch(e){ok.style.display='none';showAuthMsg('otpErr','❌ '+e.message);}
 }
 async function resendOtp(){if(!_pendingReg.email){showAuthMsg('otpErr','Session expired.');return;}const ok=document.getElementById('otpOk');ok.style.display='block';ok.textContent='⏳ Resending...';try{const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'sendOtp',email:_pendingReg.email,username:_pendingReg.user})});const result=await res.json();ok.textContent=result.ok?'✅ OTP resent!':'❌ Failed.';setTimeout(()=>ok.style.display='none',3000);}catch(e){ok.textContent='❌ '+e.message;setTimeout(()=>ok.style.display='none',3000);}}
@@ -687,39 +679,7 @@ function fmtD(n){return parseFloat(n).toFixed(2);}
 async function loadDataCSV(){try{const res=await fetch(gsUrl('Data'));if(!res.ok)return;const json=await res.json();const rows=json.values||[];if(rows.length<2)return;const hdrs=rows[0].map(h=>h.trim());const gi=k=>hdrs.findIndex(h=>h===k);const si=gi('Symbol'),pi=gi('Price'),ma50di=gi('MA50-D'),ma200di=gi('MA200-D'),rsidi=gi('RSI-D'),macddi=gi('MACD-H-D'),macdwi=gi('MACD-H-W'),sigwi=gi('Signal-W'),ma50wi=gi('MA50-W'),ma200wi=gi('MA200-W'),h52i=gi('52W-High');rows.slice(1).forEach(l=>{const c=l;const sym=(c[si]||'').trim();if(!sym)return;const n=i=>parseFloat(c[i])||null;const p=n(pi);const ma50d=n(ma50di),ma200d=n(ma200di),rsid=n(rsidi);const macdD=n(macddi),macdW=n(macdwi),sigW=n(sigwi);const ma50w=n(ma50wi),ma200w=n(ma200wi),h52=n(h52i);if(!p)return;const belowBoth=ma50d&&ma200d&&p<ma50d&&p<ma200d;const belowMA50only=ma50d&&p<ma50d&&(!ma200d||p>=ma200d);const weeklyUp=ma50w&&ma200w&&ma50w>ma200w;const macdWposRis=macdW!==null&&sigW!==null&&macdW>0&&macdW>sigW;const rsiCool=rsid!==null&&rsid>=30&&rsid<=53;const near52H=h52&&(h52-p)/h52<=0.05;const aboveBoth=ma50d&&ma200d&&p>ma50d&&p>ma200d;const nearestMA=ma50d&&ma200d?[ma50d,ma200d].reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b):null;const atMA=nearestMA?Math.abs(p-nearestMA)/p<=0.03:false;let verdict='WAIT';if((atMA||aboveBoth)&&weeklyUp&&macdWposRis&&rsiCool&&!near52H)verdict='BUY';else if(belowMA50only&&macdD<0)verdict='CAUTION';else if(belowBoth&&macdD<0&&rsid<50)verdict='EXIT';else if(weeklyUp&&macdW>0)verdict='WATCH';_techVerdict[sym]=verdict;});}catch(e){console.log('Data tab:',e.message);}}
 async function loadPricesSheet(){try{const res=await fetch(gsUrl(gsTabFor('Prices')));if(!res.ok)return;const json=await res.json();const rows=json.values||[];if(rows.length<2)return;let count=0;rows.slice(1).forEach(r=>{const sym=(r[0]||'').trim().toUpperCase();const price=parseFloat(r[1]);if(sym&&!isNaN(price)&&price>0){_prices[sym]=price;_priceSource[sym]='sheet';count++;}});if(count>0){const h2val=(rows[1][2]||'').toString().trim();if(h2val){document.getElementById('asofBadge').style.display='inline-block';document.getElementById('asofVal').textContent=h2val;}}}catch(e){console.log('Prices tab:',e.message);}}
 
-// ── FIX 2: parseHoldings — correct avg cost via proportional cost-basis reduction ──
-function parseHoldings(text){
-  const lines=text.trim().split(/\r?\n/);
-  const headers=lines[0].split(',').map(h=>h.trim().toLowerCase());
-  const rows=lines.slice(1).map(line=>{const cols=line.split(',');const obj={};headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());return obj;}).filter(r=>r.symbol&&r.symbol.trim());
-  const map={};
-  rows.forEach(r=>{
-    const sym=r.symbol.trim().toUpperCase();
-    const units=parseFloat(r.units)||0;
-    const rate=parseFloat(r.rate)||0;
-    const action=(r.action||'').toLowerCase();
-    if(!map[sym])map[sym]={qty:0,buyAmt:0,totalBuyUnits:0};
-    if(action==='buy'){
-      map[sym].qty+=units;
-      map[sym].buyAmt+=units*rate;
-      map[sym].totalBuyUnits+=units;
-    }else if(action==='sell'){
-      // reduce cost proportionally — avg price of remaining units stays correct
-      const avgBuyPrice=map[sym].totalBuyUnits>0?map[sym].buyAmt/map[sym].totalBuyUnits:0;
-      map[sym].qty=Math.max(0,map[sym].qty-units);
-      map[sym].buyAmt=Math.max(0,map[sym].buyAmt-(units*avgBuyPrice));
-      // totalBuyUnits not reduced — it tracks lifetime buys for avg price
-    }
-  });
-  _allTrades=rows;
-  _holdings=Object.entries(map).filter(([sym,d])=>d.qty>0.5&&sym&&sym.trim()).map(([sym,d])=>{
-    const qty=Math.round(d.qty);
-    const rawAvg=qty>0?d.buyAmt/qty:0;
-    const avg=parseFloat(rawAvg.toFixed(2));
-    return{symbol:sym,qty,avg,dps:DPS[sym]||0,sector:SECTOR[sym]||'Other',price:_prices[sym]||null,priceSource:_priceSource[sym]||null};
-  }).sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
-  buildAll();
-}
+
 
 function buildAll(){if(!_holdings.length)return;const tgt=CAPITAL.divTarget;const lbl=document.getElementById('kProgressLbl'),plbl=document.getElementById('divProgressLbl');if(lbl)lbl.textContent='To PKR '+fmtN(tgt)+' Target';if(plbl)plbl.textContent='Dividend Income Progress \u2192 PKR '+fmtN(tgt)+' / year';const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);const totalDiv=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);const totalWorth=_holdings.reduce((s,h)=>s+h.qty*(h.price||h.avg),0);const totalPL=totalWorth-totalInv;const pct=Math.min((totalDiv/CAPITAL.divTarget)*100,100);const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};set('kInvested','PKR '+fmtN(totalInv));set('kDivIncome','PKR '+fmtN(totalDiv));set('kWorth','PKR '+fmtN(totalWorth));set('kPL',(totalPL>=0?'+':'')+fmtN(totalPL));const totalReceivable=_dividends.filter(d=>(d.Status||'').toLowerCase()!=='paid').reduce((s,d)=>s+parseFloat(d.NetAmount||0),0);set('kDivReceivable',totalReceivable>0?'PKR '+fmtN(totalReceivable):'—');set('kFreeCash','PKR '+fmtN(CAPITAL.freeCash));set('kProgress',pct.toFixed(1)+'%');document.getElementById('kPL').className='kv '+(totalPL>=0?'c-green':'c-red');const pf=document.getElementById('progFill'),pp=document.getElementById('progPct');if(pf)pf.style.width=pct+'%';if(pp)pp.textContent=pct.toFixed(1)+'%';if(isAdmin()){try{buildAction();}catch(e){showErr('tab-action',e);}}try{buildPortfolio();}catch(e){showErr('tab-portfolio',e);}try{buildDividend();}catch(e){showErr('tab-dividend',e);}try{buildSector();}catch(e){showErr('tab-sector',e);}try{buildCapital();}catch(e){showErr('tab-capital',e);}try{buildPrices();}catch(e){showErr('tab-prices',e);}}
 function showErr(id,e){const el=document.getElementById(id);if(el)el.innerHTML=`<p style="color:var(--rose);padding:20px">Error: ${e.message}</p>`;}
@@ -810,12 +770,12 @@ async function autoLoad(){
   try{
     const res=await fetch(gsUrl(gsTabFor('holdings')));if(!res.ok)return;
     const json=await res.json();const rows=json.values||[];if(rows.length<2)return;
-    // Parse directly from raw Sheets arrays — no join/split (fixes unit count)
+    // v3.1 — parse raw Sheets arrays directly, no join/split roundtrip
     const rh=rows[0].map(h=>(h||'').trim().toLowerCase());
     const fi=(name,fb)=>{const i=rh.indexOf(name);return i>=0?i:fb;};
     const cS=fi('symbol',0),cD=fi('date',1),cA=fi('action',2),cU=fi('units',3),cR=fi('rate',4);
-    const trades=rows.slice(1)
-      .filter(r=>r&&(r[cS]||'').trim())
+    const tradeList=rows.slice(1)
+      .filter(r=>r&&(r[cS]||'').trim()&&(r[cA]||'').trim())
       .map(r=>({
         symbol:(r[cS]||'').trim().toUpperCase(),
         date:  (r[cD]||'').trim(),
@@ -823,27 +783,28 @@ async function autoLoad(){
         units: (r[cU]||'').trim(),
         rate:  (r[cR]||'').trim()
       }));
-    // Build holdings: proportional avg-cost reduction on sell
-    const mp={};
-    trades.forEach(r=>{
-      const s=r.symbol;if(!s)return;
+    // Build holdings map — proportional cost-basis reduction on sell
+    const hm={};
+    tradeList.forEach(r=>{
+      const s=r.symbol; if(!s)return;
       const u=parseFloat(r.units)||0;
       const rt=parseFloat(r.rate)||0;
-      const ac=r.action.toLowerCase();
-      if(!mp[s])mp[s]={qty:0,buyAmt:0,totBuy:0};
-      if(ac==='buy'){mp[s].qty+=u;mp[s].buyAmt+=u*rt;mp[s].totBuy+=u;}
-      else if(ac==='sell'){
-        const ab=mp[s].totBuy>0?mp[s].buyAmt/mp[s].totBuy:0;
-        mp[s].qty=Math.max(0,mp[s].qty-u);
-        mp[s].buyAmt=Math.max(0,mp[s].buyAmt-(u*ab));
+      const ac=(r.action||'').toLowerCase().trim();
+      if(!hm[s])hm[s]={qty:0,cost:0,totBuyU:0};
+      if(ac==='buy'){
+        hm[s].qty+=u; hm[s].cost+=u*rt; hm[s].totBuyU+=u;
+      } else if(ac==='sell'){
+        const avgBuy=hm[s].totBuyU>0?hm[s].cost/hm[s].totBuyU:0;
+        hm[s].qty=Math.max(0,hm[s].qty-u);
+        hm[s].cost=Math.max(0,hm[s].cost-(u*avgBuy));
       }
     });
-    _allTrades=trades;
-    _holdings=Object.entries(mp)
+    _allTrades=tradeList;
+    _holdings=Object.entries(hm)
       .filter(([s,d])=>d.qty>0.5&&s)
       .map(([s,d])=>{
         const qty=Math.round(d.qty);
-        const avg=parseFloat((qty>0?d.buyAmt/qty:0).toFixed(2));
+        const avg=parseFloat((qty>0?d.cost/qty:0).toFixed(2));
         return{symbol:s,qty,avg,dps:DPS[s]||0,sector:SECTOR[s]||'Other',
                price:_prices[s]||null,priceSource:_priceSource[s]||null};
       }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
