@@ -797,50 +797,49 @@ async function autoLoad(){
   try{
     const res=await fetch(gsUrl(gsTabFor('holdings')));if(!res.ok)return;
     const json=await res.json();const rows=json.values||[];if(rows.length<2)return;
-    // ── FIX: parse directly from raw array — no join/split roundtrip ──
+    // FIX: parse raw arrays directly — no join/split roundtrip
     const rawHdrs=rows[0].map(h=>(h||'').trim().toLowerCase());
-    const si=rawHdrs.indexOf('symbol');
-    const di=rawHdrs.indexOf('date');
-    const ai=rawHdrs.indexOf('action');
-    const ui=rawHdrs.indexOf('units');
-    const ri=rawHdrs.indexOf('rate');
-    // Fallback to positional if headers not found
-    const gi=(idx,fb)=>idx>=0?idx:fb;
-    const iSym=gi(si,0),iDt=gi(di,1),iAct=gi(ai,2),iUni=gi(ui,3),iRat=gi(ri,4);
+    const iSym=rawHdrs.indexOf('symbol');
+    const iDt =rawHdrs.indexOf('date');
+    const iAct=rawHdrs.indexOf('action');
+    const iUni=rawHdrs.indexOf('units');
+    const iRat=rawHdrs.indexOf('rate');
+    // positional fallback: Symbol=0,Date=1,Action=2,Units=3,Rate=4
+    const gI=(i,fb)=>i>=0?i:fb;
+    const cS=gI(iSym,0),cD=gI(iDt,1),cA=gI(iAct,2),cU=gI(iUni,3),cR=gI(iRat,4);
+    // Build _allTrades directly from raw arrays
     const tradeRows=rows.slice(1)
-      .filter(r=>r&&(r[iSym]||'').trim())
+      .filter(r=>r&&(r[cS]||'').trim())
       .map(r=>({
-        symbol:(r[iSym]||'').trim().toUpperCase(),
-        date:(r[iDt]||'').trim(),
-        action:(r[iAct]||'').trim(),
-        units:(r[iUni]||'').trim(),
-        rate:(r[iRat]||'').trim()
+        symbol:(r[cS]||'').trim().toUpperCase(),
+        date:  (r[cD]||'').trim(),
+        action:(r[cA]||'').trim(),
+        units: (r[cU]||'').trim(),
+        rate:  (r[cR]||'').trim()
       }));
-    // Build holdings map
-    const map={};
+    // Build holdings map with correct avg-cost on sell
+    const hMap={};
     tradeRows.forEach(r=>{
-      const sym=r.symbol;if(!sym)return;
-      const units=parseFloat(r.units)||0;
-      const rate=parseFloat(r.rate)||0;
-      const action=r.action.toLowerCase();
-      if(!map[sym])map[sym]={qty:0,buyAmt:0,totalBuyUnits:0};
-      if(action==='buy'){
-        map[sym].qty+=units;
-        map[sym].buyAmt+=units*rate;
-        map[sym].totalBuyUnits+=units;
-      }else if(action==='sell'){
-        const avgBuyPrice=map[sym].totalBuyUnits>0?map[sym].buyAmt/map[sym].totalBuyUnits:0;
-        map[sym].qty=Math.max(0,map[sym].qty-units);
-        map[sym].buyAmt=Math.max(0,map[sym].buyAmt-(units*avgBuyPrice));
+      const sym=r.symbol; if(!sym)return;
+      const u=parseFloat(r.units)||0;
+      const rt=parseFloat(r.rate)||0;
+      const act=r.action.toLowerCase();
+      if(!hMap[sym])hMap[sym]={qty:0,buyAmt:0,totBuyU:0};
+      if(act==='buy'){
+        hMap[sym].qty+=u; hMap[sym].buyAmt+=u*rt; hMap[sym].totBuyU+=u;
+      }else if(act==='sell'){
+        const avgBP=hMap[sym].totBuyU>0?hMap[sym].buyAmt/hMap[sym].totBuyU:0;
+        hMap[sym].qty=Math.max(0,hMap[sym].qty-u);
+        hMap[sym].buyAmt=Math.max(0,hMap[sym].buyAmt-(u*avgBP));
       }
     });
     _allTrades=tradeRows;
-    _holdings=Object.entries(map)
-      .filter(([sym,d])=>d.qty>0.5&&sym)
-      .map(([sym,d])=>{
+    _holdings=Object.entries(hMap)
+      .filter(([s,d])=>d.qty>0.5&&s)
+      .map(([s,d])=>{
         const qty=Math.round(d.qty);
         const avg=parseFloat((qty>0?d.buyAmt/qty:0).toFixed(2));
-        return{symbol:sym,qty,avg,dps:DPS[sym]||0,sector:SECTOR[sym]||'Other',price:_prices[sym]||null,priceSource:_priceSource[sym]||null};
+        return{symbol:s,qty,avg,dps:DPS[s]||0,sector:SECTOR[s]||'Other',price:_prices[s]||null,priceSource:_priceSource[s]||null};
       }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
     buildAll();
   }catch(e){console.log('holdings GS:',e.message);}
