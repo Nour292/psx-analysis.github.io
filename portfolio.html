@@ -847,11 +847,31 @@ function parseHoldings(text){
   const headers=lines[0].split(',').map(h=>h.trim().toLowerCase());
   const rows=lines.slice(1).map(line=>{const cols=line.split(',');const obj={};headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());return obj;}).filter(r=>r.symbol&&r.symbol.trim());
   const map={};
-  rows.forEach(r=>{const sym=r.symbol.trim().toUpperCase();const units=parseFloat(r.units)||0;const rate=parseFloat(r.rate)||0;const action=(r.action||'').toLowerCase();if(!map[sym])map[sym]={qty:0,buyAmt:0,sellAmt:0};if(action==='buy'){map[sym].qty+=units;map[sym].buyAmt+=units*rate;}else if(action==='sell'){map[sym].qty=Math.max(0,map[sym].qty-units);map[sym].sellAmt+=units*rate;}});
-  _allTrades=rows;
-  _holdings=Object.entries(map).filter(([sym,d])=>d.qty>0.5&&sym&&sym.trim()).map(([sym,d])=>{const netAmt=d.buyAmt-d.sellAmt;const qty=Math.round(d.qty);const rawAvg=qty>0?netAmt/qty:0;const avg=parseFloat(rawAvg.toFixed(2));return{symbol:sym,qty,avg,dps:DPS[sym]||0,sector:SECTOR[sym]||'Other',price:_prices[sym]||null,priceSource:_priceSource[sym]||null};}).sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
-  buildAll();
-}
+rows.forEach(r=>{
+  const sym=r.symbol.trim().toUpperCase();
+  const units=parseFloat(r.units)||0;
+  const rate=parseFloat(r.rate)||0;
+  const action=(r.action||'').toLowerCase();
+  if(!map[sym])map[sym]={qty:0,buyAmt:0,totalBuyUnits:0};
+  if(action==='buy'){
+    map[sym].qty+=units;
+    map[sym].buyAmt+=units*rate;
+    map[sym].totalBuyUnits+=units;
+  } else if(action==='sell'){
+    // Reduce cost basis proportionally — avg cost stays the same, just fewer units
+    const avgBuyPrice=map[sym].totalBuyUnits>0?map[sym].buyAmt/map[sym].totalBuyUnits:0;
+    map[sym].qty=Math.max(0,map[sym].qty-units);
+    map[sym].buyAmt=Math.max(0,map[sym].buyAmt-(units*avgBuyPrice));
+    // totalBuyUnits is NOT reduced — it tracks cumulative buys for avg price
+  }
+});
+_allTrades=rows;
+_holdings=Object.entries(map).filter(([sym,d])=>d.qty>0.5&&sym&&sym.trim()).map(([sym,d])=>{
+  const qty=Math.round(d.qty);
+  const rawAvg=qty>0?d.buyAmt/qty:0;
+  const avg=parseFloat(rawAvg.toFixed(2));
+  return{symbol:sym,qty,avg,dps:DPS[sym]||0,sector:SECTOR[sym]||'Other',price:_prices[sym]||null,priceSource:_priceSource[sym]||null};
+}).sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
 function buildAll(){
   if(!_holdings.length)return;
   const tgt=CAPITAL.divTarget;
@@ -1059,7 +1079,13 @@ function populateSymbolDropdown(){const sel=document.getElementById('srchSym');c
 function runSearch(){
   const sym=(document.getElementById('srchSym').value||'').trim().toUpperCase();
   if(!sym){document.getElementById('srchResult').innerHTML='<p class="sr-empty">Please select a symbol</p>';return;}
-  const trades=_allTrades.filter(r=>r.symbol.toUpperCase()===sym).reverse();
+  const trades=_allTrades.filter(r=>r.symbol.toUpperCase()===sym).sort((a,b)=>{
+  const da=a.date||'',db=b.date||'';
+  // Parse "D-Mon-YY" format e.g. "5-Jul-25"
+  const months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  const parse=s=>{const p=s.split('-');if(p.length!==3)return 0;const yr=parseInt(p[2])<100?2000+parseInt(p[2]):parseInt(p[2]);return new Date(yr,months[p[1]]||0,parseInt(p[0])).getTime();};
+  return parse(db)-parse(da);
+});
   if(!trades.length){document.getElementById('srchResult').innerHTML=`<p class="sr-empty">No trades for <b>${sym}</b></p>`;return;}
   let totalBuyUnits=0,totalBuyAmt=0,totalSellUnits=0,totalSellAmt=0;
   trades.forEach(r=>{const u=parseFloat(r.units)||0,rate=parseFloat(r.rate)||0,isBuy=(r.action||'').toLowerCase()==='buy';if(isBuy){totalBuyUnits+=u;totalBuyAmt+=u*rate;}else{totalSellUnits+=u;totalSellAmt+=u*rate;}});
