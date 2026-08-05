@@ -1,6 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- ── PSX Auth Guard — must be first script in <head> ── -->
+  <script>
+  (function(){
+    var AUTH='psx_user';
+    var loggedIn=sessionStorage.getItem(AUTH)||localStorage.getItem(AUTH+'_r');
+    if(!loggedIn){
+      // Remember that user was trying to open index.html
+      sessionStorage.setItem('psx_auth_redirect','index.html');
+      // Redirect to portfolio.html to login
+      window.location.replace('portfolio.html');
+    }
+  })();
+  </script>
+  <!-- ── End Auth Guard ── -->
+
+That's it. Save and push to GitHub.
+
+HOW IT WORKS:
+• User opens index.html (Technical Analysis)
+• Script runs instantly before any page content renders
+• If not logged in → redirects to portfolio.html to login
+• portfolio.html logs them in → returns them back to index.html automatically
+• If already logged in → index.html loads normally
+
+NOTE: The key name 'psx_user' and 'psx_user_r' must match
+exactly what portfolio.html stores on login (they already do).
+════════════════════════════════════════════════════════
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PSX Technical Analysis</title>
