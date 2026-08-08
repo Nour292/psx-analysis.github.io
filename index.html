@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* PSX Auth Guard — runs before any content renders */
+(function(){
+  var AUTH='psx_user';
+  var loggedIn=sessionStorage.getItem(AUTH)||localStorage.getItem(AUTH+'_r');
+  if(!loggedIn){
+    sessionStorage.setItem('psx_auth_redirect','index.html');
+    window.location.replace('portfolio.html');
+  }
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PSX Technical Analysis</title>
@@ -646,7 +657,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <button class="btn btn-warn" onclick="forceReArchive()" style="height:32px;font-size:11px" title="Force re-save archive">🗃 Re-Archive</button>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1111,18 +1121,6 @@ let _idxToken='';
 function saveToken(val){ _idxToken=val; try{localStorage.setItem(TOKEN_KEY,val);}catch(e){} }
 function loadSavedToken(){ try{ const t=localStorage.getItem(TOKEN_KEY); if(t){ _idxToken=t; const el=document.getElementById('idxGhToken'); if(el) el.value=t; } }catch(e){} }
 
-// ── FORCE RE-ARCHIVE (use when archive folder deleted) ──
-function forceReArchive(){
-  try{ localStorage.removeItem('psx_last_archived'); }catch(e){}
-  if(!_dataAsOf){ alert('Load data first (click Refresh)'); return; }
-  if(!_idxToken){ alert('GitHub token missing — enter it in the sidebar'); return; }
-  console.log('Force re-archive triggered for:', _dataAsOf);
-  autoArchive(_dataAsOf).then(()=>{
-    loadWeekPicker();
-    alert('✅ Re-archived: '+_dataAsOf);
-  }).catch(e=>alert('❌ Archive failed: '+e.message));
-}
-
 // ── AUTO-ARCHIVE ────────────────────────
 const ARCH_LAST_KEY='psx_last_archived';
 async function autoArchive(dateStr){
@@ -1141,7 +1139,7 @@ async function autoArchive(dateStr){
   const csv=lines.join('\n');
   console.log('Auto-archiving:',dateStr);
   try{
-    const filename=`archive/${dateStr}.csv`; console.log('[Archive] Saving to:',filename);
+    const filename=`archive/${dateStr}.csv`;
     const encoded=btoa(unescape(encodeURIComponent(csv)));
     let sha='';
     try{ const chk=await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`,{headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}}); if(chk.ok){const j=await chk.json();sha=j.sha||'';} }catch(e){}
@@ -1165,18 +1163,11 @@ async function loadWeekPicker(){
     const token=_idxToken;
     const headers=token?{Authorization:`token ${token}`}:{};
     const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`,{headers});
-    const sel=document.getElementById('weekPicker');
-    if(!sel) return;
-    if(!res.ok){
-      // archive folder deleted — clear cached date so autoArchive re-runs
-      _archiveDates=[];
-      sel.innerHTML='<option value="">📅 Current week</option>';
-      try{ localStorage.removeItem('psx_last_archived'); }catch(e){}
-      console.log('Archive folder missing — cleared cache, will recreate on next Refresh');
-      return;
-    }
+    if(!res.ok){ return; }
     const files=await res.json();
     _archiveDates=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse();
+    const sel=document.getElementById('weekPicker');
+    if(!sel) return;
     sel.innerHTML='<option value="">📅 Current week</option>'+_archiveDates.map(d=>`<option value="${d}">📆 ${d}</option>`).join('');
     if(_viewingWeek) sel.value=_viewingWeek;
   }catch(e){ console.log('weekPicker:',e.message); }
@@ -1281,7 +1272,7 @@ async function loadCSV(){
   }catch(e){ console.log('Sheets not loaded:',e.message); }
 }
 async function loadLatestArchive(){ await loadArchiveWeeks(); loadWeekPicker(); }
-async function loadArchiveWeeks(){ try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`); if(!res.ok){ _archiveWeeks=[]; return; } const files=await res.json(); const sorted=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse().slice(0,4); if(!sorted.length) return; const results=await Promise.all(sorted.map(async date=>{ try{ const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!r.ok) return null; const text=(await r.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const hdrs=lines[0].split(',').map(h=>h.trim()); const data={}; lines.slice(1).filter(l=>l.trim()).forEach(line=>{ const cols=line.split(','); const obj={}; hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); if(obj.Symbol) data[obj.Symbol]=obj; }); return {date,data}; }catch(e){ return null; } })); _archiveWeeks=results.filter(Boolean); if(_archiveWeeks.length){ _prevData=_archiveWeeks[0].data; _prevDate=_archiveWeeks[0].date; } if(_rawData.length) renderHome(); }catch(e){ console.log('Archive weeks error:',e.message); } }
+async function loadArchiveWeeks(){ try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`); if(!res.ok) return; const files=await res.json(); const sorted=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse().slice(0,4); if(!sorted.length) return; const results=await Promise.all(sorted.map(async date=>{ try{ const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!r.ok) return null; const text=(await r.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const hdrs=lines[0].split(',').map(h=>h.trim()); const data={}; lines.slice(1).filter(l=>l.trim()).forEach(line=>{ const cols=line.split(','); const obj={}; hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); if(obj.Symbol) data[obj.Symbol]=obj; }); return {date,data}; }catch(e){ return null; } })); _archiveWeeks=results.filter(Boolean); if(_archiveWeeks.length){ _prevData=_archiveWeeks[0].data; _prevDate=_archiveWeeks[0].date; } if(_rawData.length) renderHome(); }catch(e){ console.log('Archive weeks error:',e.message); } }
 function archiveScore(sym,weekIdx){ if(weekIdx>=_archiveWeeks.length) return null; const row=_archiveWeeks[weekIdx].data[sym]; return row?scoreRow(row):null; }
 
 loadSavedToken();
