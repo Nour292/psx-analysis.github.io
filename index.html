@@ -928,7 +928,7 @@ function processAll(){
     if(hist.length>=3){ const n=hist.length,xm=(n-1)/2; let num2=0,den=0; hist.forEach((v,i)=>{num2+=(i-xm)*v;den+=(i-xm)*(i-xm);}); trendSlope=den>0?num2/den:0; }
     let trendClass='neutral';
     if(hist.length>=3){ const rising=hist.every((v,i)=>i===0||v>=hist[i-1]-2); const falling=hist.every((v,i)=>i===0||v<=hist[i-1]+2); if(rising&&trendSlope>1.5) trendClass='sustained-up'; else if(falling&&trendSlope<-1.5) trendClass='sustained-down'; else if(trendSlope>1) trendClass='improving'; else if(trendSlope<-1) trendClass='weakening'; }
-    const prev1=_archiveWeeks[0]?.data[sym]||null; const prevP=prev1?parseFloat(prev1.Price)||0:0; const priceChg=prevP>0?((p-prevP)/prevP)*100:null;
+    const prev1=_archiveWeeks[_prevWeekIdx]?.data[sym]||null; const prevP=prev1?parseFloat(prev1.Price)||0:0; const priceChg=prevP>0?((p-prevP)/prevP)*100:null;
     const currMacdW=parseFloat(s['MACD-H-W'])||null; const prevMacdW=prev1?parseFloat(prev1['MACD-H-W'])||null:null; const macdImproving=prevMacdW!==null&&currMacdW!==null&&currMacdW>prevMacdW;
     const currRsi=parseFloat(s['RSI-D'])||null; const prevRsi=prev1?parseFloat(prev1['RSI-D'])||null:null; const rsiImproving=prevRsi!==null&&currRsi!==null&&currRsi>prevRsi&&currRsi<55;
     const vr=verdictFnEnhanced(s,sc,z,scoreDelta,macdImproving,rsiImproving,priceChg,trendClass,trendSlope);
@@ -1119,7 +1119,7 @@ function analyseSingle(){
 
 /* ── Import / Save ── */
 const FIELDS=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume','52W-High','52W-Low','Swing-Low','Swing-High'];
-let _rawData=[],_archiveWeeks=[],_prevData={},_prevDate='',_parsedRows=[];
+let _rawData=[],_archiveWeeks=[],_prevData={},_prevDate='',_parsedRows=[],_prevWeekIdx=0;
 const ALL_SYMBOLS=["ABL","BAFL","BOP","EFERT","ENGROH","FCL","FFC","HBL","HUBC","ISL","KAPCO","LUCK","MCB","MEBL","MTL","NBP","OGDC","POL","PPL","SYS","UBL"];
 const D_FIELDS=["Price","MA50-D","MA200-D","RSI-D","MACD-H-D","Signal-D","Volume-D"];
 const W_FIELDS=["MA50-W","MA200-W","RSI-W","MACD-H-W","Signal-W","Volume-W"];
@@ -1283,9 +1283,14 @@ async function loadCSV(){
   }catch(e){ console.log('Sheets not loaded:',e.message); }
 }
 async function loadLatestArchive(){ await loadArchiveWeeks(); loadWeekPicker(); }
-async function loadArchiveWeeks(){ try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`); if(!res.ok) return; const files=await res.json(); const sorted=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse().slice(0,4); if(!sorted.length) return; const results=await Promise.all(sorted.map(async date=>{ try{ const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!r.ok) return null; const text=(await r.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const hdrs=lines[0].split(',').map(h=>h.trim()); const data={}; lines.slice(1).filter(l=>l.trim()).forEach(line=>{ const cols=line.split(','); const obj={}; hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); if(obj.Symbol) data[obj.Symbol]=obj; }); return {date,data}; }catch(e){ return null; } })); _archiveWeeks=results.filter(Boolean); if(_archiveWeeks.length){ _prevData=_archiveWeeks[0].data; _prevDate=_archiveWeeks[0].date; } if(_rawData.length) renderHome(); }catch(e){ console.log('Archive weeks error:',e.message); } }
-function archiveScore(sym,weekIdx){ if(weekIdx>=_archiveWeeks.length) return null; const row=_archiveWeeks[weekIdx].data[sym]; return row?scoreRow(row):null; }
-function archiveBaseVerdict(sym,weekIdx){ if(weekIdx>=_archiveWeeks.length) return null; const row=_archiveWeeks[weekIdx].data[sym]; if(!row) return null; return verdictFn(row,scoreRow(row),computeZones(row)).verdict; }
+async function loadArchiveWeeks(){ try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`); if(!res.ok) return; const files=await res.json(); const sorted=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse().slice(0,12); if(!sorted.length) return; const results=await Promise.all(sorted.map(async date=>{ try{ const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!r.ok) return null; const text=(await r.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const hdrs=lines[0].split(',').map(h=>h.trim()); const data={}; lines.slice(1).filter(l=>l.trim()).forEach(line=>{ const cols=line.split(','); const obj={}; hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); if(obj.Symbol) data[obj.Symbol]=obj; }); return {date,data}; }catch(e){ return null; } })); _archiveWeeks=results.filter(Boolean);
+    // Detect if most recent archive is the same week as current sheet data — skip it for comparisons
+    _prevWeekIdx=0;
+    if(_archiveWeeks.length>=2&&_rawData.length>0){const curDate=(_rawData[0]?.Date||'').trim();if(curDate&&_archiveWeeks[0].date===curDate)_prevWeekIdx=1;}
+    if(_archiveWeeks.length>_prevWeekIdx){_prevData=_archiveWeeks[_prevWeekIdx].data;_prevDate=_archiveWeeks[_prevWeekIdx].date;}
+    if(_rawData.length) renderHome(); }catch(e){ console.log('Archive weeks error:',e.message); } }
+function archiveScore(sym,weekIdx){ const i=weekIdx+_prevWeekIdx; if(i>=_archiveWeeks.length) return null; const row=_archiveWeeks[i].data[sym]; return row?scoreRow(row):null; }
+function archiveBaseVerdict(sym,weekIdx){ const i=weekIdx+_prevWeekIdx; if(i>=_archiveWeeks.length) return null; const row=_archiveWeeks[i].data[sym]; if(!row) return null; return verdictFn(row,scoreRow(row),computeZones(row)).verdict; }
 function computeSetupQuality(sym,s,verdict){
   if(verdict!=='BUY'&&verdict!=='EXIT') return {grade:null,tip:''};
   let pts=0; const tips=[];
@@ -1295,11 +1300,11 @@ function computeSetupQuality(sym,s,verdict){
     else if(v2!==null&&v2!==verdict){pts+=1;tips.push('📅 Maturing (wk 2)');}
     else if(v2!==null&&v2===verdict){pts-=2;tips.push('⏳ Stale (3+ wk)');}
   }
-  const prev1=_archiveWeeks[0]?.data[sym]||null;
+  const prev1=_archiveWeeks[_prevWeekIdx]?.data[sym]||null;
   const vc=num(s['Volume-D']),vp=prev1?num(prev1['Volume-D']):null;
   if(vc!==null&&vp!==null&&vp>0){const r=vc/vp; if(r>=5){pts+=2;tips.push(`🔥 Vol ×${r.toFixed(1)}`);}else if(r>=2){pts+=1;tips.push(`📈 Vol ×${r.toFixed(1)}`);}}
   const mw=num(s['MACD-H-W']),mw1=prev1?num(prev1['MACD-H-W']):null;
-  const prev2=_archiveWeeks[1]?.data[sym]||null,mw2=prev2?num(prev2['MACD-H-W']):null;
+  const prev2=_archiveWeeks[_prevWeekIdx+1]?.data[sym]||null,mw2=prev2?num(prev2['MACD-H-W']):null;
   if(mw!==null&&mw1!==null){if(mw1<0&&mw>=0){pts+=2;tips.push('⚡ MACD-W cross ↑');}else if(mw>mw1&&(mw2===null||mw1>mw2)){pts+=1;tips.push('↑ MACD-W expnd');}}
   const grade=pts>=5?'A':pts>=3?'B':pts>=1?'C':'D';
   return {grade,tip:tips.join(' · ')};
