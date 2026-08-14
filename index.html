@@ -824,8 +824,9 @@ function computeZones(s){
   const p=num(s.Price),ma50=num(s['MA50-D']),ma200=num(s['MA200-D']);
   const high52=num(s['52W-High']),low52=num(s['52W-Low']);
   const dp=p<50?1:0;
-  const fmtV=v=>p<50?v.toFixed(1):String(Math.round(v));
-  const fmtLvl=(v)=>{const d=(v-p)/p*100;const sign=d>=0?'+':'';return `${fmtV(v)}<span style="font-size:9px;opacity:.65;margin-left:3px;color:${d<0?'var(--rose)':'var(--emerald)'}">${sign}${d.toFixed(1)}%</span>`;};
+  // Tight zone ±2% — support extends downward, resistance extends upward
+  const fmtSup=(v)=>{ const lo=v*0.96,hi=v; return p<50?`${lo.toFixed(1)}–${hi.toFixed(1)}`:p<200?`${Math.round(lo)}–${Math.round(hi)}`:`${Math.round(lo/5)*5}–${Math.round(hi/5)*5}`; };
+  const fmtRes=(v)=>{ const lo=v,hi=v*1.04; return p<50?`${lo.toFixed(1)}–${hi.toFixed(1)}`:p<200?`${Math.round(lo)}–${Math.round(hi)}`:`${Math.round(lo/5)*5}–${Math.round(hi/5)*5}`; };
 
   // Support: candidates strictly below current price, closest first
   const supCands=[];
@@ -855,7 +856,7 @@ function computeZones(s){
   const target=high52!==null&&high52>p?high52:parseFloat((res*1.07).toFixed(dp));
   const downsideTarget=parseFloat((s1*0.97).toFixed(dp));
 
-  return {supportZone:fmtLvl(s1),s2Zone:fmtLvl(s2),resistanceZone:fmtLvl(res),
+  return {supportZone:fmtSup(s1),s2Zone:fmtSup(s2),resistanceZone:fmtRes(res),
     target,downsideTarget,s1Level:s1,s2Level:s2,resLevel:res,w:p*0.02,hw:p*0.01};
 }
 function scoreRow(s){
@@ -980,7 +981,6 @@ function tableHeader(){
     <th>Resistance</th>
     <th>Target</th>
     <th>Score${prevNote}</th>
-    <th style="width:40px">Trend</th>
     <th>Verdict</th>
     <th style="width:50px;text-align:center">Quality</th>
     <th>Momentum</th>
@@ -1011,7 +1011,6 @@ function tableRow(r,i){
     <td class="zone-cell">${r.Resistance}</td>
     <td class="zone-cell" style="color:var(--accent)">${fmt(r.Target)}</td>
     <td class="score-cell">${r.Score}${deltaStr}${spark}</td>
-    <td class="trend-cell">${trendCell}</td>
     <td class="${vcls}">${r.VLabel}</td>
     <td style="text-align:center">${r.SetupQuality?.grade?`<span class="qual-${r.SetupQuality.grade.toLowerCase()}" title="${r.SetupQuality.tip}">${r.SetupQuality.grade}</span>`:'<span style="color:var(--text3);font-size:11px">—</span>'}</td>
     <td style="font-size:12px">${r.Momentum}</td>
