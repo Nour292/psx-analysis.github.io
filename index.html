@@ -283,6 +283,10 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .badge-caution { color:var(--orange); font-weight:700; font-size:12px; }
 .badge-wait    { color:var(--slate); font-size:12px; }
 .badge-avoid   { color:var(--rose-dim); font-size:12px; }
+.qual-a{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--emerald-dim);color:var(--emerald);border:1px solid var(--emerald);cursor:default;}
+.qual-b{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);cursor:default;}
+.qual-c{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber);cursor:default;}
+.qual-d{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--rose-dim);color:var(--rose);border:1px solid var(--rose);cursor:default;}
 
 /* ═══════════════════════════════════════════
    ANALYSIS PAGE
@@ -917,6 +921,7 @@ function processAll(){
     const currMacdW=parseFloat(s['MACD-H-W'])||null; const prevMacdW=prev1?parseFloat(prev1['MACD-H-W'])||null:null; const macdImproving=prevMacdW!==null&&currMacdW!==null&&currMacdW>prevMacdW;
     const currRsi=parseFloat(s['RSI-D'])||null; const prevRsi=prev1?parseFloat(prev1['RSI-D'])||null:null; const rsiImproving=prevRsi!==null&&currRsi!==null&&currRsi>prevRsi&&currRsi<55;
     const vr=verdictFnEnhanced(s,sc,z,scoreDelta,macdImproving,rsiImproving,priceChg,trendClass,trendSlope);
+    const sq=computeSetupQuality(sym,s,vr.verdict);
     let trend='';
     if(hist.length<2) trend='—'; else if(trendClass==='sustained-up') trend='⬆️'; else if(trendClass==='improving') trend='↗️'; else if(trendClass==='sustained-down') trend='⬇️'; else if(trendClass==='weakening') trend='↘️'; else trend='→';
     const sparkScores=[sc4,sc3,sc2,sc1,sc].map((v,i)=>v!==null?v:'?');
@@ -925,7 +930,7 @@ function processAll(){
     let momOrd=0;
     if(vr.verdict==='BUY'){ momOrd=mom.includes('Strong ↑')?3:mom.includes('Moderate ↑')?2:1; }
     else if(vr.verdict==='EXIT'){ momOrd=mom.includes('Strong ↓')?3:mom.includes('Moderate ↓')?2:1; }
-    const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,SheetTrend:(s['Trend']||'').trim(),Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:mom,MomentumOrder:momOrd,RR:'0',PriceChg:priceChg};
+    const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,SheetTrend:(s['Trend']||'').trim(),Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:mom,MomentumOrder:momOrd,RR:'0',PriceChg:priceChg,SetupQuality:sq};
     const supLo=parseFloat(z.supportZone.split('\u2013')[0]); row.RR=((Math.abs(vr.target-p))/(Math.abs(p-supLo)||1)).toFixed(2);
     return row;
   }).sort((a,b)=>{
@@ -933,7 +938,8 @@ function processAll(){
     const vDiff=(o[a.Verdict]||9)-(o[b.Verdict]||9);
     if(vDiff!==0) return vDiff;
     // BUY: Strong on top → descending MomentumOrder, then descending Score
-    if(a.Verdict==='BUY') return b.MomentumOrder-a.MomentumOrder||b.Score-a.Score;
+    const qo={A:4,B:3,C:2,D:1};
+    if(a.Verdict==='BUY') return b.MomentumOrder-a.MomentumOrder||(qo[b.SetupQuality?.grade]||0)-(qo[a.SetupQuality?.grade]||0)||b.Score-a.Score;
     // EXIT: Strong on bottom → ascending MomentumOrder, then ascending Score
     if(a.Verdict==='EXIT') return a.MomentumOrder-b.MomentumOrder||a.Score-b.Score;
     // All others: descending Score
@@ -966,6 +972,7 @@ function tableHeader(){
     <th>Score${prevNote}</th>
     <th style="width:40px">Trend</th>
     <th>Verdict</th>
+    <th style="width:50px;text-align:center">Quality</th>
     <th>Momentum</th>
   </tr>`;
 }
@@ -996,6 +1003,7 @@ function tableRow(r,i){
     <td class="score-cell">${r.Score}${deltaStr}${spark}</td>
     <td class="trend-cell">${trendCell}</td>
     <td class="${vcls}">${r.VLabel}</td>
+    <td style="text-align:center">${r.SetupQuality?.grade?`<span class="qual-${r.SetupQuality.grade.toLowerCase()}" title="${r.SetupQuality.tip}">${r.SetupQuality.grade}</span>`:'<span style="color:var(--text3);font-size:11px">—</span>'}</td>
     <td style="font-size:12px">${r.Momentum}</td>
   </tr>`;
 }
@@ -1268,6 +1276,25 @@ async function loadCSV(){
 async function loadLatestArchive(){ await loadArchiveWeeks(); loadWeekPicker(); }
 async function loadArchiveWeeks(){ try{ const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`); if(!res.ok) return; const files=await res.json(); const sorted=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse().slice(0,4); if(!sorted.length) return; const results=await Promise.all(sorted.map(async date=>{ try{ const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${date}.csv?${Date.now()}`); if(!r.ok) return null; const text=(await r.text()).replace(/^\uFEFF/,''); const lines=text.trim().split(/\r?\n/); const hdrs=lines[0].split(',').map(h=>h.trim()); const data={}; lines.slice(1).filter(l=>l.trim()).forEach(line=>{ const cols=line.split(','); const obj={}; hdrs.forEach((h,i)=>obj[h]=(cols[i]||'').trim()); if(obj.Symbol) data[obj.Symbol]=obj; }); return {date,data}; }catch(e){ return null; } })); _archiveWeeks=results.filter(Boolean); if(_archiveWeeks.length){ _prevData=_archiveWeeks[0].data; _prevDate=_archiveWeeks[0].date; } if(_rawData.length) renderHome(); }catch(e){ console.log('Archive weeks error:',e.message); } }
 function archiveScore(sym,weekIdx){ if(weekIdx>=_archiveWeeks.length) return null; const row=_archiveWeeks[weekIdx].data[sym]; return row?scoreRow(row):null; }
+function archiveBaseVerdict(sym,weekIdx){ if(weekIdx>=_archiveWeeks.length) return null; const row=_archiveWeeks[weekIdx].data[sym]; if(!row) return null; return verdictFn(row,scoreRow(row),computeZones(row)).verdict; }
+function computeSetupQuality(sym,s,verdict){
+  if(verdict!=='BUY'&&verdict!=='EXIT') return {grade:null,tip:''};
+  let pts=0; const tips=[];
+  const v1=archiveBaseVerdict(sym,0),v2=archiveBaseVerdict(sym,1);
+  if(v1!==null){
+    if(v1!==verdict){pts+=2;tips.push('🆕 Fresh (wk 1)');}
+    else if(v2!==null&&v2!==verdict){pts+=1;tips.push('📅 Maturing (wk 2)');}
+    else if(v2!==null&&v2===verdict){pts-=2;tips.push('⏳ Stale (3+ wk)');}
+  }
+  const prev1=_archiveWeeks[0]?.data[sym]||null;
+  const vc=num(s['Volume-D']),vp=prev1?num(prev1['Volume-D']):null;
+  if(vc!==null&&vp!==null&&vp>0){const r=vc/vp; if(r>=5){pts+=2;tips.push(`🔥 Vol ×${r.toFixed(1)}`);}else if(r>=2){pts+=1;tips.push(`📈 Vol ×${r.toFixed(1)}`);}}
+  const mw=num(s['MACD-H-W']),mw1=prev1?num(prev1['MACD-H-W']):null;
+  const prev2=_archiveWeeks[1]?.data[sym]||null,mw2=prev2?num(prev2['MACD-H-W']):null;
+  if(mw!==null&&mw1!==null){if(mw1<0&&mw>=0){pts+=2;tips.push('⚡ MACD-W cross ↑');}else if(mw>mw1&&(mw2===null||mw1>mw2)){pts+=1;tips.push('↑ MACD-W expnd');}}
+  const grade=pts>=5?'A':pts>=3?'B':pts>=1?'C':'D';
+  return {grade,tip:tips.join(' · ')};
+}
 
 loadSavedToken();
 loadCSV();
