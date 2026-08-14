@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <script>
@@ -820,33 +820,43 @@ function gsUrl(tab){
 }
 function num(v){ return(v===''||v===undefined||v===null)?null:Number(v); }
 function fmt(v){ const n=parseFloat(v);return isNaN(n)?v:parseFloat(n.toFixed(2)).toString(); }
-function fmtRange(lo,hi){ return `${Math.floor(lo)}\u2013${Math.floor(hi)}`; }
-function zoneWidth(p){ return p<=50?3:p<=150?5:p<=300?8:p<=500?8:p<=700?10:12; }
 function computeZones(s){
   const p=num(s.Price),ma50=num(s['MA50-D']),ma200=num(s['MA200-D']);
   const high52=num(s['52W-High']),low52=num(s['52W-Low']);
-  const swLow=num(s['Swing-Low']),swHigh=num(s['Swing-High']);
-  const w=zoneWidth(p),hw=w/2;
-  let supportZone,s2Zone=null;
-  if(swLow!==null){ supportZone=fmtRange(swLow-hw,swLow+hw); const a=Math.floor((swLow-hw)/10)*10-10; s2Zone=fmtRange(a-hw,a+hw); }
-  else {
-    const ma200B=(ma200!==null&&ma200<p)?ma200:null;
-    const ma50B =(ma50!==null&&ma50<p)?ma50:null;
-    if(ma200B!==null&&ma50B!==null){
-      const gap=Math.abs(ma50B-ma200B);
-      if(gap<=w){ const avg=(ma50B+ma200B)/2; supportZone=fmtRange(avg-hw,avg+hw); const a=Math.floor((avg-hw)/10)*10-10; s2Zone=fmtRange(a-hw,a+hw); }
-      else { const closer=Math.abs(p-ma50B)<Math.abs(p-ma200B)?ma50B:ma200B; const deeper=closer===ma50B?ma200B:ma50B; supportZone=fmtRange(closer-hw,closer+hw); s2Zone=fmtRange(deeper-hw,deeper+hw); }
-    } else if(ma200B!==null){ supportZone=fmtRange(ma200B-hw,ma200B+hw); const a=Math.floor((ma200B-hw)/10)*10-10; s2Zone=fmtRange(a-hw,a+hw); }
-    else if(ma50B!==null){ supportZone=fmtRange(ma50B-hw,ma50B+hw); const a=Math.floor((ma50B-hw)/10)*10-10; s2Zone=fmtRange(a-hw,a+hw); }
-    else { supportZone=fmtRange(p-w*2,p-w); }
+  const dp=p<50?1:0;
+  const fmtV=v=>p<50?v.toFixed(1):String(Math.round(v));
+  const fmtLvl=(v)=>{const d=(v-p)/p*100;const sign=d>=0?'+':'';return `${fmtV(v)}<span style="font-size:9px;opacity:.65;margin-left:3px;color:${d<0?'var(--rose)':'var(--emerald)'}">${sign}${d.toFixed(1)}%</span>`;};
+
+  // Support: candidates strictly below current price, closest first
+  const supCands=[];
+  if(ma50!==null&&ma50<p) supCands.push(ma50);
+  if(ma200!==null&&ma200<p) supCands.push(ma200);
+  supCands.sort((a,b)=>b-a);
+
+  let s1,s2;
+  if(supCands.length>=2){
+    s1=supCands[0]; s2=supCands[1];
+  } else if(supCands.length===1){
+    s1=supCands[0];
+    s2=(low52!==null&&low52<s1*0.97)?low52:s1*0.88;
+  } else {
+    // Both MAs above price (breakout zone) \u2014 use % floors
+    s1=p*0.95;
+    s2=(low52!==null&&low52<s1*0.97)?low52:p*0.88;
   }
-  let resLo=p+w,resHi=p+2*w;
-  if(swHigh!==null){resLo=swHigh-hw;resHi=swHigh+hw;}
-  else if(high52!==null&&high52>=resLo&&high52<=resHi+w){resLo=high52-hw;resHi=high52+hw;}
-  const resistanceZone=fmtRange(resLo,resHi);
-  const target=high52!==null&&high52>resHi?high52:Math.ceil(resHi/10)*10+10;
-  const downsideTarget=parseFloat(supportZone.split('\u2013')[0]);
-  return {supportZone,s2Zone,resistanceZone,target,downsideTarget,w,hw};
+  // Ensure S2 is at least 4% below S1
+  if(s1>0&&(s1-s2)/s1<0.04) s2=s1*0.93;
+
+  // Resistance: closest MA above price, else 52W-High, else +8%
+  const maAbove=[ma50,ma200].filter(m=>m!==null&&m>p);
+  const res=maAbove.length>0?Math.min(...maAbove):(high52!==null&&high52>p?high52:p*1.08);
+
+  // Target: 52W-High if above price, else 7% above resistance
+  const target=high52!==null&&high52>p?high52:parseFloat((res*1.07).toFixed(dp));
+  const downsideTarget=parseFloat((s1*0.97).toFixed(dp));
+
+  return {supportZone:fmtLvl(s1),s2Zone:fmtLvl(s2),resistanceZone:fmtLvl(res),
+    target,downsideTarget,s1Level:s1,s2Level:s2,resLevel:res,w:p*0.02,hw:p*0.01};
 }
 function scoreRow(s){
   let pts=0,max=0;
@@ -930,8 +940,8 @@ function processAll(){
     let momOrd=0;
     if(vr.verdict==='BUY'){ momOrd=mom.includes('Strong ↑')?3:mom.includes('Moderate ↑')?2:1; }
     else if(vr.verdict==='EXIT'){ momOrd=mom.includes('Strong ↓')?3:mom.includes('Moderate ↓')?2:1; }
-    const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,SheetTrend:(s['Trend']||'').trim(),Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:mom,MomentumOrder:momOrd,RR:'0',PriceChg:priceChg,SetupQuality:sq};
-    const supLo=parseFloat(z.supportZone.split('\u2013')[0]); row.RR=((Math.abs(vr.target-p))/(Math.abs(p-supLo)||1)).toFixed(2);
+    const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,S1Level:z.s1Level,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,SheetTrend:(s['Trend']||'').trim(),Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:mom,MomentumOrder:momOrd,RR:'0',PriceChg:priceChg,SetupQuality:sq};
+    row.RR=((Math.abs(vr.target-p))/(Math.abs(p-z.s1Level)||1)).toFixed(2);
     return row;
   }).sort((a,b)=>{
     const o={BUY:1,WATCH:2,CAUTION:3,WAIT:4,EXIT:5,AVOID:6};
@@ -1050,7 +1060,7 @@ function runWeekly(){
   const tp=document.getElementById('tradePlans');
   if(!planRows.length){ tp.style.display='none'; return; }
   tp.style.display='grid';
-  function buildPlanHtml(rows){ return rows.map(r=>{ const p=parseFloat(r.Price),supHi=parseFloat(r.Support.split('–')[1]); if(r.Verdict==='BUY'){ const action=p<=supHi*1.02?'BUY NOW — price is at support zone':'WAIT — watch for pullback to '+r.Support; return `<div class="plan-card buy"><h4>🟢 ${r.Symbol} · Score ${r.Score}</h4><code>Entry: ${r.Support} | Target: ₨${fmt(r.Target)} | R:R ≈ ${r.RR}</code><p>At ₨${p}: ${action}</p></div>`; } else if(r.Verdict==='CAUTION'){ return `<div class="plan-card caution"><h4>⚠️ ${r.Symbol} · Score ${r.Score}</h4><code>Current: ₨${fmt(r.Price)} | Watch: ₨${fmt(r.Target)}</code><p>Price broke below MA50. If MA200 breaks, exit.</p></div>`; } else { return `<div class="plan-card exit"><h4>🔴 ${r.Symbol} · Score ${r.Score}</h4><code>Current: ₨${fmt(r.Price)} | Downside: ₨${fmt(r.Target)}</code><p>MA50 broken. Consider closing position.</p></div>`; } }).join('')||'<p style="color:var(--text3);font-size:13px">None</p>'; }
+  function buildPlanHtml(rows){ return rows.map(r=>{ const p=parseFloat(r.Price); if(r.Verdict==='BUY'){ const action=p<=(r.S1Level||p)*1.03?'BUY NOW — price is at support zone':'WAIT — watch for pullback to '+r.Support; return `<div class="plan-card buy"><h4>🟢 ${r.Symbol} · Score ${r.Score}</h4><code>Entry: ${r.Support} | Target: ₨${fmt(r.Target)} | R:R ≈ ${r.RR}</code><p>At ₨${p}: ${action}</p></div>`; } else if(r.Verdict==='CAUTION'){ return `<div class="plan-card caution"><h4>⚠️ ${r.Symbol} · Score ${r.Score}</h4><code>Current: ₨${fmt(r.Price)} | Watch: ₨${fmt(r.Target)}</code><p>Price broke below MA50. If MA200 breaks, exit.</p></div>`; } else { return `<div class="plan-card exit"><h4>🔴 ${r.Symbol} · Score ${r.Score}</h4><code>Current: ₨${fmt(r.Price)} | Downside: ₨${fmt(r.Target)}</code><p>MA50 broken. Consider closing position.</p></div>`; } }).join('')||'<p style="color:var(--text3);font-size:13px">None</p>'; }
   const buys=planRows.filter(r=>r.Verdict==='BUY');
   const others=planRows.filter(r=>r.Verdict!=='BUY');
   tp.innerHTML=`
@@ -1071,13 +1081,13 @@ function analyseSingle(){
   if(!s.Symbol||!s.Price){ alert('Symbol and Price are required.'); return; }
   const z=computeZones(s),sc=scoreRow(s),vr=verdictFn(s,sc,z);
   const p=parseFloat(s.Price); const mom=momentumLabel(s,vr.verdict);
-  const supLo=parseFloat(z.supportZone.split('\u2013')[0]); const rr=((Math.abs(vr.target-p))/(Math.abs(p-supLo)||1)).toFixed(2);
+  const rr=((Math.abs(vr.target-p))/(Math.abs(p-z.s1Level)||1)).toFixed(2);
   const mbcls=mom.includes('Strong ↑')?'mbadge-strong-up':mom.includes('Moderate ↑')?'mbadge-mod-up':mom.includes('Forming')?'mbadge-form-up':mom.includes('Strong ↓')?'mbadge-strong-dn':mom.includes('Moderate ↓')?'mbadge-mod-dn':mom.includes('Mild ↓')?'mbadge-mild-dn':'mbadge-watch';
   const vcls=vr.verdict==='BUY'?'verdict-buy':vr.verdict==='EXIT'?'verdict-exit':vr.verdict==='WATCH'?'verdict-watch':vr.verdict==='WAIT'?'verdict-wait':'verdict-avoid';
   const ma50d=num(s['MA50-D']),ma200d=num(s['MA200-D']),rsid=num(s['RSI-D']),macdD=num(s['MACD-H-D']),sigD=num(s['Signal-D']),macdW=num(s['MACD-H-W']),sigW=num(s['Signal-W']),ma50w=num(s['MA50-W']),ma200w=num(s['MA200-W']);
   function iv(v,bull,bear){ return `<span class="ind-val ${v?'bull':'bear'}">${v?bull:bear}</span>`; }
   let planHtml='';
-  if(vr.verdict==='BUY'){ const supHi=parseFloat(z.supportZone.split('\u2013')[1]); const action=p<=supHi*1.02?'BUY NOW — price is at support':'WAIT — pullback to '+z.supportZone; planHtml=`<div class="tp-card buy"><div class="tp-head" style="color:#10B981">🟢 Buy Plan</div><div class="tp-code">Entry: ${z.supportZone} | Target: ₨${fmt(vr.target)} | R:R ≈ ${rr}</div><div class="tp-note">At ₨${p}: ${action}</div></div>`; }
+  if(vr.verdict==='BUY'){ const action=p<=z.s1Level*1.03?'BUY NOW — price is at support':'WAIT — pullback to '+z.supportZone; planHtml=`<div class="tp-card buy"><div class="tp-head" style="color:#10B981">🟢 Buy Plan</div><div class="tp-code">Entry: ${z.supportZone} | Target: ₨${fmt(vr.target)} | R:R ≈ ${rr}</div><div class="tp-note">At ₨${p}: ${action}</div></div>`; }
   else if(vr.verdict==='EXIT'){ planHtml=`<div class="tp-card exit"><div class="tp-head" style="color:#F43F5E">🔴 Exit Signal</div><div class="tp-code">Current: ₨${fmt(p)} | Downside Risk: ₨${fmt(vr.target)}</div><div class="tp-note">MA50 broken. Consider closing.</div></div>`; }
   document.getElementById('singleResult').innerHTML=`
     <div class="card-header">📈 ${s.Symbol}</div>
