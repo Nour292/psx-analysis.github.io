@@ -826,6 +826,7 @@ const MONTHS_LIST=['January','February','March','April','May','June','July','Aug
 
 function renderForms(){
   const today=new Date().toISOString().slice(0,10);
+  const curMonth=MONTHS_LIST[new Date().getMonth()];
   document.getElementById('tabForms').innerHTML=`
   <p style="font-size:12px;color:var(--text3);margin-bottom:4px">Each save appends a new row to <strong style="color:var(--text)">Budget_Log</strong> — nothing is overwritten.</p>
   <div class="form-wrap">
@@ -853,10 +854,10 @@ function renderForms(){
         <select id="fl-who"><option value="">— select category first —</option></select>
       </div>
       <div class="fgroup fg-1">
-        <label>Month</label>
+        <label>Month <span style="font-size:10px;color:var(--text3);font-weight:400;text-transform:none">(optional)</span></label>
         <select id="fl-month">
-          <option value="">— optional —</option>
-          ${MONTHS_LIST.map(m=>`<option>${m}</option>`).join('')}
+          <option value="">— skip —</option>
+          ${MONTHS_LIST.map(m=>`<option${m===curMonth?' selected':''}>${m}</option>`).join('')}
         </select>
       </div>
       <div class="fgroup fg-1">
