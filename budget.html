@@ -198,6 +198,36 @@ select:focus,input:focus{border-color:var(--purple);}
 .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .no-data{font-size:12px;color:var(--rose);padding:12px;background:var(--rose-dim);border:1px solid var(--rose);border-radius:var(--radius-sm);}
+
+/* IMPROVED TABLES */
+.tbl th{font-size:10.5px;font-weight:700;letter-spacing:.8px;color:var(--text2);padding:9px 14px;}
+.tbl td{padding:9px 14px;font-size:12.5px;}
+.tbl tbody tr:nth-child(even) td{background:rgba(255,255,255,.018);}
+:root.light .tbl tbody tr:nth-child(even) td{background:rgba(0,0,0,.025);}
+.tbl tbody tr:hover td{background:var(--surface2)!important;}
+.tbl .name-cell{font-weight:600;color:var(--text);}
+.tbl .dim{color:var(--text3);font-size:11px;}
+
+/* IMPROVED TABS */
+.tab-btn{padding:11px 16px;font-size:12.5px;font-weight:600;letter-spacing:.1px;}
+.tab-btn.active{color:var(--purple);border-bottom-color:var(--purple);font-weight:700;}
+
+/* ACTION BUTTONS (log edit/delete) */
+.act-btn{border:none;background:transparent;cursor:pointer;padding:3px 6px;border-radius:4px;font-size:13px;opacity:.5;transition:opacity .15s,background .15s;}
+.act-btn:hover{opacity:1;background:var(--surface2);}
+.act-del:hover{background:var(--rose-dim);}
+.act-col{display:flex;gap:2px;align-items:center;}
+
+/* EDIT MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;width:100%;max-width:720px;max-height:90vh;overflow-y:auto;}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.modal-ttl{font-size:14px;font-weight:700;color:var(--text);}
+.modal-close{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 14px;color:var(--text2);cursor:pointer;font-size:12px;font-weight:600;}
+.modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+
+/* SMART LIST */
+.sl-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--purple-dim);color:var(--purple);border:1px solid var(--purple);}
 </style>
 </head>
 <body>
@@ -261,7 +291,7 @@ select:focus,input:focus{border-color:var(--purple);}
     <button class="tab-btn"        data-tab="income"   onclick="goTab('income')">💵 Income</button>
     <button class="tab-btn"        data-tab="abd"      onclick="goTab('abd')">🏦 Abdullah A/C</button>
     <button class="tab-btn"        data-tab="forms"    onclick="goTab('forms')">📝 Forms</button>
-    <button class="tab-btn"        data-tab="search"   onclick="goTab('search')">🔍 Search</button>
+    <button class="tab-btn"        data-tab="search"   onclick="goTab('search')">📊 Smart List</button>
     <button class="tab-btn"        data-tab="log"      onclick="goTab('log')">📜 Log</button>
   </div>
   <div class="load-state" id="loadState"><div class="spinner"></div><span>Loading budget data…</span></div>
@@ -547,17 +577,36 @@ function renderAbd(){
 ══════════════════════════════════════ */
 const LOG_TYPES = {
   'Card':           ['Charge','Payment','Statement Fee'],
-  'Income':         ['Salary','Extra','Housing Allowance','Ticket','Bonus'],
-  'Debt':           ['New Debt','Payment Made','Partial Payment'],
+  'Income':         ['Salary','Extra','Housing Allowance','Ticket','Bonus','Remittance'],
+  'Debt':           ['New Debt','Payment Made','Partial Payment','Outstanding'],
   'Receivable':     ['New Receivable','Received','Partial Received'],
   'Expense':        ['House','Food','Medical','Education','Transport','Personal','Other'],
-  'Balance Update': ['Opening Balance','Balance Update']
+  'Balance Update': ['Opening Balance','Balance Update','Current Balance'],
+  'Balance':        ['Current Balance','Opening Balance'],
+  'Visa Fund':      ['Fee Paid','Top-up','Target'],
+  'Abdullah A/C':   ['Transfer In','Transfer Out','Fee','Expense'],
+  'Goal':           ['Target','Progress','Achieved'],
 };
+
+const WHO_OPTIONS = {
+  'Card':           ['MC ***9000','MC ***7463'],
+  'Income':         ['NCB (SNB)','STC Pay','HBL','MCB','Abdullah (Meezan)'],
+  'Debt':           ['MC ***9000','Ehab','Hayyat','Abdul Haq','Fakhra','Samia','Usman','Badar','Afzal','Work Fund'],
+  'Receivable':     ['Abdul Rehman','Munaza','Tayyab','Irfan','Asghar (cousin)','Shafeeq','Khalid','Sadam'],
+  'Expense':        ['HBL','MCB','STC Pay','NCB (SNB)','Abdullah (Meezan)','Cash'],
+  'Balance':        ['NCB (SNB)','STC Pay','HBL','MCB','Abdullah (Meezan)'],
+  'Balance Update': ['NCB (SNB)','STC Pay','HBL','MCB','Abdullah (Meezan)'],
+  'Visa Fund':      ['MCB','Abdullah (Meezan)','Step2Europe'],
+  'Abdullah A/C':   ['MCB','HBL','Huzefa','Moon','Abdullah','Gym'],
+  'Goal':           ['Visa Fund','MC ***9000','Hayyat','Ehab','Huzefa'],
+};
+
+const MONTHS_LIST=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 function renderForms(){
   const today=new Date().toISOString().slice(0,10);
   document.getElementById('tabForms').innerHTML=`
-  <p style="font-size:12px;color:var(--text3)">Each save adds a new row to <strong>Budget_Log</strong> — nothing is overwritten.</p>
+  <p style="font-size:12px;color:var(--text3);margin-bottom:4px">Each save appends a new row to <strong style="color:var(--text)">Budget_Log</strong> — nothing is overwritten.</p>
   <div class="form-wrap">
     <div class="fgrp">
       <div class="fgroup fg-1">
@@ -568,12 +617,10 @@ function renderForms(){
         <label>Category</label>
         <select id="fl-cat" onchange="onFCat()">
           <option value="">— Select —</option>
-          <option>Card</option>
-          <option>Income</option>
-          <option>Debt</option>
-          <option>Receivable</option>
-          <option>Expense</option>
-          <option>Balance Update</option>
+          <option>Card</option><option>Income</option><option>Debt</option>
+          <option>Receivable</option><option>Expense</option>
+          <option>Balance</option><option>Visa Fund</option>
+          <option>Abdullah A/C</option><option>Goal</option>
         </select>
       </div>
       <div class="fgroup fg-2">
@@ -582,11 +629,14 @@ function renderForms(){
       </div>
       <div class="fgroup fg-2">
         <label>Account / Card / Person</label>
-        <input type="text" id="fl-who" placeholder="e.g. MC ***9000  /  NCB  /  Hayyat">
+        <select id="fl-who"><option value="">— select category first —</option></select>
       </div>
       <div class="fgroup fg-1">
         <label>Month</label>
-        <input type="text" id="fl-month" placeholder="e.g. August">
+        <select id="fl-month">
+          <option value="">— optional —</option>
+          ${MONTHS_LIST.map(m=>`<option>${m}</option>`).join('')}
+        </select>
       </div>
       <div class="fgroup fg-1">
         <label>Currency</label>
@@ -614,9 +664,10 @@ function renderForms(){
 
 function onFCat(){
   const cat=document.getElementById('fl-cat').value;
-  const sel=document.getElementById('fl-type');
-  const opts=LOG_TYPES[cat]||[];
-  sel.innerHTML=opts.length?opts.map(o=>`<option>${o}</option>`).join(''):'<option>—</option>';
+  const typeOpts=LOG_TYPES[cat]||[];
+  const whoOpts=WHO_OPTIONS[cat]||[];
+  document.getElementById('fl-type').innerHTML=typeOpts.length?typeOpts.map(o=>`<option>${o}</option>`).join(''):'<option>—</option>';
+  document.getElementById('fl-who').innerHTML=whoOpts.length?whoOpts.map(o=>`<option>${o}</option>`).join(''):'<option value="">— type manually —</option>';
 }
 
 async function saveLog(){
@@ -653,33 +704,34 @@ async function saveLog(){
 }
 
 /* ══════════════════════════════════════
-   LOG TABLE
+   LOG TABLE — with edit / delete
 ══════════════════════════════════════ */
 let _logCat='';
+const CAT_CLR={Balance:'blue',Card:'red',Debt:'red','Visa Fund':'amber',Receivable:'green',Income:'green','Abdullah A/C':'purple',Goal:'amber'};
+const PRI_CLR={HIGH:'red',RETURN:'red',NEXT:'amber',QUEUE:'amber',ASSIGNED:'blue',WAITING:'gray',WATCH:'purple',LOAN:'purple'};
 
 function renderLog(){
-  if(!_rows.length){
-    document.getElementById('tabLog').innerHTML=`<div class="no-data">Budget_Log is empty. Run <strong>createBudgetLog()</strong> in Apps Script first.</div>`;
-    return;
-  }
+  if(!_rows.length){document.getElementById('tabLog').innerHTML=`<div class="no-data">Budget_Log is empty.</div>`;return;}
   const cats=['All',...new Set(_rows.map(r=>r[C.cat]||'').filter(Boolean))];
   const pills=cats.map(c=>`<button class="fpill${(_logCat===c||(_logCat===''&&c==='All'))?' active':''}" onclick="filterLog('${c}')">${c}</button>`).join('');
-  const filtered=_logCat&&_logCat!=='All'?_rows.filter(r=>r[C.cat]===_logCat):_rows;
-  const CAT_CLR={Balance:'blue',Card:'red',Debt:'red','Visa Fund':'amber',Receivable:'green',Income:'green','Abdullah A/C':'purple',Goal:'amber'};
-  const PRI_CLR={HIGH:'red',RETURN:'red',NEXT:'amber',QUEUE:'amber',ASSIGNED:'blue',WAITING:'gray',WATCH:'purple',LOAN:'purple'};
-  const rows=filtered.map(r=>`<tr>
-    <td style="color:var(--text3);font-size:11px;white-space:nowrap">${r[C.date]}</td>
+  const indexed=_rows.map((r,i)=>({r,i}));
+  const filtered=_logCat&&_logCat!=='All'?indexed.filter(({r})=>r[C.cat]===_logCat):indexed;
+  const rows=filtered.map(({r,i})=>`<tr>
+    <td class="dim">${r[C.date]}</td>
     <td><span class="badge ${CAT_CLR[r[C.cat]]||'gray'}">${r[C.cat]}</span></td>
-    <td style="font-size:12px;color:var(--text2)">${r[C.type]||''}</td>
-    <td style="font-weight:500;color:var(--text)">${r[C.who]||''}</td>
-    <td style="font-size:11px;color:var(--text3)">${r[C.month]||''}</td>
+    <td class="dim">${r[C.type]||''}</td>
+    <td class="name-cell">${r[C.who]||''}</td>
+    <td class="dim">${r[C.month]||''}</td>
     <td class="num" style="color:var(--emerald)">${num(r[C.in])}</td>
     <td class="num" style="color:var(--rose)">${num(r[C.out])}</td>
-    <td style="font-size:11px;color:var(--text3)">${r[C.cur]||''}</td>
+    <td class="dim">${r[C.cur]||''}</td>
     <td>${r[C.pri]?`<span class="badge ${PRI_CLR[r[C.pri]]||'gray'}">${r[C.pri]}</span>`:''}</td>
     <td>${r[C.cert]?`<span class="badge ${{Confirmed:'green',Expected:'blue',Uncertain:'gray'}[r[C.cert]]||'gray'}">${r[C.cert]}</span>`:''}</td>
-    <td style="font-size:11px;color:var(--text2)">${r[C.status]||''}</td>
-    <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:180px">${r[C.notes]||''}</td>
+    <td class="dim" style="max-width:160px;white-space:normal">${r[C.notes]||''}</td>
+    <td><div class="act-col">
+      <button class="act-btn" onclick="editRow(${i})" title="Edit">✏️</button>
+      <button class="act-btn act-del" onclick="deleteRow(${i})" title="Delete">🗑️</button>
+    </div></td>
   </tr>`).join('');
   document.getElementById('tabLog').innerHTML=`
   <div class="srch-box" style="margin-bottom:0;border-radius:var(--radius) var(--radius) 0 0">
@@ -688,90 +740,226 @@ function renderLog(){
     <div style="font-size:11px;color:var(--text3);margin-top:6px">${filtered.length} of ${_rows.length} rows</div>
   </div>
   <div class="card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none">
-    <div class="tbl-wrap">
-      <table class="tbl">
-        <thead><tr><th>Date</th><th>Category</th><th>Type</th><th>Account / Card / Person</th>
-          <th>Month</th><th>Amount In</th><th>Amount Out</th><th>Cur</th>
-          <th>Priority</th><th>Certainty</th><th>Status</th><th>Notes</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Date</th><th>Category</th><th>Type</th><th>Account / Person</th>
+        <th>Month</th><th>Amt In</th><th>Amt Out</th><th>Cur</th>
+        <th>Priority</th><th>Certainty</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
   </div>`;
 }
 
 function filterLog(cat){_logCat=cat==='All'?'':cat;renderLog();}
 
 /* ══════════════════════════════════════
-   FILTER SEARCH
+   SHEET UPDATE HELPER (for edit/delete)
 ══════════════════════════════════════ */
-const CAT_LABELS={'Balance':'💰 Balances','Card':'💳 Credit Cards','Visa Fund':'🎯 Visa Fund','Debt':'📋 Debts','Receivable':'📥 Receivables','Income':'💵 Income','Abdullah A/C':'🏦 Abdullah A/C','Goal':'🎯 Goals'};
+const LOG_HEADERS=['Date','Category','Type of Transaction','Account / Card / Person','Month','Amount In','Amount Out','Currency','Priority','Certainty','Status','Notes','Due Date'];
+
+async function updateSheet(statusEl){
+  const rows=[LOG_HEADERS,..._rows];
+  if(statusEl){statusEl.textContent='⏳ Saving…';statusEl.style.color='var(--amber)';}
+  try{
+    const resp=await fetch(GS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'replaceSheet',tab:'Budget_Log',rows})});
+    const result=await resp.json();
+    if(result?.error) throw new Error(result.error);
+    if(statusEl){statusEl.textContent='✅ Saved';statusEl.style.color='var(--emerald)';}
+  }catch(e){
+    if(statusEl){statusEl.textContent='❌ '+e.message;statusEl.style.color='var(--rose)';}
+  }
+}
+
+async function deleteRow(i){
+  const r=_rows[i];
+  if(!confirm(`Delete ${r[C.cat]} row — "${r[C.who]||r[C.type]}"?\nThis cannot be undone.`)) return;
+  _rows.splice(i,1);
+  renderLog();renderOverview();renderDebts();renderRecv();renderGoals();renderIncome();renderAbd();
+  await updateSheet(null);
+}
+
+/* ══════════════════════════════════════
+   EDIT MODAL
+══════════════════════════════════════ */
+let _editIdx=-1;
+
+function editRow(i){
+  _editIdx=i;
+  const r=_rows[i];
+  const cat=r[C.cat]||'';
+  const typeOpts=LOG_TYPES[cat]||[];
+  const whoOpts=WHO_OPTIONS[cat]||[];
+  const allCats=['Balance','Card','Visa Fund','Debt','Receivable','Income','Abdullah A/C','Goal','Expense','Balance Update'];
+  const mkOpt=(opts,sel)=>opts.map(o=>`<option${o===sel?' selected':''}>${o}</option>`).join('');
+  const mkSelect=(id,opts,sel,extra='')=>`<select id="${id}" ${extra}>${opts.length?mkOpt(opts,sel):`<option>${sel||''}</option>`}</select>`;
+
+  const existing=document.getElementById('edit-modal');
+  if(existing) existing.remove();
+  const modal=document.createElement('div');
+  modal.id='edit-modal';
+  modal.className='modal-backdrop';
+  modal.innerHTML=`<div class="modal-box">
+    <div class="modal-hd">
+      <div class="modal-ttl">✏️ Edit Entry — Row ${i+2}</div>
+      <button class="modal-close" onclick="closeEditModal()">✕ Close</button>
+    </div>
+    <div class="modal-grid">
+      <div class="fgroup"><label>Date</label><input type="text" id="ed-date" value="${r[C.date]||''}"></div>
+      <div class="fgroup"><label>Category</label>${mkSelect('ed-cat',allCats,cat,'onchange="onEditCat()"')}</div>
+      <div class="fgroup"><label>Type</label>${mkSelect('ed-type',typeOpts,r[C.type])}</div>
+      <div class="fgroup"><label>Account / Person</label>${mkSelect('ed-who',whoOpts,r[C.who])}</div>
+      <div class="fgroup"><label>Month</label>${mkSelect('ed-month',MONTHS_LIST,r[C.month])}</div>
+      <div class="fgroup"><label>Currency</label><select id="ed-cur"><option${r[C.cur]==='SAR'?' selected':''}>SAR</option><option${r[C.cur]==='PKR'?' selected':''}>PKR</option></select></div>
+      <div class="fgroup"><label>Amount In</label><input type="number" id="ed-in" value="${r[C.in]||''}"></div>
+      <div class="fgroup"><label>Amount Out</label><input type="number" id="ed-out" value="${r[C.out]||''}"></div>
+      <div class="fgroup"><label>Priority</label><select id="ed-pri"><option value="">—</option>${mkOpt(['HIGH','RETURN','NEXT','QUEUE','ASSIGNED','WAITING','WATCH','LOAN'],r[C.pri])}</select></div>
+      <div class="fgroup"><label>Certainty</label><select id="ed-cert"><option value="">—</option>${mkOpt(['Confirmed','Expected','Uncertain'],r[C.cert])}</select></div>
+      <div class="fgroup"><label>Status</label><input type="text" id="ed-status" value="${r[C.status]||''}"></div>
+      <div class="fgroup"><label>Due Date</label><input type="text" id="ed-due" value="${r[C.due]||''}" placeholder="YYYY-MM-DD"></div>
+    </div>
+    <div class="fgroup" style="margin-top:12px"><label>Notes</label><input type="text" id="ed-notes" value="${r[C.notes]||''}"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn-save" onclick="saveEdit()">💾 Save Changes</button>
+      <span id="edit-status" class="fstatus"></span>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function onEditCat(){
+  const cat=document.getElementById('ed-cat').value;
+  const typeOpts=LOG_TYPES[cat]||[];
+  const whoOpts=WHO_OPTIONS[cat]||[];
+  document.getElementById('ed-type').innerHTML=typeOpts.length?typeOpts.map(o=>`<option>${o}</option>`).join(''):'<option>—</option>';
+  document.getElementById('ed-who').innerHTML=whoOpts.length?whoOpts.map(o=>`<option>${o}</option>`).join(''):'<option value="">—</option>';
+}
+
+function closeEditModal(){const m=document.getElementById('edit-modal');if(m)m.remove();}
+
+async function saveEdit(){
+  if(_editIdx<0) return;
+  _rows[_editIdx]=[
+    document.getElementById('ed-date').value.trim(),
+    document.getElementById('ed-cat').value,
+    document.getElementById('ed-type').value,
+    document.getElementById('ed-who').value,
+    document.getElementById('ed-month').value,
+    document.getElementById('ed-in').value.trim(),
+    document.getElementById('ed-out').value.trim(),
+    document.getElementById('ed-cur').value,
+    document.getElementById('ed-pri').value,
+    document.getElementById('ed-cert').value,
+    document.getElementById('ed-status').value.trim(),
+    document.getElementById('ed-notes').value.trim(),
+    document.getElementById('ed-due').value.trim(),
+  ];
+  const st=document.getElementById('edit-status');
+  await updateSheet(st);
+  setTimeout(()=>{
+    closeEditModal();
+    renderLog();renderOverview();renderDebts();renderRecv();renderGoals();renderIncome();renderAbd();
+  },800);
+}
+
+/* ══════════════════════════════════════
+   SMART LIST
+══════════════════════════════════════ */
+const CAT_LABELS={'Balance':'💰 Balance','Card':'💳 Card','Visa Fund':'🎯 Visa Fund','Debt':'📋 Debt','Receivable':'📥 Receivable','Income':'💵 Income','Abdullah A/C':'🏦 Abdullah A/C','Goal':'🎯 Goal'};
+const _SL={cat:'',priority:'',certainty:'',cur:'',month:''};
 
 function renderSearch(){
-  const cats=Object.keys(CAT_LABELS);
+  const months=[...new Set(_rows.map(r=>r[C.month]).filter(Boolean))].sort((a,b)=>MONTHS_LIST.indexOf(a)-MONTHS_LIST.indexOf(b));
   document.getElementById('tabSearch').innerHTML=`
-  <div class="srch-box">
-    <div><div class="fl">Category</div>
-      <div class="fpills" id="pill-sec">
-        <button class="fpill active" onclick="sf('section','',this)">All</button>
-        ${cats.map(c=>`<button class="fpill" onclick="sf('section','${c}',this)">${CAT_LABELS[c]}</button>`).join('')}
+  <div class="card">
+    <div class="card-hd"><span style="color:var(--purple)">📊</span><span class="card-ttl">Smart List — Live Filters</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text3)" id="sl-count">${_rows.length} total rows</span></div>
+    <div class="card-bd" style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <div class="fl">Category</div>
+        <div class="fpills">
+          <button class="fpill active" onclick="slFilter('cat','',this)">All</button>
+          ${Object.entries(CAT_LABELS).map(([k,v])=>`<button class="fpill" onclick="slFilter('cat','${k}',this)">${v}</button>`).join('')}
+        </div>
       </div>
-    </div>
-    <div id="subfilter" style="display:none"></div>
-    <div class="srch-row">
-      <div style="flex:1"><div class="fl">Keyword</div>
-        <input class="srch-in" id="sk-kw" placeholder="Name, amount, date, note, account…" oninput="doSearch()">
+      <div id="sl-sub" style="display:none"></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:2;min-width:180px">
+          <div class="fl">Keyword</div>
+          <input class="srch-in" id="sl-kw" placeholder="Name, note, amount…" oninput="runSmartList()">
+        </div>
+        <div>
+          <div class="fl">Month</div>
+          <select class="srch-in" id="sl-month" onchange="runSmartList()" style="min-width:130px">
+            <option value="">All months</option>
+            ${months.map(m=>`<option>${m}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div class="fl">Currency</div>
+          <div class="fpills" id="sl-cur-pills">
+            <button class="fpill active" onclick="slFilter('cur','',this)">All</button>
+            <button class="fpill" onclick="slFilter('cur','SAR',this)">SAR</button>
+            <button class="fpill" onclick="slFilter('cur','PKR',this)">PKR</button>
+          </div>
+        </div>
       </div>
-      <div><div class="fl">Min Amount</div><input class="srch-in srch-mini" id="sk-min" type="number" placeholder="0" oninput="doSearch()"></div>
-      <div><div class="fl">Max Amount</div><input class="srch-in srch-mini" id="sk-max" type="number" placeholder="∞" oninput="doSearch()"></div>
-      <div style="align-self:flex-end"><button class="srch-btn" onclick="doSearch()">🔍 Search</button></div>
     </div>
   </div>
-  <div class="srch-res" id="srch-out"><div class="sr-none">Select a category or type a keyword to search</div></div>`;
+  <div id="sl-out"></div>`;
+  runSmartList();
 }
 
-function sf(type,val,btn){
-  _SF[type]=val;
+function slFilter(key,val,btn){
+  _SL[key]=val;
   btn.closest('.fpills').querySelectorAll('.fpill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(type==='section'){
-    _SF.priority='';_SF.certainty='';
-    const sub=document.getElementById('subfilter');
+  if(key==='cat'){
+    _SL.priority='';_SL.certainty='';
+    const sub=document.getElementById('sl-sub');
     if(val==='Debt'){
       sub.style.display='block';
-      sub.innerHTML=`<div class="fl">Priority</div><div class="fpills"><button class="fpill active" onclick="sf('priority','',this)">All</button>${['HIGH','RETURN','NEXT','QUEUE','ASSIGNED','WAITING','WATCH','LOAN'].map(p=>`<button class="fpill" onclick="sf('priority','${p}',this)">${p}</button>`).join('')}</div>`;
+      sub.innerHTML=`<div class="fl">Priority</div><div class="fpills"><button class="fpill active" onclick="slFilter('priority','',this)">All</button>${['HIGH','RETURN','NEXT','QUEUE','ASSIGNED','WAITING','WATCH','LOAN'].map(p=>`<button class="fpill" onclick="slFilter('priority','${p}',this)">${p}</button>`).join('')}</div>`;
     }else if(val==='Receivable'){
       sub.style.display='block';
-      sub.innerHTML=`<div class="fl">Certainty</div><div class="fpills"><button class="fpill active" onclick="sf('certainty','',this)">All</button>${['Confirmed','Expected','Uncertain'].map(c=>`<button class="fpill" onclick="sf('certainty','${c}',this)">${c}</button>`).join('')}</div>`;
+      sub.innerHTML=`<div class="fl">Certainty</div><div class="fpills"><button class="fpill active" onclick="slFilter('certainty','',this)">All</button>${['Confirmed','Expected','Uncertain'].map(c=>`<button class="fpill" onclick="slFilter('certainty','${c}',this)">${c}</button>`).join('')}</div>`;
     }else sub.style.display='none';
   }
-  doSearch();
+  runSmartList();
 }
 
-function doSearch(){
-  const kw=(document.getElementById('sk-kw')?.value||'').trim().toLowerCase();
-  const minA=parseFloat(document.getElementById('sk-min')?.value)||0;
-  const maxA=parseFloat(document.getElementById('sk-max')?.value)||Infinity;
-  const{section,priority,certainty}=_SF;
-  const hasF=section||priority||certainty||kw||minA>0||maxA<Infinity;
-  const out=document.getElementById('srch-out');
-  if(!hasF){out.innerHTML='<div class="sr-none">Select a category or type a keyword to search</div>';return;}
-
-  let pool=section?_rows.filter(r=>r[C.cat]===section):[..._rows];
+function runSmartList(){
+  const kw=(document.getElementById('sl-kw')?.value||'').trim().toLowerCase();
+  const month=document.getElementById('sl-month')?.value||'';
+  const{cat,priority,certainty,cur}=_SL;
+  let pool=[..._rows];
+  if(cat)      pool=pool.filter(r=>r[C.cat]===cat);
   if(priority) pool=pool.filter(r=>r[C.pri]===priority);
-  if(certainty) pool=pool.filter(r=>r[C.cert]===certainty);
-  if(kw) pool=pool.filter(r=>r.join(' ').toLowerCase().includes(kw));
-  if(minA>0||maxA<Infinity) pool=pool.filter(r=>{const v=Math.max(nv(r[C.in]),nv(r[C.out]));return v>=minA&&v<=maxA;});
-
-  if(!pool.length){out.innerHTML='<div class="sr-none">No results matching the selected filters</div>';return;}
-
-  const grp={};
-  for(const r of pool){const k=r[C.cat]||'?';if(!grp[k])grp[k]=[];grp[k].push(r);}
-  const HDRS=['Date','Category','Type','Account / Card / Person','Month','Amt In','Amt Out','Cur','Priority','Certainty','Status','Notes'];
-  out.innerHTML=Object.entries(grp).map(([cat,rows])=>{
-    const trows=rows.map(r=>`<tr>${r.map((c,i)=>{const hi=kw&&(c||'').toLowerCase().includes(kw);return`<td class="${hi?'sr-hit':i>=5&&i<=6?'num':''}">${c||''}</td>`;}).join('')}</tr>`).join('');
-    return`<div class="card" style="margin-bottom:8px"><div class="card-hd"><span class="card-ttl">${CAT_LABELS[cat]||cat}</span><span style="margin-left:auto;font-size:11px;color:var(--text3)">${rows.length} result${rows.length>1?'s':''}</span></div>
-      <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr>${HDRS.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${trows}</tbody></table></div></div></div>`;
-  }).join('');
+  if(certainty)pool=pool.filter(r=>r[C.cert]===certainty);
+  if(cur)      pool=pool.filter(r=>r[C.cur]===cur);
+  if(month)    pool=pool.filter(r=>r[C.month]===month);
+  if(kw)       pool=pool.filter(r=>r.join(' ').toLowerCase().includes(kw));
+  const cnt=document.getElementById('sl-count');
+  if(cnt) cnt.textContent=`${pool.length} of ${_rows.length} rows`;
+  const out=document.getElementById('sl-out');
+  if(!out) return;
+  if(!pool.length){out.innerHTML='<div class="sr-none">No entries match these filters</div>';return;}
+  const rows=pool.map(r=>`<tr>
+    <td class="dim">${r[C.date]}</td>
+    <td><span class="badge ${CAT_CLR[r[C.cat]]||'gray'}">${r[C.cat]}</span></td>
+    <td class="dim">${r[C.type]||''}</td>
+    <td class="name-cell">${r[C.who]||''}</td>
+    <td class="dim">${r[C.month]||''}</td>
+    <td class="num" style="color:var(--emerald);font-weight:600">${num(r[C.in])}</td>
+    <td class="num" style="color:var(--rose);font-weight:600">${num(r[C.out])}</td>
+    <td class="dim">${r[C.cur]||''}</td>
+    <td>${r[C.pri]?`<span class="badge ${PRI_CLR[r[C.pri]]||'gray'}">${r[C.pri]}</span>`:''}</td>
+    <td class="dim" style="max-width:160px;white-space:normal">${r[C.notes]||''}</td>
+  </tr>`).join('');
+  out.innerHTML=`<div class="card">
+    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Date</th><th>Category</th><th>Type</th><th>Account / Person</th><th>Month</th><th>Amt In</th><th>Amt Out</th><th>Cur</th><th>Priority</th><th>Notes</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div></div>`;
 }
 
 /* ══════════════════════════════════════
@@ -792,9 +980,11 @@ async function loadAll(){
     document.getElementById('loadState').innerHTML=`<div class="no-data">Budget_Log is empty. Run <strong>createBudgetLog()</strong> in Apps Script first.</div>`;
     return;
   }
-  renderOverview();renderDebts();renderRecv();renderGoals();renderIncome();renderAbd();renderForms();renderSearch();renderLog();
+  renderOverview();renderDebts();renderRecv();renderGoals();renderIncome();renderAbd();
+  renderForms();renderSearch();renderLog();
   document.getElementById('loadState').style.display='none';
   document.getElementById('tabBar').style.display='flex';
+  document.getElementById('lbadge').textContent='';
   document.getElementById('asof').textContent='Updated: '+new Date().toLocaleDateString('en-PK',{year:'numeric',month:'short',day:'numeric'});
 }
 
