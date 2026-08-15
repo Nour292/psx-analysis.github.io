@@ -329,7 +329,6 @@ select:focus,input:focus{border-color:var(--purple);}
     <button class="tab-btn active" data-tab="overview" onclick="goTab('overview')">🏦 Overview</button>
     <button class="tab-btn"        data-tab="debts"    onclick="goTab('debts')">📋 Debts</button>
     <button class="tab-btn"        data-tab="recv"     onclick="goTab('recv')">📥 Receivables</button>
-    <button class="tab-btn"        data-tab="goals"    onclick="goTab('goals')">🎯 Goals</button>
     <button class="tab-btn"        data-tab="income"   onclick="goTab('income')">💵 Income</button>
     <button class="tab-btn"        data-tab="abd"      onclick="goTab('abd')">🏦 Abdullah A/C</button>
     <button class="tab-btn"        data-tab="forms"    onclick="goTab('forms')">📝 Forms</button>
@@ -340,7 +339,6 @@ select:focus,input:focus{border-color:var(--purple);}
   <div id="tabOverview" class="tab-pane active"></div>
   <div id="tabDebts"    class="tab-pane"></div>
   <div id="tabRecv"     class="tab-pane"></div>
-  <div id="tabGoals"    class="tab-pane"></div>
   <div id="tabIncome"   class="tab-pane"></div>
   <div id="tabAbd"      class="tab-pane"></div>
   <div id="tabForms"    class="tab-pane"></div>
@@ -728,17 +726,6 @@ function renderRecv(){
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th>From</th><th>Cur</th><th class="r">PKR Amount</th><th class="r">SAR Amount</th><th>Certainty</th><th>Expected By</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 
-function renderGoals(){
-  const goals=bycat('Goal');
-  document.getElementById('tabGoals').innerHTML=`<div class="card">
-    <div class="card-hd"><span>🎯</span><span class="card-ttl">Goals & Targets</span></div>
-    <div class="card-bd"><div class="goals-grid">${goals.map(r=>`<div class="goal-row">
-      <div class="goal-name">${r[C.type]}${r[C.who]?' — <span style="color:var(--accent)">'+r[C.who]+'</span>':''}</div>
-      <div style="text-align:right;flex-shrink:0;display:flex;align-items:center;gap:10px">
-        ${r[C.out]?`<span class="num" style="font-size:13px;font-weight:700;color:var(--text)">${fmt(r[C.out],r[C.cur])}</span>`:(r[C.month]?`<span class="tbl-dim">${r[C.month]}</span>`:'')}
-        ${bdg(r[C.status])}
-      </div></div>`).join('')}</div></div></div>`;
-}
 
 function renderIncome(){
   const income=bycat('Income');
@@ -806,7 +793,6 @@ const LOG_TYPES = {
   'Balance':        ['Current Balance','Opening Balance'],
   'Visa Fund':      ['Fee Paid','Top-up','Target'],
   'Abdullah A/C':   ['Transfer In','Transfer Out','Fee','Expense'],
-  'Goal':           ['Target','Progress','Achieved'],
 };
 
 const WHO_OPTIONS = {
@@ -819,7 +805,6 @@ const WHO_OPTIONS = {
   'Balance Update': ['NCB (SNB)','STC Pay','HBL','MCB','Abdullah (Meezan)'],
   'Visa Fund':      ['MCB','Abdullah (Meezan)','Step2Europe'],
   'Abdullah A/C':   ['MCB','HBL','Huzefa','Moon','Abdullah','Gym'],
-  'Goal':           ['Visa Fund','MC ***9000','Hayyat','Ehab','Huzefa'],
 };
 
 const MONTHS_LIST=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -842,7 +827,7 @@ function renderForms(){
           <option>Card</option><option>Income</option><option>Debt</option>
           <option>Receivable</option><option>Expense</option>
           <option>Balance</option><option>Visa Fund</option>
-          <option>Abdullah A/C</option><option>Goal</option>
+          <option>Abdullah A/C</option>
         </select>
       </div>
       <div class="fgroup fg-2">
@@ -994,7 +979,7 @@ async function deleteRow(i){
   const r=_rows[i];
   if(!confirm(`Delete ${r[C.cat]} row — "${r[C.who]||r[C.type]}"?\nThis cannot be undone.`)) return;
   _rows.splice(i,1);
-  renderLog();renderOverview();renderDebts();renderRecv();renderGoals();renderIncome();renderAbd();
+  renderLog();renderOverview();renderDebts();renderRecv();renderIncome();renderAbd();
   await updateSheet(null);
 }
 
@@ -1009,7 +994,7 @@ function editRow(i){
   const cat=r[C.cat]||'';
   const typeOpts=LOG_TYPES[cat]||[];
   const whoOpts=WHO_OPTIONS[cat]||[];
-  const allCats=['Balance','Card','Visa Fund','Debt','Receivable','Income','Abdullah A/C','Goal','Expense','Balance Update'];
+  const allCats=['Balance','Card','Visa Fund','Debt','Receivable','Income','Abdullah A/C','Expense','Balance Update'];
   const mkOpt=(opts,sel)=>opts.map(o=>`<option${o===sel?' selected':''}>${o}</option>`).join('');
   const mkSelect=(id,opts,sel,extra='')=>`<select id="${id}" ${extra}>${opts.length?mkOpt(opts,sel):`<option>${sel||''}</option>`}</select>`;
 
@@ -1077,14 +1062,14 @@ async function saveEdit(){
   await updateSheet(st);
   setTimeout(()=>{
     closeEditModal();
-    renderLog();renderOverview();renderDebts();renderRecv();renderGoals();renderIncome();renderAbd();
+    renderLog();renderOverview();renderDebts();renderRecv();renderIncome();renderAbd();
   },800);
 }
 
 /* ══════════════════════════════════════
    SMART LIST
 ══════════════════════════════════════ */
-const CAT_LABELS={'Balance':'💰 Balance','Card':'💳 Card','Visa Fund':'🎯 Visa Fund','Debt':'📋 Debt','Receivable':'📥 Receivable','Income':'💵 Income','Abdullah A/C':'🏦 Abdullah A/C','Goal':'🎯 Goal'};
+const CAT_LABELS={'Balance':'💰 Balance','Card':'💳 Card','Visa Fund':'🎯 Visa Fund','Debt':'📋 Debt','Receivable':'📥 Receivable','Income':'💵 Income','Abdullah A/C':'🏦 Abdullah A/C'};
 const _SL={cat:'',priority:'',certainty:'',cur:'',month:''};
 
 function renderSearch(){
@@ -1199,7 +1184,7 @@ async function loadAll(){
     document.getElementById('loadState').innerHTML=`<div class="no-data">Budget_Log is empty. Run <strong>createBudgetLog()</strong> in Apps Script first.</div>`;
     return;
   }
-  renderOverview();renderDebts();renderRecv();renderGoals();renderIncome();renderAbd();
+  renderOverview();renderDebts();renderRecv();renderIncome();renderAbd();
   renderForms();renderSearch();renderLog();
   document.getElementById('loadState').style.display='none';
   document.getElementById('tabBar').style.display='flex';
