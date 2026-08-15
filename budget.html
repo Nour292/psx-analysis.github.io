@@ -300,8 +300,11 @@ select:focus,input:focus{border-color:var(--purple);}
       <button class="sub-btn" onclick="location.href='portfolio.html'">📊 Dashboard</button>
     </div>
     <div class="sb-div"></div>
-    <div class="grp-btn active-grp" style="display:flex;align-items:center;gap:10px;cursor:default">
-      <span class="ni">💰</span><span class="nl"> Personal Finance</span>
+    <div class="grp-btn active-grp open" onclick="togGrp(this,'pfSub')" style="display:flex;align-items:center;gap:10px">
+      <span class="ni">💰</span><span class="nl"> Personal Finance</span><span class="chev">▼</span>
+    </div>
+    <div class="grp-sub open" id="pfSub">
+      <button class="sub-btn" onclick="goTab('forms')">➕ Add New Record</button>
     </div>
   </nav>
   <div class="sb-foot">
