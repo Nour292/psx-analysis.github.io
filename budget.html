@@ -413,48 +413,20 @@ const bycat=cat=>_rows.filter(r=>r[C.cat]===cat);
    RENDER TABS
 ══════════════════════════════════════ */
 function renderOverview(){
-  const bal   = bycat('Balance');
-  const cards = bycat('Card');
   const debts = bycat('Debt');
   const recv  = bycat('Receivable');
-
-  // KPI strip — bank balances
-  let kH='<div class="kpi-strip">';
-  for(const r of bal){
-    const amt=nv(r[C.in]),cur=r[C.cur];
-    const cls=r[C.who].includes('MCB')?'visa':cur==='SAR'?'sar':'pkr';
-    kH+=`<div class="kpi ${cls}"><div class="kpi-lbl">${r[C.who]}</div><div class="kpi-val">${fmt(amt,cur)}</div><div class="kpi-note">${cur}</div></div>`;
-  }
-  kH+='</div>';
 
   // Summary totals — split by currency
   const totDebtSAR=debts.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.out]),0);
   const totDebtPKR=debts.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
-  // All confirmed+expected receivables (exclude Uncertain)
   const confRecv=recv.filter(r=>r[C.cert]!=='Uncertain');
   const confRecvSAR=confRecv.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
   const confRecvPKR=confRecv.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
-  // Primary display: if PKR total is larger, lead with that
-  const recvLeadPKR = confRecvPKR >= confRecvSAR*74; // rough SAR→PKR @74
-  const recvMain = recvLeadPKR ? pkr(confRecvPKR) : sar(confRecvSAR);
-  const recvSub  = recvLeadPKR
-    ? (confRecvSAR?sar(confRecvSAR)+' SAR':confRecv.length+' items')
-    : (confRecvPKR?pkr(confRecvPKR)+' PKR':'');
+  const recvLeadPKR=confRecvPKR>=confRecvSAR*74;
+  const recvMain=recvLeadPKR?pkr(confRecvPKR):sar(confRecvSAR);
+  const recvSub=recvLeadPKR?(confRecvSAR?sar(confRecvSAR)+' SAR':confRecv.length+' items'):(confRecvPKR?pkr(confRecvPKR)+' PKR':'');
 
-  // Credit cards
-  let ccH='';
-  for(const r of cards){
-    const cl=r[C.status]==='CLEARED';
-    ccH+=`<div class="cc-item"><div>
-      <div class="tbl-name" style="font-family:var(--mono)">${r[C.who]}</div>
-      <div class="tbl-dim">${r[C.notes]||''}</div></div>
-      <div style="text-align:right">
-        ${!cl?`<div class="num" style="color:var(--rose);font-weight:700">${sar(r[C.out])}</div>`:''}
-        <div style="margin-top:4px"><span class="badge ${cl?'green':'red'}">${r[C.status]}</span></div>
-      </div></div>`;
-  }
-
-  document.getElementById('tabOverview').innerHTML=`${kH}
+  document.getElementById('tabOverview').innerHTML=`
   <div class="sum-row">
     <div class="sum-card"><span class="sum-icon">🔴</span><div>
       <div class="sum-lbl">Total Debt</div>
@@ -465,10 +437,6 @@ function renderOverview(){
       <div class="sum-lbl">Receivable <span style="font-size:10px;color:var(--text3)">(excl. Uncertain)</span></div>
       <div class="sum-val" style="color:var(--emerald)">${recvMain}</div>
       <div class="sum-sub">${recvSub}</div>
-    </div></div>
-    <div class="sum-card"><span class="sum-icon">💳</span><div>
-      <div class="sum-lbl">Credit Cards</div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${ccH||'<span class="tbl-dim">No data</span>'}</div>
     </div></div>
   </div>
   <div id="adv-panel"></div>`;
@@ -482,11 +450,29 @@ function renderAdvisor(){
   const debts  = bycat('Debt');
   const recv   = bycat('Receivable');
   const bal    = bycat('Balance');
+  const cards  = bycat('Card');
   const visa   = bycat('Visa Fund');
   const income = bycat('Income');
 
-  /* ── balances ── */
+  /* ── balances KPI ── */
   const sarBal = bal.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
+  const balHTML=`<div class="kpi-strip" style="flex-wrap:wrap">${bal.map(r=>{
+    const amt=nv(r[C.in]),cur=r[C.cur];
+    const cls=r[C.who].includes('MCB')?'visa':cur==='SAR'?'sar':'pkr';
+    return`<div class="kpi ${cls}"><div class="kpi-lbl">${r[C.who]}</div><div class="kpi-val">${fmt(amt,cur)}</div><div class="kpi-note">${cur}</div></div>`;
+  }).join('')}</div>`;
+
+  /* ── credit cards ── */
+  const ccHTML=cards.map(r=>{
+    const cl=r[C.status]==='CLEARED';
+    return`<div class="cc-item">
+      <div><div class="tbl-name" style="font-family:var(--mono)">${r[C.who]}</div>
+      <div class="tbl-dim">${r[C.notes]||''}</div></div>
+      <div style="text-align:right">
+        ${!cl?`<div class="num" style="color:var(--rose);font-weight:700">${sar(r[C.out])}</div>`:''}
+        <div style="margin-top:3px"><span class="badge ${cl?'green':'red'}">${r[C.status]}</span></div>
+      </div></div>`;
+  }).join('')||'<span class="tbl-dim">No card data</span>';
 
   /* ── visa fund ── */
   const tgtRow  = visa.find(r=>(r[C.type]||'').toLowerCase().includes('target'));
@@ -640,6 +626,14 @@ function renderAdvisor(){
     <div class="adv-hd-text">
       <strong>Financial Advisor — Auto Analysis</strong>
       <span>Generated from your Budget_Log · ${_rows.length} entries · ${new Date().toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'})}</span>
+    </div>
+  </div>
+  <div class="adv-2col">
+    <div class="card"><div class="card-hd"><span>💰</span><span class="card-ttl">Account Balances</span></div>
+      <div class="card-bd" style="padding:12px 16px">${balHTML}</div>
+    </div>
+    <div class="card"><div class="card-hd"><span>💳</span><span class="card-ttl">Credit Cards</span></div>
+      <div class="card-bd" style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">${ccHTML}</div>
     </div>
   </div>
   <div class="adv-2col">
