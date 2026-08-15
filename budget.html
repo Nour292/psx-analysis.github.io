@@ -290,34 +290,23 @@ select:focus,input:focus{border-color:var(--purple);}
 
 <script>
 /* ══════════════════════════════════════
-   CONFIG — tab names in Google Sheets
+   CONFIG
 ══════════════════════════════════════ */
 const SID = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS  = 'https://script.google.com/macros/s/AKfycbwTYzhhh9q02qr_Epw4xnDNFPKCOeRqzqw1H5bM5ndn6CwUBcQ6Zti-EnDhJLjq-kiuGA/exec';
+const LOG_TAB = 'Budget_Log';
 
-// Each key → dedicated Google Sheets tab name
-const TABS = {
-  balances: 'Bgt_Balances',
-  cards:    'Bgt_Cards',
-  visa:     'Bgt_Visa',
-  debts:    'Bgt_Debts',
-  recv:     'Bgt_Recv',
-  income:   'Bgt_Income',
-  abd:      'Bgt_Abd',
-  goals:    'Bgt_Goals',
-  log:      'Budget_Log'
-};
+// Budget_Log column indices
+const C={date:0,cat:1,type:2,who:3,month:4,in:5,out:6,cur:7,pri:8,cert:9,status:10,notes:11};
 
-// Loaded data: each key → { headers:[], data:[[]] }
-let D = {};
-let _SF = {section:'', priority:'', certainty:''};
+let _rows=[]; // all Budget_Log rows
+let _SF={section:'',priority:'',certainty:''};
 
 /* ── UI HELPERS ── */
 function togTheme(){const l=document.documentElement.classList.toggle('light');localStorage.setItem('psx_theme',l?'light':'dark');document.getElementById('thIcon').textContent=l?'🌙':'☀️';document.getElementById('thLbl').textContent=l?' Dark Mode':' Light Mode';}
 (function(){if(localStorage.getItem('psx_theme')==='light'){document.documentElement.classList.add('light');document.getElementById('thIcon').textContent='🌙';document.getElementById('thLbl').textContent=' Dark Mode';}})();
 function togSb(){document.getElementById('sb').classList.toggle('col');document.documentElement.classList.toggle('sbc');}
 function togGrp(btn,id){btn.classList.toggle('open');document.getElementById(id).classList.toggle('open');}
-
 function goTab(name){
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn,.sub-btn').forEach(b=>b.classList.remove('active'));
@@ -325,17 +314,17 @@ function goTab(name){
   document.querySelectorAll('[data-tab="'+name+'"]').forEach(b=>b.classList.add('active'));
 }
 
-/* ── CSV PARSER ── */
+/* ── CSV ── */
 function parseCSV(txt){
   const rows=[];
   for(const line of txt.split('\n')){
     if(!line.trim()) continue;
     const row=[];let f='';let q=false;
     for(let i=0;i<line.length;i++){
-      const c=line[i];
-      if(c==='"'){if(q&&line[i+1]==='"'){f+='"';i++;}else q=!q;}
-      else if(c===','&&!q){row.push(f.trim());f='';}
-      else f+=c;
+      const ch=line[i];
+      if(ch==='"'){if(q&&line[i+1]==='"'){f+='"';i++;}else q=!q;}
+      else if(ch===','&&!q){row.push(f.trim());f='';}
+      else f+=ch;
     }
     row.push(f.trim());rows.push(row);
   }
@@ -346,169 +335,190 @@ function parseCSV(txt){
 const nv=v=>parseFloat(v)||0;
 const pkr=v=>'₨'+Math.round(nv(v)).toLocaleString('en-PK');
 const sar=v=>'SAR '+nv(v).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt=(v,cur)=>cur==='PKR'?pkr(v):sar(v);
+const num=v=>{const n=parseFloat(v);return isNaN(n)||n===0?'':n.toLocaleString('en',{minimumFractionDigits:0,maximumFractionDigits:2});};
 
 function bdg(p){
-  if(!p) return'';
-  const m={HIGH:'red',RETURN:'red',NEXT:'amber',QUEUE:'amber',ASSIGNED:'blue',WAITING:'gray',WATCH:'purple',LOAN:'purple',DONE:'green','PAID 31-Jul':'green','Aug salary':'amber'};
+  if(!p)return'';
+  const m={HIGH:'red',RETURN:'red',NEXT:'amber',QUEUE:'amber',ASSIGNED:'blue',WAITING:'gray',WATCH:'purple',LOAN:'purple',DONE:'green','PAID 31-Jul':'green','Aug salary':'amber','PAID':'green','GAP 903,622':'rose'};
   return`<span class="badge ${m[p]||'gray'}">${p}</span>`;
 }
 function priCls(p){return({'HIGH':'pri-HIGH','RETURN':'pri-RETURN','NEXT':'pri-NEXT','QUEUE':'pri-QUEUE','ASSIGNED':'pri-ASSIGNED','WAITING':'pri-WAITING','WATCH':'pri-WATCH','LOAN':'pri-LOAN'})[p]||'';}
+
+// Helper: filter rows by Category column
+const bycat=cat=>_rows.filter(r=>r[C.cat]===cat);
 
 /* ══════════════════════════════════════
    RENDER TABS
 ══════════════════════════════════════ */
 function renderOverview(){
-  const bal=D.balances||{headers:[],data:[]};
-  const cc=D.cards||{headers:[],data:[]};
-  const visa=D.visa||{headers:[],data:[]};
-  const debts=D.debts||{headers:[],data:[]};
-  const recv=D.recv||{headers:[],data:[]};
+  const bal   = bycat('Balance');
+  const cards = bycat('Card');
+  const visa  = bycat('Visa Fund');
+  const debts = bycat('Debt');
+  const recv  = bycat('Receivable');
 
-  // Visa fund: look up by Item name in column 0
-  const vm={};for(const r of visa.data) vm[(r[0]||'').trim()]=r[1];
-  const target=nv(vm['Target (6 months Jul 2026 – Jan 2027)']||3500000);
-  const mcbV=nv(vm['MCB']||0),abdV=nv(vm['Abdullah (Meezan)']||0);
-  const combined=mcbV+abdV,gap=target-combined;
-  const pct=Math.min(100,(combined/target)*100).toFixed(1);
-
-  // Totals
-  const dTot=debts.data.find(r=>r[0]==='TOTAL'||r[1]==='TOTAL');
-  const totDebtPKR=dTot?nv(dTot[3]||dTot[2]):0,totDebtSAR=dTot?nv(dTot[2]):0;
-  const confRecv=recv.data.filter(r=>r[3]==='Confirmed'||r[3]==='Expected').reduce((s,r)=>s+nv(r[1]),0);
-
-  // Balance cards
+  // KPI strip — bank balances
   let kH='<div class="kpi-strip">';
-  for(const row of bal.data){
-    const[acct,ccy,balance]=row;
-    const cls=acct.includes('MCB')?'visa':ccy==='SAR'?'sar':'pkr';
-    kH+=`<div class="kpi ${cls}"><div class="kpi-lbl">${acct}</div><div class="kpi-val">${ccy==='SAR'?sar(balance):pkr(balance)}</div><div class="kpi-note">${ccy}</div></div>`;
+  for(const r of bal){
+    const amt=nv(r[C.in]),cur=r[C.cur];
+    const cls=r[C.who].includes('MCB')?'visa':cur==='SAR'?'sar':'pkr';
+    kH+=`<div class="kpi ${cls}"><div class="kpi-lbl">${r[C.who]}</div><div class="kpi-val">${fmt(amt,cur)}</div><div class="kpi-note">${cur}</div></div>`;
   }
   kH+='</div>';
 
+  // Visa fund
+  const tgtRow =visa.find(r=>r[C.type]==='Target');
+  const target =nv(tgtRow?tgtRow[C.in]:3500000);
+  const mcbV   =nv((visa.find(r=>r[C.who]==='MCB')||[])[C.in]||0);
+  const abdV   =nv((visa.find(r=>r[C.who]==='Abdullah (Meezan)')||[])[C.in]||0);
+  const combined=mcbV+abdV,gap=Math.max(0,target-combined);
+  const pct=Math.min(100,(combined/target)*100).toFixed(1);
+
+  // Summary totals
+  const totDebtSAR=debts.reduce((s,r)=>s+nv(r[C.out]),0);
+  const confRecvPKR=recv.filter(r=>r[C.cert]!=='Uncertain').reduce((s,r)=>s+nv(r[C.in]),0);
+
   // Urgent actions
   const urg=[];
-  for(const row of debts.data){
-    const[,person,sAmt,,priority]=row;
-    if(!person||person==='TOTAL') continue;
-    if(priority==='HIGH')   urg.push({c:'var(--rose)',lbl:`Clear ${person}`,amt:sar(sAmt),note:'From Aug salary'});
-    if(priority==='RETURN') urg.push({c:'var(--rose)',lbl:`Return to ${person}`,amt:sar(sAmt),note:'After A.Rehman pays'});
+  for(const r of debts){
+    if(r[C.pri]==='HIGH')   urg.push({c:'var(--rose)',lbl:`Clear ${r[C.who]}`,amt:fmt(r[C.out],r[C.cur]),note:'From Aug salary'});
+    if(r[C.pri]==='RETURN') urg.push({c:'var(--rose)',lbl:`Return to ${r[C.who]}`,amt:fmt(r[C.out],r[C.cur]),note:'After A.Rehman pays'});
   }
-  for(const row of recv.data){
-    const[from,pAmt,,,note]=row;
-    if(!from||from.toUpperCase().includes('TOTAL')) continue;
-    if(note&&/(chase|follow)/i.test(note)) urg.push({c:'var(--amber)',lbl:`Chase ${from}`,amt:pkr(pAmt),note});
+  for(const r of recv){
+    if(r[C.status]==='Chase') urg.push({c:'var(--amber)',lbl:`Chase ${r[C.who]}`,amt:fmt(r[C.in],r[C.cur]),note:r[C.notes]||''});
   }
   if(gap>0) urg.push({c:'var(--amber)',lbl:'Visa Fund gap',amt:pkr(gap),note:`${pct}% funded`});
 
   // Credit cards
   let ccH='';
-  for(const row of cc.data){
-    const[card,balSAR,status,note]=row;
-    const cl=status==='CLEARED';
-    ccH+=`<div class="cc-item"><div><div style="font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono)">${card}</div><div style="font-size:11px;color:var(--text3)">${note||''}</div></div>
-      <div style="text-align:right">${!cl?`<div class="num" style="color:var(--rose);font-weight:700">${sar(balSAR)}</div>`:''}<div style="margin-top:4px"><span class="badge ${cl?'green':'red'}">${status}</span></div></div></div>`;
+  for(const r of cards){
+    const cl=r[C.status]==='CLEARED';
+    ccH+=`<div class="cc-item"><div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono)">${r[C.who]}</div>
+      <div style="font-size:11px;color:var(--text3)">${r[C.notes]||''}</div></div>
+      <div style="text-align:right">${!cl?`<div class="num" style="color:var(--rose);font-weight:700">${sar(r[C.out])}</div>`:''}
+      <div style="margin-top:4px"><span class="badge ${cl?'green':'red'}">${r[C.status]}</span></div></div></div>`;
   }
 
   document.getElementById('tabOverview').innerHTML=`${kH}
-    <div class="sum-row">
-      <div class="sum-card"><span class="sum-icon">🔴</span><div><div class="sum-lbl">Total Debt</div><div class="sum-val" style="color:var(--rose)">${pkr(totDebtPKR)}</div><div class="sum-sub">${sar(totDebtSAR)}</div></div></div>
-      <div class="sum-card"><span class="sum-icon">🟢</span><div><div class="sum-lbl">Receivable</div><div class="sum-val" style="color:var(--emerald)">${pkr(confRecv)}</div><div class="sum-sub">Confirmed + Expected</div></div></div>
-      <div class="sum-card"><span class="sum-icon">🎯</span><div><div class="sum-lbl">Visa Fund</div><div class="sum-val" style="color:var(--amber)">${pct}%</div><div class="sum-sub">Gap ${pkr(gap)}</div></div></div>
-    </div>
-    <div class="row2">
-      <div class="card"><div class="card-hd"><span style="color:var(--amber)">🎯</span><span class="card-ttl">Visa Fund Progress</span></div>
-        <div class="card-bd">
-          <div class="visa-grid">
-            <div class="vg-item"><div class="vg-lbl">MCB</div><div class="vg-val" style="color:var(--emerald)">${pkr(mcbV)}</div></div>
-            <div class="vg-item"><div class="vg-lbl">Abdullah (Meezan)</div><div class="vg-val" style="color:var(--emerald)">${pkr(abdV)}</div></div>
-            <div class="vg-item"><div class="vg-lbl">Combined</div><div class="vg-val" style="color:var(--accent)">${pkr(combined)}</div></div>
-            <div class="vg-item"><div class="vg-lbl">Target</div><div class="vg-val">${pkr(target)}</div></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px"><span>${pct}% funded</span><span>6 months · Jul 2026–Jan 2027</span></div>
-          <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-          <div class="gap-badge">⚠ Gap ${pkr(gap)}</div>
+  <div class="sum-row">
+    <div class="sum-card"><span class="sum-icon">🔴</span><div><div class="sum-lbl">Total Debt</div><div class="sum-val" style="color:var(--rose)">${sar(totDebtSAR)}</div><div class="sum-sub">${debts.length} outstanding</div></div></div>
+    <div class="sum-card"><span class="sum-icon">🟢</span><div><div class="sum-lbl">Receivable</div><div class="sum-val" style="color:var(--emerald)">${pkr(confRecvPKR)}</div><div class="sum-sub">Confirmed + Expected</div></div></div>
+    <div class="sum-card"><span class="sum-icon">🎯</span><div><div class="sum-lbl">Visa Fund</div><div class="sum-val" style="color:var(--amber)">${pct}%</div><div class="sum-sub">Gap ${pkr(gap)}</div></div></div>
+  </div>
+  <div class="row2">
+    <div class="card"><div class="card-hd"><span style="color:var(--amber)">🎯</span><span class="card-ttl">Visa Fund Progress</span></div>
+      <div class="card-bd">
+        <div class="visa-grid">
+          <div class="vg-item"><div class="vg-lbl">MCB</div><div class="vg-val" style="color:var(--emerald)">${pkr(mcbV)}</div></div>
+          <div class="vg-item"><div class="vg-lbl">Abdullah (Meezan)</div><div class="vg-val" style="color:var(--emerald)">${pkr(abdV)}</div></div>
+          <div class="vg-item"><div class="vg-lbl">Combined</div><div class="vg-val" style="color:var(--accent)">${pkr(combined)}</div></div>
+          <div class="vg-item"><div class="vg-lbl">Target</div><div class="vg-val">${pkr(target)}</div></div>
         </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px"><span>${pct}% funded</span><span>6 months · Jul 2026–Jan 2027</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+        <div class="gap-badge">⚠ Gap ${pkr(gap)}</div>
       </div>
-      <div class="card"><div class="card-hd"><span style="color:var(--rose)">💳</span><span class="card-ttl">Credit Cards</span></div><div class="card-bd">${ccH||'<span style="color:var(--text3)">No data</span>'}</div></div>
     </div>
-    <div class="card"><div class="card-hd"><span style="color:var(--rose)">⚡</span><span class="card-ttl">Urgent Actions</span></div>
-      <div class="card-bd"><div class="urg-grid">${urg.map(u=>`<div class="urg-item"><div class="urg-dot" style="background:${u.c}"></div><div class="urg-desc">${u.lbl}<span class="urg-note">${u.note}</span></div><div class="urg-amt">${u.amt}</div></div>`).join('')||'<span style="color:var(--text3)">No urgent actions</span>'}</div></div>
-    </div>`;
+    <div class="card"><div class="card-hd"><span style="color:var(--rose)">💳</span><span class="card-ttl">Credit Cards</span></div>
+      <div class="card-bd">${ccH||'<span style="color:var(--text3)">No data</span>'}</div>
+    </div>
+  </div>
+  <div class="card"><div class="card-hd"><span style="color:var(--rose)">⚡</span><span class="card-ttl">Urgent Actions</span></div>
+    <div class="card-bd"><div class="urg-grid">${urg.map(u=>`<div class="urg-item"><div class="urg-dot" style="background:${u.c}"></div><div class="urg-desc">${u.lbl}<span class="urg-note">${u.note}</span></div><div class="urg-amt">${u.amt}</div></div>`).join('')||'<span style="color:var(--text3)">No urgent actions</span>'}</div></div>
+  </div>`;
 }
 
 function renderDebts(){
-  const {headers,data}=D.debts||{headers:[],data:[]};
+  const debts=bycat('Debt');
   let rows='';
-  for(const row of data){
-    const isTot=row[0]==='TOTAL'||row[1]==='TOTAL';
-    const[no,person,sAmt,pAmt,priority,note]=row;
-    rows+=`<tr class="${isTot?'tot-row':''}"><td>${no||''}</td>
-      <td style="font-weight:500;color:var(--text)">${person||''}</td>
-      <td class="num ${priCls(priority)}">${sAmt?sar(sAmt):''}</td>
-      <td class="num">${pAmt?pkr(pAmt):''}</td>
-      <td>${!isTot&&priority?bdg(priority):''}</td>
-      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:220px">${note||''}</td></tr>`;
+  for(const r of debts){
+    rows+=`<tr><td style="font-weight:500;color:var(--text)">${r[C.who]}</td>
+      <td class="num ${priCls(r[C.pri])}">${r[C.out]?fmt(r[C.out],r[C.cur]):''}</td>
+      <td>${r[C.pri]?bdg(r[C.pri]):''}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:220px">${r[C.notes]||''}</td></tr>`;
   }
+  const tot=debts.reduce((s,r)=>s+nv(r[C.out]),0);
+  rows+=`<tr class="tot-row"><td>TOTAL</td><td class="num">${sar(tot)}</td><td></td><td></td></tr>`;
   document.getElementById('tabDebts').innerHTML=`<div class="card"><div class="card-hd"><span style="color:var(--rose)">📋</span><span class="card-ttl">Debts — Priority Order</span><span style="margin-left:auto;font-size:11px;color:var(--text3)">🔴 HIGH → 🟡 NEXT → ⚪ WAITING</span></div>
-    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Person</th><th>SAR</th><th>PKR</th><th>Priority</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Amount</th><th>Priority</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
 }
 
 function renderRecv(){
-  const {data}=D.recv||{headers:[],data:[]};
+  const recv=bycat('Receivable');
   let rows='';let unc=false;
-  for(const row of data){
-    const[from,pAmt,sAmt,certainty,note]=row;if(!from) continue;
-    const isTot=from.toUpperCase().includes('TOTAL');
-    const isU=certainty==='Uncertain';
+  for(const r of recv){
+    const isU=r[C.cert]==='Uncertain';
     if(isU&&!unc){rows+=`<tr><td colspan="5" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:10px 12px 4px">Uncertain — Do Not Plan On</td></tr>`;unc=true;}
-    rows+=`<tr class="${isTot?'tot-row':isU?'muted-row':''}">
-      <td style="font-weight:500;color:var(--text)">${from}</td>
-      <td class="num">${pAmt?pkr(pAmt):''}</td><td class="num">${sAmt?sar(sAmt):''}</td>
-      <td>${certainty?`<span class="badge ${certainty==='Confirmed'?'green':certainty==='Expected'?'blue':'gray'}">${certainty}</span>`:''}</td>
-      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:200px">${note||''}</td></tr>`;
+    rows+=`<tr class="${isU?'muted-row':''}">
+      <td style="font-weight:500;color:var(--text)">${r[C.who]}</td>
+      <td class="num">${r[C.in]?fmt(r[C.in],r[C.cur]):''}</td>
+      <td>${r[C.cert]?`<span class="badge ${{Confirmed:'green',Expected:'blue',Uncertain:'gray'}[r[C.cert]]||'gray'}">${r[C.cert]}</span>`:''}</td>
+      <td style="font-size:11px;color:var(--text2)">${r[C.status]||''}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:200px">${r[C.notes]||''}</td></tr>`;
   }
+  const tot=recv.filter(r=>r[C.cert]!=='Uncertain').reduce((s,r)=>s+nv(r[C.in]),0);
+  rows+=`<tr class="tot-row"><td>TOTAL (Conf+Expected)</td><td class="num">${pkr(tot)}</td><td></td><td></td><td></td></tr>`;
   document.getElementById('tabRecv').innerHTML=`<div class="card"><div class="card-hd"><span style="color:var(--emerald)">📥</span><span class="card-ttl">Receivables</span></div>
-    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>From</th><th>PKR</th><th>SAR</th><th>Status</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>From</th><th>Amount</th><th>Certainty</th><th>Status</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
 }
 
 function renderGoals(){
-  const {data}=D.goals||{headers:[],data:[]};
+  const goals=bycat('Goal');
   document.getElementById('tabGoals').innerHTML=`<div class="card"><div class="card-hd"><span style="color:var(--amber)">🎯</span><span class="card-ttl">Goals & Targets</span></div>
-    <div class="card-bd"><div class="goals-grid">${data.filter(r=>r[0]).map(r=>`<div class="goal-row"><div class="goal-name">${r[0]}</div><div style="text-align:right;flex-shrink:0"><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${r[1]||''}</div>${bdg(r[2])}</div></div>`).join('')}</div></div></div>`;
+    <div class="card-bd"><div class="goals-grid">${goals.map(r=>`<div class="goal-row">
+      <div class="goal-name">${r[C.type]}${r[C.who]?' — '+r[C.who]:''}</div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${r[C.out]?fmt(r[C.out],r[C.cur]):(r[C.month]||'')}</div>
+        ${bdg(r[C.status])}
+      </div></div>`).join('')}</div></div></div>`;
 }
 
 function renderIncome(){
-  const {data}=D.income||{headers:[],data:[]};
-  let rows='';
-  for(const row of data){
-    const[month,sal,extra,total,remit,bal,remitPkr]=row;if(!month) continue;
-    const isTot=month==='TOTAL';
-    rows+=`<tr class="${isTot?'tot-row':''}"><td style="color:var(--text)">${month}</td>
-      <td class="num">${sal?sar(sal):''}</td><td class="num">${extra&&extra!='0'?sar(extra):'—'}</td>
-      <td class="num" style="font-weight:600">${total?sar(total):''}</td>
-      <td class="num">${remit&&remit!='0'?sar(remit):'—'}</td>
-      <td class="num" style="color:${nv(bal)<0?'var(--rose)':'var(--text2)'}">${bal?sar(bal):''}</td>
-      <td class="num" style="color:var(--emerald)">${remitPkr&&remitPkr!='0'?pkr(remitPkr):'—'}</td></tr>`;
+  const income=bycat('Income');
+  const months={};
+  for(const r of income){
+    const m=r[C.month]||'?';
+    if(!months[m]) months[m]={sal:0,ext:0,rem:0,remNote:''};
+    const t=(r[C.type]||'').toLowerCase();
+    if(t==='salary')         months[m].sal +=nv(r[C.in]);
+    else if(t==='extra')     months[m].ext +=nv(r[C.in]);
+    else if(t==='remittance'){months[m].rem+=nv(r[C.out]);months[m].remNote=r[C.notes]||'';}
   }
+  let rows='';let tS=0,tE=0,tR=0;
+  const ORDER=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const sorted=Object.keys(months).sort((a,b)=>ORDER.indexOf(a)-ORDER.indexOf(b));
+  for(const m of sorted){
+    const v=months[m];const tot=v.sal+v.ext;tS+=v.sal;tE+=v.ext;tR+=v.rem;
+    rows+=`<tr><td style="color:var(--text)">${m}</td>
+      <td class="num">${sar(v.sal)}</td>
+      <td class="num">${v.ext?sar(v.ext):'—'}</td>
+      <td class="num" style="font-weight:600">${sar(tot)}</td>
+      <td class="num">${v.rem?sar(v.rem):'—'}</td>
+      <td class="num" style="color:var(--emerald)">${v.remNote||'—'}</td></tr>`;
+  }
+  rows+=`<tr class="tot-row"><td>TOTAL</td><td class="num">${sar(tS)}</td><td class="num">${sar(tE)}</td><td class="num">${sar(tS+tE)}</td><td class="num">${sar(tR)}</td><td></td></tr>`;
   document.getElementById('tabIncome').innerHTML=`<div class="card"><div class="card-hd"><span style="color:var(--accent)">💵</span><span class="card-ttl">Income & Remittance History</span></div>
-    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Month</th><th>Salary</th><th>Extra</th><th>Total In</th><th>Remit SAR</th><th>Balance</th><th>Remit PKR</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Month</th><th>Salary SAR</th><th>Extra SAR</th><th>Total In</th><th>Remit SAR</th><th>Remit PKR</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
 }
 
 function renderAbd(){
-  const {data}=D.abd||{headers:[],data:[]};
+  const abd=bycat('Abdullah A/C');
   let rows='';
-  for(const row of data){
-    const[no,date,desc,inP,outP,balP,flag]=row;if(!date&&!desc) continue;
-    const isTot=desc&&desc.includes('Current Balance');
-    rows+=`<tr class="${isTot?'tot-row':''}"><td style="color:var(--text3)">${no||''}</td>
-      <td style="color:var(--text3);font-size:11px">${date||''}</td><td style="color:var(--text)">${desc||''}</td>
-      <td class="num" style="color:var(--emerald)">${inP&&inP!='0'?pkr(inP):''}</td>
-      <td class="num" style="color:var(--rose)">${outP&&outP!='0'?pkr(outP):''}</td>
-      <td class="num" style="font-weight:600;color:var(--accent)">${balP?pkr(balP):''}</td>
-      <td style="color:var(--amber);font-size:11px">${flag||''}</td></tr>`;
+  for(const r of abd){
+    rows+=`<tr>
+      <td style="color:var(--text3);font-size:11px;white-space:nowrap">${r[C.date]}</td>
+      <td style="color:var(--text2)">${r[C.type]||''}</td>
+      <td style="color:var(--text)">${r[C.who]||''}</td>
+      <td style="font-size:11px;color:var(--text3)">${r[C.month]||''}</td>
+      <td class="num" style="color:var(--emerald)">${r[C.in]&&r[C.in]!='0'?pkr(r[C.in]):''}</td>
+      <td class="num" style="color:var(--rose)">${r[C.out]&&r[C.out]!='0'?pkr(r[C.out]):''}</td>
+      <td style="color:var(--amber);font-size:11px">${r[C.status]||''}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:180px">${r[C.notes]||''}</td></tr>`;
   }
   document.getElementById('tabAbd').innerHTML=`<div class="card"><div class="card-hd"><span style="color:var(--purple)">🏦</span><span class="card-ttl">Abdullah Meezan — Visa Statement</span><span style="margin-left:auto;font-size:10px;color:var(--amber)">⚠ Non-visa flagged</span></div>
-    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Date</th><th>Description</th><th>In PKR</th><th>Out PKR</th><th>Balance</th><th>Flag</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Month</th><th>In PKR</th><th>Out PKR</th><th>Flag</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
 }
 
 /* ══════════════════════════════════════
@@ -605,7 +615,7 @@ async function saveLog(){
 
   st.textContent='⏳ Saving…';st.style.color='var(--amber)';
 
-  const row=[date,cat,type,who,month,amtIn,amtOut,cur,note];
+  const row=[date,cat,type,who,month,amtIn,amtOut,cur,'','','',note];
   try{
     const resp=await fetch(GS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'appendRow',tab:'Budget_Log',row})});
@@ -627,79 +637,62 @@ async function saveLog(){
 let _logCat='';
 
 function renderLog(){
-  const {headers,data}=D.log||{headers:[],data:[]};
-  if(!data.length){
-    document.getElementById('tabLog').innerHTML=`<div class="no-data">Budget_Log tab not found or empty. Run <strong>createBudgetLog()</strong> in Apps Script first.</div>`;
+  if(!_rows.length){
+    document.getElementById('tabLog').innerHTML=`<div class="no-data">Budget_Log is empty. Run <strong>createBudgetLog()</strong> in Apps Script first.</div>`;
     return;
   }
-
-  const cats=['All',...new Set(data.map(r=>r[1]||'').filter(Boolean))];
-  const pills=cats.map(c=>`<button class="fpill${_logCat===c||(_logCat===''&&c==='All')?' active':''}" onclick="filterLog('${c}')">${c}</button>`).join('');
-
-  const filtered=_logCat&&_logCat!=='All'?data.filter(r=>r[1]===_logCat):data;
-
-  const num=v=>{const n=parseFloat(v);return isNaN(n)||n===0?'':n.toLocaleString('en',{minimumFractionDigits:0,maximumFractionDigits:2});};
-  const rows=filtered.map(r=>{
-    const[date,cat,type,who,month,amtIn,amtOut,cur,pri,cert,status,notes]=r;
-    const priCls={'HIGH':'red','RETURN':'red','NEXT':'amber','QUEUE':'amber','ASSIGNED':'blue','WAITING':'gray','WATCH':'purple','LOAN':'purple'}[pri]||'';
-    return`<tr>
-      <td style="color:var(--text3);font-size:11px;white-space:nowrap">${date}</td>
-      <td><span class="badge ${{Balance:'blue',Card:'red',Debt:'red','Visa Fund':'amber',Receivable:'green',Income:'green','Abdullah A/C':'purple',Goal:'amber','Balance Update':'blue'}[cat]||'gray'}">${cat}</span></td>
-      <td style="font-size:12px;color:var(--text2)">${type||''}</td>
-      <td style="font-weight:500;color:var(--text)">${who||''}</td>
-      <td style="font-size:11px;color:var(--text3)">${month||''}</td>
-      <td class="num" style="color:var(--emerald)">${num(amtIn)}</td>
-      <td class="num" style="color:var(--rose)">${num(amtOut)}</td>
-      <td style="font-size:11px;color:var(--text3)">${cur||''}</td>
-      <td>${pri?`<span class="badge ${priCls}">${pri}</span>`:''}</td>
-      <td>${cert?`<span class="badge ${{Confirmed:'green',Expected:'blue',Uncertain:'gray'}[cert]||'gray'}">${cert}</span>`:''}</td>
-      <td style="font-size:11px;color:var(--text2)">${status||''}</td>
-      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:180px">${notes||''}</td>
-    </tr>`;
-  }).join('');
-
+  const cats=['All',...new Set(_rows.map(r=>r[C.cat]||'').filter(Boolean))];
+  const pills=cats.map(c=>`<button class="fpill${(_logCat===c||(_logCat===''&&c==='All'))?' active':''}" onclick="filterLog('${c}')">${c}</button>`).join('');
+  const filtered=_logCat&&_logCat!=='All'?_rows.filter(r=>r[C.cat]===_logCat):_rows;
+  const CAT_CLR={Balance:'blue',Card:'red',Debt:'red','Visa Fund':'amber',Receivable:'green',Income:'green','Abdullah A/C':'purple',Goal:'amber'};
+  const PRI_CLR={HIGH:'red',RETURN:'red',NEXT:'amber',QUEUE:'amber',ASSIGNED:'blue',WAITING:'gray',WATCH:'purple',LOAN:'purple'};
+  const rows=filtered.map(r=>`<tr>
+    <td style="color:var(--text3);font-size:11px;white-space:nowrap">${r[C.date]}</td>
+    <td><span class="badge ${CAT_CLR[r[C.cat]]||'gray'}">${r[C.cat]}</span></td>
+    <td style="font-size:12px;color:var(--text2)">${r[C.type]||''}</td>
+    <td style="font-weight:500;color:var(--text)">${r[C.who]||''}</td>
+    <td style="font-size:11px;color:var(--text3)">${r[C.month]||''}</td>
+    <td class="num" style="color:var(--emerald)">${num(r[C.in])}</td>
+    <td class="num" style="color:var(--rose)">${num(r[C.out])}</td>
+    <td style="font-size:11px;color:var(--text3)">${r[C.cur]||''}</td>
+    <td>${r[C.pri]?`<span class="badge ${PRI_CLR[r[C.pri]]||'gray'}">${r[C.pri]}</span>`:''}</td>
+    <td>${r[C.cert]?`<span class="badge ${{Confirmed:'green',Expected:'blue',Uncertain:'gray'}[r[C.cert]]||'gray'}">${r[C.cert]}</span>`:''}</td>
+    <td style="font-size:11px;color:var(--text2)">${r[C.status]||''}</td>
+    <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:180px">${r[C.notes]||''}</td>
+  </tr>`).join('');
   document.getElementById('tabLog').innerHTML=`
   <div class="srch-box" style="margin-bottom:0;border-radius:var(--radius) var(--radius) 0 0">
     <div class="fl">Filter by Category</div>
     <div class="fpills">${pills}</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:6px">${filtered.length} of ${data.length} rows</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">${filtered.length} of ${_rows.length} rows</div>
   </div>
   <div class="card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none">
     <div class="tbl-wrap">
       <table class="tbl">
-        <thead><tr>
-          <th>Date</th><th>Category</th><th>Type</th><th>Account / Card / Person</th>
+        <thead><tr><th>Date</th><th>Category</th><th>Type</th><th>Account / Card / Person</th>
           <th>Month</th><th>Amount In</th><th>Amount Out</th><th>Cur</th>
-          <th>Priority</th><th>Certainty</th><th>Status</th><th>Notes</th>
-        </tr></thead>
+          <th>Priority</th><th>Certainty</th><th>Status</th><th>Notes</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
   </div>`;
 }
 
-function filterLog(cat){
-  _logCat=cat==='All'?'':cat;
-  renderLog();
-}
+function filterLog(cat){_logCat=cat==='All'?'':cat;renderLog();}
 
 /* ══════════════════════════════════════
    FILTER SEARCH
 ══════════════════════════════════════ */
+const CAT_LABELS={'Balance':'💰 Balances','Card':'💳 Credit Cards','Visa Fund':'🎯 Visa Fund','Debt':'📋 Debts','Receivable':'📥 Receivables','Income':'💵 Income','Abdullah A/C':'🏦 Abdullah A/C','Goal':'🎯 Goals'};
+
 function renderSearch(){
+  const cats=Object.keys(CAT_LABELS);
   document.getElementById('tabSearch').innerHTML=`
   <div class="srch-box">
-    <div><div class="fl">Section</div>
+    <div><div class="fl">Category</div>
       <div class="fpills" id="pill-sec">
         <button class="fpill active" onclick="sf('section','',this)">All</button>
-        <button class="fpill" onclick="sf('section','balances',this)">💰 Balances</button>
-        <button class="fpill" onclick="sf('section','cards',this)">💳 Credit Cards</button>
-        <button class="fpill" onclick="sf('section','visa',this)">🎯 Visa Fund</button>
-        <button class="fpill" onclick="sf('section','debts',this)">📋 Debts</button>
-        <button class="fpill" onclick="sf('section','recv',this)">📥 Receivables</button>
-        <button class="fpill" onclick="sf('section','income',this)">💵 Income</button>
-        <button class="fpill" onclick="sf('section','abd',this)">🏦 Abdullah A/C</button>
-        <button class="fpill" onclick="sf('section','goals',this)">🎯 Goals</button>
+        ${cats.map(c=>`<button class="fpill" onclick="sf('section','${c}',this)">${CAT_LABELS[c]}</button>`).join('')}
       </div>
     </div>
     <div id="subfilter" style="display:none"></div>
@@ -707,12 +700,12 @@ function renderSearch(){
       <div style="flex:1"><div class="fl">Keyword</div>
         <input class="srch-in" id="sk-kw" placeholder="Name, amount, date, note, account…" oninput="doSearch()">
       </div>
-      <div><div class="fl">Min PKR</div><input class="srch-in srch-mini" id="sk-min" type="number" placeholder="0" oninput="doSearch()"></div>
-      <div><div class="fl">Max PKR</div><input class="srch-in srch-mini" id="sk-max" type="number" placeholder="∞" oninput="doSearch()"></div>
+      <div><div class="fl">Min Amount</div><input class="srch-in srch-mini" id="sk-min" type="number" placeholder="0" oninput="doSearch()"></div>
+      <div><div class="fl">Max Amount</div><input class="srch-in srch-mini" id="sk-max" type="number" placeholder="∞" oninput="doSearch()"></div>
       <div style="align-self:flex-end"><button class="srch-btn" onclick="doSearch()">🔍 Search</button></div>
     </div>
   </div>
-  <div class="srch-res" id="srch-out"><div class="sr-none">Select a section or type a keyword to search</div></div>`;
+  <div class="srch-res" id="srch-out"><div class="sr-none">Select a category or type a keyword to search</div></div>`;
 }
 
 function sf(type,val,btn){
@@ -722,10 +715,10 @@ function sf(type,val,btn){
   if(type==='section'){
     _SF.priority='';_SF.certainty='';
     const sub=document.getElementById('subfilter');
-    if(val==='debts'){
+    if(val==='Debt'){
       sub.style.display='block';
       sub.innerHTML=`<div class="fl">Priority</div><div class="fpills"><button class="fpill active" onclick="sf('priority','',this)">All</button>${['HIGH','RETURN','NEXT','QUEUE','ASSIGNED','WAITING','WATCH','LOAN'].map(p=>`<button class="fpill" onclick="sf('priority','${p}',this)">${p}</button>`).join('')}</div>`;
-    }else if(val==='recv'){
+    }else if(val==='Receivable'){
       sub.style.display='block';
       sub.innerHTML=`<div class="fl">Certainty</div><div class="fpills"><button class="fpill active" onclick="sf('certainty','',this)">All</button>${['Confirmed','Expected','Uncertain'].map(c=>`<button class="fpill" onclick="sf('certainty','${c}',this)">${c}</button>`).join('')}</div>`;
     }else sub.style.display='none';
@@ -735,81 +728,52 @@ function sf(type,val,btn){
 
 function doSearch(){
   const kw=(document.getElementById('sk-kw')?.value||'').trim().toLowerCase();
-  const minP=parseFloat(document.getElementById('sk-min')?.value)||0;
-  const maxP=parseFloat(document.getElementById('sk-max')?.value)||Infinity;
+  const minA=parseFloat(document.getElementById('sk-min')?.value)||0;
+  const maxA=parseFloat(document.getElementById('sk-max')?.value)||Infinity;
   const{section,priority,certainty}=_SF;
-  const hasF=section||priority||certainty||kw||minP>0||maxP<Infinity;
+  const hasF=section||priority||certainty||kw||minA>0||maxA<Infinity;
   const out=document.getElementById('srch-out');
-  if(!hasF){out.innerHTML='<div class="sr-none">Select a section or type a keyword to search</div>';return;}
+  if(!hasF){out.innerHTML='<div class="sr-none">Select a category or type a keyword to search</div>';return;}
 
-  const results=[];
-  const keys=section?[section]:Object.keys(TABS);
-  for(const key of keys){
-    const sec=D[key];if(!sec) continue;
-    for(const row of sec.data){
-      if(priority&&!row.includes(priority)) continue;
-      if(certainty&&!row.includes(certainty)) continue;
-      if(kw&&!row.join(' ').toLowerCase().includes(kw)) continue;
-      if(minP>0||maxP<Infinity){const nums=row.map(c=>parseFloat(c)).filter(v=>!isNaN(v)&&v>100);if(!nums.some(v=>v>=minP&&v<=maxP)) continue;}
-      results.push({key,headers:sec.headers,row});
-    }
-  }
+  let pool=section?_rows.filter(r=>r[C.cat]===section):[..._rows];
+  if(priority) pool=pool.filter(r=>r[C.pri]===priority);
+  if(certainty) pool=pool.filter(r=>r[C.cert]===certainty);
+  if(kw) pool=pool.filter(r=>r.join(' ').toLowerCase().includes(kw));
+  if(minA>0||maxA<Infinity) pool=pool.filter(r=>{const v=Math.max(nv(r[C.in]),nv(r[C.out]));return v>=minA&&v<=maxA;});
 
-  if(!results.length){out.innerHTML='<div class="sr-none">No results matching the selected filters</div>';return;}
+  if(!pool.length){out.innerHTML='<div class="sr-none">No results matching the selected filters</div>';return;}
 
   const grp={};
-  for(const r of results){if(!grp[r.key]) grp[r.key]={h:r.headers,rows:[]};grp[r.key].rows.push(r.row);}
-
-  const TAB_NAMES={balances:'Balances',cards:'Credit Cards',visa:'Visa Fund',debts:'Debts',recv:'Receivables',income:'Income',abd:'Abdullah A/C',goals:'Goals'};
-  out.innerHTML=Object.entries(grp).map(([key,g])=>{
-    const hdrs=g.h.filter(h=>h);
-    const trows=g.rows.map(row=>`<tr>${hdrs.map((_,i)=>{const c=row[i]||'';const hi=kw&&c.toLowerCase().includes(kw);return`<td class="${hi?'sr-hit num':''}">${c}</td>`;}).join('')}</tr>`).join('');
-    return`<div class="card" style="margin-bottom:8px"><div class="card-hd"><span class="card-ttl">${TAB_NAMES[key]||key}</span><span style="margin-left:auto;font-size:11px;color:var(--text3)">${g.rows.length} result${g.rows.length>1?'s':''}</span></div>
-      <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr>${hdrs.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${trows}</tbody></table></div></div></div>`;
+  for(const r of pool){const k=r[C.cat]||'?';if(!grp[k])grp[k]=[];grp[k].push(r);}
+  const HDRS=['Date','Category','Type','Account / Card / Person','Month','Amt In','Amt Out','Cur','Priority','Certainty','Status','Notes'];
+  out.innerHTML=Object.entries(grp).map(([cat,rows])=>{
+    const trows=rows.map(r=>`<tr>${r.map((c,i)=>{const hi=kw&&(c||'').toLowerCase().includes(kw);return`<td class="${hi?'sr-hit':i>=5&&i<=6?'num':''}">${c||''}</td>`;}).join('')}</tr>`).join('');
+    return`<div class="card" style="margin-bottom:8px"><div class="card-hd"><span class="card-ttl">${CAT_LABELS[cat]||cat}</span><span style="margin-left:auto;font-size:11px;color:var(--text3)">${rows.length} result${rows.length>1?'s':''}</span></div>
+      <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr>${HDRS.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${trows}</tbody></table></div></div></div>`;
   }).join('');
 }
 
-
 /* ══════════════════════════════════════
-   LOAD — fetches each tab independently
+   LOAD — single Budget_Log fetch
 ══════════════════════════════════════ */
-async function loadTab(key){
-  const url=`https://docs.google.com/spreadsheets/d/${SID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TABS[key])}&_=${Date.now()}`;
+async function loadAll(){
   try{
+    const url=`https://docs.google.com/spreadsheets/d/${SID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(LOG_TAB)}&_=${Date.now()}`;
     const r=await fetch(url);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const rows=parseCSV(await r.text());
-    return{headers:rows[0]||[],data:rows.slice(1)};
+    _rows=rows.slice(1).filter(r=>r.some(c=>c));
   }catch(e){
-    console.warn('Tab',TABS[key],'not found:',e.message);
-    return{headers:[],data:[],missing:true};
-  }
-}
-
-async function loadAll(){
-  const keys=Object.keys(TABS);
-  const results=await Promise.all(keys.map(k=>loadTab(k)));
-  keys.forEach((k,i)=>D[k]=results[i]);
-
-  const missing=keys.filter(k=>D[k].missing);
-  if(missing.length===keys.length){
-    document.getElementById('loadState').innerHTML=`
-      <div class="no-data" style="max-width:500px;text-align:left">
-        <strong>⚠ Budget tabs not found</strong><br><br>
-        The separate budget tabs (Bgt_Balances, Bgt_Debts, etc.) do not exist yet.<br><br>
-        <strong>Run the setup script once:</strong><br>
-        1. Open the Google Sheet → Extensions → Apps Script<br>
-        2. Paste the <code>createBudgetTabs()</code> script<br>
-        3. Click Run → grant permission<br>
-        4. Refresh this page
-      </div>`;
+    document.getElementById('loadState').innerHTML=`<div class="no-data"><strong>⚠ Could not load Budget_Log</strong><br><br>${e.message}<br><br>Make sure the Google Sheet is shared (anyone with link can view) and Budget_Log tab exists.</div>`;
     return;
   }
-
+  if(!_rows.length){
+    document.getElementById('loadState').innerHTML=`<div class="no-data">Budget_Log is empty. Run <strong>createBudgetLog()</strong> in Apps Script first.</div>`;
+    return;
+  }
   renderOverview();renderDebts();renderRecv();renderGoals();renderIncome();renderAbd();renderForms();renderSearch();renderLog();
   document.getElementById('loadState').style.display='none';
   document.getElementById('tabBar').style.display='flex';
-  document.getElementById('lbadge').textContent=missing.length?`⚠ ${missing.length} tab(s) missing`:'';
   document.getElementById('asof').textContent='Updated: '+new Date().toLocaleDateString('en-PK',{year:'numeric',month:'short',day:'numeric'});
 }
 
