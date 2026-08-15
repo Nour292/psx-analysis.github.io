@@ -239,6 +239,7 @@ select:focus,input:focus{border-color:var(--purple);}
       <button class="sub-btn"        data-tab="abd"         onclick="goTab('abd')">🏦 Abdullah A/C</button>
       <button class="sub-btn"        data-tab="forms"       onclick="goTab('forms')">📝 Forms</button>
       <button class="sub-btn"        data-tab="search"      onclick="goTab('search')">🔍 Search</button>
+      <button class="sub-btn"        data-tab="log"         onclick="goTab('log')">📜 Log</button>
     </div>
   </nav>
   <div class="sb-foot">
@@ -272,6 +273,7 @@ select:focus,input:focus{border-color:var(--purple);}
     <button class="tab-btn"        data-tab="abd"      onclick="goTab('abd')">🏦 Abdullah A/C</button>
     <button class="tab-btn"        data-tab="forms"    onclick="goTab('forms')">📝 Forms</button>
     <button class="tab-btn"        data-tab="search"   onclick="goTab('search')">🔍 Search</button>
+    <button class="tab-btn"        data-tab="log"      onclick="goTab('log')">📜 Log</button>
   </div>
   <div class="load-state" id="loadState"><div class="spinner"></div><span>Loading budget data…</span></div>
   <div id="tabOverview" class="tab-pane active"></div>
@@ -282,6 +284,7 @@ select:focus,input:focus{border-color:var(--purple);}
   <div id="tabAbd"      class="tab-pane"></div>
   <div id="tabForms"    class="tab-pane"></div>
   <div id="tabSearch"   class="tab-pane"></div>
+  <div id="tabLog"      class="tab-pane"></div>
 </main>
 </div>
 
@@ -301,7 +304,8 @@ const TABS = {
   recv:     'Bgt_Recv',
   income:   'Bgt_Income',
   abd:      'Bgt_Abd',
-  goals:    'Bgt_Goals'
+  goals:    'Bgt_Goals',
+  log:      'Budget_Log'
 };
 
 // Loaded data: each key → { headers:[], data:[[]] }
@@ -618,6 +622,68 @@ async function saveLog(){
 }
 
 /* ══════════════════════════════════════
+   LOG TABLE
+══════════════════════════════════════ */
+let _logCat='';
+
+function renderLog(){
+  const {headers,data}=D.log||{headers:[],data:[]};
+  if(!data.length){
+    document.getElementById('tabLog').innerHTML=`<div class="no-data">Budget_Log tab not found or empty. Run <strong>createBudgetLog()</strong> in Apps Script first.</div>`;
+    return;
+  }
+
+  const cats=['All',...new Set(data.map(r=>r[1]||'').filter(Boolean))];
+  const pills=cats.map(c=>`<button class="fpill${_logCat===c||(_logCat===''&&c==='All')?' active':''}" onclick="filterLog('${c}')">${c}</button>`).join('');
+
+  const filtered=_logCat&&_logCat!=='All'?data.filter(r=>r[1]===_logCat):data;
+
+  const num=v=>{const n=parseFloat(v);return isNaN(n)||n===0?'':n.toLocaleString('en',{minimumFractionDigits:0,maximumFractionDigits:2});};
+  const rows=filtered.map(r=>{
+    const[date,cat,type,who,month,amtIn,amtOut,cur,pri,cert,status,notes]=r;
+    const priCls={'HIGH':'red','RETURN':'red','NEXT':'amber','QUEUE':'amber','ASSIGNED':'blue','WAITING':'gray','WATCH':'purple','LOAN':'purple'}[pri]||'';
+    return`<tr>
+      <td style="color:var(--text3);font-size:11px;white-space:nowrap">${date}</td>
+      <td><span class="badge ${{Balance:'blue',Card:'red',Debt:'red','Visa Fund':'amber',Receivable:'green',Income:'green','Abdullah A/C':'purple',Goal:'amber','Balance Update':'blue'}[cat]||'gray'}">${cat}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${type||''}</td>
+      <td style="font-weight:500;color:var(--text)">${who||''}</td>
+      <td style="font-size:11px;color:var(--text3)">${month||''}</td>
+      <td class="num" style="color:var(--emerald)">${num(amtIn)}</td>
+      <td class="num" style="color:var(--rose)">${num(amtOut)}</td>
+      <td style="font-size:11px;color:var(--text3)">${cur||''}</td>
+      <td>${pri?`<span class="badge ${priCls}">${pri}</span>`:''}</td>
+      <td>${cert?`<span class="badge ${{Confirmed:'green',Expected:'blue',Uncertain:'gray'}[cert]||'gray'}">${cert}</span>`:''}</td>
+      <td style="font-size:11px;color:var(--text2)">${status||''}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:180px">${notes||''}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tabLog').innerHTML=`
+  <div class="srch-box" style="margin-bottom:0;border-radius:var(--radius) var(--radius) 0 0">
+    <div class="fl">Filter by Category</div>
+    <div class="fpills">${pills}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">${filtered.length} of ${data.length} rows</div>
+  </div>
+  <div class="card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none">
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th>Date</th><th>Category</th><th>Type</th><th>Account / Card / Person</th>
+          <th>Month</th><th>Amount In</th><th>Amount Out</th><th>Cur</th>
+          <th>Priority</th><th>Certainty</th><th>Status</th><th>Notes</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function filterLog(cat){
+  _logCat=cat==='All'?'':cat;
+  renderLog();
+}
+
+/* ══════════════════════════════════════
    FILTER SEARCH
 ══════════════════════════════════════ */
 function renderSearch(){
@@ -740,7 +806,7 @@ async function loadAll(){
     return;
   }
 
-  renderOverview();renderDebts();renderRecv();renderGoals();renderIncome();renderAbd();renderForms();renderSearch();
+  renderOverview();renderDebts();renderRecv();renderGoals();renderIncome();renderAbd();renderForms();renderSearch();renderLog();
   document.getElementById('loadState').style.display='none';
   document.getElementById('tabBar').style.display='flex';
   document.getElementById('lbadge').textContent=missing.length?`⚠ ${missing.length} tab(s) missing`:'';
