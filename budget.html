@@ -375,9 +375,11 @@ function renderOverview(){
   const combined=mcbV+abdV,gap=Math.max(0,target-combined);
   const pct=Math.min(100,(combined/target)*100).toFixed(1);
 
-  // Summary totals
-  const totDebtSAR=debts.reduce((s,r)=>s+nv(r[C.out]),0);
-  const confRecvPKR=recv.filter(r=>r[C.cert]!=='Uncertain').reduce((s,r)=>s+nv(r[C.in]),0);
+  // Summary totals — split by currency
+  const totDebtSAR=debts.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.out]),0);
+  const totDebtPKR=debts.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
+  const confRecvSAR=recv.filter(r=>r[C.cert]!=='Uncertain'&&r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
+  const confRecvPKR=recv.filter(r=>r[C.cert]!=='Uncertain'&&r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
 
   // Urgent actions
   const urg=[];
@@ -403,8 +405,8 @@ function renderOverview(){
 
   document.getElementById('tabOverview').innerHTML=`${kH}
   <div class="sum-row">
-    <div class="sum-card"><span class="sum-icon">🔴</span><div><div class="sum-lbl">Total Debt</div><div class="sum-val" style="color:var(--rose)">${sar(totDebtSAR)}</div><div class="sum-sub">${debts.length} outstanding</div></div></div>
-    <div class="sum-card"><span class="sum-icon">🟢</span><div><div class="sum-lbl">Receivable</div><div class="sum-val" style="color:var(--emerald)">${pkr(confRecvPKR)}</div><div class="sum-sub">Confirmed + Expected</div></div></div>
+    <div class="sum-card"><span class="sum-icon">🔴</span><div><div class="sum-lbl">Total Debt</div><div class="sum-val" style="color:var(--rose)">${sar(totDebtSAR)}</div><div class="sum-sub">${totDebtPKR?pkr(totDebtPKR)+' PKR':''} · ${debts.length} items</div></div></div>
+    <div class="sum-card"><span class="sum-icon">🟢</span><div><div class="sum-lbl">Receivable</div><div class="sum-val" style="color:var(--emerald)">${sar(confRecvSAR)}</div><div class="sum-sub">${confRecvPKR?pkr(confRecvPKR)+' PKR':''}</div></div></div>
     <div class="sum-card"><span class="sum-icon">🎯</span><div><div class="sum-lbl">Visa Fund</div><div class="sum-val" style="color:var(--amber)">${pct}%</div><div class="sum-sub">Gap ${pkr(gap)}</div></div></div>
   </div>
   <div class="row2">
@@ -434,15 +436,23 @@ function renderDebts(){
   const debts=bycat('Debt');
   let rows='';
   for(const r of debts){
-    rows+=`<tr><td style="font-weight:500;color:var(--text)">${r[C.who]}</td>
-      <td class="num ${priCls(r[C.pri])}">${r[C.out]?fmt(r[C.out],r[C.cur]):''}</td>
+    const isPKR=r[C.cur]==='PKR';
+    rows+=`<tr>
+      <td style="font-weight:500;color:var(--text)">${r[C.who]}</td>
+      <td class="num ${isPKR?'':''}"><span style="font-size:10px;font-weight:700;margin-right:3px;color:var(--text3)">${r[C.cur]||''}</span></td>
+      <td class="num" style="color:var(--rose)">${isPKR&&r[C.out]?pkr(r[C.out]):''}</td>
+      <td class="num" style="color:var(--rose)">${!isPKR&&r[C.out]?sar(r[C.out]):''}</td>
       <td>${r[C.pri]?bdg(r[C.pri]):''}</td>
-      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:220px">${r[C.notes]||''}</td></tr>`;
+      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:200px">${r[C.notes]||''}</td></tr>`;
   }
-  const tot=debts.reduce((s,r)=>s+nv(r[C.out]),0);
-  rows+=`<tr class="tot-row"><td>TOTAL</td><td class="num">${sar(tot)}</td><td></td><td></td></tr>`;
+  const totSAR=debts.filter(r=>r[C.cur]!=='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
+  const totPKR=debts.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
+  rows+=`<tr class="tot-row"><td>TOTAL</td><td></td>
+    <td class="num">${totPKR?pkr(totPKR):''}</td>
+    <td class="num">${totSAR?sar(totSAR):''}</td>
+    <td></td><td></td></tr>`;
   document.getElementById('tabDebts').innerHTML=`<div class="card"><div class="card-hd"><span style="color:var(--rose)">📋</span><span class="card-ttl">Debts — Priority Order</span><span style="margin-left:auto;font-size:11px;color:var(--text3)">🔴 HIGH → 🟡 NEXT → ⚪ WAITING</span></div>
-    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Amount</th><th>Priority</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Cur</th><th>PKR Amount</th><th>SAR Amount</th><th>Priority</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
 }
 
 function renderRecv(){
@@ -450,18 +460,25 @@ function renderRecv(){
   let rows='';let unc=false;
   for(const r of recv){
     const isU=r[C.cert]==='Uncertain';
-    if(isU&&!unc){rows+=`<tr><td colspan="5" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:10px 12px 4px">Uncertain — Do Not Plan On</td></tr>`;unc=true;}
+    const isPKR=r[C.cur]==='PKR';
+    if(isU&&!unc){rows+=`<tr><td colspan="6" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:10px 12px 4px">Uncertain — Do Not Plan On</td></tr>`;unc=true;}
     rows+=`<tr class="${isU?'muted-row':''}">
       <td style="font-weight:500;color:var(--text)">${r[C.who]}</td>
-      <td class="num">${r[C.in]?fmt(r[C.in],r[C.cur]):''}</td>
+      <td><span style="font-size:10px;font-weight:700;color:var(--text3)">${r[C.cur]||''}</span></td>
+      <td class="num" style="color:var(--emerald)">${isPKR&&r[C.in]?pkr(r[C.in]):''}</td>
+      <td class="num" style="color:var(--emerald)">${!isPKR&&r[C.in]?sar(r[C.in]):''}</td>
       <td>${r[C.cert]?`<span class="badge ${{Confirmed:'green',Expected:'blue',Uncertain:'gray'}[r[C.cert]]||'gray'}">${r[C.cert]}</span>`:''}</td>
-      <td style="font-size:11px;color:var(--text2)">${r[C.status]||''}</td>
-      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:200px">${r[C.notes]||''}</td></tr>`;
+      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:180px">${r[C.notes]||''}</td></tr>`;
   }
-  const tot=recv.filter(r=>r[C.cert]!=='Uncertain').reduce((s,r)=>s+nv(r[C.in]),0);
-  rows+=`<tr class="tot-row"><td>TOTAL (Conf+Expected)</td><td class="num">${pkr(tot)}</td><td></td><td></td><td></td></tr>`;
+  const conf=recv.filter(r=>r[C.cert]!=='Uncertain');
+  const totSAR=conf.filter(r=>r[C.cur]!=='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
+  const totPKR=conf.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
+  rows+=`<tr class="tot-row"><td>TOTAL (Conf+Expected)</td><td></td>
+    <td class="num">${totPKR?pkr(totPKR):''}</td>
+    <td class="num">${totSAR?sar(totSAR):''}</td>
+    <td></td><td></td></tr>`;
   document.getElementById('tabRecv').innerHTML=`<div class="card"><div class="card-hd"><span style="color:var(--emerald)">📥</span><span class="card-ttl">Receivables</span></div>
-    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>From</th><th>Amount</th><th>Certainty</th><th>Status</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>From</th><th>Cur</th><th>PKR Amount</th><th>SAR Amount</th><th>Certainty</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
 }
 
 function renderGoals(){
