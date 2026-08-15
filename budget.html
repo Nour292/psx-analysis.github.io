@@ -427,20 +427,7 @@ function renderOverview(){
   const recvMain=recvLeadPKR?pkr(confRecvPKR):sar(confRecvSAR);
   const recvSub=recvLeadPKR?(confRecvSAR?sar(confRecvSAR)+' SAR':confRecv.length+' items'):(confRecvPKR?pkr(confRecvPKR)+' PKR':'');
 
-  document.getElementById('tabOverview').innerHTML=`
-  <div class="sum-row">
-    <div class="sum-card"><span class="sum-icon">🔴</span><div>
-      <div class="sum-lbl">Total Debt</div>
-      <div class="sum-val" style="color:var(--rose)">${sar(totDebtSAR)}</div>
-      <div class="sum-sub">${totDebtPKR?pkr(totDebtPKR)+' PKR &middot; ':''} ${debts.length} items</div>
-    </div></div>
-    <div class="sum-card"><span class="sum-icon">🟢</span><div>
-      <div class="sum-lbl">Receivable <span style="font-size:10px;color:var(--text3)">(excl. Uncertain)</span></div>
-      <div class="sum-val" style="color:var(--emerald)">${recvMain}</div>
-      <div class="sum-sub">${recvSub}</div>
-    </div></div>
-  </div>
-  <div id="adv-panel"></div>`;
+  document.getElementById('tabOverview').innerHTML=`<div id="adv-panel"></div>`;
   renderAdvisor();
 }
 
