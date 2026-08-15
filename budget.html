@@ -213,6 +213,45 @@ select:focus,input:focus{border-color:var(--purple);}
 @keyframes spin{to{transform:rotate(360deg);}}
 .no-data{font-size:12px;color:var(--rose);padding:12px;background:var(--rose-dim);border:1px solid var(--rose);border-radius:var(--radius-sm);}
 
+/* ADVISOR PANEL */
+.adv-wrap{display:flex;flex-direction:column;gap:16px;}
+.adv-hd{display:flex;align-items:center;gap:10px;padding:14px 20px;background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(56,189,248,.08));border:1px solid var(--border2);border-radius:var(--radius);margin-bottom:0;}
+.adv-hd-icon{font-size:26px;flex-shrink:0;}
+.adv-hd-text strong{font-size:14px;font-weight:800;color:var(--text);display:block;}
+.adv-hd-text span{font-size:11.5px;color:var(--text3);}
+.adv-score-row{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;}
+.adv-score-circle{width:80px;height:80px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:3px solid;flex-shrink:0;}
+.adv-score-num{font-size:22px;font-weight:900;font-family:var(--mono);line-height:1;}
+.adv-score-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-top:2px;}
+.adv-score-bars{display:flex;flex-direction:column;gap:6px;}
+.adv-bar-row{display:flex;align-items:center;gap:8px;}
+.adv-bar-label{font-size:11px;color:var(--text3);width:160px;flex-shrink:0;}
+.adv-bar-track{flex:1;height:6px;background:var(--surface2);border-radius:20px;overflow:hidden;}
+.adv-bar-fill{height:100%;border-radius:20px;transition:width .8s;}
+.adv-bar-pts{font-size:11px;font-family:var(--mono);color:var(--text3);width:40px;text-align:right;flex-shrink:0;}
+.adv-actions{display:flex;flex-direction:column;gap:8px;}
+.adv-action{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);position:relative;overflow:hidden;}
+.adv-action::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.adv-action.c-rose::before{background:var(--rose);}
+.adv-action.c-amber::before{background:var(--amber);}
+.adv-action.c-accent::before{background:var(--accent);}
+.adv-action.c-emerald::before{background:var(--emerald);}
+.adv-action.c-purple::before{background:var(--purple);}
+.adv-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;margin-top:1px;}
+.adv-body{flex:1;min-width:0;}
+.adv-title{font-size:13px;font-weight:700;color:var(--text);}
+.adv-detail{font-size:12px;color:var(--text3);margin-top:3px;line-height:1.5;}
+.adv-tag{font-size:10px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:20px;flex-shrink:0;align-self:flex-start;}
+.adv-insights{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.adv-insight{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;}
+.adv-ins-icon{font-size:18px;margin-bottom:6px;}
+.adv-ins-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);}
+.adv-ins-val{font-size:12.5px;font-weight:600;color:var(--text2);margin-top:4px;line-height:1.4;}
+.adv-warn{display:flex;flex-direction:column;gap:6px;}
+.adv-warn-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:var(--radius-sm);background:var(--rose-dim);border:1px solid var(--rose);font-size:12.5px;color:var(--rose);}
+.adv-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:600px){.adv-2col,.adv-insights{grid-template-columns:1fr;}.adv-score-row{grid-template-columns:1fr;}.adv-score-circle{width:64px;height:64px;}.adv-bar-label{width:120px;}}
+
 /* ACTION BUTTONS (log edit/delete) */
 .act-btn{border:none;background:transparent;cursor:pointer;padding:3px 6px;border-radius:4px;font-size:13px;opacity:.5;transition:opacity .15s,background .15s;}
 .act-btn:hover{opacity:1;background:var(--surface2);}
@@ -449,6 +488,189 @@ function renderOverview(){
   </div>
   <div class="card"><div class="card-hd"><span style="color:var(--rose)">⚡</span><span class="card-ttl">Urgent Actions</span></div>
     <div class="card-bd"><div class="urg-grid">${urg.map(u=>`<div class="urg-item"><div class="urg-dot" style="background:${u.c}"></div><div class="urg-desc">${u.lbl}<span class="urg-note">${u.note}</span></div><div class="urg-amt">${u.amt}</div></div>`).join('')||'<span style="color:var(--text3)">No urgent actions</span>'}</div></div>
+  </div>
+  <div id="adv-panel"></div>`;
+  renderAdvisor();
+}
+
+function renderAdvisor(){
+  const el=document.getElementById('adv-panel');
+  if(!el||!_rows.length) return;
+
+  const debts  = bycat('Debt');
+  const recv   = bycat('Receivable');
+  const bal    = bycat('Balance');
+  const visa   = bycat('Visa Fund');
+  const income = bycat('Income');
+
+  /* ── balances ── */
+  const sarBal = bal.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
+
+  /* ── visa fund ── */
+  const tgtRow  = visa.find(r=>(r[C.type]||'').toLowerCase()==='target');
+  const vTarget = nv(tgtRow?tgtRow[C.in]:3500000);
+  const mcbV    = nv((visa.find(r=>r[C.who]==='MCB')||[])[C.in]||0);
+  const abdV    = nv((visa.find(r=>r[C.who]==='Abdullah (Meezan)')||[])[C.in]||0);
+  const vCombined = mcbV+abdV;
+  const vGap    = Math.max(0,vTarget-vCombined);
+  const vPct    = Math.min(100,(vCombined/vTarget)*100);
+
+  /* ── debts ── */
+  const totDebtSAR = debts.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.out]),0);
+  const totDebtPKR = debts.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
+  const highD  = debts.filter(r=>r[C.pri]==='HIGH');
+  const retD   = debts.filter(r=>r[C.pri]==='RETURN');
+  const nextD  = debts.filter(r=>r[C.pri]==='NEXT');
+  const queueD = debts.filter(r=>r[C.pri]==='QUEUE');
+
+  /* ── receivables ── */
+  const confRecv = recv.filter(r=>r[C.cert]==='Confirmed');
+  const expRecv  = recv.filter(r=>r[C.cert]==='Expected');
+  const confPKR  = confRecv.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
+  const confSAR  = confRecv.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
+  const expPKR   = expRecv.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
+
+  /* ── income avg ── */
+  const salRows = income.filter(r=>(r[C.type]||'').toLowerCase()==='salary');
+  const avgSal  = salRows.length ? salRows.reduce((s,r)=>s+nv(r[C.in]),0)/salRows.length : 3900;
+
+  /* ── health score (0–100) ── */
+  const VISA_MAX=35, DEBT_MAX=25, RECV_MAX=20, BUFF_MAX=20;
+  const visaScore = Math.round((vPct/100)*VISA_MAX);
+  const maxDebt   = 50000;
+  const debtScore = Math.max(0,Math.round(DEBT_MAX*(1-Math.min(1,totDebtSAR/maxDebt))));
+  const recvScore = Math.min(RECV_MAX, confRecv.length*7);
+  const buffMths  = avgSal>0 ? sarBal/(avgSal*0.25) : 0;
+  const buffScore = Math.min(BUFF_MAX,Math.round(buffMths*6));
+  const score     = visaScore+debtScore+recvScore+buffScore;
+  const scoreClr  = score>=70?'var(--emerald)':score>=45?'var(--amber)':'var(--rose)';
+  const scoreLbl  = score>=70?'Good':score>=45?'Caution':'Critical';
+
+  const bars=[
+    {label:'Visa Fund progress',  pts:visaScore, max:VISA_MAX, clr:'var(--amber)'},
+    {label:'Debt burden',         pts:debtScore, max:DEBT_MAX, clr:'var(--rose)'},
+    {label:'Confirmed receivables',pts:recvScore,max:RECV_MAX, clr:'var(--emerald)'},
+    {label:'SAR cash buffer',     pts:buffScore, max:BUFF_MAX, clr:'var(--accent)'},
+  ];
+  const scoreHTML=`
+  <div class="adv-score-row">
+    <div class="adv-score-circle" style="border-color:${scoreClr};color:${scoreClr}">
+      <div class="adv-score-num">${score}</div>
+      <div class="adv-score-lbl" style="color:${scoreClr}">${scoreLbl}</div>
+    </div>
+    <div class="adv-score-bars">
+      ${bars.map(b=>`<div class="adv-bar-row">
+        <div class="adv-bar-label">${b.label}</div>
+        <div class="adv-bar-track"><div class="adv-bar-fill" style="width:${Math.round((b.pts/b.max)*100)}%;background:${b.clr}"></div></div>
+        <div class="adv-bar-pts">${b.pts}/${b.max}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+
+  /* ── action queue ── */
+  const actions=[];
+  const act=(cls,tag,tagBg,tagClr,title,detail)=>actions.push({cls,tag,tagBg,tagClr,title,detail});
+
+  for(const r of highD)
+    act('c-rose','URGENT','var(--rose-dim)','var(--rose)',
+        `Clear ${r[C.who]}`,
+        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Highest priority debt. Clear from next salary before any other outflow.'}`);
+
+  for(const r of retD)
+    act('c-rose','HIGH','var(--rose-dim)','var(--rose)',
+        `Return to ${r[C.who]}`,
+        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Honour return commitment as soon as receivable comes in.'}`);
+
+  if(vGap>0)
+    act('c-amber','CRITICAL','var(--amber-dim)','var(--amber)',
+        `Close Visa Fund gap — ${pkr(vGap)} remaining`,
+        `You are ${vPct.toFixed(1)}% of the way to PKR ${(vTarget/1e6).toFixed(1)}M target. Route every spare PKR into MCB or Abdullah (Meezan) until gap is zero.`);
+
+  for(const r of nextD)
+    act('c-amber','NEXT','var(--amber-dim)','var(--amber)',
+        `Pay ${r[C.who]}`,
+        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Schedule after HIGH debts are cleared.'}`);
+
+  for(const r of expRecv.filter(r=>(r[C.notes]||'').toLowerCase().includes('chase')))
+    act('c-accent','FOLLOW-UP','var(--accent-dim)','var(--accent)',
+        `Chase ${r[C.who]}`,
+        `${fmt(r[C.in],r[C.cur])} expected — ${r[C.notes]}`);
+
+  if(confPKR>0)
+    act('c-emerald','INCOMING','var(--emerald-dim)','var(--emerald)',
+        `Allocate confirmed receivables (${pkr(confPKR)})`,
+        `${confRecv.map(r=>r[C.who]).join(', ')} — plan allocation split between Visa Fund and debt repayment before the money arrives.`);
+
+  for(const r of queueD)
+    act('c-purple','QUEUE','var(--purple-dim)','var(--purple)',
+        `${r[C.who]} (queue)`,
+        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Pay when higher priorities are settled.'}`);
+
+  const actHTML=actions.map((a,i)=>`
+  <div class="adv-action ${a.cls}">
+    <div class="adv-num" style="background:${a.tagBg};color:${a.tagClr}">${i+1}</div>
+    <div class="adv-body">
+      <div class="adv-title">${a.title}</div>
+      <div class="adv-detail">${a.detail}</div>
+    </div>
+    <div class="adv-tag" style="background:${a.tagBg};color:${a.tagClr}">${a.tag}</div>
+  </div>`).join('');
+
+  /* ── insights ── */
+  const netPos = confPKR+expPKR - totDebtPKR;
+  const netClr = netPos>=0?'var(--emerald)':'var(--rose)';
+  const mthsToFill = avgSal>0 ? Math.ceil(vGap/(avgSal*74*0.4)) : '?'; // rough SAR→PKR @74
+  const insights=[
+    {icon:'⚖️', lbl:'Net Position (PKR)',
+     val:`<span style="color:${netClr};font-weight:700">${netPos>=0?'+':''}${pkr(netPos)}</span><br><span style="font-size:11px;color:var(--text3)">${pkr(confPKR+expPKR)} receivable vs ${pkr(totDebtPKR)} PKR debt</span>`},
+    {icon:'🎯', lbl:'Visa Fund',
+     val:`<span style="color:var(--amber);font-weight:700">${vPct.toFixed(1)}% funded</span><br><span style="font-size:11px;color:var(--text3)">Gap ${pkr(vGap)} · est. ${mthsToFill} mo to close</span>`},
+    {icon:'📥', lbl:'Incoming (confirmed)',
+     val:`<span style="color:var(--emerald);font-weight:700">${pkr(confPKR)}${confSAR?` + ${sar(confSAR)}`:''}</span><br><span style="font-size:11px;color:var(--text3)">${confRecv.length} confirmed · ${expRecv.length} expected</span>`},
+    {icon:'💸', lbl:'Total Debt',
+     val:`<span style="color:var(--rose);font-weight:700">${sar(totDebtSAR)}</span><br><span style="font-size:11px;color:var(--text3)">${pkr(totDebtPKR)} PKR · ${debts.length} creditors</span>`},
+  ];
+  const insHTML=insights.map(i=>`<div class="adv-insight">
+    <div class="adv-ins-icon">${i.icon}</div>
+    <div class="adv-ins-lbl">${i.lbl}</div>
+    <div class="adv-ins-val">${i.val}</div>
+  </div>`).join('');
+
+  /* ── warnings ── */
+  const warns=[];
+  const now2=new Date(); now2.setHours(0,0,0,0);
+  for(const r of [...debts,...recv]){
+    if(!r[C.due]) continue;
+    const d=new Date(r[C.due]);
+    const diff=Math.round((d-now2)/(864e5));
+    if(diff<0)   warns.push(`⚠ ${r[C.who]} — OVERDUE since ${r[C.due]}`);
+    else if(diff<=14) warns.push(`⏰ ${r[C.who]} — due in ${diff} day${diff===1?'':'s'} (${r[C.due]})`);
+  }
+  if(sarBal<300) warns.push(`🔴 SAR balance critically low — ${sar(sarBal)}`);
+  else if(sarBal<800) warns.push(`🟡 SAR balance low — ${sar(sarBal)}`);
+  if(vPct<40) warns.push(`🟡 Visa Fund below 40% — accelerate savings`);
+  const warnHTML=warns.length?`<div class="card"><div class="card-hd"><span>⚠️</span><span class="card-ttl" style="color:var(--amber)">Warnings & Flags</span></div>
+    <div class="card-bd"><div class="adv-warn">${warns.map(w=>`<div class="adv-warn-item">${w}</div>`).join('')}</div></div></div>`:'';
+
+  el.innerHTML=`<div class="adv-wrap">
+  <div class="adv-hd">
+    <div class="adv-hd-icon">🤖</div>
+    <div class="adv-hd-text">
+      <strong>Financial Advisor — Auto Analysis</strong>
+      <span>Generated from your Budget_Log · ${_rows.length} entries · ${new Date().toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'})}</span>
+    </div>
+  </div>
+  <div class="adv-2col">
+    <div class="card"><div class="card-hd"><span>📊</span><span class="card-ttl">Financial Health Score</span></div>
+      <div class="card-bd">${scoreHTML}</div>
+    </div>
+    <div class="adv-insights">${insHTML}</div>
+  </div>
+  <div class="card"><div class="card-hd"><span>📋</span><span class="card-ttl">Priority Action Plan</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--text3)">${actions.length} actions · work top to bottom</span></div>
+    <div class="card-bd"><div class="adv-actions">${actHTML||'<span style="color:var(--text3)">No actions computed — check data</span>'}</div></div>
+  </div>
+  ${warnHTML}
   </div>`;
 }
 
