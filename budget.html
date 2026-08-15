@@ -508,112 +508,113 @@ function renderAbd(){
 }
 
 /* ══════════════════════════════════════
-   COMBINED FORM
+   LOG FORM — one tab, one row per save
 ══════════════════════════════════════ */
-const CAT_HINT={
-  'balance'  :{t:'Update Account Balance',   b:'Select the account and enter the new balance. Only the Balances tab is updated — all other data is untouched.'},
-  'debt-upd' :{t:'Update Existing Debt',      b:'Select the person and change any field. Leave a field blank to keep its current value. Only the Debts tab is updated.'},
-  'debt-add' :{t:'Add New Debt Entry',        b:'Fill in all details for a new debt. It is inserted before the TOTAL row and totals are recalculated. Only Debts tab is updated.'},
-  'recv-upd' :{t:'Update Existing Receivable',b:'Select the person and update the amount, certainty, or notes. Only the Receivables tab is updated.'},
-  'recv-add' :{t:'Add New Receivable',        b:'Add someone new who owes you money. Use Expected or Confirmed. Only the Receivables tab is updated.'}
+const LOG_TYPES = {
+  'Card':           ['Charge','Payment','Statement Fee'],
+  'Income':         ['Salary','Extra','Housing Allowance','Ticket','Bonus'],
+  'Debt':           ['New Debt','Payment Made','Partial Payment'],
+  'Receivable':     ['New Receivable','Received','Partial Received'],
+  'Expense':        ['House','Food','Medical','Education','Transport','Personal','Other'],
+  'Balance Update': ['Opening Balance','Balance Update']
 };
 
 function renderForms(){
-  const balOpts=(D.balances?.data||[]).map(r=>`<option value="${r[0]}">${r[0]} (${r[1]})</option>`).join('');
-  const debtOpts=(D.debts?.data||[]).filter(r=>r[1]&&r[1]!=='TOTAL'&&r[0]!=='TOTAL').map(r=>`<option value="${r[1]}">${r[1]}  —  ${sar(r[2])}</option>`).join('');
-  const recvOpts=(D.recv?.data||[]).filter(r=>r[0]&&!r[0].toUpperCase().includes('TOTAL')).map(r=>`<option value="${r[0]}">${r[0]}</option>`).join('');
-
+  const today=new Date().toISOString().slice(0,10);
   document.getElementById('tabForms').innerHTML=`
-  <p style="font-size:12px;color:var(--text3)">Select update type — only the relevant tab is written. All other budget data stays unchanged.</p>
+  <p style="font-size:12px;color:var(--text3)">Each save adds a new row to <strong>Budget_Log</strong> — nothing is overwritten.</p>
   <div class="form-wrap">
-    <div class="form-top">
-      <div><label style="display:block;margin-bottom:8px">Type of Update</label>
-        <select class="cat-sel" id="f-cat" onchange="onCat()">
-          <option value="">— Select what to update —</option>
-          <optgroup label="💰 Bank Balances">
-            <option value="balance">Update Account Balance</option>
-          </optgroup>
-          <optgroup label="📋 Debts">
-            <option value="debt-upd">Update Existing Debt</option>
-            <option value="debt-add">Add New Debt Entry</option>
-          </optgroup>
-          <optgroup label="📥 Receivables">
-            <option value="recv-upd">Update Existing Receivable</option>
-            <option value="recv-add">Add New Receivable</option>
-          </optgroup>
+    <div class="fgrp">
+      <div class="fgroup fg-1">
+        <label>Date</label>
+        <input type="text" id="fl-date" value="${today}">
+      </div>
+      <div class="fgroup fg-1">
+        <label>Category</label>
+        <select id="fl-cat" onchange="onFCat()">
+          <option value="">— Select —</option>
+          <option>Card</option>
+          <option>Income</option>
+          <option>Debt</option>
+          <option>Receivable</option>
+          <option>Expense</option>
+          <option>Balance Update</option>
         </select>
       </div>
-      <div class="cat-hint" id="f-hint">
-        <strong>Choose an update type</strong>
-        <p>Each save targets only the relevant tab — other budget data is never touched.</p>
+      <div class="fgroup fg-2">
+        <label>Type of Transaction</label>
+        <select id="fl-type"><option value="">— select category first —</option></select>
+      </div>
+      <div class="fgroup fg-2">
+        <label>Account / Card / Person</label>
+        <input type="text" id="fl-who" placeholder="e.g. MC ***9000  /  NCB  /  Hayyat">
+      </div>
+      <div class="fgroup fg-1">
+        <label>Month</label>
+        <input type="text" id="fl-month" placeholder="e.g. August">
+      </div>
+      <div class="fgroup fg-1">
+        <label>Currency</label>
+        <select id="fl-cur"><option>SAR</option><option>PKR</option></select>
+      </div>
+      <div class="fgroup fg-1">
+        <label>Amount In</label>
+        <input type="number" id="fl-in" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="fgroup fg-1">
+        <label>Amount Out</label>
+        <input type="number" id="fl-out" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="fgroup fg-2">
+        <label>Notes</label>
+        <input type="text" id="fl-note" placeholder="Optional…">
       </div>
     </div>
-
-    <!-- BALANCE FIELDS -->
-    <div class="fgrp hidden" id="fg-bal">
-      <div class="fgroup fg-2"><label>Account</label><select id="fb-acc">${balOpts}</select></div>
-      <div class="fgroup fg-2"><label>New Balance</label><input type="number" id="fb-amt" placeholder="e.g. 852.85" step="0.01"></div>
-      <div class="fgroup fg-full"><label>Notes (optional)</label><input type="text" id="fb-note" placeholder="Reason for update…"></div>
-    </div>
-
-    <!-- DEBT FIELDS -->
-    <div class="fgrp hidden" id="fg-debt">
-      <div class="fgroup fg-2" id="fd-sel-wr"><label>Select Person</label><select id="fd-sel">${debtOpts}</select></div>
-      <div class="fgroup fg-2 hidden" id="fd-new-wr"><label>New Person / Entity</label><input type="text" id="fd-new" placeholder="e.g. Zaid"></div>
-      <div class="fgroup fg-1"><label>SAR Amount</label><input type="number" id="fd-sar" placeholder="0.00" step="0.01"></div>
-      <div class="fgroup fg-1"><label>PKR Amount</label><input type="number" id="fd-pkr" placeholder="0"></div>
-      <div class="fgroup fg-1"><label>Priority</label>
-        <select id="fd-pri"><option>HIGH</option><option>RETURN</option><option>NEXT</option><option>QUEUE</option><option>ASSIGNED</option><option>WAITING</option><option>WATCH</option><option>LOAN</option></select>
-      </div>
-      <div class="fgroup fg-1"><label>Notes</label><input type="text" id="fd-note" placeholder="Repayment plan…"></div>
-    </div>
-
-    <!-- RECV FIELDS -->
-    <div class="fgrp hidden" id="fg-recv">
-      <div class="fgroup fg-2" id="fr-sel-wr"><label>Select Person</label><select id="fr-sel">${recvOpts}</select></div>
-      <div class="fgroup fg-2 hidden" id="fr-new-wr"><label>From (Name)</label><input type="text" id="fr-new" placeholder="e.g. Ahmed"></div>
-      <div class="fgroup fg-1"><label>PKR Amount</label><input type="number" id="fr-pkr" placeholder="0"></div>
-      <div class="fgroup fg-1"><label>SAR Amount</label><input type="number" id="fr-sar" placeholder="0" step="0.01"></div>
-      <div class="fgroup fg-1"><label>Certainty</label>
-        <select id="fr-cert"><option>Expected</option><option>Confirmed</option><option>Uncertain</option></select>
-      </div>
-      <div class="fgroup fg-1"><label>Notes</label><input type="text" id="fr-note" placeholder="When, why, chase status…"></div>
-    </div>
-
-    <div class="form-foot" id="f-foot">
-      <button class="btn-save" onclick="saveForm()">💾 Save to Google Sheets</button>
-      <span class="fstatus" id="f-st"></span>
+    <div style="display:flex;align-items:center;gap:14px;padding-top:20px;margin-top:4px;border-top:1px solid var(--border)">
+      <button class="btn-save" onclick="saveLog()">💾 Save Entry</button>
+      <span class="fstatus" id="fl-st"></span>
     </div>
   </div>`;
 }
 
-function onCat(){
-  const cat=document.getElementById('f-cat').value;
-  const h=CAT_HINT[cat];
-  document.getElementById('f-hint').innerHTML=h?`<strong>${h.t}</strong><p>${h.b}</p>`:'<strong>Choose an update type</strong><p>Each save targets only the relevant tab — other budget data is never touched.</p>';
-  ['fg-bal','fg-debt','fg-recv'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-  document.getElementById('f-foot').classList.toggle('vis',!!cat);
-  if(cat==='balance') document.getElementById('fg-bal').classList.remove('hidden');
-  else if(cat.startsWith('debt')){
-    const add=cat==='debt-add';
-    document.getElementById('fg-debt').classList.remove('hidden');
-    document.getElementById('fd-sel-wr').classList.toggle('hidden',add);
-    document.getElementById('fd-new-wr').classList.toggle('hidden',!add);
-  }
-  else if(cat.startsWith('recv')){
-    const add=cat==='recv-add';
-    document.getElementById('fg-recv').classList.remove('hidden');
-    document.getElementById('fr-sel-wr').classList.toggle('hidden',add);
-    document.getElementById('fr-new-wr').classList.toggle('hidden',!add);
-  }
+function onFCat(){
+  const cat=document.getElementById('fl-cat').value;
+  const sel=document.getElementById('fl-type');
+  const opts=LOG_TYPES[cat]||[];
+  sel.innerHTML=opts.length?opts.map(o=>`<option>${o}</option>`).join(''):'<option>—</option>';
 }
 
-function saveForm(){
-  const cat=document.getElementById('f-cat').value;
-  if(!cat) return;
-  if(cat==='balance') fSaveBal();
-  else if(cat.startsWith('debt')) fSaveDebt(cat==='debt-add');
-  else if(cat.startsWith('recv')) fSaveRecv(cat==='recv-add');
+async function saveLog(){
+  const date  =(document.getElementById('fl-date').value||'').trim();
+  const cat   =(document.getElementById('fl-cat').value||'').trim();
+  const type  =(document.getElementById('fl-type').value||'').trim();
+  const who   =(document.getElementById('fl-who').value||'').trim();
+  const month =(document.getElementById('fl-month').value||'').trim();
+  const amtIn =(document.getElementById('fl-in').value||'').trim();
+  const amtOut=(document.getElementById('fl-out').value||'').trim();
+  const cur   = document.getElementById('fl-cur').value;
+  const note  =(document.getElementById('fl-note').value||'').trim();
+  const st    = document.getElementById('fl-st');
+
+  if(!cat){st.textContent='Please select a category.';st.style.color='var(--rose)';return;}
+  if(!amtIn&&!amtOut){st.textContent='Enter Amount In or Amount Out.';st.style.color='var(--rose)';return;}
+
+  st.textContent='⏳ Saving…';st.style.color='var(--amber)';
+
+  const row=[date,cat,type,who,month,amtIn,amtOut,cur,note];
+  try{
+    const resp=await fetch(GS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'appendRow',tab:'Budget_Log',row})});
+    const result=await resp.json();
+    if(result?.error) throw new Error(result.error);
+    st.textContent='✅ Row saved to Budget_Log';st.style.color='var(--emerald)';
+    ['fl-in','fl-out','fl-note','fl-who','fl-month'].forEach(id=>{
+      const el=document.getElementById(id);if(el) el.value='';
+    });
+    setTimeout(()=>{st.textContent='';},4000);
+  }catch(e){
+    st.textContent='❌ '+e.message;st.style.color='var(--rose)';
+  }
 }
 
 /* ══════════════════════════════════════
@@ -702,83 +703,6 @@ function doSearch(){
   }).join('');
 }
 
-/* ══════════════════════════════════════
-   SHEET WRITE — targeted per tab
-══════════════════════════════════════ */
-async function writeTo(key, statusId){
-  const el=document.getElementById(statusId);
-  el.textContent='⏳ Saving…';el.style.color='var(--amber)';
-  const {headers,data}=D[key];
-  const rows=[headers,...data];
-  try{
-    const resp=await fetch(GS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'replaceSheet',tab:TABS[key],rows})});
-    const result=await resp.json();
-    if(result?.error) throw new Error(result.error);
-    el.textContent='✅ Saved!';el.style.color='var(--emerald)';
-    setTimeout(()=>{el.textContent='';},3000);
-    await loadAll();
-  }catch(e){el.textContent='❌ '+e.message;el.style.color='var(--rose)';}
-}
-
-function fSaveBal(){
-  const acct=document.getElementById('fb-acc').value;
-  const amt=(document.getElementById('fb-amt').value||'').trim();
-  if(!amt){document.getElementById('f-st').textContent='Enter a balance.';return;}
-  for(const row of D.balances.data){if(row[0]===acct){row[2]=amt;const n=document.getElementById('fb-note').value.trim();if(n)row[3]=n;break;}}
-  writeTo('balances','f-st');
-}
-
-function fSaveDebt(isAdd){
-  const s=(document.getElementById('fd-sar').value||'').trim();
-  const p=(document.getElementById('fd-pkr').value||'').trim();
-  const pri=document.getElementById('fd-pri').value;
-  const note=(document.getElementById('fd-note').value||'').trim();
-  const data=D.debts.data;
-  if(isAdd){
-    const nm=(document.getElementById('fd-new').value||'').trim();
-    if(!nm){document.getElementById('f-st').textContent='Enter a person name.';return;}
-    // Insert before TOTAL row
-    const tI=data.findIndex(r=>r[0]==='TOTAL'||r[1]==='TOTAL');
-    const no=String(tI>0?tI:data.length+1);
-    const nr=[no,nm,s||'0',p||'0',pri,note];
-    tI>=0?data.splice(tI,0,nr):data.push(nr);
-    // Recalculate TOTAL
-    const tot=data.find(r=>r[0]==='TOTAL'||r[1]==='TOTAL');
-    if(tot){
-      const ts=data.filter(r=>r[0]!=='TOTAL'&&r[1]!=='TOTAL').reduce((a,r)=>a+nv(r[2]),0);
-      const tp=data.filter(r=>r[0]!=='TOTAL'&&r[1]!=='TOTAL').reduce((a,r)=>a+nv(r[3]),0);
-      // keep TOTAL row structure: ['TOTAL','',sar,pkr,'',''] or ['','TOTAL',sar,pkr,'','']
-      if(tot[0]==='TOTAL'){tot[2]=ts.toFixed(2);tot[3]=String(Math.round(tp));}
-      else{tot[2]=ts.toFixed(2);tot[3]=String(Math.round(tp));}
-    }
-  }else{
-    const person=document.getElementById('fd-sel').value;
-    for(const row of data){if(row[1]===person){if(s)row[2]=s;if(p)row[3]=p;row[4]=pri;if(note)row[5]=note;break;}}
-  }
-  writeTo('debts','f-st');
-}
-
-function fSaveRecv(isAdd){
-  const p=(document.getElementById('fr-pkr').value||'').trim();
-  const s=(document.getElementById('fr-sar').value||'').trim();
-  const cert=document.getElementById('fr-cert').value;
-  const note=(document.getElementById('fr-note').value||'').trim();
-  const data=D.recv.data;
-  if(isAdd){
-    const from=(document.getElementById('fr-new').value||'').trim();
-    if(!from){document.getElementById('f-st').textContent='Enter a name.';return;}
-    const tI=data.findIndex(r=>(r[0]||'').toUpperCase().includes('TOTAL'));
-    const nr=[from,p||'0',s||'',cert,note];
-    tI>=0?data.splice(tI,0,nr):data.push(nr);
-    const tot=data.find(r=>(r[0]||'').toUpperCase().includes('TOTAL'));
-    if(tot){const tp=data.filter(r=>!(r[0]||'').toUpperCase().includes('TOTAL')&&(r[3]==='Confirmed'||r[3]==='Expected')).reduce((a,r)=>a+nv(r[1]),0);tot[1]=String(Math.round(tp));}
-  }else{
-    const from=document.getElementById('fr-sel').value;
-    for(const row of data){if(row[0]===from){if(p)row[1]=p;if(s)row[2]=s;row[3]=cert;if(note)row[4]=note;break;}}
-  }
-  writeTo('recv','f-st');
-}
 
 /* ══════════════════════════════════════
    LOAD — fetches each tab independently
