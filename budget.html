@@ -447,6 +447,7 @@ function renderAdvisor(){
 
   /* ── balances KPI ── */
   const sarBal = bal.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
+  const pkrBal = bal.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
   const ccKPIs=cards.map(r=>{
     const cl=r[C.status]==='CLEARED';
     return`<div class="kpi ${cl?'pkr':'rose'}">
@@ -470,42 +471,64 @@ function renderAdvisor(){
   const vGap    = Math.max(0,vTarget-vCombined);
   const vPct    = Math.min(100,(vCombined/vTarget)*100);
 
-  /* ── debts ── */
-  const totDebtSAR = debts.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.out]),0);
-  const totDebtPKR = debts.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
-  const highD  = debts.filter(r=>r[C.pri]==='HIGH');
-  const retD   = debts.filter(r=>r[C.pri]==='RETURN');
-  const nextD  = debts.filter(r=>r[C.pri]==='NEXT');
-  const queueD = debts.filter(r=>r[C.pri]==='QUEUE');
+  /* ── active debts only (exclude DONE / PAID) ── */
+  const activeDebts = debts.filter(r=>r[C.pri]!=='DONE'&&r[C.status]!=='PAID'&&r[C.status]!=='CLEARED');
+  const totDebtSAR = activeDebts.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.out]),0);
+  const totDebtPKR = activeDebts.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
+  const highD  = activeDebts.filter(r=>r[C.pri]==='HIGH');
+  const retD   = activeDebts.filter(r=>r[C.pri]==='RETURN');
+  const nextD  = activeDebts.filter(r=>r[C.pri]==='NEXT');
+  const queueD = activeDebts.filter(r=>r[C.pri]==='QUEUE');
 
   /* ── receivables ── */
   const confRecv = recv.filter(r=>r[C.cert]==='Confirmed');
   const expRecv  = recv.filter(r=>r[C.cert]==='Expected');
+  const uncRecv  = recv.filter(r=>r[C.cert]==='Uncertain');
   const confPKR  = confRecv.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
   const confSAR  = confRecv.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
   const expPKR   = expRecv.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
 
-  /* ── income avg ── */
+  /* ── income ── */
   const salRows = income.filter(r=>(r[C.type]||'').toLowerCase()==='salary');
   const avgSal  = salRows.length ? salRows.reduce((s,r)=>s+nv(r[C.in]),0)/salRows.length : 3900;
 
+  /* ── derived metrics ── */
+  const PKR_RATE = 74;
+  const monthlyIncomePKR = avgSal * PKR_RATE;
+  const totDebtSARinPKR  = totDebtSAR * PKR_RATE;
+  const totDebtAllPKR    = totDebtPKR + totDebtSARinPKR;
+  const debtToIncome     = monthlyIncomePKR > 0 ? totDebtAllPKR / monthlyIncomePKR : 0;
+  const totalLiquidPKR   = sarBal * PKR_RATE + pkrBal;
+  const bufferMonths     = monthlyIncomePKR > 0 ? totalLiquidPKR / monthlyIncomePKR : 0;
+  const savingsRate      = 0.40;
+  const monthlySavingsPKR = monthlyIncomePKR * savingsRate;
+  const mthsToDebtFree   = monthlySavingsPKR > 0 ? Math.ceil(totDebtAllPKR / monthlySavingsPKR) : '?';
+  const mthsToFill       = monthlySavingsPKR > 0 && vGap > 0 ? Math.ceil(vGap / monthlySavingsPKR) : (vGap===0?0:'?');
+  const urgentTotalPKR   = [...highD,...retD].reduce((s,r)=>s+(r[C.cur]==='PKR'?nv(r[C.out]):nv(r[C.out])*PKR_RATE),0);
+
   /* ── health score (0–100) ── */
-  const VISA_MAX=35, DEBT_MAX=25, RECV_MAX=20, BUFF_MAX=20;
+  // Visa Fund 0–30: % of target
+  const VISA_MAX=30;
   const visaScore = Math.round((vPct/100)*VISA_MAX);
-  const maxDebt   = 50000;
-  const debtScore = Math.max(0,Math.round(DEBT_MAX*(1-Math.min(1,totDebtSAR/maxDebt))));
-  const recvScore = Math.min(RECV_MAX, confRecv.length*7);
-  const buffMths  = avgSal>0 ? sarBal/(avgSal*0.25) : 0;
-  const buffScore = Math.min(BUFF_MAX,Math.round(buffMths*6));
+  // Debt burden 0–25: debt-to-income ratio (0×=25pts, 6×=0pts)
+  const DEBT_MAX=25;
+  const debtScore = Math.max(0, Math.round(DEBT_MAX * Math.max(0,1 - debtToIncome/6)));
+  // Receivables coverage 0–20: confirmed recv as % of total debt
+  const RECV_MAX=20;
+  const recvCoverage = totDebtAllPKR>0 ? Math.min(1,(confPKR+confSAR*PKR_RATE)/totDebtAllPKR) : 1;
+  const recvScore = Math.round(recvCoverage * RECV_MAX);
+  // Liquidity buffer 0–25: 3+ months = full score
+  const BUFF_MAX=25;
+  const buffScore = Math.min(BUFF_MAX, Math.round((bufferMonths/3)*BUFF_MAX));
   const score     = visaScore+debtScore+recvScore+buffScore;
   const scoreClr  = score>=70?'var(--emerald)':score>=45?'var(--amber)':'var(--rose)';
   const scoreLbl  = score>=70?'Good':score>=45?'Caution':'Critical';
 
   const bars=[
-    {label:'Visa Fund progress',  pts:visaScore, max:VISA_MAX, clr:'var(--amber)'},
-    {label:'Debt burden',         pts:debtScore, max:DEBT_MAX, clr:'var(--rose)'},
-    {label:'Confirmed receivables',pts:recvScore,max:RECV_MAX, clr:'var(--emerald)'},
-    {label:'SAR cash buffer',     pts:buffScore, max:BUFF_MAX, clr:'var(--accent)'},
+    {label:'Visa Fund progress',          pts:visaScore, max:VISA_MAX, clr:'var(--amber)'},
+    {label:'Debt-to-income burden',       pts:debtScore, max:DEBT_MAX, clr:'var(--rose)'},
+    {label:'Receivables vs debt coverage',pts:recvScore, max:RECV_MAX, clr:'var(--emerald)'},
+    {label:'Liquidity buffer (months)',   pts:buffScore, max:BUFF_MAX, clr:'var(--accent)'},
   ];
   const scoreHTML=`
   <div class="adv-score-row">
@@ -529,37 +552,47 @@ function renderAdvisor(){
   for(const r of highD)
     act('c-rose','URGENT','var(--rose-dim)','var(--rose)',
         `Clear ${r[C.who]}`,
-        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Highest priority debt. Clear from next salary before any other outflow.'}`);
+        `${fmt(r[C.out],r[C.cur])} outstanding — ${r[C.notes]||'Highest priority. Clear from next salary before any other outflow. Every day delayed compounds financial stress.'}`);
 
   for(const r of retD)
-    act('c-rose','HIGH','var(--rose-dim)','var(--rose)',
+    act('c-rose','RETURN','var(--rose-dim)','var(--rose)',
         `Return to ${r[C.who]}`,
-        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Honour return commitment as soon as receivable comes in.'}`);
+        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Honour this commitment the moment receivables land. Protecting trust is non-negotiable.'}`);
 
   if(vGap>0)
     act('c-amber','CRITICAL','var(--amber-dim)','var(--amber)',
         `Close Visa Fund gap — ${pkr(vGap)} remaining`,
-        `You are ${vPct.toFixed(1)}% of the way to PKR ${(vTarget/1e6).toFixed(1)}M target. Route every spare PKR into MCB or Abdullah (Meezan) until gap is zero.`);
+        `${vPct.toFixed(1)}% funded (${pkr(vCombined)} of ${pkr(vTarget)} target). At ${(savingsRate*100).toFixed(0)}% savings rate, est. ${mthsToFill} month${mthsToFill===1?'':'s'} to close. Contribute proportionally: MCB currently ${pkr(mcbV)}, Abdullah Meezan ${pkr(abdV)}.`);
+
+  if(confPKR>0||confSAR>0){
+    const confTotalPKR=confPKR+confSAR*PKR_RATE;
+    const debtAlloc=urgentTotalPKR>0?Math.min(confTotalPKR*0.6,urgentTotalPKR):0;
+    const visaAlloc=Math.max(0,Math.min(confTotalPKR*0.3,vGap));
+    const reserveAlloc=Math.max(0,confTotalPKR-debtAlloc-visaAlloc);
+    act('c-emerald','ALLOCATE','var(--emerald-dim)','var(--emerald)',
+        `Incoming ${pkr(confPKR)}${confSAR?` + ${sar(confSAR)}`:''} — Allocation Plan`,
+        `Recommended split → Debt clearance: ${pkr(debtAlloc)} (${urgentTotalPKR>0?'prioritise HIGH & RETURN':'no urgent debts'}) · Visa Fund: ${pkr(visaAlloc)} · SAR reserve: ${pkr(reserveAlloc)}. Sources: ${confRecv.map(r=>r[C.who]).join(', ')}.`);
+  }
 
   for(const r of nextD)
     act('c-amber','NEXT','var(--amber-dim)','var(--amber)',
         `Pay ${r[C.who]}`,
-        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Schedule after HIGH debts are cleared.'}`);
+        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Schedule immediately after HIGH and RETURN items are resolved.'}`);
 
-  for(const r of expRecv.filter(r=>(r[C.notes]||'').toLowerCase().includes('chase')))
+  for(const r of expRecv)
     act('c-accent','FOLLOW-UP','var(--accent-dim)','var(--accent)',
-        `Chase ${r[C.who]}`,
-        `${fmt(r[C.in],r[C.cur])} expected — ${r[C.notes]}`);
-
-  if(confPKR>0)
-    act('c-emerald','INCOMING','var(--emerald-dim)','var(--emerald)',
-        `Allocate confirmed receivables (${pkr(confPKR)})`,
-        `${confRecv.map(r=>r[C.who]).join(', ')} — plan allocation split between Visa Fund and debt repayment before the money arrives.`);
+        `Follow up: ${r[C.who]}`,
+        `${fmt(r[C.in],r[C.cur])} expected${r[C.due]?' — due '+r[C.due]:''} — ${r[C.notes]||'Confirm status, set a firm collection date, and follow through.'}`);
 
   for(const r of queueD)
     act('c-purple','QUEUE','var(--purple-dim)','var(--purple)',
-        `${r[C.who]} (queue)`,
-        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Pay when higher priorities are settled.'}`);
+        `${r[C.who]}`,
+        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Address after all higher-priority items are cleared.'}`);
+
+  if(sarBal<avgSal*0.5)
+    act('c-rose','CASH RISK','var(--rose-dim)','var(--rose)',
+        `SAR buffer low — ${sar(sarBal)}`,
+        `Recommended minimum: ${sar(avgSal*0.5)} (½ month salary). Current covers only ${sarBal>0?((sarBal/avgSal)*30).toFixed(0):0} days of income. Avoid non-essential SAR outflows until next salary arrives.`);
 
   const actHTML=actions.map((a,i)=>`
   <div class="adv-action ${a.cls}">
@@ -571,19 +604,25 @@ function renderAdvisor(){
     <div class="adv-tag" style="background:${a.tagBg};color:${a.tagClr}">${a.tag}</div>
   </div>`).join('');
 
-  /* ── insights ── */
-  const netPos = confPKR+expPKR - totDebtPKR;
-  const netClr = netPos>=0?'var(--emerald)':'var(--rose)';
-  const mthsToFill = avgSal>0 ? Math.ceil(vGap/(avgSal*74*0.4)) : '?'; // rough SAR→PKR @74
+  /* ── insights (6 tiles) ── */
+  const netPosPKR = (confPKR+expPKR) - totDebtAllPKR;
+  const netClr    = netPosPKR>=0?'var(--emerald)':'var(--rose)';
+  const dtiPct    = (debtToIncome*100).toFixed(0);
+  const dtiClr    = debtToIncome<2?'var(--emerald)':debtToIncome<4?'var(--amber)':'var(--rose)';
+  const bufClr    = bufferMonths>=2?'var(--emerald)':bufferMonths>=1?'var(--amber)':'var(--rose)';
   const insights=[
-    {icon:'⚖️', lbl:'Net Position (PKR)',
-     val:`<span style="color:${netClr};font-weight:700">${netPos>=0?'+':''}${pkr(netPos)}</span><br><span style="font-size:11px;color:var(--text3)">${pkr(confPKR+expPKR)} receivable vs ${pkr(totDebtPKR)} PKR debt</span>`},
-    {icon:'🎯', lbl:'Visa Fund',
-     val:`<span style="color:var(--amber);font-weight:700">${vPct.toFixed(1)}% funded</span><br><span style="font-size:11px;color:var(--text3)">Gap ${pkr(vGap)} · est. ${mthsToFill} mo to close</span>`},
+    {icon:'⚖️', lbl:'Net Position (all in PKR equiv.)',
+     val:`<span style="color:${netClr};font-weight:700">${netPosPKR>=0?'+':''}${pkr(netPosPKR)}</span><br><span style="font-size:11px;color:var(--text3)">${pkr(confPKR+expPKR)} receivable vs ${pkr(totDebtAllPKR)} total debt</span>`},
+    {icon:'🎯', lbl:'Visa Fund Status',
+     val:`<span style="color:var(--amber);font-weight:700">${vPct.toFixed(1)}% funded</span><br><span style="font-size:11px;color:var(--text3)">Gap ${pkr(vGap)} · est. ${mthsToFill} mo at 40% savings</span>`},
+    {icon:'📊', lbl:'Debt-to-Income Ratio',
+     val:`<span style="color:${dtiClr};font-weight:700">${dtiPct}% · ${debtToIncome.toFixed(1)}× salary</span><br><span style="font-size:11px;color:var(--text3)">${debtToIncome<2?'Manageable':'Elevated — reduce debt urgently'} · ~${mthsToDebtFree} mo to debt-free</span>`},
+    {icon:'🛡️', lbl:'Liquidity Buffer',
+     val:`<span style="color:${bufClr};font-weight:700">${bufferMonths.toFixed(1)} months liquid</span><br><span style="font-size:11px;color:var(--text3)">${sar(sarBal)} + ${pkr(pkrBal)} on hand</span>`},
     {icon:'📥', lbl:'Incoming (confirmed)',
-     val:`<span style="color:var(--emerald);font-weight:700">${pkr(confPKR)}${confSAR?` + ${sar(confSAR)}`:''}</span><br><span style="font-size:11px;color:var(--text3)">${confRecv.length} confirmed · ${expRecv.length} expected</span>`},
-    {icon:'💸', lbl:'Total Debt',
-     val:`<span style="color:var(--rose);font-weight:700">${sar(totDebtSAR)}</span><br><span style="font-size:11px;color:var(--text3)">${pkr(totDebtPKR)} PKR · ${debts.length} creditors</span>`},
+     val:`<span style="color:var(--emerald);font-weight:700">${pkr(confPKR)}${confSAR?` + ${sar(confSAR)}`:''}</span><br><span style="font-size:11px;color:var(--text3)">${confRecv.length} confirmed · ${expRecv.length} expected · ${uncRecv.length} uncertain</span>`},
+    {icon:'💸', lbl:'Total Active Debt',
+     val:`<span style="color:var(--rose);font-weight:700">${sar(totDebtSAR)}</span><br><span style="font-size:11px;color:var(--text3)">${pkr(totDebtPKR)} PKR · ${activeDebts.length} active creditors</span>`},
   ];
   const insHTML=insights.map(i=>`<div class="adv-insight">
     <div class="adv-ins-icon">${i.icon}</div>
@@ -594,18 +633,27 @@ function renderAdvisor(){
   /* ── warnings ── */
   const warns=[];
   const now2=new Date(); now2.setHours(0,0,0,0);
-  for(const r of [...debts,...recv]){
+  for(const r of [...activeDebts,...recv]){
     if(!r[C.due]) continue;
-    const d=new Date(r[C.due]);
+    const d=new Date(r[C.due]); if(isNaN(d)) continue;
     const diff=Math.round((d-now2)/(864e5));
-    if(diff<0)   warns.push(`⚠ ${r[C.who]} — OVERDUE since ${r[C.due]}`);
-    else if(diff<=14) warns.push(`⏰ ${r[C.who]} — due in ${diff} day${diff===1?'':'s'} (${r[C.due]})`);
+    if(diff<0)    warns.push({t:'red', m:`⚠ ${r[C.who]} — OVERDUE by ${Math.abs(diff)} day${Math.abs(diff)===1?'':'s'} (was due ${r[C.due]})`});
+    else if(diff<=14) warns.push({t:'amber',m:`⏰ ${r[C.who]} — due in ${diff} day${diff===1?'':'s'} (${r[C.due]})`});
   }
-  if(sarBal<300) warns.push(`🔴 SAR balance critically low — ${sar(sarBal)}`);
-  else if(sarBal<800) warns.push(`🟡 SAR balance low — ${sar(sarBal)}`);
-  if(vPct<40) warns.push(`🟡 Visa Fund below 40% — accelerate savings`);
-  const warnHTML=warns.length?`<div class="card"><div class="card-hd"><span>⚠️</span><span class="card-ttl" style="color:var(--amber)">Warnings & Flags</span></div>
-    <div class="card-bd"><div class="adv-warn">${warns.map(w=>`<div class="adv-warn-item">${w}</div>`).join('')}</div></div></div>`:'';
+  if(sarBal<300)       warns.push({t:'red',   m:`🔴 SAR balance critically low — ${sar(sarBal)} · immediate top-up required`});
+  else if(sarBal<800)  warns.push({t:'amber', m:`🟡 SAR balance low — ${sar(sarBal)} · top up before next major outflow`});
+  if(vPct<40)          warns.push({t:'amber', m:`🟡 Visa Fund below 40% — accelerate savings, cut non-essential spend`});
+  if(netPosPKR<0)      warns.push({t:'red',   m:`🔴 Net position negative — ${pkr(Math.abs(netPosPKR))} more owed than incoming. Stop new debt immediately.`});
+  if(debtToIncome>=4)  warns.push({t:'red',   m:`🔴 Debt-to-income ${dtiPct}% is dangerously high (above 4× monthly income)`});
+  else if(debtToIncome>=2) warns.push({t:'amber',m:`🟡 Debt-to-income ${dtiPct}% elevated — target below 2× monthly income`});
+  if(highD.length===0&&retD.length===0&&activeDebts.length>0)
+    warns.push({t:'green',m:`✅ No URGENT or RETURN debts — good position. Focus surplus on Visa Fund.`});
+
+  const warnStyle={red:'background:var(--rose-dim);border-color:var(--rose);color:var(--rose)',
+                   amber:'background:var(--amber-dim);border-color:var(--amber);color:var(--amber)',
+                   green:'background:var(--emerald-dim);border-color:var(--emerald);color:var(--emerald)'};
+  const warnHTML=warns.length?`<div class="card"><div class="card-hd"><span>⚠️</span><span class="card-ttl" style="color:var(--amber)">Warnings &amp; Flags</span></div>
+    <div class="card-bd"><div class="adv-warn">${warns.map(w=>`<div class="adv-warn-item" style="${warnStyle[w.t]||''}">${w.m}</div>`).join('')}</div></div></div>`:'';
 
   el.innerHTML=`<div class="adv-wrap">
   <div class="adv-hd">
