@@ -413,7 +413,6 @@ const bycat=cat=>_rows.filter(r=>r[C.cat]===cat);
 function renderOverview(){
   const bal   = bycat('Balance');
   const cards = bycat('Card');
-  const visa  = bycat('Visa Fund');
   const debts = bycat('Debt');
   const recv  = bycat('Receivable');
 
@@ -426,68 +425,49 @@ function renderOverview(){
   }
   kH+='</div>';
 
-  // Visa fund
-  const tgtRow =visa.find(r=>r[C.type]==='Target');
-  const target =nv(tgtRow?tgtRow[C.in]:3500000);
-  const mcbV   =nv((visa.find(r=>r[C.who]==='MCB')||[])[C.in]||0);
-  const abdV   =nv((visa.find(r=>r[C.who]==='Abdullah (Meezan)')||[])[C.in]||0);
-  const combined=mcbV+abdV,gap=Math.max(0,target-combined);
-  const pct=Math.min(100,(combined/target)*100).toFixed(1);
-
   // Summary totals — split by currency
   const totDebtSAR=debts.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.out]),0);
   const totDebtPKR=debts.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
-  const confRecvSAR=recv.filter(r=>r[C.cert]!=='Uncertain'&&r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
-  const confRecvPKR=recv.filter(r=>r[C.cert]!=='Uncertain'&&r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
-
-  // Urgent actions
-  const urg=[];
-  for(const r of debts){
-    if(r[C.pri]==='HIGH')   urg.push({c:'var(--rose)',lbl:`Clear ${r[C.who]}`,amt:fmt(r[C.out],r[C.cur]),note:'From Aug salary'});
-    if(r[C.pri]==='RETURN') urg.push({c:'var(--rose)',lbl:`Return to ${r[C.who]}`,amt:fmt(r[C.out],r[C.cur]),note:'After A.Rehman pays'});
-  }
-  for(const r of recv){
-    if(r[C.status]==='Chase') urg.push({c:'var(--amber)',lbl:`Chase ${r[C.who]}`,amt:fmt(r[C.in],r[C.cur]),note:r[C.notes]||''});
-  }
-  if(gap>0) urg.push({c:'var(--amber)',lbl:'Visa Fund gap',amt:pkr(gap),note:`${pct}% funded`});
+  // All confirmed+expected receivables (exclude Uncertain)
+  const confRecv=recv.filter(r=>r[C.cert]!=='Uncertain');
+  const confRecvSAR=confRecv.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
+  const confRecvPKR=confRecv.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
+  // Primary display: if PKR total is larger, lead with that
+  const recvLeadPKR = confRecvPKR >= confRecvSAR*74; // rough SAR→PKR @74
+  const recvMain = recvLeadPKR ? pkr(confRecvPKR) : sar(confRecvSAR);
+  const recvSub  = recvLeadPKR
+    ? (confRecvSAR?sar(confRecvSAR)+' SAR':confRecv.length+' items')
+    : (confRecvPKR?pkr(confRecvPKR)+' PKR':'');
 
   // Credit cards
   let ccH='';
   for(const r of cards){
     const cl=r[C.status]==='CLEARED';
     ccH+=`<div class="cc-item"><div>
-      <div style="font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono)">${r[C.who]}</div>
-      <div style="font-size:11px;color:var(--text3)">${r[C.notes]||''}</div></div>
-      <div style="text-align:right">${!cl?`<div class="num" style="color:var(--rose);font-weight:700">${sar(r[C.out])}</div>`:''}
-      <div style="margin-top:4px"><span class="badge ${cl?'green':'red'}">${r[C.status]}</span></div></div></div>`;
+      <div class="tbl-name" style="font-family:var(--mono)">${r[C.who]}</div>
+      <div class="tbl-dim">${r[C.notes]||''}</div></div>
+      <div style="text-align:right">
+        ${!cl?`<div class="num" style="color:var(--rose);font-weight:700">${sar(r[C.out])}</div>`:''}
+        <div style="margin-top:4px"><span class="badge ${cl?'green':'red'}">${r[C.status]}</span></div>
+      </div></div>`;
   }
 
   document.getElementById('tabOverview').innerHTML=`${kH}
   <div class="sum-row">
-    <div class="sum-card"><span class="sum-icon">🔴</span><div><div class="sum-lbl">Total Debt</div><div class="sum-val" style="color:var(--rose)">${sar(totDebtSAR)}</div><div class="sum-sub">${totDebtPKR?pkr(totDebtPKR)+' PKR':''} · ${debts.length} items</div></div></div>
-    <div class="sum-card"><span class="sum-icon">🟢</span><div><div class="sum-lbl">Receivable</div><div class="sum-val" style="color:var(--emerald)">${sar(confRecvSAR)}</div><div class="sum-sub">${confRecvPKR?pkr(confRecvPKR)+' PKR':''}</div></div></div>
-    <div class="sum-card"><span class="sum-icon">🎯</span><div><div class="sum-lbl">Visa Fund</div><div class="sum-val" style="color:var(--amber)">${pct}%</div><div class="sum-sub">Gap ${pkr(gap)}</div></div></div>
-  </div>
-  <div class="row2">
-    <div class="card"><div class="card-hd"><span style="color:var(--amber)">🎯</span><span class="card-ttl">Visa Fund Progress</span></div>
-      <div class="card-bd">
-        <div class="visa-grid">
-          <div class="vg-item"><div class="vg-lbl">MCB</div><div class="vg-val" style="color:var(--emerald)">${pkr(mcbV)}</div></div>
-          <div class="vg-item"><div class="vg-lbl">Abdullah (Meezan)</div><div class="vg-val" style="color:var(--emerald)">${pkr(abdV)}</div></div>
-          <div class="vg-item"><div class="vg-lbl">Combined</div><div class="vg-val" style="color:var(--accent)">${pkr(combined)}</div></div>
-          <div class="vg-item"><div class="vg-lbl">Target</div><div class="vg-val">${pkr(target)}</div></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px"><span>${pct}% funded</span><span>6 months · Jul 2026–Jan 2027</span></div>
-        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-        <div class="gap-badge">⚠ Gap ${pkr(gap)}</div>
-      </div>
-    </div>
-    <div class="card"><div class="card-hd"><span style="color:var(--rose)">💳</span><span class="card-ttl">Credit Cards</span></div>
-      <div class="card-bd">${ccH||'<span style="color:var(--text3)">No data</span>'}</div>
-    </div>
-  </div>
-  <div class="card"><div class="card-hd"><span style="color:var(--rose)">⚡</span><span class="card-ttl">Urgent Actions</span></div>
-    <div class="card-bd"><div class="urg-grid">${urg.map(u=>`<div class="urg-item"><div class="urg-dot" style="background:${u.c}"></div><div class="urg-desc">${u.lbl}<span class="urg-note">${u.note}</span></div><div class="urg-amt">${u.amt}</div></div>`).join('')||'<span style="color:var(--text3)">No urgent actions</span>'}</div></div>
+    <div class="sum-card"><span class="sum-icon">🔴</span><div>
+      <div class="sum-lbl">Total Debt</div>
+      <div class="sum-val" style="color:var(--rose)">${sar(totDebtSAR)}</div>
+      <div class="sum-sub">${totDebtPKR?pkr(totDebtPKR)+' PKR &middot; ':''} ${debts.length} items</div>
+    </div></div>
+    <div class="sum-card"><span class="sum-icon">🟢</span><div>
+      <div class="sum-lbl">Receivable <span style="font-size:10px;color:var(--text3)">(excl. Uncertain)</span></div>
+      <div class="sum-val" style="color:var(--emerald)">${recvMain}</div>
+      <div class="sum-sub">${recvSub}</div>
+    </div></div>
+    <div class="sum-card"><span class="sum-icon">💳</span><div>
+      <div class="sum-lbl">Credit Cards</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${ccH||'<span class="tbl-dim">No data</span>'}</div>
+    </div></div>
   </div>
   <div id="adv-panel"></div>`;
   renderAdvisor();
@@ -507,7 +487,7 @@ function renderAdvisor(){
   const sarBal = bal.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
 
   /* ── visa fund ── */
-  const tgtRow  = visa.find(r=>(r[C.type]||'').toLowerCase()==='target');
+  const tgtRow  = visa.find(r=>(r[C.type]||'').toLowerCase().includes('target'));
   const vTarget = nv(tgtRow?tgtRow[C.in]:3500000);
   const mcbV    = nv((visa.find(r=>r[C.who]==='MCB')||[])[C.in]||0);
   const abdV    = nv((visa.find(r=>r[C.who]==='Abdullah (Meezan)')||[])[C.in]||0);
