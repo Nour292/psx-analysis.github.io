@@ -297,7 +297,7 @@ const GS  = 'https://script.google.com/macros/s/AKfycbwTYzhhh9q02qr_Epw4xnDNFPKC
 const LOG_TAB = 'Budget_Log';
 
 // Budget_Log column indices
-const C={date:0,cat:1,type:2,who:3,month:4,in:5,out:6,cur:7,pri:8,cert:9,status:10,notes:11};
+const C={date:0,cat:1,type:2,who:3,month:4,in:5,out:6,cur:7,pri:8,cert:9,status:10,notes:11,due:12};
 
 let _rows=[]; // all Budget_Log rows
 let _SF={section:'',priority:'',certainty:''};
@@ -432,6 +432,19 @@ function renderOverview(){
   </div>`;
 }
 
+function dueBadge(due){
+  if(!due) return '<span style="color:var(--text3);font-size:11px">—</span>';
+  const d=new Date(due),now=new Date();
+  now.setHours(0,0,0,0);
+  const diff=Math.round((d-now)/(1000*60*60*24));
+  let cls='gray',label=due;
+  if(diff<0)       {cls='red';  label=`⚠ ${due} (overdue)`;}
+  else if(diff===0){cls='red';  label='Today';}
+  else if(diff<=7) {cls='amber';label=`${due} (${diff}d)`;}
+  else if(diff<=30){cls='blue'; label=`${due} (${diff}d)`;}
+  return`<span class="badge ${cls}" style="font-size:10px">${label}</span>`;
+}
+
 function renderDebts(){
   const debts=bycat('Debt');
   let rows='';
@@ -439,20 +452,21 @@ function renderDebts(){
     const isPKR=r[C.cur]==='PKR';
     rows+=`<tr>
       <td style="font-weight:500;color:var(--text)">${r[C.who]}</td>
-      <td class="num ${isPKR?'':''}"><span style="font-size:10px;font-weight:700;margin-right:3px;color:var(--text3)">${r[C.cur]||''}</span></td>
+      <td><span style="font-size:10px;font-weight:700;color:var(--text3)">${r[C.cur]||''}</span></td>
       <td class="num" style="color:var(--rose)">${isPKR&&r[C.out]?pkr(r[C.out]):''}</td>
       <td class="num" style="color:var(--rose)">${!isPKR&&r[C.out]?sar(r[C.out]):''}</td>
       <td>${r[C.pri]?bdg(r[C.pri]):''}</td>
-      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:200px">${r[C.notes]||''}</td></tr>`;
+      <td>${dueBadge(r[C.due])}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:180px">${r[C.notes]||''}</td></tr>`;
   }
   const totSAR=debts.filter(r=>r[C.cur]!=='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
   const totPKR=debts.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
   rows+=`<tr class="tot-row"><td>TOTAL</td><td></td>
     <td class="num">${totPKR?pkr(totPKR):''}</td>
     <td class="num">${totSAR?sar(totSAR):''}</td>
-    <td></td><td></td></tr>`;
+    <td></td><td></td><td></td></tr>`;
   document.getElementById('tabDebts').innerHTML=`<div class="card"><div class="card-hd"><span style="color:var(--rose)">📋</span><span class="card-ttl">Debts — Priority Order</span><span style="margin-left:auto;font-size:11px;color:var(--text3)">🔴 HIGH → 🟡 NEXT → ⚪ WAITING</span></div>
-    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Cur</th><th>PKR Amount</th><th>SAR Amount</th><th>Priority</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Cur</th><th>PKR Amount</th><th>SAR Amount</th><th>Priority</th><th>Due Date</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
 }
 
 function renderRecv(){
@@ -461,14 +475,15 @@ function renderRecv(){
   for(const r of recv){
     const isU=r[C.cert]==='Uncertain';
     const isPKR=r[C.cur]==='PKR';
-    if(isU&&!unc){rows+=`<tr><td colspan="6" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:10px 12px 4px">Uncertain — Do Not Plan On</td></tr>`;unc=true;}
+    if(isU&&!unc){rows+=`<tr><td colspan="7" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:10px 12px 4px">Uncertain — Do Not Plan On</td></tr>`;unc=true;}
     rows+=`<tr class="${isU?'muted-row':''}">
       <td style="font-weight:500;color:var(--text)">${r[C.who]}</td>
       <td><span style="font-size:10px;font-weight:700;color:var(--text3)">${r[C.cur]||''}</span></td>
       <td class="num" style="color:var(--emerald)">${isPKR&&r[C.in]?pkr(r[C.in]):''}</td>
       <td class="num" style="color:var(--emerald)">${!isPKR&&r[C.in]?sar(r[C.in]):''}</td>
       <td>${r[C.cert]?`<span class="badge ${{Confirmed:'green',Expected:'blue',Uncertain:'gray'}[r[C.cert]]||'gray'}">${r[C.cert]}</span>`:''}</td>
-      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:180px">${r[C.notes]||''}</td></tr>`;
+      <td>${dueBadge(r[C.due])}</td>
+      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:160px">${r[C.notes]||''}</td></tr>`;
   }
   const conf=recv.filter(r=>r[C.cert]!=='Uncertain');
   const totSAR=conf.filter(r=>r[C.cur]!=='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
@@ -476,9 +491,9 @@ function renderRecv(){
   rows+=`<tr class="tot-row"><td>TOTAL (Conf+Expected)</td><td></td>
     <td class="num">${totPKR?pkr(totPKR):''}</td>
     <td class="num">${totSAR?sar(totSAR):''}</td>
-    <td></td><td></td></tr>`;
+    <td></td><td></td><td></td></tr>`;
   document.getElementById('tabRecv').innerHTML=`<div class="card"><div class="card-hd"><span style="color:var(--emerald)">📥</span><span class="card-ttl">Receivables</span></div>
-    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>From</th><th>Cur</th><th>PKR Amount</th><th>SAR Amount</th><th>Certainty</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+    <div class="card-bd" style="padding:0"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>From</th><th>Cur</th><th>PKR Amount</th><th>SAR Amount</th><th>Certainty</th><th>Expected By</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
 }
 
 function renderGoals(){
