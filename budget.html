@@ -99,6 +99,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .kpi.sar .kpi-val{color:var(--accent);}
 .kpi.pkr .kpi-val{color:var(--emerald);}
 .kpi.visa .kpi-val{color:var(--amber);}
+.kpi.rose .kpi-val{color:var(--rose);}
 .sum-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:14px;}
 .sum-icon{font-size:26px;flex-shrink:0;}
@@ -456,23 +457,19 @@ function renderAdvisor(){
 
   /* ── balances KPI ── */
   const sarBal = bal.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
+  const ccKPIs=cards.map(r=>{
+    const cl=r[C.status]==='CLEARED';
+    return`<div class="kpi ${cl?'pkr':'rose'}">
+      <div class="kpi-lbl" style="font-family:var(--mono)">${r[C.who]}</div>
+      <div class="kpi-val">${cl?'—':sar(nv(r[C.out]))}</div>
+      <div class="kpi-note"><span class="badge ${cl?'green':'red'}" style="font-size:9px;padding:1px 6px">${r[C.status]}</span></div>
+    </div>`;
+  }).join('');
   const balHTML=`<div class="kpi-strip" style="flex-wrap:wrap">${bal.map(r=>{
     const amt=nv(r[C.in]),cur=r[C.cur];
     const cls=r[C.who].includes('MCB')?'visa':cur==='SAR'?'sar':'pkr';
     return`<div class="kpi ${cls}"><div class="kpi-lbl">${r[C.who]}</div><div class="kpi-val">${fmt(amt,cur)}</div><div class="kpi-note">${cur}</div></div>`;
-  }).join('')}</div>`;
-
-  /* ── credit cards ── */
-  const ccHTML=cards.map(r=>{
-    const cl=r[C.status]==='CLEARED';
-    return`<div class="cc-item">
-      <div><div class="tbl-name" style="font-family:var(--mono)">${r[C.who]}</div>
-      <div class="tbl-dim">${r[C.notes]||''}</div></div>
-      <div style="text-align:right">
-        ${!cl?`<div class="num" style="color:var(--rose);font-weight:700">${sar(r[C.out])}</div>`:''}
-        <div style="margin-top:3px"><span class="badge ${cl?'green':'red'}">${r[C.status]}</span></div>
-      </div></div>`;
-  }).join('')||'<span class="tbl-dim">No card data</span>';
+  }).join('')}${ccKPIs}</div>`;
 
   /* ── visa fund ── */
   const tgtRow  = visa.find(r=>(r[C.type]||'').toLowerCase().includes('target'));
@@ -628,13 +625,8 @@ function renderAdvisor(){
       <span>Generated from your Budget_Log · ${_rows.length} entries · ${new Date().toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'})}</span>
     </div>
   </div>
-  <div class="adv-2col">
-    <div class="card"><div class="card-hd"><span>💰</span><span class="card-ttl">Account Balances</span></div>
-      <div class="card-bd" style="padding:12px 16px">${balHTML}</div>
-    </div>
-    <div class="card"><div class="card-hd"><span>💳</span><span class="card-ttl">Credit Cards</span></div>
-      <div class="card-bd" style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">${ccHTML}</div>
-    </div>
+  <div class="card"><div class="card-hd"><span>💰</span><span class="card-ttl">Account Balances &amp; Cards</span></div>
+    <div class="card-bd" style="padding:12px 16px">${balHTML}</div>
   </div>
   <div class="adv-2col">
     <div class="card"><div class="card-hd"><span>📊</span><span class="card-ttl">Financial Health Score</span></div>
