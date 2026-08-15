@@ -168,6 +168,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .goal-name{font-size:12px;font-weight:600;color:var(--text);flex:1;min-width:0;margin-right:8px;}
 .goal-target{font-size:11px;color:var(--text3);font-family:var(--mono);}
 
+/* ── TABS ── */
+.tab-bar{display:flex;padding:0 24px;gap:2px;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;flex-shrink:0;}
+.tab-btn{padding:12px 18px;font-size:12.5px;font-weight:600;border:none;background:none;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-family:var(--font);transition:color .12s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--purple);border-bottom-color:var(--purple);}
+.tab-pane{display:none;padding:20px 24px;flex-direction:column;gap:16px;}
+.tab-pane.active{display:flex;}
+
 /* ── LOAD STATE ── */
 .load-state{display:flex;align-items:center;justify-content:center;height:300px;flex-direction:column;gap:12px;color:var(--text3);}
 .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;}
@@ -251,13 +259,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <span id="loadBadge" style="font-size:11px;color:var(--text3)">Loading…</span>
   </div>
 
-  <div class="content" id="mainContent">
-    <div class="load-state" id="loadState">
-      <div class="spinner"></div>
-      <span>Loading budget data…</span>
-    </div>
-    <div id="dashboard" style="display:none"></div>
+  <!-- TAB BAR -->
+  <div class="tab-bar" id="tabBar" style="display:none">
+    <button class="tab-btn active" onclick="switchTab('overview',this)">🏦 Overview</button>
+    <button class="tab-btn" onclick="switchTab('debts',this)">📋 Debts</button>
+    <button class="tab-btn" onclick="switchTab('receivables',this)">📥 Receivables</button>
+    <button class="tab-btn" onclick="switchTab('goals',this)">🎯 Goals</button>
+    <button class="tab-btn" onclick="switchTab('income',this)">💵 Income</button>
+    <button class="tab-btn" onclick="switchTab('abdullah',this)">🏦 Abdullah A/C</button>
   </div>
+
+  <!-- LOAD STATE -->
+  <div class="load-state" id="loadState">
+    <div class="spinner"></div>
+    <span>Loading budget data…</span>
+  </div>
+
+  <!-- TAB PANES -->
+  <div id="tabOverview"    class="tab-pane active"></div>
+  <div id="tabDebts"       class="tab-pane"></div>
+  <div id="tabReceivables" class="tab-pane"></div>
+  <div id="tabGoals"       class="tab-pane"></div>
+  <div id="tabIncome"      class="tab-pane"></div>
+  <div id="tabAbdullah"    class="tab-pane"></div>
 </main>
 </div>
 
@@ -546,15 +570,30 @@ function render(sections){
     </div>
   </div>`;
 
-  /* ── ASSEMBLE ── */
-  document.getElementById('dashboard').innerHTML=`
+  /* ── ASSEMBLE INTO TABS ── */
+  // Overview tab: balances + visa fund + credit cards
+  document.getElementById('tabOverview').innerHTML=`
     ${kpiHtml}
     <div class="row2">${visaCard}${ccCard}</div>
-    <div class="row3">${debtsCard}</div>
-    <div class="row4">${recvCard}${goalsCard}</div>
-    <div class="row3">${incomeCard}</div>
-    <div class="row3">${abdCard}</div>
   `;
+  // Debts tab
+  document.getElementById('tabDebts').innerHTML=debtsCard;
+  // Receivables tab
+  document.getElementById('tabReceivables').innerHTML=recvCard;
+  // Goals tab
+  document.getElementById('tabGoals').innerHTML=goalsCard;
+  // Income tab
+  document.getElementById('tabIncome').innerHTML=incomeCard;
+  // Abdullah tab
+  document.getElementById('tabAbdullah').innerHTML=abdCard;
+}
+
+/* ── TAB SWITCHER ── */
+function switchTab(name, btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
+  btn.classList.add('active');
 }
 
 /* ── LOAD ── */
@@ -568,7 +607,7 @@ async function load(){
     const sections=parseSections(rows);
     render(sections);
     document.getElementById('loadState').style.display='none';
-    document.getElementById('dashboard').style.display='block';
+    document.getElementById('tabBar').style.display='flex';
     document.getElementById('loadBadge').textContent='';
     document.getElementById('asofDate').textContent='Updated: '+new Date().toLocaleDateString('en-PK',{year:'numeric',month:'short',day:'numeric'});
   } catch(e){
