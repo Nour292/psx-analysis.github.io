@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+(function(){
+  var AUTH='psx_user';
+  var loggedIn=sessionStorage.getItem(AUTH)||localStorage.getItem(AUTH+'_r');
+  if(!loggedIn){ window.location.replace('portfolio.html'); }
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Personal Finance — PSX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0F1E;--surface:#111827;--surface2:#1C2536;
+  --border:#263348;--border2:#334466;
+  --text:#F0F4FF;--text2:#A8BBDA;--text3:#607090;
+  --accent:#38BDF8;--accent-dim:#0C3A52;
+  --emerald:#10B981;--emerald-dim:#062B1C;
+  --rose:#F43F5E;--rose-dim:#2B0A14;
+  --amber:#F59E0B;--amber-dim:#2B1F04;
+  --orange:#FB923C;--orange-dim:#2B1304;
+  --purple:#A78BFA;--purple-dim:#1E1040;
+  --slate:#64748B;
+  --radius:8px;--radius-sm:5px;
+  --font:'Inter',sans-serif;--mono:'DM Mono',monospace;
+  --sidebar-w:220px;--sidebar-w-collapsed:52px;--header-h:52px;
+}
+:root.light{
+  --bg:#EFF3F9;--surface:#FFFFFF;--surface2:#E8EDF5;
+  --border:#C8D4E8;--border2:#A8BCE0;
+  --text:#0D1526;--text2:#2D4268;--text3:#6B82A8;
+  --accent:#0369A1;--accent-dim:#DBEAFE;
+  --emerald:#047857;--emerald-dim:#D1FAE5;
+  --rose:#BE123C;--rose-dim:#FFE4E6;
+  --amber:#B45309;--amber-dim:#FEF3C7;
+  --orange:#C2410C;--orange-dim:#FFEDD5;
+  --purple:#6D28D9;--purple-dim:#EDE9FE;
+  --slate:#475569;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+*,*::before,*::after{transition:background-color .2s,border-color .2s,color .15s;}
+
+/* ── LAYOUT ── */
+.shell{display:flex;min-height:100vh;}
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;flex-shrink:0;transition:width .22s cubic-bezier(.4,0,.2,1);}
+.sidebar.collapsed{width:var(--sidebar-w-collapsed);}
+.sidebar-logo{padding:0 14px;height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;overflow:hidden;white-space:nowrap;}
+.sidebar-logo .logo-text-wrap{opacity:1;transition:opacity .15s .05s;flex:1;min-width:0;}
+.sidebar.collapsed .logo-text-wrap{opacity:0;pointer-events:none;}
+.logo-icon{width:28px;height:28px;background:var(--purple);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.logo-text{font-size:14px;font-weight:700;color:var(--text);}
+.logo-sub{font-size:10px;color:var(--text3);margin-top:1px;}
+.sidebar-nav{flex:1;padding:8px 0;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overflow-x:hidden;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;white-space:nowrap;transition:background .12s,color .12s;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--purple-dim);color:var(--purple);}
+.nav-icon{font-size:18px;flex-shrink:0;width:22px;text-align:center;}
+.nav-label{transition:opacity .18s,max-width .22s;overflow:hidden;max-width:180px;}
+.sidebar.collapsed .nav-label{opacity:0;max-width:0;pointer-events:none;}
+.sidebar.collapsed .nav-item{padding:9px 0;justify-content:center;gap:0;}
+.nav-divider{height:1px;background:var(--border);margin:6px 8px;}
+.nav-grp{display:flex;flex-direction:column;}
+.nav-grp-btn{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;white-space:nowrap;transition:background .12s,color .12s;}
+.nav-grp-btn:hover{background:var(--surface2);color:var(--text);}
+.nav-grp-chevron{margin-left:auto;font-size:9px;opacity:.5;flex-shrink:0;transition:transform .2s;}
+.nav-grp-btn.open .nav-grp-chevron{transform:rotate(180deg);opacity:1;}
+.sidebar.collapsed .nav-grp-btn{padding:9px 0;justify-content:center;gap:0;}
+.sidebar.collapsed .nav-grp-btn .nav-label{opacity:0;max-width:0;pointer-events:none;}
+.sidebar.collapsed .nav-grp-chevron{display:none;}
+.nav-sub{display:flex;flex-direction:column;overflow:hidden;max-height:0;transition:max-height .22s cubic-bezier(.4,0,.2,1);}
+.nav-sub.open{max-height:300px;}
+.sidebar.collapsed .nav-sub{display:none;}
+.nav-sub-btn{display:flex;align-items:center;gap:8px;padding:7px 12px 7px 42px;font-size:12.5px;font-weight:500;color:var(--text3);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;border-radius:var(--radius-sm);white-space:nowrap;transition:background .12s,color .12s;}
+.nav-sub-btn:hover{background:var(--surface2);color:var(--text);}
+.sidebar-footer{padding:8px 0;border-top:1px solid var(--border);}
+.footer-btn{display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;white-space:nowrap;}
+.footer-btn:hover{background:var(--surface2);color:var(--text);}
+.footer-label{transition:opacity .18s,max-width .22s;overflow:hidden;max-width:180px;}
+.sidebar.collapsed .footer-label{opacity:0;max-width:0;pointer-events:none;}
+.sidebar.collapsed .footer-btn{padding:9px 0;justify-content:center;gap:0;}
+.sb-toggle-tab{position:fixed;top:50%;left:calc(var(--sidebar-w) - 1px);transform:translateY(-50%);z-index:200;width:18px;height:48px;background:var(--surface);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:left .22s cubic-bezier(.4,0,.2,1),background .12s,color .12s;box-shadow:2px 0 6px rgba(0,0,0,.15);}
+.sb-toggle-tab:hover{background:var(--surface2);color:var(--text);}
+.sb-toggle-tab svg{transition:transform .22s;flex-shrink:0;}
+:root.sb-collapsed .sb-toggle-tab{left:calc(var(--sidebar-w-collapsed) - 1px);}
+:root.sb-collapsed .sb-toggle-tab svg{transform:rotate(180deg);}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column;transition:margin-left .22s cubic-bezier(.4,0,.2,1);}
+:root.sb-collapsed .main{margin-left:var(--sidebar-w-collapsed);}
+.topbar{height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;flex-shrink:0;position:sticky;top:0;z-index:50;}
+.topbar-title{font-size:14px;font-weight:700;color:var(--text);flex:1;}
+.topbar-date{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.content{padding:20px 24px;display:flex;flex-direction:column;gap:16px;}
+
+/* ── KPI STRIP ── */
+.kpi-strip{display:flex;gap:10px;flex-wrap:nowrap;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;flex:1;min-width:0;}
+.kpi-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin-bottom:4px;}
+.kpi-val{font-size:17px;font-weight:800;font-family:var(--mono);line-height:1.2;}
+.kpi-note{font-size:10px;color:var(--text3);margin-top:3px;}
+.kpi.sar .kpi-val{color:var(--accent);}
+.kpi.pkr .kpi-val{color:var(--emerald);}
+.kpi.visa .kpi-val{color:var(--amber);}
+.kpi.warn .kpi-val{color:var(--rose);}
+
+/* ── CARDS ── */
+.row2{display:grid;grid-template-columns:3fr 2fr;gap:16px;}
+.row3{display:grid;grid-template-columns:1fr;gap:16px;}
+.row4{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.card-head{padding:12px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.card-head-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);}
+.card-body{padding:14px 16px;}
+
+/* ── VISA FUND ── */
+.visa-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.vs-item{background:var(--surface2);border-radius:var(--radius-sm);padding:8px 12px;}
+.vs-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;}
+.vs-val{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text);margin-top:2px;}
+.prog-wrap{margin-bottom:8px;}
+.prog-label-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px;}
+.prog-bar{background:var(--surface2);border-radius:20px;height:12px;overflow:hidden;border:1px solid var(--border);}
+.prog-fill{background:linear-gradient(90deg,var(--amber),#FCD34D);height:100%;border-radius:20px;transition:width .8s;}
+.gap-badge{display:inline-flex;align-items:center;gap:5px;background:var(--rose-dim);color:var(--rose);border:1px solid var(--rose);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;font-family:var(--mono);margin-top:8px;}
+
+/* ── CREDIT CARDS ── */
+.cc-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.cc-item:last-child{border-bottom:none;}
+.cc-name{font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono);}
+.cc-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px;}
+.badge.red{background:var(--rose-dim);color:var(--rose);border:1px solid var(--rose);}
+.badge.green{background:var(--emerald-dim);color:var(--emerald);border:1px solid var(--emerald);}
+.badge.amber{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber);}
+.badge.blue{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);}
+.badge.gray{background:var(--surface2);color:var(--text3);border:1px solid var(--border);}
+.badge.purple{background:var(--purple-dim);color:var(--purple);border:1px solid var(--purple);}
+
+/* ── TABLES ── */
+.tbl-wrap{overflow-x:auto;}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.tbl th{background:var(--surface2);color:var(--text3);padding:8px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.tbl td{border-bottom:1px solid var(--border);padding:8px 12px;color:var(--text2);white-space:nowrap;}
+.tbl tbody tr:last-child td{border-bottom:none;}
+.tbl tbody tr:hover td{background:var(--surface2);}
+.tbl .total-row td{font-weight:700;color:var(--text);border-top:1px solid var(--border2);background:var(--surface2);}
+.tbl .muted-row td{color:var(--text3);}
+.num{font-family:var(--mono);}
+.pri-high{color:var(--rose);font-weight:700;}
+.pri-return{color:var(--rose);}
+.pri-next{color:var(--amber);font-weight:600;}
+.pri-queue{color:var(--amber);}
+.pri-assigned{color:var(--accent);}
+.pri-waiting{color:var(--text3);}
+.pri-watch{color:var(--orange);}
+.pri-loan{color:var(--purple);}
+.flag-warn{color:var(--amber);font-size:11px;}
+
+/* ── GOALS ── */
+.goals-grid{display:flex;flex-direction:column;gap:6px;}
+.goal-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-sm);background:var(--surface2);}
+.goal-name{font-size:12px;font-weight:600;color:var(--text);flex:1;min-width:0;margin-right:8px;}
+.goal-target{font-size:11px;color:var(--text3);font-family:var(--mono);}
+
+/* ── LOAD STATE ── */
+.load-state{display:flex;align-items:center;justify-content:center;height:300px;flex-direction:column;gap:12px;color:var(--text3);}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">💰</div>
+    <div class="logo-text-wrap">
+      <div class="logo-text">PSX Analysis</div>
+      <div class="logo-sub">Personal Finance</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+
+    <!-- Technical Analysis -->
+    <div class="nav-grp">
+      <button class="nav-grp-btn" onclick="this.classList.toggle('open');document.getElementById('taSub').classList.toggle('open')">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label"> Technical Analysis</span>
+        <span class="nav-grp-chevron">▼</span>
+      </button>
+      <div class="nav-sub" id="taSub">
+        <button class="nav-sub-btn" onclick="window.location.href='index.html'">⌂ Dashboard</button>
+        <button class="nav-sub-btn" onclick="window.location.href='index.html'">▶ Weekly Analysis</button>
+      </div>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <!-- Portfolio -->
+    <div class="nav-grp">
+      <button class="nav-grp-btn" onclick="this.classList.toggle('open');document.getElementById('portSub').classList.toggle('open')">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label"> Portfolio</span>
+        <span class="nav-grp-chevron">▼</span>
+      </button>
+      <div class="nav-sub" id="portSub">
+        <button class="nav-sub-btn" onclick="window.location.href='portfolio.html'">📊 Dashboard</button>
+      </div>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <!-- Personal Finance (active) -->
+    <button class="nav-item active">
+      <span class="nav-icon">💰</span>
+      <span class="nav-label"> Personal Finance</span>
+    </button>
+
+  </nav>
+  <div class="sidebar-footer">
+    <button class="footer-btn" onclick="toggleTheme()" id="themeBtn">
+      <span id="themeIcon" style="font-size:15px">☀️</span>
+      <span class="footer-label" id="themeLbl"> Light Mode</span>
+    </button>
+    <button class="footer-btn" onclick="location.reload()">
+      <span style="font-size:15px">↺</span>
+      <span class="footer-label"> Refresh</span>
+    </button>
+    <div class="footer-btn" style="cursor:default;flex-direction:column;align-items:flex-start;gap:2px">
+      <span class="footer-label" style="font-size:10px;color:var(--text3)">PSX · Pakistan Stock Exchange</span>
+    </div>
+  </div>
+</aside>
+
+<button class="sb-toggle-tab" onclick="toggleSidebar()" title="Toggle sidebar">
+  <svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M7 2L2 8l5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main" id="mainEl">
+  <div class="topbar">
+    <div class="topbar-title">Personal Finance</div>
+    <div class="topbar-date" id="asofDate"></div>
+    <span id="loadBadge" style="font-size:11px;color:var(--text3)">Loading…</span>
+  </div>
+
+  <div class="content" id="mainContent">
+    <div class="load-state" id="loadState">
+      <div class="spinner"></div>
+      <span>Loading budget data…</span>
+    </div>
+    <div id="dashboard" style="display:none"></div>
+  </div>
+</main>
+</div>
+
+<script>
+const SHEET_ID = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
+const SHEET_NAME = 'Budget';
+
+/* ── THEME ── */
+function toggleTheme(){
+  const r=document.documentElement;
+  const isLight=r.classList.contains('light');
+  r.classList.toggle('light',!isLight);
+  localStorage.setItem('psx_theme',isLight?'dark':'light');
+  document.getElementById('themeIcon').textContent=isLight?'☀️':'🌙';
+  document.getElementById('themeLbl').textContent=isLight?' Light Mode':' Dark Mode';
+}
+(function(){
+  const t=localStorage.getItem('psx_theme');
+  if(t==='light'){document.documentElement.classList.add('light');document.getElementById('themeIcon').textContent='🌙';document.getElementById('themeLbl').textContent=' Dark Mode';}
+})();
+
+/* ── SIDEBAR ── */
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const r=document.documentElement;
+  sb.classList.toggle('collapsed');
+  r.classList.toggle('sb-collapsed');
+}
+
+/* ── CSV PARSER ── */
+function parseCSV(text){
+  const rows=[];
+  for(const line of text.split('\n')){
+    if(!line.trim()) continue;
+    const row=[];let field='';let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){if(inQ&&line[i+1]==='"'){field+='"';i++;}else inQ=!inQ;}
+      else if(c===','&&!inQ){row.push(field.trim());field='';}
+      else field+=c;
+    }
+    row.push(field.trim());
+    rows.push(row);
+  }
+  return rows;
+}
+
+/* ── SECTION PARSER ── */
+const KNOWN_SECTIONS=[
+  'PROFILE','BALANCES','CREDIT CARDS','VISA FUND','DEBTS',
+  'RECEIVABLES','INCOME HISTORY (Jan–Jul 2026)',
+  'ABDULLAH MEEZAN ACCOUNT — VISA STATEMENT','GOALS & TARGETS'
+];
+
+function parseSections(rows){
+  const sections={};
+  let cur=null;let gotHeader=false;
+  for(const row of rows){
+    const first=(row[0]||'').trim();
+    if(!first) continue;
+    if(KNOWN_SECTIONS.includes(first)){cur=first;sections[cur]={headers:[],data:[]};gotHeader=false;continue;}
+    if(cur&&!gotHeader){sections[cur].headers=row;gotHeader=true;continue;}
+    if(cur) sections[cur].data.push(row);
+  }
+  return sections;
+}
+
+/* ── FORMATTERS ── */
+const fmtPKR=n=>{const v=parseFloat(n);return isNaN(v)?n:'₨'+Math.round(v).toLocaleString('en-PK');};
+const fmtSAR=n=>{const v=parseFloat(n);return isNaN(v)||v===0?n:'SAR '+v.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});};
+const fmtNum=n=>{const v=parseFloat(n);return isNaN(v)?n:v.toLocaleString();};
+const num=n=>parseFloat(n)||0;
+
+/* ── PRIORITY BADGE ── */
+function priClass(p){
+  const m={'HIGH':'pri-high','RETURN':'pri-return','NEXT':'pri-next','QUEUE':'pri-queue','ASSIGNED':'pri-assigned','WAITING':'pri-waiting','WATCH':'pri-watch','LOAN':'pri-loan'};
+  return m[p]||'';
+}
+function priBadge(p){
+  const m={'HIGH':'red','RETURN':'red','NEXT':'amber','QUEUE':'amber','ASSIGNED':'blue','WAITING':'gray','WATCH':'purple','LOAN':'purple','DONE':'green','PAID 31-Jul':'green','Aug salary':'amber','After card':'amber','After A.Rehman':'amber','Queue':'gray','Plan by Oct':'gray','GAP PKR 903,622':'red'};
+  const cls=m[p]||'gray';
+  return `<span class="badge ${cls}">${p}</span>`;
+}
+
+/* ── RENDER ── */
+function render(sections){
+  const bal=sections['BALANCES']||{data:[]};
+  const cc=sections['CREDIT CARDS']||{data:[]};
+  const visa=sections['VISA FUND']||{data:[]};
+  const debts=sections['DEBTS']||{data:[]};
+  const recv=sections['RECEIVABLES']||{data:[]};
+  const income=sections['INCOME HISTORY (Jan–Jul 2026)']||{data:[]};
+  const abd=sections['ABDULLAH MEEZAN ACCOUNT — VISA STATEMENT']||{data:[]};
+  const goals=sections['GOALS & TARGETS']||{data:[]};
+
+  /* ── KPI STRIP ── */
+  let kpiHtml='<div class="kpi-strip">';
+  for(const row of bal.data){
+    const [acct,ccy,balance,note]=row;
+    const cls=acct.includes('MCB')?'visa kpi':ccy==='SAR'?'sar kpi':'pkr kpi';
+    const val=ccy==='SAR'?'SAR '+num(balance).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}):'₨'+Math.round(num(balance)).toLocaleString('en-PK');
+    kpiHtml+=`<div class="${cls}"><div class="kpi-label">${acct}</div><div class="kpi-val">${val}</div><div class="kpi-note">${ccy}</div></div>`;
+  }
+  kpiHtml+='</div>';
+
+  /* ── VISA FUND CARD ── */
+  const visaMap={};
+  for(const r of visa.data) visaMap[(r[0]||'').trim()]=r[1];
+  const target=num(visaMap['Target (6 months Jul 2026 – Jan 2027)']||3500000);
+  const mcbV=num(visaMap['MCB']||0);
+  const abdV=num(visaMap['Abdullah (Meezan)']||0);
+  const combined=mcbV+abdV;
+  const gap=target-combined;
+  const pct=Math.min(100,(combined/target)*100).toFixed(1);
+  const visaCard=`
+  <div class="card">
+    <div class="card-head"><span style="color:var(--amber);font-size:16px">🎯</span><span class="card-head-title">Visa Fund Progress</span></div>
+    <div class="card-body">
+      <div class="visa-stats">
+        <div class="vs-item"><div class="vs-label">MCB</div><div class="vs-val" style="color:var(--emerald)">₨${Math.round(mcbV).toLocaleString('en-PK')}</div></div>
+        <div class="vs-item"><div class="vs-label">Abdullah (Meezan)</div><div class="vs-val" style="color:var(--emerald)">₨${Math.round(abdV).toLocaleString('en-PK')}</div></div>
+        <div class="vs-item"><div class="vs-label">Combined</div><div class="vs-val" style="color:var(--accent)">₨${Math.round(combined).toLocaleString('en-PK')}</div></div>
+        <div class="vs-item"><div class="vs-label">Target</div><div class="vs-val" style="color:var(--text)">₨${Math.round(target).toLocaleString('en-PK')}</div></div>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-label-row"><span>${pct}% funded</span><span>6 months · Jul 2026 – Jan 2027</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="gap-badge">⚠ Gap ₨${Math.round(gap).toLocaleString('en-PK')}</div>
+    </div>
+  </div>`;
+
+  /* ── CREDIT CARDS CARD ── */
+  let ccRows='';
+  for(const row of cc.data){
+    const [card,balSAR,status,note]=row;
+    const cleared=status==='CLEARED';
+    ccRows+=`<div class="cc-item">
+      <div><div class="cc-name">${card}</div><div class="cc-sub">${note||''}</div></div>
+      <div style="text-align:right">
+        ${!cleared?`<div class="num" style="color:var(--rose);font-weight:700;font-size:13px">SAR ${num(balSAR).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>`:''}
+        <span class="badge ${cleared?'green':'red'}">${status}</span>
+      </div>
+    </div>`;
+  }
+  const ccCard=`
+  <div class="card">
+    <div class="card-head"><span style="color:var(--rose);font-size:16px">💳</span><span class="card-head-title">Credit Cards</span></div>
+    <div class="card-body">${ccRows}</div>
+  </div>`;
+
+  /* ── DEBTS TABLE ── */
+  let debtRows='';
+  for(const row of debts.data){
+    const [no,person,sar,pkr,priority,note]=row;
+    if(!person) continue;
+    const isTotal=person==='TOTAL';
+    const trCls=isTotal?'total-row':'';
+    debtRows+=`<tr class="${trCls}">
+      <td>${no}</td>
+      <td style="font-weight:${isTotal?700:500};color:var(--text)">${person}</td>
+      <td class="num ${isTotal?'':''}"><span class="${priClass(priority)}">${sar?fmtSAR(sar):''}</span></td>
+      <td class="num">${pkr?fmtPKR(pkr):''}</td>
+      <td>${priority&&!isTotal?priBadge(priority):''}</td>
+      <td style="font-size:11px;color:var(--text3);max-width:220px;white-space:normal">${note||''}</td>
+    </tr>`;
+  }
+  const debtsCard=`
+  <div class="card">
+    <div class="card-head"><span style="color:var(--rose);font-size:16px">📋</span><span class="card-head-title">Debts — Priority Order</span><span style="margin-left:auto;font-size:11px;color:var(--text3)">Pay 🔴→🟡→⚪</span></div>
+    <div class="card-body" style="padding:0">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Person</th><th>SAR</th><th>PKR</th><th>Priority</th><th>Notes</th></tr></thead>
+          <tbody>${debtRows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+  /* ── RECEIVABLES ── */
+  let recvRows='';let recvMuted=false;
+  for(const row of recv.data){
+    const [from,pkr,sar,certainty,note]=row;
+    if(!from) continue;
+    const isTotal=from.includes('Total');
+    const isUncertain=certainty==='Uncertain';
+    if(isUncertain&&!recvMuted){recvRows+=`<tr><td colspan="5" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:10px 12px 4px">Uncertain — Do Not Plan On</td></tr>`;recvMuted=true;}
+    recvRows+=`<tr class="${isTotal?'total-row':isUncertain?'muted-row':''}">
+      <td style="font-weight:500;color:var(--text)">${from}</td>
+      <td class="num">${pkr?fmtPKR(pkr):''}</td>
+      <td class="num">${sar?fmtSAR(sar):''}</td>
+      <td><span class="badge ${certainty==='Confirmed'?'green':certainty==='Expected'?'blue':'gray'}">${certainty||''}</span></td>
+      <td style="font-size:11px;color:var(--text3);white-space:normal;max-width:180px">${note||''}</td>
+    </tr>`;
+  }
+  const recvCard=`
+  <div class="card">
+    <div class="card-head"><span style="color:var(--emerald);font-size:16px">📥</span><span class="card-head-title">Receivables</span></div>
+    <div class="card-body" style="padding:0">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>From</th><th>PKR</th><th>SAR</th><th>Status</th><th>Notes</th></tr></thead>
+          <tbody>${recvRows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+  /* ── GOALS ── */
+  let goalsHtml='<div class="goals-grid">';
+  for(const row of goals.data){
+    const [goal,target,status,note]=row;
+    if(!goal) continue;
+    goalsHtml+=`<div class="goal-item">
+      <div class="goal-name">${goal}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+        <span class="goal-target">${target||''}</span>
+        ${priBadge(status)}
+      </div>
+    </div>`;
+  }
+  goalsHtml+='</div>';
+  const goalsCard=`
+  <div class="card">
+    <div class="card-head"><span style="color:var(--amber);font-size:16px">🎯</span><span class="card-head-title">Goals & Targets</span></div>
+    <div class="card-body">${goalsHtml}</div>
+  </div>`;
+
+  /* ── INCOME HISTORY ── */
+  let incomeRows='';
+  for(const row of income.data){
+    const [month,sal,extra,total,remit,bal,remitPkr]=row;
+    if(!month) continue;
+    const isTotal=month==='TOTAL';
+    const negBal=parseFloat(bal)<0;
+    incomeRows+=`<tr class="${isTotal?'total-row':''}">
+      <td style="font-weight:${isTotal?700:400};color:var(--text)">${month}</td>
+      <td class="num">${sal?fmtSAR(sal):''}</td>
+      <td class="num">${extra&&extra!='0'?fmtSAR(extra):'—'}</td>
+      <td class="num" style="font-weight:600">${total?fmtSAR(total):''}</td>
+      <td class="num">${remit&&remit!='0'?fmtSAR(remit):'—'}</td>
+      <td class="num" style="color:${negBal?'var(--rose)':'var(--text2)'}">${bal?fmtSAR(bal):''}</td>
+      <td class="num" style="color:var(--emerald)">${remitPkr&&remitPkr!='0'?fmtPKR(remitPkr):'—'}</td>
+    </tr>`;
+  }
+  const incomeCard=`
+  <div class="card">
+    <div class="card-head"><span style="color:var(--accent);font-size:16px">💵</span><span class="card-head-title">Income & Remittance History</span></div>
+    <div class="card-body" style="padding:0">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Month</th><th>Salary</th><th>Extra</th><th>Total In</th><th>Remit</th><th>Balance</th><th>Remit PKR</th></tr></thead>
+          <tbody>${incomeRows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+  /* ── ABDULLAH ACCOUNT ── */
+  let abdRows='';
+  for(const row of abd.data){
+    const [no,date,desc,inPkr,outPkr,balPkr,flag]=row;
+    if(!date&&!desc) continue;
+    const isTotal=desc&&desc.includes('Current Balance');
+    abdRows+=`<tr class="${isTotal?'total-row':''}">
+      <td style="color:var(--text3)">${no||''}</td>
+      <td style="color:var(--text3);font-size:11px">${date||''}</td>
+      <td style="color:var(--text)">${desc||''}</td>
+      <td class="num" style="color:var(--emerald)">${inPkr&&inPkr!='0'?fmtPKR(inPkr):''}</td>
+      <td class="num" style="color:var(--rose)">${outPkr&&outPkr!='0'?fmtPKR(outPkr):''}</td>
+      <td class="num" style="font-weight:600;color:var(--accent)">${balPkr?fmtPKR(balPkr):''}</td>
+      <td class="flag-warn">${flag||''}</td>
+    </tr>`;
+  }
+  const abdCard=`
+  <div class="card">
+    <div class="card-head"><span style="color:var(--purple);font-size:16px">🏦</span><span class="card-head-title">Abdullah Meezan Account — Visa Statement</span><span style="margin-left:auto;font-size:10px;color:var(--amber)">⚠ Non-visa outflows may be queried by consulate</span></div>
+    <div class="card-body" style="padding:0">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Date</th><th>Description</th><th>In PKR</th><th>Out PKR</th><th>Balance</th><th>Flag</th></tr></thead>
+          <tbody>${abdRows}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+  /* ── ASSEMBLE ── */
+  document.getElementById('dashboard').innerHTML=`
+    ${kpiHtml}
+    <div class="row2">${visaCard}${ccCard}</div>
+    <div class="row3">${debtsCard}</div>
+    <div class="row4">${recvCard}${goalsCard}</div>
+    <div class="row3">${incomeCard}</div>
+    <div class="row3">${abdCard}</div>
+  `;
+}
+
+/* ── LOAD ── */
+async function load(){
+  try{
+    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}&_=${Date.now()}`;
+    const resp=await fetch(url);
+    if(!resp.ok) throw new Error('Sheet fetch failed: '+resp.status);
+    const text=await resp.text();
+    const rows=parseCSV(text);
+    const sections=parseSections(rows);
+    render(sections);
+    document.getElementById('loadState').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    document.getElementById('loadBadge').textContent='';
+    document.getElementById('asofDate').textContent='Updated: '+new Date().toLocaleDateString('en-PK',{year:'numeric',month:'short',day:'numeric'});
+  } catch(e){
+    document.getElementById('loadState').innerHTML=`<span style="color:var(--rose)">⚠ ${e.message}</span><span style="font-size:12px;color:var(--text3)">Run the Apps Script first to create the Budget tab, then refresh.</span>`;
+  }
+}
+
+load();
+</script>
+</body>
+</html>
