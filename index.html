@@ -324,38 +324,38 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 /* ═══════════════════════════════════════════
    SINGLE TICKER PAGE
 ═══════════════════════════════════════════ */
-.single-layout{ display:grid; grid-template-columns:300px 1fr; gap:20px; align-items:start; }
+.single-layout{ display:grid; grid-template-columns:340px 1fr; gap:20px; align-items:start; }
 @media(max-width:900px){ .single-layout{ grid-template-columns:1fr; } }
 
 .input-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
 .card-header{
-  padding:14px 16px; border-bottom:1px solid var(--border);
+  padding:12px 16px; border-bottom:1px solid var(--border);
   font-size:13px; font-weight:600; color:var(--text);
 }
-.input-rows{ }
-.input-row{
-  display:flex; align-items:center; border-bottom:1px solid var(--border); padding:0;
+/* ── single-ticker table ── */
+.s-tbl{ width:100%; border-collapse:collapse; }
+.s-tbl th{
+  padding:7px 12px; font-size:10px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.6px; color:var(--text3); background:var(--surface2);
+  border-bottom:2px solid var(--border); text-align:center;
 }
-.input-row:last-of-type{ border-bottom:none; }
-.input-row-label{
-  width:45%; padding:9px 14px; font-size:12px; color:var(--text2);
-  font-weight:500; flex-shrink:0;
+.s-tbl th:first-child{ text-align:left; width:36%; border-right:1px solid var(--border); }
+.s-tbl th:not(:first-child){ width:32%; border-left:1px solid var(--border); }
+.s-tbl td{ border-bottom:1px solid var(--border); padding:0; }
+.s-tbl tr:last-child td{ border-bottom:none; }
+.s-lbl{
+  padding:9px 12px; font-size:12px; color:var(--text2); font-weight:500;
+  border-right:1px solid var(--border); white-space:nowrap;
 }
-.input-row-fields{ flex:1; display:flex; gap:0; }
-.input-row-fields input{
-  flex:1; background:transparent; color:var(--accent); border:none;
+.s-tbl input{
+  width:100%; background:transparent; color:var(--accent); border:none;
   border-left:1px solid var(--border); padding:9px 10px; font-size:12.5px;
   font-family:var(--mono); font-weight:500; text-align:center; outline:none;
-  transition:background .1s;
+  transition:background .1s; display:block;
 }
-.input-row-fields input:focus{ background:var(--surface2); }
-.col-header{
-  display:flex; gap:0; border-bottom:1px solid var(--border);
-}
-.col-hdr{ flex:1; padding:6px 10px; font-size:10px; font-weight:600; text-transform:uppercase;
-  letter-spacing:.6px; color:var(--text3); text-align:center;
-  border-left:1px solid var(--border); }
-.col-hdr:first-child{ border-left:none; }
+.s-tbl input:first-child{ border-left:none; }
+.s-tbl input:focus{ background:var(--surface2); }
+.s-tbl .s-span input{ border-left:none; }
 
 .analyse-btn{
   width:100%; padding:12px; background:var(--accent); color:#000;
@@ -678,23 +678,23 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
     <div class="single-layout">
       <div class="input-card">
         <div class="card-header">📋 Enter Indicators</div>
-        <div class="col-header" style="padding-left:0;margin:0;">
-          <div style="width:45%;padding:6px 14px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Field</div>
-          <div class="col-hdr">1D</div>
-          <div class="col-hdr">1W</div>
-        </div>
-        <div class="input-rows">
-          <div class="input-row"><div class="input-row-label">Symbol</div><div class="input-row-fields" style="grid-column:span 2"><input id="sSymbol" placeholder="MCB" style="border-left:1px solid var(--border);width:100%"></div></div>
-          <div class="input-row"><div class="input-row-label">Price</div><div class="input-row-fields"><input id="sPrice" placeholder="403.86" style="border-left:none;width:200%"></div></div>
-          <div class="input-row"><div class="input-row-label">MA50</div><div class="input-row-fields"><input id="sMA50D" placeholder="401.2"><input id="sMA50W" placeholder="399.1"></div></div>
-          <div class="input-row"><div class="input-row-label">MA200</div><div class="input-row-fields"><input id="sMA200D" placeholder="385.5"><input id="sMA200W" placeholder="280.4"></div></div>
-          <div class="input-row"><div class="input-row-label">RSI</div><div class="input-row-fields"><input id="sRSID" placeholder="52.1"><input id="sRSIW" placeholder="58.3"></div></div>
-          <div class="input-row"><div class="input-row-label">MACD-H</div><div class="input-row-fields"><input id="sMACDHD" placeholder="-1.2"><input id="sMACDHW" placeholder="4.2"></div></div>
-          <div class="input-row"><div class="input-row-label">Signal</div><div class="input-row-fields"><input id="sSignalD" placeholder="0.8"><input id="sSignalW" placeholder="3.1"></div></div>
-          <div class="input-row"><div class="input-row-label">Volume</div><div class="input-row-fields"><input id="sVolume" placeholder="1D vol"><input id="sVolumeW" placeholder="1W vol"></div></div>
-          <div class="input-row"><div class="input-row-label">52W High</div><div class="input-row-fields"><input id="s52High" placeholder="452" style="border-left:1px solid var(--border);width:200%"></div></div>
-          <div class="input-row"><div class="input-row-label">52W Low</div><div class="input-row-fields"><input id="s52Low" placeholder="280" style="border-left:1px solid var(--border);width:200%"></div></div>
-        </div>
+        <table class="s-tbl">
+          <thead>
+            <tr><th>Field</th><th>1D</th><th>1W</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="s-lbl">Symbol</td><td colspan="2" class="s-span"><input id="sSymbol" placeholder="e.g. MCB"></td></tr>
+            <tr><td class="s-lbl">Price</td><td colspan="2" class="s-span"><input id="sPrice" placeholder="403.86"></td></tr>
+            <tr><td class="s-lbl">MA 50</td><td><input id="sMA50D" placeholder="401.2"></td><td><input id="sMA50W" placeholder="399.1"></td></tr>
+            <tr><td class="s-lbl">MA 200</td><td><input id="sMA200D" placeholder="385.5"></td><td><input id="sMA200W" placeholder="280.4"></td></tr>
+            <tr><td class="s-lbl">RSI</td><td><input id="sRSID" placeholder="52.1"></td><td><input id="sRSIW" placeholder="58.3"></td></tr>
+            <tr><td class="s-lbl">MACD-H</td><td><input id="sMACDHD" placeholder="-1.2"></td><td><input id="sMACDHW" placeholder="4.2"></td></tr>
+            <tr><td class="s-lbl">Signal</td><td><input id="sSignalD" placeholder="0.8"></td><td><input id="sSignalW" placeholder="3.1"></td></tr>
+            <tr><td class="s-lbl">Volume</td><td><input id="sVolume" placeholder="1D vol"></td><td><input id="sVolumeW" placeholder="1W vol"></td></tr>
+            <tr><td class="s-lbl">52W High</td><td colspan="2" class="s-span"><input id="s52High" placeholder="452"></td></tr>
+            <tr><td class="s-lbl">52W Low</td><td colspan="2" class="s-span"><input id="s52Low" placeholder="280"></td></tr>
+          </tbody>
+        </table>
         <button class="analyse-btn" onclick="analyseSingle()">Analyse Symbol</button>
       </div>
       <div class="result-card" id="singleResult">
