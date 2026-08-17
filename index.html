@@ -4,11 +4,14 @@
 <script>
 /* PSX Auth Guard — runs before any content renders */
 (function(){
-  var AUTH='psx_user';
-  var loggedIn=sessionStorage.getItem(AUTH)||localStorage.getItem(AUTH+'_r');
-  if(!loggedIn){
-    sessionStorage.setItem('psx_auth_redirect','index.html');
-    window.location.replace('portfolio.html');
+  var AUTH='psx_user',ADMIN='qasim';
+  var u=sessionStorage.getItem(AUTH)||localStorage.getItem(AUTH+'_r')||'';
+  if(!u){sessionStorage.setItem('psx_auth_redirect','index.html');window.location.replace('portfolio.html');return;}
+  if(u.trim().toLowerCase()===ADMIN){
+    document.addEventListener('DOMContentLoaded',function(){
+      var b=document.getElementById('btnPersonalFinance');
+      if(b)b.style.display='';
+    });
   }
 })();
 </script>
@@ -586,9 +589,9 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 
     <div class="nav-divider"></div>
 
-    <!-- Personal Finance -->
-    <button class="nav-item" data-tip="Personal Finance"
-            onclick="window.location.href='budget.html'">
+    <!-- Personal Finance (admin only) -->
+    <button id="btnPersonalFinance" class="nav-item" data-tip="Personal Finance"
+            onclick="window.location.href='budget.html'" style="display:none">
       <span class="nav-icon">💰</span>
       <span class="nav-label"> Personal Finance</span>
     </button>

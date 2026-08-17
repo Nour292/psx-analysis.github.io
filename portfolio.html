@@ -342,7 +342,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </div>
     <div class="nav-divider"></div>
-    <button class="nav-item" style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:5px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;white-space:nowrap;" onclick="window.location.href='budget.html'" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
+    <button id="btnPersonalFinance" class="nav-item" style="display:none;align-items:center;gap:10px;padding:9px 14px;border-radius:5px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;white-space:nowrap;" onclick="window.location.href='budget.html'" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
       <span style="font-size:18px;width:22px;text-align:center">💰</span>
       <span class="footer-label"> Personal Finance</span>
     </button>
@@ -567,6 +567,8 @@ function applyRoleUI(){
   if(admin){Object.assign(CAPITAL,CAPITAL_ADMIN);}else{Object.assign(CAPITAL,CAPITAL_USER);}
   document.getElementById('tab-portfolio').classList.add('active');
   document.getElementById('tabBtnPortfolio').classList.add('active');
+  const pf=document.getElementById('btnPersonalFinance');
+  if(pf)pf.style.display=admin?'flex':'none';
 }
 function showUserBadge(name){document.getElementById('userBadgeName').textContent=name;document.getElementById('userBadge').classList.add('show');applyRoleUI();}
 
