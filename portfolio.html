@@ -313,7 +313,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </div>
 
 <div class="shell">
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar" onmouseenter="hoverSidebar(true)" onmouseleave="hoverSidebar(false)">
   <div class="sidebar-logo">
     <div class="logo-icon">📈</div>
     <div class="logo-text-wrap"><div class="logo-text">PSX Portfolio</div><div class="logo-sub">Dividend Dashboard</div></div>
@@ -355,9 +355,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </aside>
 
-<button class="sb-toggle-tab" onclick="toggleSidebar()" title="Toggle sidebar">
-  <svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M7 2L2 8l5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-</button>
 
 <main class="main" id="mainContent">
   <div class="topbar">
@@ -526,7 +523,7 @@ function applyLight(){document.documentElement.classList.add('light');const i=do
 function applyDark(){document.documentElement.classList.remove('light');const i=document.getElementById('themeIcon'),l=document.getElementById('themeLabel');if(i)i.textContent='☀️';if(l)l.textContent='Light Mode';}
 function toggleTheme(){const isLight=document.documentElement.classList.contains('light');if(isLight){applyDark();localStorage.setItem('psx_theme','dark');}else{applyLight();localStorage.setItem('psx_theme','light');}}
 function hardRefresh(){window.location.reload(true);}
-function toggleSidebar(){const sb=document.getElementById('sidebar');const collapsed=sb.classList.toggle('collapsed');document.documentElement.classList.toggle('sb-collapsed',collapsed);localStorage.setItem('psx_sb_collapsed',collapsed?'1':'0');}
+function hoverSidebar(enter){const sb=document.getElementById('sidebar');if(enter){sb.classList.remove('collapsed');document.documentElement.classList.remove('sb-collapsed');}else{sb.classList.add('collapsed');document.documentElement.classList.add('sb-collapsed');}}
 function goPortDash(){['pgHistory','pgDividends','pgCashFlow'].forEach(id=>{document.getElementById(id).classList.remove('open');});document.querySelectorAll('.nav-sub-btn').forEach(n=>n.classList.remove('active'));const d=document.getElementById('navPortDash');if(d)d.classList.add('active');_activeOverlay=null;}
 function toggleGrp(grp){if(grp==='port'){const btn=document.getElementById('navPortBtn'),sub=document.getElementById('navPortSub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');goPortDash();}}else{const btn=document.getElementById('navTABtn'),sub=document.getElementById('navTASub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');window.location.href='index.html';}}}
 let _activeOverlay=null;
@@ -535,7 +532,7 @@ function initHistory(){populateSymbolDropdown();document.getElementById('srchSym
 function goBack(){document.getElementById('pgHistory').classList.remove('open');const n=document.getElementById('navHistory');if(n)n.classList.remove('active');}
 function closeDividends(){document.getElementById('pgDividends').classList.remove('open');const n=document.getElementById('navDivPage');if(n)n.classList.remove('active');}
 function closeCashFlow(){document.getElementById('pgCashFlow').classList.remove('open');const n=document.getElementById('navCashFlow');if(n)n.classList.remove('active');}
-document.addEventListener('DOMContentLoaded',function(){if(localStorage.getItem('psx_sb_collapsed')==='1'){const sb=document.getElementById('sidebar');if(sb)sb.classList.add('collapsed');document.documentElement.classList.add('sb-collapsed');}});
+document.addEventListener('DOMContentLoaded',function(){const sb=document.getElementById('sidebar');if(sb)sb.classList.add('collapsed');document.documentElement.classList.add('sb-collapsed');});
 
 const GS_ID='1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY='AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';

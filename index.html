@@ -548,7 +548,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 <div class="shell">
 
 <!-- ═══ SIDEBAR ═══ -->
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar" onmouseenter="hoverSidebar(true)" onmouseleave="hoverSidebar(false)">
   <div class="sidebar-logo">
     <div class="logo-icon">📊</div>
     <div class="logo-text-wrap">
@@ -621,10 +621,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
   </div>
 </aside>
 
-<!-- Floating sidebar toggle — always visible -->
-<button class="sb-toggle-tab" onclick="toggleSidebar()" title="Toggle sidebar">
-  <svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M7 2L2 8l5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-</button>
 
 <!-- ═══ MAIN ═══ -->
 <main class="main">
@@ -729,20 +725,13 @@ function hardRefresh(){
   window.location.reload(true);
 }
 
-function toggleSidebar(){
-  const sb=document.getElementById('sidebar');
-  const collapsed=sb.classList.toggle('collapsed');
-  document.documentElement.classList.toggle('sb-collapsed',collapsed);
-  localStorage.setItem('psx_sb_collapsed',collapsed?'1':'0');
-}
+function hoverSidebar(enter){const sb=document.getElementById('sidebar');if(enter){sb.classList.remove('collapsed');document.documentElement.classList.remove('sb-collapsed');}else{sb.classList.add('collapsed');document.documentElement.classList.add('sb-collapsed');}}
 
-// restore sidebar collapsed state
+// start collapsed
 document.addEventListener('DOMContentLoaded',function(){
-  if(localStorage.getItem('psx_sb_collapsed')==='1'){
-    const sb=document.getElementById('sidebar');
-    if(sb)sb.classList.add('collapsed');
-    document.documentElement.classList.add('sb-collapsed');
-  }
+  const sb=document.getElementById('sidebar');
+  if(sb)sb.classList.add('collapsed');
+  document.documentElement.classList.add('sb-collapsed');
 });
 
 /* ════════════════════════════════════════════
