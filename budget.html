@@ -280,7 +280,7 @@ select:focus,input:focus{border-color:var(--purple);}
 <div style="display:flex;min-height:100vh">
 
 <!-- SIDEBAR -->
-<aside class="sb" id="sb">
+<aside class="sb" id="sb" onmouseenter="hoverSb(true)" onmouseleave="hoverSb(false)">
   <div class="sb-logo">
     <div class="sb-icon">💰</div>
     <div class="sb-logo-txt">
@@ -289,18 +289,12 @@ select:focus,input:focus{border-color:var(--purple);}
     </div>
   </div>
   <nav class="sb-nav">
-    <div class="grp-btn" onclick="togGrp(this,'taSub')" style="display:flex;align-items:center;gap:10px">
-      <span class="ni">📊</span><span class="nl"> Technical Analysis</span><span class="chev">▼</span>
-    </div>
-    <div class="grp-sub" id="taSub">
-      <button class="sub-btn" onclick="location.href='index.html'">⌂ Dashboard</button>
+    <div class="grp-btn" onclick="location.href='index.html'" style="display:flex;align-items:center;gap:10px">
+      <span class="ni">📊</span><span class="nl"> Technical Analysis</span>
     </div>
     <div class="sb-div"></div>
-    <div class="grp-btn" onclick="togGrp(this,'portSub')" style="display:flex;align-items:center;gap:10px">
-      <span class="ni">📈</span><span class="nl"> Portfolio</span><span class="chev">▼</span>
-    </div>
-    <div class="grp-sub" id="portSub">
-      <button class="sub-btn" onclick="location.href='portfolio.html'">📊 Dashboard</button>
+    <div class="grp-btn" onclick="location.href='portfolio.html'" style="display:flex;align-items:center;gap:10px">
+      <span class="ni">📈</span><span class="nl"> Portfolio</span>
     </div>
     <div class="sb-div"></div>
     <div class="grp-btn active-grp open" onclick="togGrp(this,'pfSub')" style="display:flex;align-items:center;gap:10px">
@@ -319,11 +313,6 @@ select:focus,input:focus{border-color:var(--purple);}
     </button>
   </div>
 </aside>
-<button class="sb-tab" onclick="togSb()">
-  <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
-    <path d="M7 2L2 8l5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-</button>
 
 <!-- MAIN -->
 <main class="main">
@@ -371,8 +360,7 @@ let _SF={section:'',priority:'',certainty:''};
 /* ── UI HELPERS ── */
 function togTheme(){const l=document.documentElement.classList.toggle('light');localStorage.setItem('psx_theme',l?'light':'dark');document.getElementById('thIcon').textContent=l?'🌙':'☀️';document.getElementById('thLbl').textContent=l?' Dark Mode':' Light Mode';}
 (function(){if(localStorage.getItem('psx_theme')==='light'){document.documentElement.classList.add('light');document.getElementById('thIcon').textContent='🌙';document.getElementById('thLbl').textContent=' Dark Mode';}})();
-function togSb(){document.getElementById('sb').classList.toggle('col');document.documentElement.classList.toggle('sbc');}
-// Start sidebar collapsed on budget page so tables have maximum width
+function hoverSb(enter){const sb=document.getElementById('sb');if(enter){sb.classList.remove('col');document.documentElement.classList.remove('sbc');}else{sb.classList.add('col');document.documentElement.classList.add('sbc');}}
 (function(){document.getElementById('sb').classList.add('col');document.documentElement.classList.add('sbc');})();
 function togGrp(btn,id){btn.classList.toggle('open');document.getElementById(id).classList.toggle('open');}
 function goTab(name){
