@@ -644,7 +644,7 @@ async function doRegister(){
     const vRes=await fetch(gsUrl('Users'));
     if(vRes.ok){const rows=((await vRes.json()).values||[]).slice(1);if(rows.find(r=>(r[0]||'').toLowerCase()===user)){ok.style.display='none';showAuthMsg('regErr','❌ Username already taken.');return;}}
     ok.textContent='⏳ Sending OTP to '+email+'...';
-    const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'sendOtp',email,username:user})});
+    const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'sendOtp',email,username:user,password:pass,mobile,country})});
     const result=await res.json();
     if(!result.ok){ok.style.display='none';showAuthMsg('regErr','❌ '+(result.error||'Failed to send OTP.'));return;}
     _pendingReg={user,pass,email,mobile,country};
