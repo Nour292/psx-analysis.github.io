@@ -661,9 +661,11 @@ async function doVerifyOtp(){
     const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'verifyOtpAndRegister',username:_pendingReg.user,password:_pendingReg.pass,email:_pendingReg.email,mobile:_pendingReg.mobile,country:_pendingReg.country,otp})});
     const result=await res.json();
     if(!result.ok){ok.style.display='none';showAuthMsg('otpErr','❌ '+(result.error||'Invalid OTP.'));return;}
-    ok.textContent='✅ Account created! Logging you in...';
+    ok.textContent='✅ Account created! Setting up your workspace...';
+    fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'createUserSheets',username:_pendingReg.user})}).catch(()=>{});
     _currentUser=_pendingReg.user;sessionStorage.setItem(AUTH_KEY,_pendingReg.user);_pendingReg={};
-    setTimeout(()=>{document.getElementById('pwGate').style.display='none';showUserBadge(_currentUser);autoLoad();},1000);
+    setTimeout(()=>{document.getElementById('pwGate').style.display='none';showUserBadge(_currentUser);autoLoad();},1500);
   }catch(e){ok.style.display='none';showAuthMsg('otpErr','❌ '+e.message);}
 }
 async function resendOtp(){if(!_pendingReg.email){showAuthMsg('otpErr','Session expired.');return;}const ok=document.getElementById('otpOk');ok.style.display='block';ok.textContent='⏳ Resending...';try{const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'sendOtp',email:_pendingReg.email,username:_pendingReg.user})});const result=await res.json();ok.textContent=result.ok?'✅ OTP resent!':'❌ Failed.';setTimeout(()=>ok.style.display='none',3000);}catch(e){ok.textContent='❌ '+e.message;setTimeout(()=>ok.style.display='none',3000);}}
