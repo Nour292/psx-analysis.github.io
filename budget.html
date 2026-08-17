@@ -3,8 +3,10 @@
 <head>
 <script>
 (function(){
-  var k='psx_user';
-  if(!sessionStorage.getItem(k)&&!localStorage.getItem(k+'_r')) window.location.replace('portfolio.html');
+  var k='psx_user',ADMIN='qasim';
+  var u=sessionStorage.getItem(k)||localStorage.getItem(k+'_r')||'';
+  if(!u) window.location.replace('portfolio.html');
+  else if(u.trim().toLowerCase()!==ADMIN) window.location.replace('portfolio.html');
 })();
 </script>
 <meta charset="UTF-8">
