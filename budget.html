@@ -393,6 +393,26 @@ const pkr=v=>'₨'+Math.round(nv(v)).toLocaleString('en-PK');
 const sar=v=>'SAR '+nv(v).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmt=(v,cur)=>cur==='PKR'?pkr(v):sar(v);
 const num=v=>{const n=parseFloat(v);return isNaN(n)||n===0?'':n.toLocaleString('en',{minimumFractionDigits:0,maximumFractionDigits:2});};
+const fN=v=>v.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+function totStrip(pool){
+  const sarIn =pool.reduce((s,r)=>r[C.cur]==='SAR'    ?s+nv(r[C.in]):s,0);
+  const sarOut =pool.reduce((s,r)=>r[C.cur]==='SAR'    ?s+nv(r[C.out]):s,0);
+  const pkrIn  =pool.reduce((s,r)=>r[C.cur]==='PKR'    ?s+nv(r[C.in]):s,0);
+  const pkrOut =pool.reduce((s,r)=>r[C.cur]==='PKR'    ?s+nv(r[C.out]):s,0);
+  const mixIn  =pool.reduce((s,r)=>r[C.cur]==='SAR/PKR'?s+nv(r[C.in]):s,0);
+  const mixOut =pool.reduce((s,r)=>r[C.cur]==='SAR/PKR'?s+nv(r[C.out]):s,0);
+  const tile=(lbl,i,o,cls)=>`<div class="kpi ${cls}"><div class="kpi-lbl">${lbl}</div><div class="kpi-val" style="font-size:11px;line-height:1.8">
+    <span style="color:var(--emerald)">${fN(i)}</span><span style="color:var(--text3);font-size:9px;font-weight:400"> IN</span>&ensp;
+    <span style="color:var(--rose)">${fN(o)}</span><span style="color:var(--text3);font-size:9px;font-weight:400"> OUT</span>&ensp;
+    <span style="color:${i-o>=0?'var(--accent)':'var(--rose)'}">${fN(i-o)}</span><span style="color:var(--text3);font-size:9px;font-weight:400"> BAL</span>
+  </div></div>`;
+  const tiles=[];
+  if(sarIn||sarOut)  tiles.push(tile('SAR',sarIn,sarOut,'sar'));
+  if(pkrIn||pkrOut)  tiles.push(tile('PKR',pkrIn,pkrOut,'pkr'));
+  if(mixIn||mixOut)  tiles.push(tile('SAR / PKR',mixIn,mixOut,'visa'));
+  return tiles.length?`<div class="kpi-strip" style="margin-bottom:10px">${tiles.join('')}</div>`:'';
+}
 
 function bdg(p){
   if(!p)return'';
@@ -745,8 +765,11 @@ function renderRecv(){
 function renderIncome(){
   const income=bycat('Income');
   const months={};
+  const _MN={Jan:'January',Feb:'February',Mar:'March',Apr:'April',May:'May',Jun:'June',Jul:'July',Aug:'August',Sep:'September',Oct:'October',Nov:'November',Dec:'December'};
   for(const r of income){
-    const m=r[C.month]||'?';
+    let m=(r[C.month]||'').trim();
+    if(!m){const p=(r[C.date]||'').split('-');m=p.length>=2?(_MN[p[1]]||p[1]):'';}
+    m=m||'?';
     if(!months[m]) months[m]={sal:0,ext:0,rem:0,remNote:''};
     const t=(r[C.type]||'').toLowerCase();
     if(t==='salary')         months[m].sal +=nv(r[C.in]);
@@ -953,12 +976,14 @@ function renderLog(){
       <button class="act-btn act-del" onclick="deleteRow(${i})" title="Delete">🗑️</button>
     </div></td>
   </tr>`).join('');
+  const fRows=filtered.map(({r})=>r);
   document.getElementById('tabLog').innerHTML=`
   <div class="srch-box" style="margin-bottom:0;border-radius:var(--radius) var(--radius) 0 0">
     <div class="fl">Filter by Category</div>
     <div class="fpills">${pills}</div>
     <div style="font-size:11px;color:var(--text3);margin-top:6px">${filtered.length} of ${_rows.length} rows</div>
   </div>
+  ${totStrip(fRows)}
   <div class="card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none">
     <div class="tbl-wrap"><table class="tbl">
       <thead><tr><th>Date</th><th>Category</th><th>Type</th><th>Account / Person</th>
@@ -1177,7 +1202,7 @@ function runSmartList(){
     <td>${r[C.pri]?`<span class="badge ${PRI_CLR[r[C.pri]]||'gray'}">${r[C.pri]}</span>`:''}</td>
     <td class="tbl-note">${r[C.notes]||''}</td>
   </tr>`).join('');
-  out.innerHTML=`<div class="card">
+  out.innerHTML=totStrip(pool)+`<div class="card">
     <div class="tbl-wrap"><table class="tbl">
       <thead><tr><th>Date</th><th>Category</th><th>Type</th><th>Account / Person</th><th class="r">Amt In</th><th class="r">Amt Out</th><th>Cur</th><th>Priority</th><th>Notes</th></tr></thead>
       <tbody>${rows}</tbody>
