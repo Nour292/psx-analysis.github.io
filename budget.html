@@ -348,7 +348,7 @@ select:focus,input:focus{border-color:var(--purple);}
 /* ══════════════════════════════════════
    CONFIG
 ══════════════════════════════════════ */
-const VERSION = 'v1.4';
+const VERSION = 'v1.5';
 const SID = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS  = 'https://script.google.com/macros/s/AKfycbxKq8r0kG-0wX6EOIWXMWoYQznLrzTb6fOPEM5U6R3ujdNTtSSvAPBxVq_JMwptjdZelA/exec';
 const LOG_TAB = 'Budget_Log';
@@ -451,200 +451,207 @@ function renderAdvisor(){
   const el=document.getElementById('adv-panel');
   if(!el||!_rows.length) return;
 
-  const debts  = bycat('Debt');
-  const recv   = bycat('Receivable');
-  const bal    = bycat('Balance');
-  const cards  = bycat('Card');
-  const visa   = bycat('Visa Fund');
-  const income = bycat('Income');
-
-  /* ── balances KPI ── */
-  const sarBal = bal.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
-  const pkrBal = bal.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
-  const ccKPIs=cards.map(r=>{
-    const cl=r[C.status]==='CLEARED';
-    return`<div class="kpi ${cl?'pkr':'rose'}">
-      <div class="kpi-lbl" style="font-family:var(--mono)">${r[C.who]}</div>
-      <div class="kpi-val">${cl?'—':sar(nv(r[C.out]))}</div>
-      <div class="kpi-note"><span class="badge ${cl?'green':'red'}" style="font-size:9px;padding:1px 6px">${r[C.status]}</span></div>
-    </div>`;
-  }).join('');
-  const balHTML=`<div class="kpi-strip" style="flex-wrap:wrap">${bal.map(r=>{
-    const amt=nv(r[C.in]),cur=r[C.cur];
-    const cls=r[C.who].includes('MCB')?'visa':cur==='SAR'?'sar':'pkr';
-    return`<div class="kpi ${cls}"><div class="kpi-lbl">${r[C.who]}</div><div class="kpi-val">${fmt(amt,cur)}</div><div class="kpi-note">${cur}</div></div>`;
-  }).join('')}${ccKPIs}</div>`;
-
-  /* ── visa fund ── */
-  const tgtRow  = visa.find(r=>(r[C.type]||'').toLowerCase().includes('target'));
-  const vTarget = nv(tgtRow?tgtRow[C.in]:3500000);
-  const mcbV    = nv((visa.find(r=>r[C.who]==='MCB')||[])[C.in]||0);
-  const abdV    = nv((visa.find(r=>r[C.who]==='Abdullah (Meezan)')||[])[C.in]||0);
-  const vCombined = mcbV+abdV;
-  const vGap    = Math.max(0,vTarget-vCombined);
-  const vPct    = Math.min(100,(vCombined/vTarget)*100);
-
-  /* ── active debts only (exclude DONE / PAID) ── */
-  const activeDebts = debts.filter(r=>r[C.pri]!=='DONE'&&r[C.status]!=='PAID'&&r[C.status]!=='CLEARED');
-  const totDebtSAR = activeDebts.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.out]),0);
-  const totDebtPKR = activeDebts.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
-  const highD  = activeDebts.filter(r=>r[C.pri]==='HIGH');
-  const retD   = activeDebts.filter(r=>r[C.pri]==='RETURN');
-  const nextD  = activeDebts.filter(r=>r[C.pri]==='NEXT');
-  const queueD = activeDebts.filter(r=>r[C.pri]==='QUEUE');
-
-  /* ── receivables (cert column not in sheet → treat all as incoming) ── */
-  const confRecv = recv;
-  const expRecv  = [];
-  const uncRecv  = [];
-  const confPKR  = recv.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
-  const confSAR  = recv.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
-  const expPKR   = 0;
-
-  /* ── income ── */
-  const salRows = income.filter(r=>(r[C.type]||'').toLowerCase()==='salary');
-  const avgSal  = salRows.length ? salRows.reduce((s,r)=>s+nv(r[C.in]),0)/salRows.length : 3900;
-
-  /* ── derived metrics ── */
-  const PKR_RATE = 74;
-  const monthlyIncomePKR = avgSal * PKR_RATE;
-  const totDebtSARinPKR  = totDebtSAR * PKR_RATE;
-  const totDebtAllPKR    = totDebtPKR + totDebtSARinPKR;
-  const debtToIncome     = monthlyIncomePKR > 0 ? totDebtAllPKR / monthlyIncomePKR : 0;
-  const totalLiquidPKR   = sarBal * PKR_RATE + pkrBal;
-  const bufferMonths     = monthlyIncomePKR > 0 ? totalLiquidPKR / monthlyIncomePKR : 0;
-  const savingsRate      = 0.40;
-  const monthlySavingsPKR = monthlyIncomePKR * savingsRate;
-  const mthsToDebtFree   = monthlySavingsPKR > 0 ? Math.ceil(totDebtAllPKR / monthlySavingsPKR) : '?';
-  const mthsToFill       = monthlySavingsPKR > 0 && vGap > 0 ? Math.ceil(vGap / monthlySavingsPKR) : (vGap===0?0:'?');
-  const urgentTotalPKR   = [...highD,...retD].reduce((s,r)=>s+(r[C.cur]==='PKR'?nv(r[C.out]):nv(r[C.out])*PKR_RATE),0);
-
-  /* ── health score (0–75) ── */
-  // Debt burden 0–30: debt-to-income ratio (0×=30pts, 6×=0pts)
-  const DEBT_MAX=30;
-  const debtScore = Math.max(0, Math.round(DEBT_MAX * Math.max(0,1 - debtToIncome/6)));
-  // Receivables coverage 0–25: recv as % of total debt
-  const RECV_MAX=25;
-  const recvCoverage = totDebtAllPKR>0 ? Math.min(1,(confPKR+confSAR*PKR_RATE)/totDebtAllPKR) : 1;
-  const recvScore = Math.round(recvCoverage * RECV_MAX);
-  // Liquidity buffer 0–20: 3+ months = full score
-  const BUFF_MAX=20;
-  const buffScore = Math.min(BUFF_MAX, Math.round((bufferMonths/3)*BUFF_MAX));
-  const score     = debtScore+recvScore+buffScore;
-  const scoreClr  = score>=55?'var(--emerald)':score>=35?'var(--amber)':'var(--rose)';
-  const scoreLbl  = score>=55?'Good':score>=35?'Caution':'Critical';
-
-  const bars=[
-    {label:'Debt-to-income burden',       pts:debtScore, max:DEBT_MAX, clr:'var(--rose)'},
-    {label:'Receivables vs debt coverage',pts:recvScore, max:RECV_MAX, clr:'var(--emerald)'},
-    {label:'Liquidity buffer (months)',   pts:buffScore, max:BUFF_MAX, clr:'var(--accent)'},
-  ];
-  const scoreHTML=`
-  <div class="adv-score-row">
-    <div class="adv-score-circle" style="border-color:${scoreClr};color:${scoreClr}">
-      <div class="adv-score-num">${score}</div>
-      <div class="adv-score-lbl" style="color:${scoreClr}">${scoreLbl}</div>
-    </div>
-    <div class="adv-score-bars">
-      ${bars.map(b=>`<div class="adv-bar-row">
-        <div class="adv-bar-label">${b.label}</div>
-        <div class="adv-bar-track"><div class="adv-bar-fill" style="width:${Math.round((b.pts/b.max)*100)}%;background:${b.clr}"></div></div>
-        <div class="adv-bar-pts">${b.pts}/${b.max}</div>
-      </div>`).join('')}
-    </div>
-  </div>`;
-
-  /* ── action queue ── */
-  const actions=[];
-  const act=(cls,tag,tagBg,tagClr,title,detail)=>actions.push({cls,tag,tagBg,tagClr,title,detail});
-
-  for(const r of highD)
-    act('c-rose','URGENT','var(--rose-dim)','var(--rose)',
-        `Clear ${r[C.who]}`,
-        `${fmt(r[C.out],r[C.cur])} outstanding — ${r[C.notes]||'Highest priority. Clear from next salary before any other outflow. Every day delayed compounds financial stress.'}`);
-
-  for(const r of retD)
-    act('c-rose','RETURN','var(--rose-dim)','var(--rose)',
-        `Return to ${r[C.who]}`,
-        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Honour this commitment the moment receivables land. Protecting trust is non-negotiable.'}`);
-
-
-  if(confPKR>0||confSAR>0){
-    const confTotalPKR=confPKR+confSAR*PKR_RATE;
-    const debtAlloc=urgentTotalPKR>0?Math.min(confTotalPKR*0.6,urgentTotalPKR):0;
-    const visaAlloc=Math.max(0,Math.min(confTotalPKR*0.3,vGap));
-    const reserveAlloc=Math.max(0,confTotalPKR-debtAlloc-visaAlloc);
-    act('c-emerald','ALLOCATE','var(--emerald-dim)','var(--emerald)',
-        `Incoming ${pkr(confPKR)}${confSAR?` + ${sar(confSAR)}`:''} — Allocation Plan`,
-        `Recommended split → Debt clearance: ${pkr(debtAlloc)} (${urgentTotalPKR>0?'prioritise HIGH & RETURN':'no urgent debts'}) · Visa Fund: ${pkr(visaAlloc)} · SAR reserve: ${pkr(reserveAlloc)}. Sources: ${confRecv.map(r=>r[C.who]).join(', ')}.`);
+  /* ── category aggregates ── */
+  const catMap={};
+  for(const r of _rows){
+    const cat=(r[C.cat]||'—').trim();
+    if(!catMap[cat]) catMap[cat]={in:0,out:0,count:0,curs:new Set()};
+    catMap[cat].in+=nv(r[C.in]); catMap[cat].out+=nv(r[C.out]); catMap[cat].count++;
+    if(r[C.cur]) catMap[cat].curs.add(r[C.cur]);
   }
 
-  for(const r of nextD)
-    act('c-amber','NEXT','var(--amber-dim)','var(--amber)',
-        `Pay ${r[C.who]}`,
-        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Schedule immediately after HIGH and RETURN items are resolved.'}`);
+  /* ── specific categories ── */
+  const debts  = bycat('Debt');
+  const recv   = bycat('Receivable');
+  const income = bycat('Income');
+  const bal    = bycat('Balance');
 
-  for(const r of expRecv)
-    act('c-accent','FOLLOW-UP','var(--accent-dim)','var(--accent)',
-        `Follow up: ${r[C.who]}`,
-        `${fmt(r[C.in],r[C.cur])} expected${r[C.due]?' — due '+r[C.due]:''} — ${r[C.notes]||'Confirm status, set a firm collection date, and follow through.'}`);
+  /* ── active debts ── */
+  const activeDebts=debts.filter(r=>r[C.pri]!=='DONE'&&r[C.status]!=='PAID'&&r[C.status]!=='CLEARED');
+  const totDebtSAR=activeDebts.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.out]),0);
+  const totDebtPKR=activeDebts.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.out]),0);
+  const highD=activeDebts.filter(r=>r[C.pri]==='HIGH');
+  const retD =activeDebts.filter(r=>r[C.pri]==='RETURN');
+  const nextD=activeDebts.filter(r=>r[C.pri]==='NEXT');
+  const queueD=activeDebts.filter(r=>r[C.pri]==='QUEUE');
 
-  for(const r of queueD)
-    act('c-purple','QUEUE','var(--purple-dim)','var(--purple)',
-        `${r[C.who]}`,
-        `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Address after all higher-priority items are cleared.'}`);
+  /* ── receivables ── */
+  const confPKR=recv.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
+  const confSAR=recv.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
 
+  /* ── income ── */
+  const salRows=income.filter(r=>(r[C.type]||'').toLowerCase()==='salary');
+  const avgSal =salRows.length?salRows.reduce((s,r)=>s+nv(r[C.in]),0)/salRows.length:3900;
 
-  const actHTML=actions.map((a,i)=>`
-  <div class="adv-action ${a.cls}">
-    <div class="adv-num" style="background:${a.tagBg};color:${a.tagClr}">${i+1}</div>
-    <div class="adv-body">
-      <div class="adv-title">${a.title}</div>
-      <div class="adv-detail">${a.detail}</div>
-    </div>
-    <div class="adv-tag" style="background:${a.tagBg};color:${a.tagClr}">${a.tag}</div>
-  </div>`).join('');
+  /* ── balances ── */
+  const sarBal=bal.filter(r=>r[C.cur]==='SAR').reduce((s,r)=>s+nv(r[C.in]),0);
+  const pkrBal=bal.filter(r=>r[C.cur]==='PKR').reduce((s,r)=>s+nv(r[C.in]),0);
 
-  /* ── insights (6 tiles) ── */
-  const netPosPKR = (confPKR+expPKR) - totDebtAllPKR;
-  const netClr    = netPosPKR>=0?'var(--emerald)':'var(--rose)';
-  const dtiPct    = (debtToIncome*100).toFixed(0);
-  const dtiClr    = debtToIncome<2?'var(--emerald)':debtToIncome<4?'var(--amber)':'var(--rose)';
-  const bufClr    = bufferMonths>=2?'var(--emerald)':bufferMonths>=1?'var(--amber)':'var(--rose)';
-  const insights=[
-    {icon:'⚖️', lbl:'Net Position (all in PKR equiv.)',
-     val:`<span style="color:${netClr};font-weight:700">${netPosPKR>=0?'+':''}${pkr(netPosPKR)}</span><br><span style="font-size:11px;color:var(--text3)">${pkr(confPKR+expPKR)} receivable vs ${pkr(totDebtAllPKR)} total debt</span>`},
-    {icon:'📊', lbl:'Debt-to-Income Ratio',
-     val:`<span style="color:${dtiClr};font-weight:700">${dtiPct}% · ${debtToIncome.toFixed(1)}× salary</span><br><span style="font-size:11px;color:var(--text3)">${debtToIncome<2?'Manageable':'Elevated — reduce debt urgently'} · ~${mthsToDebtFree} mo to debt-free</span>`},
-    {icon:'🛡️', lbl:'Liquidity Buffer',
-     val:`<span style="color:${bufClr};font-weight:700">${bufferMonths.toFixed(1)} months liquid</span><br><span style="font-size:11px;color:var(--text3)">${sar(sarBal)} + ${pkr(pkrBal)} on hand</span>`},
-    {icon:'📥', lbl:'Incoming Receivables',
-     val:`<span style="color:var(--emerald);font-weight:700">${pkr(confPKR)}${confSAR?` + ${sar(confSAR)}`:''}</span><br><span style="font-size:11px;color:var(--text3)">${recv.length} total receivable${recv.length===1?'':'s'}</span>`},
-    {icon:'💸', lbl:'Total Active Debt',
-     val:`<span style="color:var(--rose);font-weight:700">${sar(totDebtSAR)}</span><br><span style="font-size:11px;color:var(--text3)">${pkr(totDebtPKR)} PKR · ${activeDebts.length} active creditors</span>`},
-  ];
-  const insHTML=insights.map(i=>`<div class="adv-insight">
-    <div class="adv-ins-icon">${i.icon}</div>
-    <div class="adv-ins-lbl">${i.lbl}</div>
-    <div class="adv-ins-val">${i.val}</div>
-  </div>`).join('');
+  /* ── derived ── */
+  const PKR_RATE=74;
+  const monthlyIncomePKR=avgSal*PKR_RATE;
+  const totDebtAllPKR=totDebtPKR+totDebtSAR*PKR_RATE;
+  const debtToIncome=monthlyIncomePKR>0?totDebtAllPKR/monthlyIncomePKR:0;
+  const totalLiquidPKR=sarBal*PKR_RATE+pkrBal;
+  const bufferMonths=monthlyIncomePKR>0?totalLiquidPKR/monthlyIncomePKR:0;
+  const monthlySavingsPKR=monthlyIncomePKR*0.40;
+  const mthsToDebtFree=monthlySavingsPKR>0?Math.ceil(totDebtAllPKR/monthlySavingsPKR):'?';
+  const urgentTotalPKR=[...highD,...retD].reduce((s,r)=>s+(r[C.cur]==='PKR'?nv(r[C.out]):nv(r[C.out])*PKR_RATE),0);
+  const netPosPKR=confPKR+confSAR*PKR_RATE-totDebtAllPKR;
 
-  /* ── warnings ── */
+  /* ── date range ── */
+  const dates=_rows.map(r=>r[C.date]).filter(Boolean).sort();
+  const dateRange=dates.length>1?`${dates[0]} – ${dates[dates.length-1]}`:dates[0]||'';
+
+  /* ── SECTION 1: overall currency strip ── */
+  const overallStrip=totStrip(_rows);
+
+  /* ── SECTION 2: category breakdown table ── */
+  const sortedCats=Object.entries(catMap).sort((a,b)=>(b[1].in+b[1].out)-(a[1].in+a[1].out));
+  const catRows=sortedCats.map(([cat,m])=>{
+    const clr=CAT_CLR[cat]||'gray';
+    const net=m.in-m.out;
+    const netClr=net>0?'var(--emerald)':net<0?'var(--rose)':'var(--text3)';
+    return`<tr>
+      <td><span class="badge ${clr}" style="font-size:10px;padding:2px 8px">${cat}</span></td>
+      <td class="num" style="color:var(--text3);font-size:11px">${m.count}</td>
+      <td class="num" style="color:var(--emerald);font-size:11px">${m.in>0?fN(m.in):'—'}</td>
+      <td class="num" style="color:var(--rose);font-size:11px">${m.out>0?fN(m.out):'—'}</td>
+      <td class="num" style="color:${netClr};font-size:11px;font-weight:600">${net!==0?fN(Math.abs(net)):' —'}</td>
+      <td style="font-size:10px;color:var(--text3)">${[...m.curs].join(', ')}</td>
+    </tr>`;
+  }).join('');
+  const catHTML=`<div class="card">
+    <div class="card-hd"><span>📂</span><span class="card-ttl">Category Breakdown</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text3)">${_rows.length} entries · ${dateRange}</span></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Category</th><th class="r">Rows</th><th class="r">Total IN</th><th class="r">Total OUT</th><th class="r">Net</th><th>Currency</th></tr></thead>
+      <tbody>${catRows}</tbody>
+    </table></div>
+  </div>`;
+
+  /* ── SECTION 3: Health Score + Insights (only when relevant categories exist) ── */
+  const hasSpecificData=debts.length>0||income.length>0||recv.length>0||bal.length>0;
+  let section3='';
+  if(hasSpecificData){
+    const DEBT_MAX=30,RECV_MAX=25,BUFF_MAX=20;
+    const debtScore=Math.max(0,Math.round(DEBT_MAX*Math.max(0,1-debtToIncome/6)));
+    const recvCoverage=totDebtAllPKR>0?Math.min(1,(confPKR+confSAR*PKR_RATE)/totDebtAllPKR):1;
+    const recvScore=Math.round(recvCoverage*RECV_MAX);
+    const buffScore=Math.min(BUFF_MAX,Math.round((bufferMonths/3)*BUFF_MAX));
+    const score=debtScore+recvScore+buffScore;
+    const scoreClr=score>=55?'var(--emerald)':score>=35?'var(--amber)':'var(--rose)';
+    const scoreLbl=score>=55?'Good':score>=35?'Caution':'Critical';
+    const bars=[
+      {label:'Debt-to-income burden',       pts:debtScore,max:DEBT_MAX,clr:'var(--rose)'},
+      {label:'Receivables vs debt coverage',pts:recvScore, max:RECV_MAX,clr:'var(--emerald)'},
+      {label:'Liquidity buffer (months)',   pts:buffScore, max:BUFF_MAX,clr:'var(--accent)'},
+    ];
+    const scoreHTML=`<div class="adv-score-row">
+      <div class="adv-score-circle" style="border-color:${scoreClr};color:${scoreClr}">
+        <div class="adv-score-num">${score}</div>
+        <div class="adv-score-lbl" style="color:${scoreClr}">${scoreLbl}</div>
+      </div>
+      <div class="adv-score-bars">
+        ${bars.map(b=>`<div class="adv-bar-row">
+          <div class="adv-bar-label">${b.label}</div>
+          <div class="adv-bar-track"><div class="adv-bar-fill" style="width:${Math.round((b.pts/b.max)*100)}%;background:${b.clr}"></div></div>
+          <div class="adv-bar-pts">${b.pts}/${b.max}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+    const dtiPct=(debtToIncome*100).toFixed(0);
+    const dtiClr=debtToIncome<2?'var(--emerald)':debtToIncome<4?'var(--amber)':'var(--rose)';
+    const bufClr=bufferMonths>=2?'var(--emerald)':bufferMonths>=1?'var(--amber)':'var(--rose)';
+    const netClr=netPosPKR>=0?'var(--emerald)':'var(--rose)';
+    const insights=[];
+    if(debts.length>0||recv.length>0)
+      insights.push({icon:'⚖️',lbl:'Net Position (PKR equiv.)',
+        val:`<span style="color:${netClr};font-weight:700">${netPosPKR>=0?'+':''}${pkr(netPosPKR)}</span><br><span style="font-size:11px;color:var(--text3)">${pkr(confPKR+confSAR*PKR_RATE)} receivable vs ${pkr(totDebtAllPKR)} debt</span>`});
+    if(income.length>0||debts.length>0)
+      insights.push({icon:'📊',lbl:'Debt-to-Income Ratio',
+        val:`<span style="color:${dtiClr};font-weight:700">${dtiPct}% · ${debtToIncome.toFixed(1)}× salary</span><br><span style="font-size:11px;color:var(--text3)">${debtToIncome<2?'Manageable':'Elevated'} · ~${mthsToDebtFree} mo to debt-free</span>`});
+    if(bal.length>0)
+      insights.push({icon:'🛡️',lbl:'Liquidity Buffer',
+        val:`<span style="color:${bufClr};font-weight:700">${bufferMonths.toFixed(1)} months liquid</span><br><span style="font-size:11px;color:var(--text3)">${sar(sarBal)} + ${pkr(pkrBal)} on hand</span>`});
+    if(recv.length>0)
+      insights.push({icon:'📥',lbl:'Incoming Receivables',
+        val:`<span style="color:var(--emerald);font-weight:700">${pkr(confPKR)}${confSAR?` + ${sar(confSAR)}`:''}</span><br><span style="font-size:11px;color:var(--text3)">${recv.length} receivable${recv.length===1?'':'s'}</span>`});
+    if(debts.length>0)
+      insights.push({icon:'💸',lbl:'Total Active Debt',
+        val:`<span style="color:var(--rose);font-weight:700">${sar(totDebtSAR)||pkr(totDebtPKR)}</span><br><span style="font-size:11px;color:var(--text3)">${activeDebts.length} active creditor${activeDebts.length===1?'':'s'}</span>`});
+    if(income.length>0)
+      insights.push({icon:'💵',lbl:'Avg Monthly Salary',
+        val:`<span style="color:var(--accent);font-weight:700">${sar(avgSal)}</span><br><span style="font-size:11px;color:var(--text3)">from ${salRows.length} salary entr${salRows.length===1?'y':'ies'}</span>`});
+    const insHTML=insights.map(i=>`<div class="adv-insight">
+      <div class="adv-ins-icon">${i.icon}</div>
+      <div class="adv-ins-lbl">${i.lbl}</div>
+      <div class="adv-ins-val">${i.val}</div>
+    </div>`).join('');
+    section3=`<div class="adv-2col">
+      <div class="card"><div class="card-hd"><span>📊</span><span class="card-ttl">Financial Health Score</span></div>
+        <div class="card-bd">${scoreHTML}</div>
+      </div>
+      <div class="adv-insights">${insHTML}</div>
+    </div>`;
+  }
+
+  /* ── SECTION 4: Priority Action Plan (only when debt/recv data exists) ── */
+  let actionSection='';
+  if(activeDebts.length>0||recv.length>0){
+    const actions=[];
+    const act=(cls,tag,tagBg,tagClr,title,detail)=>actions.push({cls,tag,tagBg,tagClr,title,detail});
+    for(const r of highD)
+      act('c-rose','URGENT','var(--rose-dim)','var(--rose)',`Clear ${r[C.who]}`,
+          `${fmt(r[C.out],r[C.cur])} outstanding — ${r[C.notes]||'Highest priority. Clear from next salary before any other outflow.'}`);
+    for(const r of retD)
+      act('c-rose','RETURN','var(--rose-dim)','var(--rose)',`Return to ${r[C.who]}`,
+          `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Honour this commitment the moment receivables land.'}`);
+    if(confPKR>0||confSAR>0){
+      const confTotalPKR=confPKR+confSAR*PKR_RATE;
+      const debtAlloc=urgentTotalPKR>0?Math.min(confTotalPKR*0.6,urgentTotalPKR):0;
+      const reserveAlloc=Math.max(0,confTotalPKR-debtAlloc);
+      act('c-emerald','ALLOCATE','var(--emerald-dim)','var(--emerald)',
+          `Incoming ${pkr(confPKR)}${confSAR?` + ${sar(confSAR)}`:''} — Allocation Plan`,
+          `Recommended split → Debt clearance: ${pkr(debtAlloc)} (${urgentTotalPKR>0?'prioritise HIGH & RETURN':'no urgent debts'}) · SAR reserve: ${pkr(reserveAlloc)}. Sources: ${recv.map(r=>r[C.who]).filter(Boolean).join(', ')||'Receivables'}.`);
+    }
+    for(const r of nextD)
+      act('c-amber','NEXT','var(--amber-dim)','var(--amber)',`Pay ${r[C.who]}`,
+          `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Schedule after HIGH and RETURN items.'}`);
+    for(const r of queueD)
+      act('c-purple','QUEUE','var(--purple-dim)','var(--purple)',`${r[C.who]}`,
+          `${fmt(r[C.out],r[C.cur])} — ${r[C.notes]||'Address after all higher-priority items are cleared.'}`);
+    const actHTML=actions.map((a,i)=>`
+    <div class="adv-action ${a.cls}">
+      <div class="adv-num" style="background:${a.tagBg};color:${a.tagClr}">${i+1}</div>
+      <div class="adv-body">
+        <div class="adv-title">${a.title}</div>
+        <div class="adv-detail">${a.detail}</div>
+      </div>
+      <div class="adv-tag" style="background:${a.tagBg};color:${a.tagClr}">${a.tag}</div>
+    </div>`).join('');
+    actionSection=`<div class="card">
+      <div class="card-hd"><span>📋</span><span class="card-ttl">Priority Action Plan</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--text3)">${actions.length} action${actions.length===1?'':'s'} · work top to bottom</span></div>
+      <div class="card-bd"><div class="adv-actions">${actHTML||'<span style="color:var(--text3)">No actions — all debts resolved</span>'}</div></div>
+    </div>`;
+  }
+
+  /* ── SECTION 5: Warnings (only real events) ── */
   const warns=[];
   const now2=new Date(); now2.setHours(0,0,0,0);
   for(const r of [...activeDebts,...recv]){
     if(!r[C.due]) continue;
     const d=new Date(r[C.due]); if(isNaN(d)) continue;
     const diff=Math.round((d-now2)/(864e5));
-    if(diff<0)    warns.push({t:'red', m:`⚠ ${r[C.who]} — OVERDUE by ${Math.abs(diff)} day${Math.abs(diff)===1?'':'s'} (was due ${r[C.due]})`});
-    else if(diff<=14) warns.push({t:'amber',m:`⏰ ${r[C.who]} — due in ${diff} day${diff===1?'':'s'} (${r[C.due]})`});
+    if(diff<0) warns.push({t:'red',m:`⚠ ${r[C.who]||r[C.type]} — OVERDUE by ${Math.abs(diff)} day${Math.abs(diff)===1?'':'s'} (was due ${r[C.due]})`});
+    else if(diff<=14) warns.push({t:'amber',m:`⏰ ${r[C.who]||r[C.type]} — due in ${diff} day${diff===1?'':'s'} (${r[C.due]})`});
   }
-  if(netPosPKR<0)      warns.push({t:'red',   m:`🔴 Net position negative — ${pkr(Math.abs(netPosPKR))} more owed than incoming. Stop new debt immediately.`});
-  if(debtToIncome>=4)  warns.push({t:'red',   m:`🔴 Debt-to-income ${dtiPct}% is dangerously high (above 4× monthly income)`});
-  else if(debtToIncome>=2) warns.push({t:'amber',m:`🟡 Debt-to-income ${dtiPct}% elevated — target below 2× monthly income`});
+  if(activeDebts.length>0&&netPosPKR<0) warns.push({t:'red',m:`🔴 Net position negative — ${pkr(Math.abs(netPosPKR))} more owed than incoming. Stop new debt immediately.`});
+  if(debtToIncome>=4) warns.push({t:'red',m:`🔴 Debt-to-income ${(debtToIncome*100).toFixed(0)}% is dangerously high (above 4× monthly income)`});
+  else if(debtToIncome>=2) warns.push({t:'amber',m:`🟡 Debt-to-income ${(debtToIncome*100).toFixed(0)}% elevated — target below 2× monthly income`});
   if(highD.length===0&&retD.length===0&&activeDebts.length>0)
-    warns.push({t:'green',m:`✅ No URGENT or RETURN debts — good position. Focus surplus on Visa Fund.`});
-
+    warns.push({t:'green',m:`✅ No URGENT or RETURN debts — good position.`});
   const warnStyle={red:'background:var(--rose-dim);border-color:var(--rose);color:var(--rose)',
                    amber:'background:var(--amber-dim);border-color:var(--amber);color:var(--amber)',
                    green:'background:var(--emerald-dim);border-color:var(--emerald);color:var(--emerald)'};
@@ -659,16 +666,10 @@ function renderAdvisor(){
       <span>Generated from your Budget_Log · ${_rows.length} entries · ${new Date().toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'})}</span>
     </div>
   </div>
-  <div class="adv-2col">
-    <div class="card"><div class="card-hd"><span>📊</span><span class="card-ttl">Financial Health Score</span></div>
-      <div class="card-bd">${scoreHTML}</div>
-    </div>
-    <div class="adv-insights">${insHTML}</div>
-  </div>
-  <div class="card"><div class="card-hd"><span>📋</span><span class="card-ttl">Priority Action Plan</span>
-    <span style="margin-left:auto;font-size:11px;color:var(--text3)">${actions.length} actions · work top to bottom</span></div>
-    <div class="card-bd"><div class="adv-actions">${actHTML||'<span style="color:var(--text3)">No actions computed — check data</span>'}</div></div>
-  </div>
+  ${overallStrip}
+  ${catHTML}
+  ${section3}
+  ${actionSection}
   ${warnHTML}
   </div>`;
 }
