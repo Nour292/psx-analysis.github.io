@@ -352,7 +352,7 @@ const GS  = 'https://script.google.com/macros/s/AKfycbxKq8r0kG-0wX6EOIWXMWoYQznL
 const LOG_TAB = 'Budget_Log';
 
 // Budget_Log column indices
-const C={date:0,cat:1,type:2,who:3,month:4,in:5,out:6,cur:7,pri:8,cert:9,status:10,notes:11,due:12};
+const C={date:0,cat:1,type:2,who:3,month:4,cur:5,in:6,out:7,bal:8,pri:9,cert:-1,status:10,notes:11,due:-1};
 
 let _rows=[]; // all Budget_Log rows
 let _SF={section:'',priority:'',certainty:''};
@@ -909,7 +909,7 @@ async function saveLog(){
 
   st.textContent='⏳ Saving…';st.style.color='var(--amber)';
 
-  const row=[date,cat,type,who,month,amtIn,amtOut,cur,'','','',note];
+  const row=[date,cat,type,who,month,cur,amtIn,amtOut,'','','',note];
   try{
     const resp=await fetch(GS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'appendRow',tab:'Budget_Log',row})});
@@ -929,7 +929,7 @@ async function saveLog(){
    LOG TABLE — with edit / delete
 ══════════════════════════════════════ */
 let _logCat='';
-const CAT_CLR={Balance:'blue',Card:'red',Debt:'red','Visa Fund':'amber',Receivable:'green',Income:'green','Abdullah A/C':'purple',Goal:'amber'};
+const CAT_CLR={Balance:'blue',Card:'red',Debt:'red','Visa Fund':'amber',Receivable:'green',Income:'green','Abdullah A/C':'purple',Goal:'amber',BANK:'blue',REMITTANCE:'green','Record in SAR':'amber','Record in Pks':'purple',Expenses:'gray'};
 const PRI_CLR={HIGH:'red',RETURN:'red',NEXT:'amber',QUEUE:'amber',ASSIGNED:'blue',WAITING:'gray',WATCH:'purple',LOAN:'purple'};
 
 function renderLog(){
@@ -974,7 +974,7 @@ function filterLog(cat){_logCat=cat==='All'?'':cat;renderLog();}
 /* ══════════════════════════════════════
    SHEET UPDATE HELPER (for edit/delete)
 ══════════════════════════════════════ */
-const LOG_HEADERS=['Date','Category','Type of Transaction','Account / Card / Person','Month','Amount In','Amount Out','Currency','Priority','Certainty','Status','Notes','Due Date'];
+const LOG_HEADERS=['Date','Category','Type / Description','Account / Person','Month','Currency','Amount IN','Amount OUT','Balance','Priority','Status','Notes'];
 
 async function updateSheet(statusEl){
   const rows=[LOG_HEADERS,..._rows];
@@ -1033,9 +1033,7 @@ function editRow(i){
       <div class="fgroup"><label>Amount In</label><input type="number" id="ed-in" value="${r[C.in]||''}"></div>
       <div class="fgroup"><label>Amount Out</label><input type="number" id="ed-out" value="${r[C.out]||''}"></div>
       <div class="fgroup"><label>Priority</label><select id="ed-pri"><option value="">—</option>${mkOpt(['HIGH','RETURN','NEXT','QUEUE','ASSIGNED','WAITING','WATCH','LOAN'],r[C.pri])}</select></div>
-      <div class="fgroup"><label>Certainty</label><select id="ed-cert"><option value="">—</option>${mkOpt(['Confirmed','Expected','Uncertain'],r[C.cert])}</select></div>
       <div class="fgroup"><label>Status</label><input type="text" id="ed-status" value="${r[C.status]||''}"></div>
-      <div class="fgroup"><label>Due Date</label><input type="text" id="ed-due" value="${r[C.due]||''}" placeholder="YYYY-MM-DD"></div>
     </div>
     <div class="fgroup" style="margin-top:12px"><label>Notes</label><input type="text" id="ed-notes" value="${r[C.notes]||''}"></div>
     <div style="display:flex;align-items:center;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
@@ -1064,14 +1062,13 @@ async function saveEdit(){
     document.getElementById('ed-type').value,
     document.getElementById('ed-who').value,
     document.getElementById('ed-month').value,
+    document.getElementById('ed-cur').value,
     document.getElementById('ed-in').value.trim(),
     document.getElementById('ed-out').value.trim(),
-    document.getElementById('ed-cur').value,
+    _rows[_editIdx][8]||'',
     document.getElementById('ed-pri').value,
-    document.getElementById('ed-cert').value,
     document.getElementById('ed-status').value.trim(),
     document.getElementById('ed-notes').value.trim(),
-    document.getElementById('ed-due').value.trim(),
   ];
   const st=document.getElementById('edit-status');
   await updateSheet(st);
@@ -1084,11 +1081,17 @@ async function saveEdit(){
 /* ══════════════════════════════════════
    SMART LIST
 ══════════════════════════════════════ */
-const CAT_LABELS={'Balance':'💰 Balance','Card':'💳 Card','Visa Fund':'🎯 Visa Fund','Debt':'📋 Debt','Receivable':'📥 Receivable','Income':'💵 Income','Abdullah A/C':'🏦 Abdullah A/C'};
+const CAT_LABELS={'Balance':'💰 Balance','Card':'💳 Card','Visa Fund':'🎯 Visa Fund','Debt':'📋 Debt','Receivable':'📥 Receivable','Income':'💵 Income','Abdullah A/C':'🏦 Abdullah A/C','BANK':'🏛️ BANK','REMITTANCE':'💸 REMITTANCE','Record in SAR':'🇸🇦 Record in SAR','Record in Pks':'🇵🇰 Record in Pks','Expenses':'📊 Expenses'};
 const _SL={cat:'',priority:'',certainty:'',cur:'',month:''};
 
 function renderSearch(){
-  const months=[...new Set(_rows.map(r=>r[C.month]).filter(Boolean))].sort((a,b)=>MONTHS_LIST.indexOf(a)-MONTHS_LIST.indexOf(b));
+  const _mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months=[...new Set(_rows.map(r=>r[C.month]).filter(Boolean))].sort((a,b)=>{
+    const pa=a.split('-'),pb=b.split('-');
+    const ya=parseInt(pa[1]||0),yb=parseInt(pb[1]||0);
+    const ma=_mo.indexOf(pa[0]),mb=_mo.indexOf(pb[0]);
+    return ya!==yb?ya-yb:ma-mb;
+  });
   document.getElementById('tabSearch').innerHTML=`
   <div class="card">
     <div class="card-hd"><span style="color:var(--purple)">📊</span><span class="card-ttl">Smart List — Live Filters</span>
