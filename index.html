@@ -542,6 +542,9 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 <div class="shell">
 
 <!-- ═══ SIDEBAR ═══ -->
+<button class="sb-toggle-tab" id="sbToggle" onclick="toggleSidebar()" title="Toggle sidebar">
+  <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M7 1L3 5l4 4"/></svg>
+</button>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon">📊</div>
@@ -711,11 +714,18 @@ function hardRefresh(){
 }
 
 
-// start collapsed
-document.addEventListener('DOMContentLoaded',function(){
+function toggleSidebar(){
   const sb=document.getElementById('sidebar');
-  if(sb)sb.classList.add('collapsed');
-  document.documentElement.classList.add('sb-collapsed');
+  const collapsed=sb.classList.toggle('collapsed');
+  document.documentElement.classList.toggle('sb-collapsed',collapsed);
+  localStorage.setItem('psx_sb_collapsed',collapsed?'1':'0');
+}
+document.addEventListener('DOMContentLoaded',function(){
+  if(localStorage.getItem('psx_sb_collapsed')==='1'){
+    const sb=document.getElementById('sidebar');
+    if(sb)sb.classList.add('collapsed');
+    document.documentElement.classList.add('sb-collapsed');
+  }
 });
 
 /* ════════════════════════════════════════════
