@@ -348,10 +348,11 @@ select:focus,input:focus{border-color:var(--purple);}
 /* ══════════════════════════════════════
    CONFIG
 ══════════════════════════════════════ */
-const VERSION = 'v1.6';
+const VERSION = 'v1.7';
 const SID = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS  = 'https://script.google.com/macros/s/AKfycbxKq8r0kG-0wX6EOIWXMWoYQznLrzTb6fOPEM5U6R3ujdNTtSSvAPBxVq_JMwptjdZelA/exec';
 const LOG_TAB = 'Budget_Log';
+const LOG_GID = '1854327922';
 
 // Budget_Log column indices
 const C={date:0,cat:1,type:2,who:3,month:4,cur:5,in:6,out:7,bal:8,pri:9,cert:-1,status:10,notes:11,due:-1};
@@ -1347,7 +1348,7 @@ function runSmartList(){
 ══════════════════════════════════════ */
 async function loadAll(){
   try{
-    const url=`https://docs.google.com/spreadsheets/d/${SID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(LOG_TAB)}&_=${Date.now()}`;
+    const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${LOG_GID}&_=${Date.now()}`;
     const r=await fetch(url);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const rows=parseCSV(await r.text());
