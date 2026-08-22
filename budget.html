@@ -348,7 +348,7 @@ select:focus,input:focus{border-color:var(--purple);}
 /* ══════════════════════════════════════
    CONFIG
 ══════════════════════════════════════ */
-const VERSION = 'v1.7';
+const VERSION = 'v1.8';
 const SID = '1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS  = 'https://script.google.com/macros/s/AKfycbxKq8r0kG-0wX6EOIWXMWoYQznLrzTb6fOPEM5U6R3ujdNTtSSvAPBxVq_JMwptjdZelA/exec';
 const LOG_TAB = 'Budget_Log';
@@ -932,11 +932,27 @@ function renderIncome(){
 
 function renderAbd(){
   const abd=bycat('Abdullah A/C');
+
+  /* running balance oldest→newest */
+  let runBal=0;
+  const balMap=new Map();
+  for(const r of [...abd].reverse()){
+    runBal+=nv(r[C.in])-nv(r[C.out]);
+    balMap.set(r,runBal);
+  }
+
+  const totalIn =abd.reduce((s,r)=>s+nv(r[C.in]),0);
+  const totalOut=abd.reduce((s,r)=>s+nv(r[C.out]),0);
+  const netBal  =totalIn-totalOut;
+  const netClr  =netBal>=0?'var(--emerald)':'var(--rose)';
+
   let rows='';
   for(const r of abd){
     const isNonVisa=(r[C.status]||'').includes('Non');
-    const inAmt=r[C.in]&&r[C.in]!='0'?`<span style="color:var(--emerald);font-weight:700">${pkr(r[C.in])}</span>`:'';
-    const outAmt=r[C.out]&&r[C.out]!='0'?`<span style="color:var(--rose);font-weight:700">${pkr(r[C.out])}</span>`:'';
+    const inAmt =nv(r[C.in]) >0?`<span style="color:var(--emerald);font-weight:700">${pkr(r[C.in])}</span>`:'';
+    const outAmt=nv(r[C.out])>0?`<span style="color:var(--rose);font-weight:700">${pkr(r[C.out])}</span>`:'';
+    const b=balMap.get(r);
+    const bClr=b>=0?'var(--emerald)':'var(--rose)';
     rows+=`<tr class="${isNonVisa?'muted-row':''}">
       <td class="tbl-dim">${r[C.date]}</td>
       <td class="tbl-dim">${r[C.type]||''}</td>
@@ -944,12 +960,21 @@ function renderAbd(){
       <td class="tbl-dim">${r[C.month]||''}</td>
       <td class="num">${inAmt}</td>
       <td class="num">${outAmt}</td>
+      <td class="num" style="color:${bClr};font-weight:700;font-size:11px">${pkr(b)}</td>
       <td>${r[C.status]?`<span class="badge ${isNonVisa?'amber':'gray'}" style="font-size:10px">${r[C.status]}</span>`:''}</td>
       <td class="tbl-note">${r[C.notes]||''}</td></tr>`;
   }
+
+  const kpi=`<div class="kpi-strip">
+    <div class="kpi"><div class="kpi-lbl">Total IN</div><div class="kpi-val" style="color:var(--emerald)">${pkr(totalIn)}</div><div class="kpi-note">PKR received</div></div>
+    <div class="kpi"><div class="kpi-lbl">Total OUT</div><div class="kpi-val" style="color:var(--rose)">${pkr(totalOut)}</div><div class="kpi-note">PKR spent / sent</div></div>
+    <div class="kpi"><div class="kpi-lbl">Net Balance</div><div class="kpi-val" style="color:${netClr}">${pkr(netBal)}</div><div class="kpi-note">${abd.length} entries</div></div>
+  </div>`;
+
   document.getElementById('tabAbd').innerHTML=`<div class="card">
     <div class="card-hd"><span>🏦</span><span class="card-ttl">Abdullah Meezan — Visa Statement</span><span style="margin-left:auto"><span class="badge amber" style="font-size:10px">⚠ Non-visa rows dimmed</span></span></div>
-    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Month</th><th class="r">In PKR</th><th class="r">Out PKR</th><th>Flag</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    <div class="card-bd" style="padding:12px 16px">${kpi}</div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Month</th><th class="r">In PKR</th><th class="r">Out PKR</th><th class="r">Balance</th><th>Flag</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 
 /* ══════════════════════════════════════
