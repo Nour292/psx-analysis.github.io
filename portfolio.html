@@ -345,6 +345,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <button class="nav-sub-btn" onclick="window.location.href='index.html#single'">◎ Single Ticker</button>
       </div>
     </div>
+    <div class="nav-divider"></div>
+    <button class="nav-item" data-tip="Finance" onclick="openFinance()">
+      <span class="nav-icon">💰</span><span class="nav-label"> Finance</span>
+    </button>
   </nav>
   <div class="sidebar-footer">
     <button class="footer-btn" onclick="toggleTheme()" id="themeBtn" style="margin-bottom:4px"><span id="themeIcon" style="font-size:15px">☀️</span><span class="footer-label" id="themeLabel"> Light Mode</span></button>
@@ -521,6 +525,7 @@ function applyLight(){document.documentElement.classList.add('light');const i=do
 function applyDark(){document.documentElement.classList.remove('light');const i=document.getElementById('themeIcon'),l=document.getElementById('themeLabel');if(i)i.textContent='☀️';if(l)l.textContent='Light Mode';}
 function toggleTheme(){const isLight=document.documentElement.classList.contains('light');if(isLight){applyDark();localStorage.setItem('psx_theme','dark');}else{applyLight();localStorage.setItem('psx_theme','light');}}
 function hardRefresh(){window.location.reload(true);}
+function openFinance(){window.location.href='finance.html';}
 function goPortDash(){['pgHistory','pgDividends','pgCashFlow'].forEach(id=>{document.getElementById(id).classList.remove('open');});document.querySelectorAll('.nav-sub-btn').forEach(n=>n.classList.remove('active'));const d=document.getElementById('navPortDash');if(d)d.classList.add('active');_activeOverlay=null;}
 function toggleGrp(grp){if(grp==='port'){const btn=document.getElementById('navPortBtn'),sub=document.getElementById('navPortSub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');goPortDash();}}else{const btn=document.getElementById('navTABtn'),sub=document.getElementById('navTASub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');window.location.href='index.html';}}}
 let _activeOverlay=null;

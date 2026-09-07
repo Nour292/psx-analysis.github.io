@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Finance — Personal Accounts</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0F1E;--surface:#111827;--surface2:#1C2536;
+  --border:#263348;--border2:#334466;
+  --text:#F0F4FF;--text2:#A8BBDA;--text3:#607090;
+  --accent:#38BDF8;--accent-dim:#0C3A52;
+  --emerald:#10B981;--emerald-dim:#062B1C;
+  --rose:#F43F5E;--rose-dim:#2B0A14;
+  --amber:#F59E0B;--amber-dim:#2B1F04;
+  --purple:#A78BFA;--purple-dim:#1E1040;
+  --radius:8px;--radius-sm:5px;
+  --font:'Inter',sans-serif;--mono:'DM Mono',monospace;
+}
+:root.light{
+  --bg:#EFF3F9;--surface:#FFFFFF;--surface2:#E8EDF5;
+  --border:#C8D4E8;--border2:#A8BCE0;
+  --text:#0D1526;--text2:#2D4268;--text3:#6B82A8;
+  --accent:#0369A1;--accent-dim:#DBEAFE;
+  --emerald:#047857;--emerald-dim:#D1FAE5;
+  --rose:#BE123C;--rose-dim:#FFE4E6;
+  --amber:#B45309;--amber-dim:#FEF3C7;
+  --purple:#6D28D9;--purple-dim:#EDE9FE;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ---- PASSWORD GATE ---- */
+#pwGate{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.pw-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:44px 40px;width:360px;max-width:95vw;text-align:center;}
+.pw-logo{font-size:44px;margin-bottom:12px;}
+.pw-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.pw-sub{font-size:13px;color:var(--text3);margin-bottom:24px;}
+.pw-input{width:100%;padding:13px;font-size:18px;letter-spacing:8px;text-align:center;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;font-family:var(--mono);margin-bottom:10px;}
+.pw-input:focus{border-color:var(--accent);}
+.pw-btn{width:100%;padding:13px;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;background:var(--accent);color:#000;font-family:var(--font);}
+.pw-btn:hover{opacity:.88;}
+.pw-err{font-size:12px;color:var(--rose);margin-top:10px;display:none;}
+
+/* ---- HEADER ---- */
+.header{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:50;}
+.back-btn{display:flex;align-items:center;gap:6px;color:var(--text3);text-decoration:none;font-size:13px;font-weight:600;padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);transition:background .12s,color .12s;}
+.back-btn:hover{background:var(--surface2);color:var(--text);}
+.header-title{font-size:15px;font-weight:700;flex:1;}
+.header-status{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.theme-btn{border:none;background:var(--surface2);color:var(--text2);padding:6px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;border:1px solid var(--border);}
+.refresh-btn{border:1px solid var(--border);background:var(--surface2);color:var(--text2);padding:6px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:600;}
+.refresh-btn:hover{background:var(--border);color:var(--text);}
+
+/* ---- TABS ---- */
+.tab-bar{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;}
+.tab-btn{padding:11px 18px;border:none;background:none;color:var(--text3);font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-family:var(--font);transition:color .12s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ---- CONTENT ---- */
+.content{padding:22px 24px;max-width:1200px;}
+
+/* ---- CARDS ---- */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:28px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
+.card-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.card-value{font-size:20px;font-weight:800;font-family:var(--mono);line-height:1.2;}
+.card-sub{font-size:11px;color:var(--text3);margin-top:5px;}
+.card-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block;margin-top:4px;}
+
+/* ---- SECTION HEADER ---- */
+.sec-hdr{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.9px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sec-hdr::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ---- TABLE ---- */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{background:var(--surface);color:var(--text3);padding:9px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.tbl td{border-bottom:1px solid var(--border);padding:8px 12px;color:var(--text2);white-space:nowrap;}
+.tbl tbody tr:last-child td{border-bottom:none;}
+.tbl tbody tr:hover td{background:var(--surface2);}
+.tbl .mono{font-family:var(--mono);}
+.tbl .c-g{color:var(--emerald);font-weight:700;}
+.tbl .c-r{color:var(--rose);font-weight:700;}
+.tbl .c-b{color:var(--accent);}
+.tbl .c-d{color:var(--text3);}
+
+/* ---- SEARCH BAR ---- */
+.tbl-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.srch{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-size:12.5px;outline:none;width:220px;font-family:var(--font);}
+.srch:focus{border-color:var(--accent);}
+.tbl-count{font-size:11px;color:var(--text3);}
+
+/* ---- FORM ---- */
+.form-wrap{max-width:520px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:11px;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.7px;font-weight:600;}
+.form-input{width:100%;padding:10px 13px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none;font-family:var(--font);}
+.form-input:focus{border-color:var(--accent);}
+.form-select{width:100%;padding:10px 13px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none;font-family:var(--font);}
+.radio-row{display:flex;gap:8px;}
+.radio-opt{flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);}
+.radio-opt input{accent-color:var(--accent);}
+.pkr-display{padding:12px 13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;font-weight:700;color:var(--emerald);font-family:var(--mono);}
+.submit-btn{width:100%;padding:13px;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;background:var(--emerald);color:#000;font-family:var(--font);margin-top:6px;}
+.submit-btn:hover{opacity:.88;}
+.form-msg{margin-top:12px;font-size:13px;text-align:center;font-family:var(--mono);display:none;}
+
+/* ---- BUDGET SUMMARY ---- */
+.budget-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:20px;}
+.mini-tbl{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.mini-tbl-hdr{padding:11px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text2);}
+.mini-tbl table{width:100%;border-collapse:collapse;font-size:12px;}
+.mini-tbl td{padding:8px 14px;border-top:1px solid var(--border);color:var(--text2);}
+.mini-tbl td:last-child{text-align:right;font-family:var(--mono);}
+
+/* Loading spinner */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="pwGate">
+  <div class="pw-box">
+    <div class="pw-logo">💰</div>
+    <div class="pw-title">Finance</div>
+    <div class="pw-sub">Personal Accounts · Enter PIN</div>
+    <input type="password" id="pwInput" class="pw-input" placeholder="••••" maxlength="10">
+    <button class="pw-btn" onclick="checkPin()">Enter</button>
+    <div class="pw-err" id="pwErr">Incorrect PIN. Try again.</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+  <div class="header">
+    <a href="portfolio.html" class="back-btn">← Portfolio</a>
+    <span style="font-size:18px">💰</span>
+    <span class="header-title">Finance</span>
+    <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
+    <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tb-dash"  onclick="showTab('dash')">📊 Dashboard</button>
+    <button class="tab-btn" id="tb-all"   onclick="showTab('all')">🏦 All Accounts</button>
+    <button class="tab-btn" id="tb-credit" onclick="showTab('credit')">👥 CREDIT</button>
+    <button class="tab-btn" id="tb-remit" onclick="showTab('remit')">💸 Remittance</button>
+    <button class="tab-btn" id="tb-add"   onclick="showTab('add')">＋ Add Entry</button>
+  </div>
+
+  <div class="content" id="content">
+    <p style="color:var(--text3)">Loading data…</p>
+  </div>
+</div>
+
+<script>
+const PIN = '4209';
+const SID = '1gwv-xCDuaDSWp5g2nfrLvkT3xygqc7jg1R8Cizpqwkk';
+const GIDS = { credit:'13235236', remit:'1705134543', allAcc:'1234926277' };
+
+// ► Paste your deployed Apps Script URL here after deployment:
+const APPS_SCRIPT_URL = '';
+
+let DATA = { credit:null, remit:null, allAcc:null };
+let currentTab = 'dash';
+
+// ---- AUTH ----
+function checkPin(){
+  const v = document.getElementById('pwInput').value;
+  if(v === PIN){
+    document.getElementById('pwGate').style.display='none';
+    document.getElementById('mainApp').style.display='block';
+    if(localStorage.getItem('fin_theme')==='light') document.documentElement.classList.add('light');
+    loadAll();
+  } else {
+    document.getElementById('pwErr').style.display='block';
+    document.getElementById('pwInput').value='';
+    document.getElementById('pwInput').focus();
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('pwInput').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPin(); });
+});
+
+// ---- THEME ----
+function toggleTheme(){
+  const light = document.documentElement.classList.toggle('light');
+  localStorage.setItem('fin_theme', light?'light':'dark');
+  document.getElementById('themeBtn').textContent = light?'🌙':'☀️';
+}
+
+// ---- CSV LOADING ----
+async function loadCSV(gid){
+  const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${gid}&_=${Date.now()}`;
+  const r=await fetch(url);
+  return parseCSV(await r.text());
+}
+
+function parseCSV(text){
+  const lines=text.split('\n');
+  if(!lines.length) return {headers:[],rows:[]};
+  const headers=parseRow(lines[0]);
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    if(!lines[i].trim()) continue;
+    const v=parseRow(lines[i]);const o={};
+    headers.forEach((h,j)=>o[h]=(v[j]||'').trim());
+    rows.push(o);
+  }
+  return {headers,rows};
+}
+
+function parseRow(line){
+  const r=[];let c='';let q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){if(q&&line[i+1]==='"'){c+='"';i++;}else q=!q;}
+    else if(ch===','&&!q){r.push(c.trim());c='';}
+    else c+=ch;
+  }
+  r.push(c.trim());return r;
+}
+
+function n(v){ return parseFloat((v||'').toString().replace(/,/g,''))||0; }
+function fmt(v,dec=0){ return Math.abs(v).toLocaleString('en-PK',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
+
+async function loadAll(){
+  setStatus('<span class="spinner"></span>Loading…');
+  try{
+    const [credit,remit,allAcc]=await Promise.all([
+      loadCSV(GIDS.credit),loadCSV(GIDS.remit),loadCSV(GIDS.allAcc)
+    ]);
+    DATA={credit,remit,allAcc};
+    setStatus(`✓ ${allAcc.rows.length} + ${credit.rows.length} + ${remit.rows.length} records`);
+    renderTab(currentTab);
+  } catch(e){
+    setStatus('⚠ Error loading data');
+    document.getElementById('content').innerHTML='<p style="color:var(--rose)">Failed to load data. Make sure the Google Sheet is shared publicly (View access).</p>';
+  }
+}
+
+function setStatus(html){ document.getElementById('loadStatus').innerHTML=html; }
+
+// ---- TABS ----
+function showTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tb-'+tab).classList.add('active');
+  renderTab(tab);
+}
+
+function renderTab(tab){
+  if(!DATA.allAcc && tab!=='add'){
+    document.getElementById('content').innerHTML='<p style="color:var(--text3)">Loading data…</p>';return;
+  }
+  if(tab==='dash') renderDash();
+  else if(tab==='all') renderTable('allAcc');
+  else if(tab==='credit') renderTable('credit');
+  else if(tab==='remit') renderTable('remit');
+  else if(tab==='add') renderForm();
+}
+
+// ==============================
+// DASHBOARD
+// ==============================
+function renderDash(){
+  // ── A: Bank Balances (All Accounts, group by Bank)
+  const bankMap={};
+  DATA.allAcc.rows.forEach(r=>{
+    const b=r['Bank']||'Other';
+    if(!bankMap[b]) bankMap[b]={in:0,out:0};
+    bankMap[b].in+=n(r['Credit']);
+    bankMap[b].out+=n(r['Debit']);
+  });
+
+  // ── B: Person Balances (CREDIT-COMBINED, group by Name)
+  const personMap={};
+  DATA.credit.rows.forEach(r=>{
+    const nm=r['Name']||'Unknown';
+    if(!personMap[nm]) personMap[nm]={lent:0,rcvd:0,pkr:{lent:0,rcvd:0},sar:{lent:0,rcvd:0}};
+    const cur=r['Currency']||'PKR';
+    if(cur==='PKR'){
+      personMap[nm].pkr.lent+=n(r['Debit']);
+      personMap[nm].pkr.rcvd+=n(r['Credit']);
+    } else {
+      personMap[nm].sar.lent+=n(r['Debit']);
+      personMap[nm].sar.rcvd+=n(r['Credit']);
+    }
+    personMap[nm].lent+=n(r['Debit']);
+    personMap[nm].rcvd+=n(r['Credit']);
+  });
+
+  // ── C: Budget — from REMITANCE + All Accounts
+  const totalSAR=DATA.remit.rows.reduce((s,r)=>s+n(r['Saudi Riyals']),0);
+  const totalPKR=DATA.remit.rows.reduce((s,r)=>s+n(r['Pakistani Rupees']),0);
+  const totalIn=DATA.allAcc.rows.reduce((s,r)=>s+n(r['Credit']),0);
+  const totalOut=DATA.allAcc.rows.reduce((s,r)=>s+n(r['Debit']),0);
+
+  // Monthly remittances (last 8)
+  const monthMap={};
+  DATA.remit.rows.forEach(r=>{
+    const m=r['Month']||'?';
+    if(!monthMap[m]) monthMap[m]={sar:0,pkr:0,cnt:0};
+    monthMap[m].sar+=n(r['Saudi Riyals']);
+    monthMap[m].pkr+=n(r['Pakistani Rupees']);
+    monthMap[m].cnt++;
+  });
+  const recentMonths=Object.keys(monthMap).slice(-8);
+
+  let html='';
+
+  // ── Section A
+  html+=`<div class="sec-hdr">🏦 Bank Balances <span style="font-size:10px;font-weight:400">(All Accounts · Net per bank)</span></div>`;
+  html+=`<div class="card-grid">`;
+  Object.entries(bankMap)
+    .sort((a,b)=>(b[1].in-b[1].out)-(a[1].in-a[1].out))
+    .forEach(([bank,v])=>{
+      const net=v.in-v.out;
+      const col=net>=0?'var(--emerald)':'var(--rose)';
+      html+=`<div class="card">
+        <div class="card-label">${bank}</div>
+        <div class="card-value" style="color:${col}">${net<0?'−':''}PKR ${fmt(net)}</div>
+        <div class="card-sub">In: ${fmt(v.in)} &nbsp;·&nbsp; Out: ${fmt(v.out)}</div>
+      </div>`;
+    });
+  html+=`</div>`;
+
+  // ── Section B
+  html+=`<div class="sec-hdr">👥 Person Balances <span style="font-size:10px;font-weight:400">(CREDIT-COMBINED · Lent vs Received)</span></div>`;
+  html+=`<div class="card-grid">`;
+  Object.entries(personMap)
+    .sort((a,b)=>Math.abs(b[1].lent-b[1].rcvd)-Math.abs(a[1].lent-a[1].rcvd))
+    .forEach(([name,v])=>{
+      const net=v.lent-v.rcvd;
+      const isRcvbl=net>0;
+      const col=net>0?'var(--amber)':net<0?'var(--rose)':'var(--emerald)';
+      const tag=net>0?'Receivable':net<0?'Payable':'Settled';
+      const tagBg=net>0?'var(--amber-dim)':net<0?'var(--rose-dim)':'var(--emerald-dim)';
+      let subParts=[];
+      if(v.pkr.lent||v.pkr.rcvd) subParts.push(`PKR L:${fmt(v.pkr.lent)} R:${fmt(v.pkr.rcvd)}`);
+      if(v.sar.lent||v.sar.rcvd) subParts.push(`SAR L:${fmt(v.sar.lent)} R:${fmt(v.sar.rcvd)}`);
+      html+=`<div class="card">
+        <div class="card-label">${name}</div>
+        <div class="card-value" style="color:${col};font-size:17px">${fmt(Math.abs(net))}</div>
+        <span class="card-tag" style="background:${tagBg};color:${col}">${tag}</span>
+        <div class="card-sub" style="margin-top:6px">${subParts.join('<br>')}</div>
+      </div>`;
+    });
+  html+=`</div>`;
+
+  // ── Section C: Budget Overview
+  html+=`<div class="sec-hdr">📈 Budget Overview <span style="font-size:10px;font-weight:400">(All sources combined)</span></div>`;
+  html+=`<div class="budget-grid">
+    <div class="card" style="border-color:var(--accent)">
+      <div class="card-label">Total Remittances</div>
+      <div class="card-value" style="color:var(--accent);font-size:16px">SAR ${fmt(totalSAR)}</div>
+      <div style="font-size:15px;font-weight:700;font-family:var(--mono);color:var(--emerald);margin-top:4px">PKR ${fmt(totalPKR)}</div>
+      <div class="card-sub">${DATA.remit.rows.length} transfers</div>
+    </div>
+    <div class="card">
+      <div class="card-label">All Accounts · Total IN</div>
+      <div class="card-value" style="color:var(--emerald)">PKR ${fmt(totalIn)}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">All Accounts · Total OUT</div>
+      <div class="card-value" style="color:var(--rose)">PKR ${fmt(totalOut)}</div>
+    </div>
+    <div class="card" style="border-color:${(totalIn-totalOut)>=0?'var(--emerald)':'var(--rose)'}">
+      <div class="card-label">Net (IN − OUT)</div>
+      <div class="card-value" style="color:${(totalIn-totalOut)>=0?'var(--emerald)':'var(--rose)'}">
+        ${(totalIn-totalOut)<0?'−':''}PKR ${fmt(totalIn-totalOut)}
+      </div>
+    </div>
+  </div>`;
+
+  // Monthly remittance table
+  html+=`<div class="mini-tbl">
+    <div class="mini-tbl-hdr">📅 Monthly Remittances (Recent ${recentMonths.length} months)</div>
+    <table>
+      <thead><tr>
+        <th style="padding:8px 14px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border)">Month</th>
+        <th style="padding:8px 14px;text-align:center;font-size:10px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border)">Transfers</th>
+        <th style="padding:8px 14px;text-align:right;font-size:10px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border)">SAR</th>
+        <th style="padding:8px 14px;text-align:right;font-size:10px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border)">PKR</th>
+      </tr></thead>
+      <tbody>`;
+  recentMonths.forEach(m=>{
+    const v=monthMap[m];
+    html+=`<tr>
+      <td>${m}</td>
+      <td style="text-align:center;color:var(--text3)">${v.cnt}</td>
+      <td style="text-align:right;font-family:var(--mono);color:var(--accent)">${fmt(v.sar)}</td>
+      <td style="text-align:right;font-family:var(--mono);color:var(--emerald)">${fmt(v.pkr)}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+
+  document.getElementById('content').innerHTML=html;
+}
+
+// ==============================
+// TABLE VIEW
+// ==============================
+const TABLE_CFG={
+  allAcc:{title:'All Accounts',key:'allAcc'},
+  credit:{title:'CREDIT-COMBINED',key:'credit'},
+  remit:{title:'Remittance',key:'remit'}
+};
+
+function renderTable(key){
+  const cfg=TABLE_CFG[key];
+  const {headers,rows}=DATA[key];
+  const display=[...rows].reverse().slice(0,300);
+
+  let html=`<div class="tbl-header">
+    <h2 style="font-size:14px;font-weight:700;flex:1">${cfg.title}</h2>
+    <span class="tbl-count" id="tblCount_${key}">Showing ${display.length} of ${rows.length}</span>
+    <input class="srch" id="srch_${key}" placeholder="Search…" oninput="filterTbl('${key}')">
+  </div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr>`;
+  headers.forEach(h=>html+=`<th>${h}</th>`);
+  html+=`</tr></thead><tbody id="tbody_${key}">`;
+  html+=buildRows(headers,display);
+  html+=`</tbody></table></div>`;
+  if(rows.length>300) html+=`<p style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center">Latest 300 shown · use search to find older records</p>`;
+
+  document.getElementById('content').innerHTML=html;
+}
+
+function buildRows(headers,rows){
+  return rows.map(r=>{
+    return '<tr>'+headers.map(h=>{
+      const v=r[h]||'';
+      let cls='';
+      if(h==='Balance'){ cls=n(v)>=0?'mono c-g':'mono c-r'; }
+      else if(h==='Credit'&&v){ cls='mono c-g'; }
+      else if(h==='Debit'&&v){ cls='mono c-r'; }
+      else if(['Saudi Riyals','Pakistani Rupees','Rate'].includes(h)&&v){ cls='mono c-b'; }
+      return `<td class="${cls}">${v||'—'}</td>`;
+    }).join('')+'</tr>';
+  }).join('');
+}
+
+function filterTbl(key){
+  const q=document.getElementById('srch_'+key).value.toLowerCase();
+  const {headers,rows}=DATA[key];
+  const filtered=q
+    ? rows.filter(r=>Object.values(r).some(v=>v.toLowerCase().includes(q)))
+    : [...rows].reverse().slice(0,300);
+  document.getElementById('tbody_'+key).innerHTML=buildRows(headers,filtered.slice(0,500));
+  document.getElementById('tblCount_'+key).textContent=`${filtered.length} records${filtered.length>500?' (showing 500)':''}`;
+}
+
+// ==============================
+// FORM
+// ==============================
+function renderForm(){
+  const today=new Date().toISOString().split('T')[0];
+  let html=`<div class="form-wrap">
+    <h2 style="font-size:15px;font-weight:700;margin-bottom:18px">➕ Add New Entry</h2>
+    <div class="form-group">
+      <label class="form-label">Sheet</label>
+      <select class="form-select" id="fSheet" onchange="buildFields()">
+        <option value="credit">CREDIT-COMBINED</option>
+        <option value="remit">REMITTANCE</option>
+        <option value="allAcc">All Accounts</option>
+      </select>
+    </div>
+    <div id="fFields"></div>
+    <button class="submit-btn" onclick="submitEntry()">Submit Entry</button>
+    <div class="form-msg" id="fMsg"></div>
+  </div>`;
+  document.getElementById('content').innerHTML=html;
+  buildFields();
+}
+
+function inp(id,label,type,placeholder,extra=''){
+  return `<div class="form-group">
+    <label class="form-label">${label}</label>
+    <input id="${id}" type="${type}" placeholder="${placeholder}" ${extra} class="form-input">
+  </div>`;
+}
+function sel(id,label,opts){
+  return `<div class="form-group">
+    <label class="form-label">${label}</label>
+    <select id="${id}" class="form-select">${opts.map(o=>`<option>${o}</option>`).join('')}</select>
+  </div>`;
+}
+function radioDebitCredit(debitLabel,creditLabel){
+  return `<div class="form-group">
+    <label class="form-label">Type</label>
+    <div class="radio-row">
+      <label class="radio-opt"><input type="radio" name="fType" value="debit" checked> ${debitLabel}</label>
+      <label class="radio-opt"><input type="radio" name="fType" value="credit"> ${creditLabel}</label>
+    </div>
+  </div>`;
+}
+
+function buildFields(){
+  const sheet=document.getElementById('fSheet').value;
+  const today=new Date().toISOString().split('T')[0];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const curMonth=months[new Date().getMonth()];
+  let html='';
+
+  if(sheet==='credit'){
+    html+=inp('fDate','Date','date','',`value="${today}"`);
+    html+=inp('fName','Name','text','e.g. USMAN');
+    html+=inp('fDesc','Description','text','Transaction description');
+    html+=sel('fCurrency','Currency',['PKR','SAR']);
+    html+=radioDebitCredit('Debit (You gave)','Credit (You received)');
+    html+=inp('fAmount','Amount','number','0');
+  } else if(sheet==='remit'){
+    html+=inp('fDate','Date','date','',`value="${today}"`);
+    html+=inp('fMonth','Month','text',`e.g. ${curMonth}`,`value="${curMonth}"`);
+    html+=inp('fTo','To','text','e.g. My Account');
+    html+=inp('fSAR','Saudi Riyals (SAR)','number','0');
+    html+=inp('fRate','Exchange Rate','number','e.g. 73.50');
+    html+=`<div class="form-group">
+      <label class="form-label">Pakistani Rupees (Auto-calculated)</label>
+      <div class="pkr-display" id="pkrDisp">—</div>
+    </div>`;
+    html+=inp('fDesc','Description','text','e.g. BY STC - to my HBL Account');
+    setTimeout(()=>{
+      ['fSAR','fRate'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.addEventListener('input',calcPKR);
+      });
+    },50);
+  } else {
+    html+=inp('fDate','Date','date','',`value="${today}"`);
+    html+=inp('fDesc','Description','text','Transaction description');
+    html+=inp('fBank','Bank','text','e.g. MCB, HBL');
+    html+=inp('fType2','Type','text','e.g. Transfer, Salary');
+    html+=radioDebitCredit('Debit (Money Out)','Credit (Money In)');
+    html+=inp('fAmount','Amount','number','0');
+    html+=inp('fDetails','Details (optional)','text','Additional details');
+  }
+
+  document.getElementById('fFields').innerHTML=html;
+}
+
+function calcPKR(){
+  const sar=parseFloat(document.getElementById('fSAR').value)||0;
+  const rate=parseFloat(document.getElementById('fRate').value)||0;
+  const pkr=sar*rate;
+  document.getElementById('pkrDisp').textContent = pkr ? `PKR ${fmt(pkr)}` : '—';
+}
+
+function gv(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+function gr(name){ const el=document.querySelector(`input[name="${name}"]:checked`); return el?el.value:''; }
+
+async function submitEntry(){
+  const sheet=gv('fSheet');
+  let data={sheet};
+
+  if(sheet==='credit'){
+    if(!gv('fName')||!gv('fAmount')){ showMsg('Name and Amount are required.','var(--rose)'); return; }
+    const type=gr('fType');
+    data={...data,date:gv('fDate'),name:gv('fName'),description:gv('fDesc'),currency:gv('fCurrency'),
+      debit:type==='debit'?gv('fAmount'):'',credit:type==='credit'?gv('fAmount'):''};
+  } else if(sheet==='remit'){
+    if(!gv('fSAR')||!gv('fRate')){ showMsg('SAR and Rate are required.','var(--rose)'); return; }
+    data={...data,date:gv('fDate'),month:gv('fMonth'),to:gv('fTo'),sar:gv('fSAR'),rate:gv('fRate'),description:gv('fDesc')};
+  } else {
+    if(!gv('fAmount')){ showMsg('Amount is required.','var(--rose)'); return; }
+    const type=gr('fType');
+    data={...data,date:gv('fDate'),description:gv('fDesc'),bank:gv('fBank'),type:gv('fType2'),
+      debit:type==='debit'?gv('fAmount'):'',credit:type==='credit'?gv('fAmount'):'',details:gv('fDetails')};
+  }
+
+  if(!APPS_SCRIPT_URL){
+    showMsg('⚠ Apps Script URL not set. Deploy the script first and paste its URL into finance.html.','var(--amber)');
+    return;
+  }
+
+  showMsg('<span class="spinner"></span> Submitting…','var(--text3)');
+  try{
+    await fetch(APPS_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    showMsg('✅ Entry submitted. Click Refresh to see updated data.','var(--emerald)');
+  } catch(e){
+    showMsg('❌ Submission failed. Check console.','var(--rose)');
+    console.error(e);
+  }
+}
+
+function showMsg(html,color){
+  const el=document.getElementById('fMsg');
+  el.innerHTML=html; el.style.color=color; el.style.display='block';
+}
+</script>
+</body>
+</html>
