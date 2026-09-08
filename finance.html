@@ -587,7 +587,7 @@ async function submitEntry(){
 
   showMsg('<span class="spinner"></span> Submitting…','var(--text3)');
   try{
-    await fetch(APPS_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    await fetch(APPS_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)});
     showMsg('✅ Entry submitted. Click Refresh to see updated data.','var(--emerald)');
   } catch(e){
     showMsg('❌ Submission failed. Check console.','var(--rose)');
