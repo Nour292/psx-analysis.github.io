@@ -63,7 +63,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 
 /* ---- CONTENT ---- */
-.content{padding:22px 24px;max-width:1200px;}
+.content{padding:22px 24px;max-width:1200px;box-sizing:border-box;width:100%;}
 
 /* ---- CARDS ---- */
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:28px;}
@@ -97,17 +97,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .tbl-count{font-size:11px;color:var(--text3);}
 
 /* ---- FORM ---- */
-.form-wrap{max-width:860px;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;}
+.form-wrap{width:100%;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
 .form-grid .span2{grid-column:1/-1;}
 .form-group{margin-bottom:14px;}
 .form-label{font-size:11px;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.7px;font-weight:600;}
 .form-input{width:100%;padding:10px 13px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none;font-family:var(--font);}
 .form-input:focus{border-color:var(--accent);}
-input[type="date"]{color-scheme:dark;}
-:root.light input[type="date"]{color-scheme:light;}
-input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.75);cursor:pointer;}
-:root.light input[type="date"]::-webkit-calendar-picker-indicator{filter:none;}
+input[type="date"]{color-scheme:dark;color:var(--text);}
+:root.light input[type="date"]{color-scheme:light;color:var(--text);}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.85;cursor:pointer;width:18px;height:18px;}
+:root.light input[type="date"]::-webkit-calendar-picker-indicator{filter:none;opacity:.7;}
 .form-select{width:100%;padding:10px 13px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none;font-family:var(--font);}
 .radio-row{display:flex;gap:8px;}
 .radio-opt{flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);}
@@ -483,10 +483,8 @@ function renderForm(){
       </select>
     </div>
     <div id="fFields"></div>
-    <div style="max-width:420px">
-      <button class="submit-btn" onclick="submitEntry()">Submit Entry</button>
-      <div class="form-msg" id="fMsg"></div>
-    </div>
+    <button class="submit-btn" style="max-width:420px;margin-top:6px" onclick="submitEntry()">Submit Entry</button>
+    <div class="form-msg" id="fMsg"></div>
   </div>`;
   document.getElementById('content').innerHTML=html;
   buildFields();
