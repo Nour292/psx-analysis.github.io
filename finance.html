@@ -97,11 +97,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .tbl-count{font-size:11px;color:var(--text3);}
 
 /* ---- FORM ---- */
-.form-wrap{max-width:520px;}
+.form-wrap{max-width:860px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;}
+.form-grid .span2{grid-column:1/-1;}
 .form-group{margin-bottom:14px;}
 .form-label{font-size:11px;color:var(--text3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.7px;font-weight:600;}
 .form-input{width:100%;padding:10px 13px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none;font-family:var(--font);}
 .form-input:focus{border-color:var(--accent);}
+input[type="date"]{color-scheme:dark;}
+:root.light input[type="date"]{color-scheme:light;}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.75);cursor:pointer;}
+:root.light input[type="date"]::-webkit-calendar-picker-indicator{filter:none;}
 .form-select{width:100%;padding:10px 13px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none;font-family:var(--font);}
 .radio-row{display:flex;gap:8px;}
 .radio-opt{flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);}
@@ -466,10 +472,9 @@ function filterTbl(key){
 // FORM
 // ==============================
 function renderForm(){
-  const today=new Date().toISOString().split('T')[0];
   let html=`<div class="form-wrap">
     <h2 style="font-size:15px;font-weight:700;margin-bottom:18px">➕ Add New Entry</h2>
-    <div class="form-group">
+    <div class="form-group" style="max-width:300px">
       <label class="form-label">Sheet</label>
       <select class="form-select" id="fSheet" onchange="buildFields()">
         <option value="credit">CREDIT-COMBINED</option>
@@ -478,27 +483,40 @@ function renderForm(){
       </select>
     </div>
     <div id="fFields"></div>
-    <button class="submit-btn" onclick="submitEntry()">Submit Entry</button>
-    <div class="form-msg" id="fMsg"></div>
+    <div style="max-width:420px">
+      <button class="submit-btn" onclick="submitEntry()">Submit Entry</button>
+      <div class="form-msg" id="fMsg"></div>
+    </div>
   </div>`;
   document.getElementById('content').innerHTML=html;
   buildFields();
 }
 
-function inp(id,label,type,placeholder,extra=''){
-  return `<div class="form-group">
+/* helpers */
+function uniq(rows,key){ return [...new Set(rows.map(r=>r[key]).filter(v=>v&&v.trim()))].sort(); }
+
+function inp(id,label,type,placeholder,extra='',spanClass=''){
+  return `<div class="form-group${spanClass?' '+spanClass:''}">
     <label class="form-label">${label}</label>
     <input id="${id}" type="${type}" placeholder="${placeholder}" ${extra} class="form-input">
   </div>`;
 }
-function sel(id,label,opts){
-  return `<div class="form-group">
+function combo(id,label,listId,opts,placeholder,extra='',spanClass=''){
+  const optHtml=opts.map(o=>`<option value="${o}">`).join('');
+  return `<div class="form-group${spanClass?' '+spanClass:''}">
+    <label class="form-label">${label}</label>
+    <input id="${id}" list="${listId}" placeholder="${placeholder}" ${extra} class="form-input" autocomplete="off">
+    <datalist id="${listId}">${optHtml}</datalist>
+  </div>`;
+}
+function sel(id,label,opts,spanClass=''){
+  return `<div class="form-group${spanClass?' '+spanClass:''}">
     <label class="form-label">${label}</label>
     <select id="${id}" class="form-select">${opts.map(o=>`<option>${o}</option>`).join('')}</select>
   </div>`;
 }
-function radioDebitCredit(debitLabel,creditLabel){
-  return `<div class="form-group">
+function radioRow(debitLabel,creditLabel,spanClass=''){
+  return `<div class="form-group${spanClass?' '+spanClass:''}">
     <label class="form-label">Type</label>
     <div class="radio-row">
       <label class="radio-opt"><input type="radio" name="fType" value="debit" checked> ${debitLabel}</label>
@@ -510,52 +528,74 @@ function radioDebitCredit(debitLabel,creditLabel){
 function buildFields(){
   const sheet=document.getElementById('fSheet').value;
   const today=new Date().toISOString().split('T')[0];
-  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const curMonth=months[new Date().getMonth()];
+  const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const curMonth=MONTHS[new Date().getMonth()];
   let html='';
 
   if(sheet==='credit'){
+    const names = DATA.credit ? uniq(DATA.credit.rows,'Name') : [];
+    const descs = DATA.credit ? uniq(DATA.credit.rows,'Description') : [];
+    html+=`<div class="form-grid">`;
     html+=inp('fDate','Date','date','',`value="${today}"`);
-    html+=inp('fName','Name','text','e.g. USMAN');
-    html+=inp('fDesc','Description','text','Transaction description');
     html+=sel('fCurrency','Currency',['PKR','SAR']);
-    html+=radioDebitCredit('Debit (You gave)','Credit (You received)');
+    html+=combo('fName','Name','dl-names',names,'e.g. USMAN');
     html+=inp('fAmount','Amount','number','0');
+    html+=radioRow('Debit (You gave)','Credit (You received)','span2');
+    html+=combo('fDesc','Description','dl-descs',descs,'Transaction description','','span2');
+    html+=`</div>`;
+
   } else if(sheet==='remit'){
+    const toOpts = DATA.remit ? uniq(DATA.remit.rows,'To') : [];
+    const descOpts = DATA.remit ? uniq(DATA.remit.rows,'DESCRIPTION') : [];
+    html+=`<div class="form-grid">`;
     html+=inp('fDate','Date','date','',`value="${today}"`);
-    html+=inp('fMonth','Month','text',`e.g. ${curMonth}`,`value="${curMonth}"`);
-    html+=inp('fTo','To','text','e.g. My Account');
+    html+=sel('fMonth','Month',MONTHS);
+    // set current month
+    html+=combo('fTo','To','dl-to',toOpts,'e.g. My Account');
     html+=inp('fSAR','Saudi Riyals (SAR)','number','0');
-    html+=inp('fRate','Exchange Rate','number','e.g. 73.50');
     html+=`<div class="form-group">
-      <label class="form-label">Pakistani Rupees (Auto-calculated)</label>
-      <div class="pkr-display" id="pkrDisp">—</div>
+      <label class="form-label">Pakistani Rupees (PKR)</label>
+      <input id="fPKR" type="number" placeholder="0" class="form-input" oninput="calcRate()">
     </div>`;
-    html+=inp('fDesc','Description','text','e.g. BY STC - to my HBL Account');
+    html+=`<div class="form-group">
+      <label class="form-label">Exchange Rate (Auto)</label>
+      <div class="pkr-display" id="rateDisp" style="font-size:14px">—</div>
+    </div>`;
+    html+=combo('fDesc','Description','dl-descs',descOpts,'e.g. BY STC - to my HBL Account','','span2');
+    html+=`</div>`;
     setTimeout(()=>{
-      ['fSAR','fRate'].forEach(id=>{
-        const el=document.getElementById(id);
-        if(el) el.addEventListener('input',calcPKR);
-      });
+      const el=document.getElementById('fSAR');
+      if(el) el.addEventListener('input',calcRate);
+      const sel=document.getElementById('fMonth');
+      if(sel){ const idx=new Date().getMonth(); sel.selectedIndex=idx; }
     },50);
-  } else {
+
+  } else { // allAcc
+    const banks = DATA.allAcc ? uniq(DATA.allAcc.rows,'Bank') : [];
+    const types = DATA.allAcc ? uniq(DATA.allAcc.rows,'Type') : [];
+    const descs = DATA.allAcc ? uniq(DATA.allAcc.rows,'Description') : [];
+    html+=`<div class="form-grid">`;
     html+=inp('fDate','Date','date','',`value="${today}"`);
-    html+=inp('fDesc','Description','text','Transaction description');
-    html+=inp('fBank','Bank','text','e.g. MCB, HBL');
-    html+=inp('fType2','Type','text','e.g. Transfer, Salary');
-    html+=radioDebitCredit('Debit (Money Out)','Credit (Money In)');
+    html+=combo('fBank','Bank','dl-banks',banks,'e.g. MCB, HBL');
+    html+=combo('fDesc','Description','dl-descs',descs,'Transaction description');
+    html+=combo('fType2','Type','dl-types',types,'e.g. Transfer, Salary');
+    html+=radioRow('Debit (Money Out)','Credit (Money In)','span2');
     html+=inp('fAmount','Amount','number','0');
     html+=inp('fDetails','Details (optional)','text','Additional details');
+    html+=`</div>`;
   }
 
   document.getElementById('fFields').innerHTML=html;
 }
 
-function calcPKR(){
+function calcRate(){
   const sar=parseFloat(document.getElementById('fSAR').value)||0;
-  const rate=parseFloat(document.getElementById('fRate').value)||0;
-  const pkr=sar*rate;
-  document.getElementById('pkrDisp').textContent = pkr ? `PKR ${fmt(pkr)}` : '—';
+  const pkr=parseFloat(document.getElementById('fPKR').value)||0;
+  const disp=document.getElementById('rateDisp');
+  if(disp){
+    if(sar&&pkr){ const r=pkr/sar; disp.textContent=`${r.toFixed(4)}`; }
+    else { disp.textContent='—'; }
+  }
 }
 
 function gv(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
@@ -571,8 +611,10 @@ async function submitEntry(){
     data={...data,date:gv('fDate'),name:gv('fName'),description:gv('fDesc'),currency:gv('fCurrency'),
       debit:type==='debit'?gv('fAmount'):'',credit:type==='credit'?gv('fAmount'):''};
   } else if(sheet==='remit'){
-    if(!gv('fSAR')||!gv('fRate')){ showMsg('SAR and Rate are required.','var(--rose)'); return; }
-    data={...data,date:gv('fDate'),month:gv('fMonth'),to:gv('fTo'),sar:gv('fSAR'),rate:gv('fRate'),description:gv('fDesc')};
+    if(!gv('fSAR')||!gv('fPKR')){ showMsg('SAR and PKR are required.','var(--rose)'); return; }
+    const sar=parseFloat(gv('fSAR'))||0; const pkr=parseFloat(gv('fPKR'))||0;
+    const rate=sar?+(pkr/sar).toFixed(4):0;
+    data={...data,date:gv('fDate'),month:gv('fMonth'),to:gv('fTo'),sar,rate,pkr,description:gv('fDesc')};
   } else {
     if(!gv('fAmount')){ showMsg('Amount is required.','var(--rose)'); return; }
     const type=gr('fType');
