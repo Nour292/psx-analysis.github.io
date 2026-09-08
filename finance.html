@@ -118,6 +118,12 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
 .submit-btn{width:100%;padding:13px;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;background:var(--emerald);color:#000;font-family:var(--font);margin-top:6px;}
 .submit-btn:hover{opacity:.88;}
 .form-msg{margin-top:12px;font-size:13px;text-align:center;font-family:var(--mono);display:none;}
+.toast{position:fixed;top:22px;left:50%;transform:translateX(-50%) translateY(-10px);padding:11px 28px;border-radius:8px;font-size:14px;font-weight:700;z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.35);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.t-ok{background:#16a34a;color:#fff;}
+.toast.t-err{background:#dc2626;color:#fff;}
+.toast.t-warn{background:#b45309;color:#fff;}
+.submit-btn:disabled{opacity:.55;cursor:not-allowed;}
 
 /* ---- BUDGET SUMMARY ---- */
 .budget-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:20px;}
@@ -628,22 +634,51 @@ async function submitEntry(){
   }
 
   showMsg('<span class="spinner"></span> Submitting…','var(--text3)');
+  const _btn=document.querySelector('.submit-btn');
+  const _orig=_btn?_btn.textContent:'';
+  if(_btn){_btn.disabled=true;_btn.textContent='Saving…';}
   try{
     const params=new URLSearchParams();
     Object.entries(data).forEach(([k,v])=>params.append(k,String(v==null?'':v)));
-    await new Promise(resolve=>{
-      const img=new Image();
-      img.onload=img.onerror=resolve;
-      img.src=`${APPS_SCRIPT_URL}?${params.toString()}&_t=${Date.now()}`;
-      setTimeout(resolve,6000);
-    });
-    showMsg('✅ Entry submitted. Click Refresh to see updated data.','var(--emerald)');
-  } catch(e){
+    const url=`${APPS_SCRIPT_URL}?${params.toString()}&_t=${Date.now()}`;
+    let result=null;
+    try{
+      const resp=await fetch(url);
+      result=await resp.json();
+    }catch(fetchErr){
+      await new Promise(resolve=>{
+        const img=new Image();img.onload=img.onerror=resolve;
+        img.src=url;setTimeout(resolve,6000);
+      });
+    }
+    if(result){
+      if(result.success){
+        showToast('✅ Saved successfully!','t-ok');
+        showMsg('✅ Saved! Click Refresh to update data.','var(--emerald)');
+      } else {
+        showToast(`❌ Error: ${result.error||'Script returned failure'}`,'t-err',7000);
+        showMsg(`❌ Error: ${result.error||'Script returned failure. Check the sheet.'}`, 'var(--rose)');
+      }
+    } else {
+      showToast('✅ Sent! Click Refresh to verify.','t-ok');
+      showMsg('✅ Sent! Click Refresh to verify it saved.','var(--emerald)');
+    }
+  }catch(e){
+    showToast('❌ Submission failed — check connection.','t-err');
     showMsg('❌ Submission failed. Check console.','var(--rose)');
     console.error(e);
+  }finally{
+    if(_btn){_btn.disabled=false;_btn.textContent=_orig;}
   }
 }
 
+function showToast(msg, type='t-ok', ms=4000){
+  let t=document.getElementById('_toast');
+  if(!t){t=document.createElement('div');t.id='_toast';t.className='toast';document.body.appendChild(t);}
+  t.textContent=msg; t.className=`toast ${type} show`;
+  clearTimeout(t._tid);
+  t._tid=setTimeout(()=>{t.className=`toast ${type}`;},ms);
+}
 function showMsg(html,color){
   const el=document.getElementById('fMsg');
   el.innerHTML=html; el.style.color=color; el.style.display='block';
