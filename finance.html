@@ -117,7 +117,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
 .pkr-display{padding:12px 13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;font-weight:700;color:var(--emerald);font-family:var(--mono);}
 .submit-btn{width:100%;padding:13px;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;background:var(--emerald);color:#000;font-family:var(--font);margin-top:6px;}
 .submit-btn:hover{opacity:.88;}
-.form-msg{margin-top:12px;font-size:13px;text-align:center;font-family:var(--mono);display:none;}
+.form-msg{margin-top:0;margin-bottom:10px;font-size:14px;font-weight:600;text-align:center;font-family:var(--mono);padding:10px 14px;border-radius:var(--radius-sm);display:none;background:var(--surface2);}
 .toast{position:fixed;top:22px;left:50%;transform:translateX(-50%) translateY(-10px);padding:11px 28px;border-radius:8px;font-size:14px;font-weight:700;z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.35);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.t-ok{background:#16a34a;color:#fff;}
@@ -491,8 +491,8 @@ function renderForm(){
       </select>
     </div>
     <div id="fFields"></div>
-    <button class="submit-btn" style="max-width:420px;margin-top:6px" onclick="submitEntry()">Submit Entry</button>
     <div class="form-msg" id="fMsg"></div>
+    <button class="submit-btn" style="max-width:420px;margin-top:6px" onclick="submitEntry()">Submit Entry</button>
   </div>`;
   document.getElementById('content').innerHTML=html;
   buildFields();
@@ -681,7 +681,9 @@ function showToast(msg, type='t-ok', ms=4000){
 }
 function showMsg(html,color){
   const el=document.getElementById('fMsg');
+  if(!el)return;
   el.innerHTML=html; el.style.color=color; el.style.display='block';
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 </script>
 </body>
