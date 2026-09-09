@@ -161,7 +161,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.2</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.3</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -303,7 +303,7 @@ function renderDash(){
   // ── B: Credit Balances (Credit=Debit means received-from-person vs paid-to-person)
   const personMap={};
   DATA.credit.rows.forEach(r=>{
-    const nm=r['Name']||'Unknown';
+    const nm=(r['Name']||'Unknown').trim().toUpperCase();
     if(!personMap[nm]) personMap[nm]={pkr:{debit:0,credit:0},sar:{debit:0,credit:0}};
     const cur=r['Currency']||'PKR';
     if(cur==='PKR'){
@@ -368,7 +368,7 @@ function renderDash(){
 
   // ── Table C: Remittance by Year (SAR + PKR only)
   let remitRows='';
-  Object.entries(yearMap).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([yr,v])=>{
+  Object.entries(yearMap).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([yr,v])=>{
     remitRows+=`<tr>
       <td style="font-weight:600">${yr}</td>
       <td class="dt-num" style="color:var(--accent)">SAR ${fmt(v.sar)}</td>
