@@ -125,13 +125,16 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
 .toast.t-warn{background:#b45309;color:#fff;}
 .submit-btn:disabled{opacity:.55;cursor:not-allowed;}
 
-/* ---- BUDGET SUMMARY ---- */
-.budget-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:20px;}
-.mini-tbl{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-.mini-tbl-hdr{padding:11px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text2);}
-.mini-tbl table{width:100%;border-collapse:collapse;font-size:12px;}
-.mini-tbl td{padding:8px 14px;border-top:1px solid var(--border);color:var(--text2);}
-.mini-tbl td:last-child{text-align:right;font-family:var(--mono);}
+/* ---- DASHBOARD TABLES ---- */
+.dt-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:4px;}
+.dt{width:100%;border-collapse:collapse;font-size:13px;}
+.dt thead tr{background:var(--surface2);}
+.dt th{padding:9px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;}
+.dt td{padding:9px 14px;border-top:1px solid var(--border);color:var(--text2);}
+.dt tbody tr:hover{background:var(--surface2);}
+.dt-num{text-align:right!important;font-family:var(--mono);}
+.dt-total td{font-weight:700;background:var(--surface2);color:var(--text);border-top:2px solid var(--border)!important;}
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;}
 
 /* Loading spinner */
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
@@ -313,13 +316,9 @@ function renderDash(){
     personMap[nm].rcvd+=n(r['Credit']);
   });
 
-  // ── C: Budget — from REMITANCE + All Accounts
+  // ── C: Remittance totals + month map
   const totalSAR=DATA.remit.rows.reduce((s,r)=>s+n(r['Saudi Riyals']),0);
   const totalPKR=DATA.remit.rows.reduce((s,r)=>s+n(r['Pakistani Rupees']),0);
-  const totalIn=DATA.allAcc.rows.reduce((s,r)=>s+n(r['Credit']),0);
-  const totalOut=DATA.allAcc.rows.reduce((s,r)=>s+n(r['Debit']),0);
-
-  // Monthly remittances (last 8)
   const monthMap={};
   DATA.remit.rows.forEach(r=>{
     const m=r['Month']||'?';
@@ -328,95 +327,89 @@ function renderDash(){
     monthMap[m].pkr+=n(r['Pakistani Rupees']);
     monthMap[m].cnt++;
   });
-  const recentMonths=Object.keys(monthMap).slice(-8);
 
   let html='';
 
-  // ── Section A
-  html+=`<div class="sec-hdr">🏦 Bank Balances <span style="font-size:10px;font-weight:400">(All Accounts · Net per bank)</span></div>`;
-  html+=`<div class="card-grid">`;
+  // ── Table A: Bank Balances
+  const bankTotal={in:0,out:0};
+  html+=`<div class="sec-hdr">🏦 Bank Balances <span style="font-size:10px;font-weight:400">(All Accounts · net per bank)</span></div>
+  <div class="dt-wrap"><table class="dt">
+    <thead><tr>
+      <th>Bank</th><th class="dt-num">Money In</th><th class="dt-num">Money Out</th><th class="dt-num">Net Balance</th>
+    </tr></thead><tbody>`;
   Object.entries(bankMap)
     .sort((a,b)=>(b[1].in-b[1].out)-(a[1].in-a[1].out))
     .forEach(([bank,v])=>{
       const net=v.in-v.out;
       const col=net>=0?'var(--emerald)':'var(--rose)';
-      html+=`<div class="card">
-        <div class="card-label">${bank}</div>
-        <div class="card-value" style="color:${col}">${net<0?'−':''}PKR ${fmt(net)}</div>
-        <div class="card-sub">In: ${fmt(v.in)} &nbsp;·&nbsp; Out: ${fmt(v.out)}</div>
-      </div>`;
+      bankTotal.in+=v.in; bankTotal.out+=v.out;
+      html+=`<tr>
+        <td style="font-weight:600">${bank}</td>
+        <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(v.in)}</td>
+        <td class="dt-num" style="color:var(--rose)">PKR ${fmt(v.out)}</td>
+        <td class="dt-num" style="color:${col};font-weight:700">${net<0?'−':''}PKR ${fmt(Math.abs(net))}</td>
+      </tr>`;
     });
-  html+=`</div>`;
+  const bankNet=bankTotal.in-bankTotal.out;
+  html+=`<tr class="dt-total">
+    <td>TOTAL</td>
+    <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(bankTotal.in)}</td>
+    <td class="dt-num" style="color:var(--rose)">PKR ${fmt(bankTotal.out)}</td>
+    <td class="dt-num" style="color:${bankNet>=0?'var(--emerald)':'var(--rose)'}">${bankNet<0?'−':''}PKR ${fmt(Math.abs(bankNet))}</td>
+  </tr></tbody></table></div>`;
 
-  // ── Section B
-  html+=`<div class="sec-hdr">👥 Person Balances <span style="font-size:10px;font-weight:400">(CREDIT-COMBINED · Lent vs Received)</span></div>`;
-  html+=`<div class="card-grid">`;
+  // ── Table B: Credit / Person Balances (skip zero)
+  html+=`<div class="sec-hdr" style="margin-top:20px">👥 Credit Balances <span style="font-size:10px;font-weight:400">(CREDIT-COMBINED · non-zero only)</span></div>
+  <div class="dt-wrap"><table class="dt">
+    <thead><tr>
+      <th>Name</th>
+      <th class="dt-num">PKR Lent</th><th class="dt-num">PKR Received</th>
+      <th class="dt-num">SAR Lent</th><th class="dt-num">SAR Received</th>
+      <th class="dt-num">Net (PKR)</th><th>Status</th>
+    </tr></thead><tbody>`;
   Object.entries(personMap)
     .sort((a,b)=>Math.abs(b[1].lent-b[1].rcvd)-Math.abs(a[1].lent-a[1].rcvd))
+    .filter(([,v])=>v.lent||v.rcvd)
     .forEach(([name,v])=>{
       const net=v.lent-v.rcvd;
-      const isRcvbl=net>0;
       const col=net>0?'var(--amber)':net<0?'var(--rose)':'var(--emerald)';
       const tag=net>0?'Receivable':net<0?'Payable':'Settled';
-      const tagBg=net>0?'var(--amber-dim)':net<0?'var(--rose-dim)':'var(--emerald-dim)';
-      let subParts=[];
-      if(v.pkr.lent||v.pkr.rcvd) subParts.push(`PKR L:${fmt(v.pkr.lent)} R:${fmt(v.pkr.rcvd)}`);
-      if(v.sar.lent||v.sar.rcvd) subParts.push(`SAR L:${fmt(v.sar.lent)} R:${fmt(v.sar.rcvd)}`);
-      html+=`<div class="card">
-        <div class="card-label">${name}</div>
-        <div class="card-value" style="color:${col};font-size:17px">${fmt(Math.abs(net))}</div>
-        <span class="card-tag" style="background:${tagBg};color:${col}">${tag}</span>
-        <div class="card-sub" style="margin-top:6px">${subParts.join('<br>')}</div>
-      </div>`;
+      html+=`<tr>
+        <td style="font-weight:600">${name}</td>
+        <td class="dt-num">${v.pkr.lent?'PKR '+fmt(v.pkr.lent):'—'}</td>
+        <td class="dt-num">${v.pkr.rcvd?'PKR '+fmt(v.pkr.rcvd):'—'}</td>
+        <td class="dt-num">${v.sar.lent?'SAR '+fmt(v.sar.lent):'—'}</td>
+        <td class="dt-num">${v.sar.rcvd?'SAR '+fmt(v.sar.rcvd):'—'}</td>
+        <td class="dt-num" style="color:${col};font-weight:700">${net<0?'−':''}${fmt(Math.abs(net))}</td>
+        <td><span class="badge" style="background:${col}22;color:${col}">${tag}</span></td>
+      </tr>`;
     });
-  html+=`</div>`;
+  html+=`</tbody></table></div>`;
 
-  // ── Section C: Budget Overview
-  html+=`<div class="sec-hdr">📈 Budget Overview <span style="font-size:10px;font-weight:400">(All sources combined)</span></div>`;
-  html+=`<div class="budget-grid">
-    <div class="card" style="border-color:var(--accent)">
-      <div class="card-label">Total Remittances</div>
-      <div class="card-value" style="color:var(--accent);font-size:16px">SAR ${fmt(totalSAR)}</div>
-      <div style="font-size:15px;font-weight:700;font-family:var(--mono);color:var(--emerald);margin-top:4px">PKR ${fmt(totalPKR)}</div>
-      <div class="card-sub">${DATA.remit.rows.length} transfers</div>
-    </div>
-    <div class="card">
-      <div class="card-label">All Accounts · Total IN</div>
-      <div class="card-value" style="color:var(--emerald)">PKR ${fmt(totalIn)}</div>
-    </div>
-    <div class="card">
-      <div class="card-label">All Accounts · Total OUT</div>
-      <div class="card-value" style="color:var(--rose)">PKR ${fmt(totalOut)}</div>
-    </div>
-    <div class="card" style="border-color:${(totalIn-totalOut)>=0?'var(--emerald)':'var(--rose)'}">
-      <div class="card-label">Net (IN − OUT)</div>
-      <div class="card-value" style="color:${(totalIn-totalOut)>=0?'var(--emerald)':'var(--rose)'}">
-        ${(totalIn-totalOut)<0?'−':''}PKR ${fmt(totalIn-totalOut)}
-      </div>
-    </div>
-  </div>`;
-
-  // Monthly remittance table
-  html+=`<div class="mini-tbl">
-    <div class="mini-tbl-hdr">📅 Monthly Remittances (Recent ${recentMonths.length} months)</div>
-    <table>
-      <thead><tr>
-        <th style="padding:8px 14px;text-align:left;font-size:10px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border)">Month</th>
-        <th style="padding:8px 14px;text-align:center;font-size:10px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border)">Transfers</th>
-        <th style="padding:8px 14px;text-align:right;font-size:10px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border)">SAR</th>
-        <th style="padding:8px 14px;text-align:right;font-size:10px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border)">PKR</th>
-      </tr></thead>
-      <tbody>`;
-  recentMonths.forEach(m=>{
-    const v=monthMap[m];
+  // ── Table C: Remittance by month
+  html+=`<div class="sec-hdr" style="margin-top:20px">💸 Remittance <span style="font-size:10px;font-weight:400">(All months)</span></div>
+  <div class="dt-wrap"><table class="dt">
+    <thead><tr>
+      <th>Month</th><th class="dt-num"># Transfers</th>
+      <th class="dt-num">SAR</th><th class="dt-num">PKR</th><th class="dt-num">Avg Rate</th>
+    </tr></thead><tbody>`;
+  Object.entries(monthMap).forEach(([m,v])=>{
+    const rate=v.sar?+(v.pkr/v.sar).toFixed(2):0;
     html+=`<tr>
       <td>${m}</td>
-      <td style="text-align:center;color:var(--text3)">${v.cnt}</td>
-      <td style="text-align:right;font-family:var(--mono);color:var(--accent)">${fmt(v.sar)}</td>
-      <td style="text-align:right;font-family:var(--mono);color:var(--emerald)">${fmt(v.pkr)}</td>
+      <td class="dt-num" style="color:var(--text3)">${v.cnt}</td>
+      <td class="dt-num" style="color:var(--accent)">SAR ${fmt(v.sar)}</td>
+      <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(v.pkr)}</td>
+      <td class="dt-num" style="color:var(--text3)">${rate||'—'}</td>
     </tr>`;
   });
-  html+=`</tbody></table></div>`;
+  html+=`<tr class="dt-total">
+    <td>TOTAL</td>
+    <td class="dt-num" style="color:var(--text3)">${DATA.remit.rows.length}</td>
+    <td class="dt-num" style="color:var(--accent)">SAR ${fmt(totalSAR)}</td>
+    <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(totalPKR)}</td>
+    <td class="dt-num">—</td>
+  </tr></tbody></table></div>`;
 
   document.getElementById('content').innerHTML=html;
 }
