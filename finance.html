@@ -92,11 +92,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);}
 .tbl .c-b{color:var(--accent);}
 .tbl .c-d{color:var(--text3);}
 
-/* ---- SEARCH BAR ---- */
-.tbl-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
-.srch{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-size:12.5px;outline:none;width:220px;font-family:var(--font);}
+/* ---- SEARCH / FILTER / EXPORT ---- */
+.tbl-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+.srch{padding:7px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-size:12px;outline:none;width:180px;font-family:var(--font);}
 .srch:focus{border-color:var(--accent);}
-.tbl-count{font-size:11px;color:var(--text3);}
+.tbl-count{font-size:11px;color:var(--text3);flex:1;}
+.filter-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;}
+.filter-bar select{padding:5px 9px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:var(--font);outline:none;cursor:pointer;}
+.filter-bar select:focus{border-color:var(--accent);}
+.filter-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+.exp-btn{padding:6px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);background:var(--surface2);color:var(--text);white-space:nowrap;}
+.exp-btn:hover{border-color:var(--accent);color:var(--accent);}
+.exp-btn.pdf{border-color:var(--rose);color:var(--rose);}
+.exp-btn.pdf:hover{background:var(--rose);color:#fff;}
+.exp-btn.xls{border-color:var(--emerald);color:var(--emerald);}
+.exp-btn.xls:hover{background:var(--emerald);color:#000;}
 
 /* ---- FORM ---- */
 .form-wrap{width:100%;}
@@ -161,7 +171,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.4</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.5</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -420,50 +430,146 @@ const TABLE_CFG={
   remit:{title:'Remittance',key:'remit'}
 };
 
+// Filter state per tab
+const FSTATE={allAcc:{bank:'',dir:''},credit:{name:'',cur:''},remit:{year:'',month:'',to:''}};
+
+function yrFromDate(d){
+  const p=(d||'').split('/');
+  if(p.length===3){const y=parseInt(p[2],10);return isNaN(y)?'?':String(y<100?2000+y:y);}
+  const m=(d||'').match(/\d{4}/);return m?m[0]:'?';
+}
+
 function renderTable(key){
   const cfg=TABLE_CFG[key];
   const {headers,rows}=DATA[key];
-  const display=[...rows].reverse().slice(0,300);
 
+  // ── Filter controls
+  let fbar='<div class="filter-bar">';
+  if(key==='allAcc'){
+    const banks=uniq(rows,'Bank');
+    fbar+=`<span class="filter-lbl">Bank</span>
+      <select onchange="FSTATE.allAcc.bank=this.value;applyFilters('${key}')">
+        <option value="">All</option>${banks.map(b=>`<option>${b}</option>`).join('')}
+      </select>
+      <span class="filter-lbl" style="margin-left:6px">Direction</span>
+      <select onchange="FSTATE.allAcc.dir=this.value;applyFilters('${key}')">
+        <option value="">All</option><option value="in">Money In</option><option value="out">Money Out</option>
+      </select>`;
+  } else if(key==='credit'){
+    const names=uniq(rows,'Name');
+    fbar+=`<span class="filter-lbl">Name</span>
+      <select onchange="FSTATE.credit.name=this.value;applyFilters('${key}')">
+        <option value="">All</option>${names.map(n=>`<option>${n}</option>`).join('')}
+      </select>
+      <span class="filter-lbl" style="margin-left:6px">Currency</span>
+      <select onchange="FSTATE.credit.cur=this.value;applyFilters('${key}')">
+        <option value="">All</option><option>PKR</option><option>SAR</option>
+      </select>`;
+  } else if(key==='remit'){
+    const years=[...new Set(rows.map(r=>yrFromDate(r['Date'])).filter(y=>y!=='?'))].sort((a,b)=>b.localeCompare(a));
+    const tos=uniq(rows,'To');
+    const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sept','Oct','Nov','Dec'];
+    fbar+=`<span class="filter-lbl">Year</span>
+      <select onchange="FSTATE.remit.year=this.value;applyFilters('${key}')">
+        <option value="">All</option>${years.map(y=>`<option>${y}</option>`).join('')}
+      </select>
+      <span class="filter-lbl" style="margin-left:6px">Month</span>
+      <select onchange="FSTATE.remit.month=this.value;applyFilters('${key}')">
+        <option value="">All</option>${MONTHS.map(m=>`<option>${m}</option>`).join('')}
+      </select>
+      <span class="filter-lbl" style="margin-left:6px">To</span>
+      <select onchange="FSTATE.remit.to=this.value;applyFilters('${key}')">
+        <option value="">All</option>${tos.map(t=>`<option>${t}</option>`).join('')}
+      </select>`;
+  }
+  fbar+='</div>';
+
+  const display=getFilteredRows(key).slice(0,300);
   let html=`<div class="tbl-header">
-    <h2 style="font-size:14px;font-weight:700;flex:1">${cfg.title}</h2>
-    <span class="tbl-count" id="tblCount_${key}">Showing ${display.length} of ${rows.length}</span>
-    <input class="srch" id="srch_${key}" placeholder="Search…" oninput="filterTbl('${key}')">
-  </div>
-  <div class="tbl-wrap">
-    <table class="tbl">
-      <thead><tr>`;
+    <h2 style="font-size:14px;font-weight:700">${cfg.title}</h2>
+    <span class="tbl-count" id="tblCount_${key}">${display.length} of ${rows.length} records</span>
+    <input class="srch" id="srch_${key}" placeholder="Search…" oninput="applyFilters('${key}')">
+    <button class="exp-btn xls" onclick="exportCSV('${key}')">⬇ Excel</button>
+    <button class="exp-btn pdf" onclick="exportPDF('${key}')">🖨 PDF</button>
+  </div>${fbar}
+  <div class="tbl-wrap"><table class="tbl"><thead><tr>`;
   headers.forEach(h=>html+=`<th>${h}</th>`);
   html+=`</tr></thead><tbody id="tbody_${key}">`;
   html+=buildRows(headers,display);
   html+=`</tbody></table></div>`;
-  if(rows.length>300) html+=`<p style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center">Latest 300 shown · use search to find older records</p>`;
+  if(rows.length>300) html+=`<p style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center">Showing 300 of ${rows.length} — use filters or search to narrow</p>`;
 
   document.getElementById('content').innerHTML=html;
 }
 
 function buildRows(headers,rows){
-  return rows.map(r=>{
-    return '<tr>'+headers.map(h=>{
-      const v=r[h]||'';
-      let cls='';
-      if(h==='Balance'){ cls=n(v)>=0?'mono c-g':'mono c-r'; }
-      else if(h==='Credit'&&v){ cls='mono c-g'; }
-      else if(h==='Debit'&&v){ cls='mono c-r'; }
-      else if(['Saudi Riyals','Pakistani Rupees','Rate'].includes(h)&&v){ cls='mono c-b'; }
-      return `<td class="${cls}">${v||'—'}</td>`;
-    }).join('')+'</tr>';
-  }).join('');
+  return rows.map(r=>'<tr>'+headers.map(h=>{
+    const v=r[h]||'';
+    let cls='';
+    if(h==='Balance'){cls=n(v)>=0?'mono c-g':'mono c-r';}
+    else if(h==='Credit'&&v){cls='mono c-g';}
+    else if(h==='Debit'&&v){cls='mono c-r';}
+    else if(['Saudi Riyals','Pakistani Rupees','Rate'].includes(h)&&v){cls='mono c-b';}
+    return `<td class="${cls}">${v||'—'}</td>`;
+  }).join('')+'</tr>').join('');
 }
 
-function filterTbl(key){
-  const q=document.getElementById('srch_'+key).value.toLowerCase();
-  const {headers,rows}=DATA[key];
-  const filtered=q
-    ? rows.filter(r=>Object.values(r).some(v=>v.toLowerCase().includes(q)))
-    : [...rows].reverse().slice(0,300);
-  document.getElementById('tbody_'+key).innerHTML=buildRows(headers,filtered.slice(0,500));
-  document.getElementById('tblCount_'+key).textContent=`${filtered.length} records${filtered.length>500?' (showing 500)':''}`;
+function getFilteredRows(key){
+  const {rows}=DATA[key];
+  let out=[...rows].reverse();
+  if(key==='allAcc'){
+    const {bank,dir}=FSTATE.allAcc;
+    if(bank) out=out.filter(r=>r['Bank']===bank);
+    if(dir==='in') out=out.filter(r=>n(r['Credit'])>0);
+    if(dir==='out') out=out.filter(r=>n(r['Debit'])>0);
+  } else if(key==='credit'){
+    const {name,cur}=FSTATE.credit;
+    if(name) out=out.filter(r=>(r['Name']||'').trim()===name);
+    if(cur) out=out.filter(r=>r['Currency']===cur);
+  } else if(key==='remit'){
+    const {year,month,to}=FSTATE.remit;
+    if(year) out=out.filter(r=>yrFromDate(r['Date'])===year);
+    if(month) out=out.filter(r=>r['Month']===month);
+    if(to) out=out.filter(r=>r['To']===to);
+  }
+  const q=(document.getElementById('srch_'+key)||{}).value?.toLowerCase()||'';
+  if(q) out=out.filter(r=>Object.values(r).some(v=>(v||'').toLowerCase().includes(q)));
+  return out;
+}
+
+function applyFilters(key){
+  const filtered=getFilteredRows(key);
+  document.getElementById('tbody_'+key).innerHTML=buildRows(DATA[key].headers,filtered.slice(0,500));
+  document.getElementById('tblCount_'+key).textContent=`${filtered.length} of ${DATA[key].rows.length} records${filtered.length>500?' (showing 500)':''}`;
+}
+function filterTbl(key){applyFilters(key);}
+
+function exportCSV(key){
+  const {headers}=DATA[key];
+  const rows=getFilteredRows(key);
+  const csv=[headers,...rows.map(r=>headers.map(h=>`"${(r[h]||'').replace(/"/g,'""')}"`))]
+    .map(row=>row.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${TABLE_CFG[key].title}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function exportPDF(key){
+  const cfg=TABLE_CFG[key];
+  const {headers}=DATA[key];
+  const rows=getFilteredRows(key);
+  const th=`padding:6px 10px;text-align:left;border-bottom:2px solid #555;font-size:10px;text-transform:uppercase;background:#eee;`;
+  const td=`padding:5px 10px;border-bottom:1px solid #ddd;font-size:11px;`;
+  const tbl=`<table style="width:100%;border-collapse:collapse">
+    <thead><tr>${headers.map(h=>`<th style="${th}">${h}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${headers.map(h=>`<td style="${td}">${r[h]||''}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table>`;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>${cfg.title}</title>
+    <style>body{font-family:Arial,sans-serif;margin:16px;}h3{font-size:14px;margin-bottom:4px;}p{font-size:10px;color:#666;margin-bottom:10px;}@media print{@page{margin:12mm;}}</style>
+    </head><body><h3>${cfg.title}</h3><p>${rows.length} records · ${new Date().toLocaleDateString()}</p>${tbl}</body></html>`);
+  w.document.close();w.print();
 }
 
 // ==============================
