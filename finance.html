@@ -76,7 +76,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);}
 .card-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block;margin-top:4px;}
 
 /* ---- SECTION HEADER ---- */
-.sec-hdr{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.9px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sec-hdr{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.9px;font-weight:700;margin-bottom:8px;margin-top:16px;display:flex;align-items:center;gap:8px;}
 .sec-hdr::after{content:'';flex:1;height:1px;background:var(--border);}
 
 /* ---- TABLE ---- */
@@ -126,15 +126,15 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
 .submit-btn:disabled{opacity:.55;cursor:not-allowed;}
 
 /* ---- DASHBOARD TABLES ---- */
-.dt-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:4px;}
+.dt-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;margin-bottom:4px;}
 .dt{width:100%;border-collapse:collapse;font-size:13px;}
 .dt thead tr{background:var(--surface2);}
-.dt th{padding:9px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;}
-.dt td{padding:9px 14px;border-top:1px solid var(--border);color:var(--text2);}
+.dt th{padding:7px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;}
+.dt td{padding:6px 12px;border-top:1px solid var(--border);color:var(--text2);white-space:nowrap;}
 .dt tbody tr:hover{background:var(--surface2);}
 .dt-num{text-align:right!important;font-family:var(--mono);}
 .dt-total td{font-weight:700;background:var(--surface2);color:var(--text);border-top:2px solid var(--border)!important;}
-.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
 
 /* Loading spinner */
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
@@ -359,7 +359,7 @@ function renderDash(){
   </tr></tbody></table></div>`;
 
   // ── Table B: Credit / Person Balances (skip zero)
-  html+=`<div class="sec-hdr" style="margin-top:20px">👥 Credit Balances <span style="font-size:10px;font-weight:400">(CREDIT-COMBINED · non-zero only)</span></div>
+  html+=`<div class="sec-hdr">👥 Credit Balances <span style="font-size:10px;font-weight:400">(CREDIT-COMBINED · non-zero only)</span></div>
   <div class="dt-wrap"><table class="dt">
     <thead><tr>
       <th>Name</th>
@@ -387,7 +387,7 @@ function renderDash(){
   html+=`</tbody></table></div>`;
 
   // ── Table C: Remittance by month
-  html+=`<div class="sec-hdr" style="margin-top:20px">💸 Remittance <span style="font-size:10px;font-weight:400">(All months)</span></div>
+  html+=`<div class="sec-hdr">💸 Remittance <span style="font-size:10px;font-weight:400">(All months)</span></div>
   <div class="dt-wrap"><table class="dt">
     <thead><tr>
       <th>Month</th><th class="dt-num"># Transfers</th>
