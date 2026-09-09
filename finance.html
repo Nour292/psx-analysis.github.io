@@ -161,7 +161,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.3</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.4</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -291,140 +291,123 @@ function renderTab(tab){
 // DASHBOARD
 // ==============================
 function renderDash(){
+  // helper: extract 4-digit year from "DD/Mon/YY" format
+  function getYear(d){
+    const p=(d||'').split('/');
+    if(p.length===3){const y=parseInt(p[2],10);return isNaN(y)?'?':String(y<100?2000+y:y);}
+    const m=(d||'').match(/\d{4}/);return m?m[0]:'?';
+  }
+  // month sort order
+  const MO={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,june:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12};
+  const mNum=m=>MO[m.toLowerCase().slice(0,4)]||MO[m.toLowerCase().slice(0,3)]||0;
+
   // ── A: Bank Balances
   const bankMap={};
   DATA.allAcc.rows.forEach(r=>{
     const b=r['Bank']||'Other';
     if(!bankMap[b]) bankMap[b]={in:0,out:0};
-    bankMap[b].in+=n(r['Credit']);
-    bankMap[b].out+=n(r['Debit']);
+    bankMap[b].in+=n(r['Credit']); bankMap[b].out+=n(r['Debit']);
   });
 
-  // ── B: Credit Balances (Credit=Debit means received-from-person vs paid-to-person)
+  // ── B: Credit Balances
   const personMap={};
   DATA.credit.rows.forEach(r=>{
     const nm=(r['Name']||'Unknown').trim().toUpperCase();
     if(!personMap[nm]) personMap[nm]={pkr:{debit:0,credit:0},sar:{debit:0,credit:0}};
     const cur=r['Currency']||'PKR';
-    if(cur==='PKR'){
-      personMap[nm].pkr.debit+=n(r['Debit']);
-      personMap[nm].pkr.credit+=n(r['Credit']);
-    } else {
-      personMap[nm].sar.debit+=n(r['Debit']);
-      personMap[nm].sar.credit+=n(r['Credit']);
-    }
+    if(cur==='PKR'){personMap[nm].pkr.debit+=n(r['Debit']);personMap[nm].pkr.credit+=n(r['Credit']);}
+    else{personMap[nm].sar.debit+=n(r['Debit']);personMap[nm].sar.credit+=n(r['Credit']);}
   });
 
-  // ── C: Remittance by Year
-  const totalSAR=DATA.remit.rows.reduce((s,r)=>s+n(r['Saudi Riyals']),0);
-  const totalPKR=DATA.remit.rows.reduce((s,r)=>s+n(r['Pakistani Rupees']),0);
-  const yearMap={};
+  // ── C: Remittance — find latest year, group that year by month
+  const allYears=[...new Set(DATA.remit.rows.map(r=>getYear(r['Date'])))].filter(y=>y!=='?').sort((a,b)=>b.localeCompare(a));
+  const latestYr=allYears[0]||'?';
+  const monthMap={};
   DATA.remit.rows.forEach(r=>{
-    const d=r['Date']||'';
-    let yr='?';
-    const parts=d.split('/');
-    if(parts.length===3){
-      const y=parseInt(parts[2],10);
-      yr=isNaN(y)?parts[2]:String(y<100?2000+y:y);
-    } else {
-      const m=d.match(/\d{4}/);
-      if(m) yr=m[0];
-    }
-    if(!yearMap[yr]) yearMap[yr]={sar:0,pkr:0};
-    yearMap[yr].sar+=n(r['Saudi Riyals']);
-    yearMap[yr].pkr+=n(r['Pakistani Rupees']);
+    if(getYear(r['Date'])!==latestYr) return;
+    const m=r['Month']||'?';
+    if(!monthMap[m]) monthMap[m]={sar:0,pkr:0};
+    monthMap[m].sar+=n(r['Saudi Riyals']); monthMap[m].pkr+=n(r['Pakistani Rupees']);
   });
 
-  let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">';
+  // ── Build HTML — left col: Bank + Credit; right col: Remittance
+  let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start"><div>';
 
-  // ── Table A: Bank Balance (Bank + Net only)
-  let bankNet=0;
-  let bankRows='';
-  Object.entries(bankMap)
-    .sort((a,b)=>(b[1].in-b[1].out)-(a[1].in-a[1].out))
-    .forEach(([bank,v])=>{
-      const net=v.in-v.out;
-      bankNet+=net;
-      const col=net>=0?'var(--emerald)':'var(--rose)';
-      bankRows+=`<tr>
-        <td style="font-weight:600">${bank}</td>
-        <td class="dt-num" style="color:${col};font-weight:700">${net<0?'−':''}PKR ${fmt(Math.abs(net))}</td>
-      </tr>`;
-    });
-  html+=`<div>
-    <div class="sec-hdr">🏦 Bank Balances</div>
-    <div class="dt-wrap"><table class="dt">
-      <thead><tr><th>Bank</th><th class="dt-num">Net Balance</th></tr></thead>
-      <tbody>${bankRows}
-        <tr class="dt-total">
-          <td>TOTAL</td>
-          <td class="dt-num" style="color:${bankNet>=0?'var(--emerald)':'var(--rose)'}">
-            ${bankNet<0?'−':''}PKR ${fmt(Math.abs(bankNet))}
-          </td>
-        </tr>
-      </tbody>
-    </table></div>
-  </div>`;
-
-  // ── Table C: Remittance by Year (SAR + PKR only)
-  let remitRows='';
-  Object.entries(yearMap).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([yr,v])=>{
-    remitRows+=`<tr>
-      <td style="font-weight:600">${yr}</td>
-      <td class="dt-num" style="color:var(--accent)">SAR ${fmt(v.sar)}</td>
-      <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(v.pkr)}</td>
-    </tr>`;
+  // Bank Balances
+  let bankNet=0, bankRows='';
+  Object.entries(bankMap).sort((a,b)=>(b[1].in-b[1].out)-(a[1].in-a[1].out)).forEach(([bank,v])=>{
+    const net=v.in-v.out; bankNet+=net;
+    const col=net>=0?'var(--emerald)':'var(--rose)';
+    bankRows+=`<tr><td style="font-weight:600">${bank}</td>
+      <td class="dt-num" style="color:${col};font-weight:700">${net<0?'−':''}PKR ${fmt(Math.abs(net))}</td></tr>`;
   });
-  html+=`<div>
-    <div class="sec-hdr">💸 Remittance</div>
-    <div class="dt-wrap"><table class="dt">
-      <thead><tr><th>Year</th><th class="dt-num">SAR</th><th class="dt-num">PKR</th></tr></thead>
-      <tbody>${remitRows}
-        <tr class="dt-total">
-          <td>TOTAL</td>
-          <td class="dt-num" style="color:var(--accent)">SAR ${fmt(totalSAR)}</td>
-          <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(totalPKR)}</td>
-        </tr>
-      </tbody>
-    </table></div>
-  </div>`;
+  html+=`<div class="sec-hdr">🏦 Bank Balances</div>
+  <div class="dt-wrap"><table class="dt">
+    <thead><tr><th>Bank</th><th class="dt-num">Net Balance</th></tr></thead>
+    <tbody>${bankRows}
+      <tr class="dt-total"><td>TOTAL</td>
+        <td class="dt-num" style="color:${bankNet>=0?'var(--emerald)':'var(--rose)'}">
+          ${bankNet<0?'−':''}PKR ${fmt(Math.abs(bankNet))}</td>
+      </tr>
+    </tbody></table></div>`;
 
-  html+='</div>'; // end top grid
-
-  // ── Table B: Credit Balances (Name, Net PKR, Net SAR, Status) — skip Settled
-  // net = Credit - Debit: positive = you gave more = Receivable (they owe you)
-  let creditRows='';
+  // Credit Balances (under Bank, same column)
+  let creditRows='', totPKR=0, totSAR=0;
   Object.entries(personMap)
-    .map(([name,v])=>{
-      const netPKR=v.pkr.credit-v.pkr.debit;
-      const netSAR=v.sar.credit-v.sar.debit;
-      return {name,netPKR,netSAR};
-    })
+    .map(([name,v])=>({name,netPKR:v.pkr.credit-v.pkr.debit,netSAR:v.sar.credit-v.sar.debit}))
     .filter(x=>x.netPKR!==0||x.netSAR!==0)
     .sort((a,b)=>Math.abs(b.netPKR)-Math.abs(a.netPKR))
     .forEach(({name,netPKR,netSAR})=>{
-      const primaryNet=netPKR!==0?netPKR:netSAR;
-      const col=primaryNet>0?'var(--amber)':'var(--rose)';
-      const tag=primaryNet>0?'Receivable':'Payable';
+      totPKR+=netPKR; totSAR+=netSAR;
+      const pNet=netPKR!==0?netPKR:netSAR;
+      const col=pNet>0?'var(--amber)':'var(--rose)';
+      const tag=pNet>0?'Receivable':'Payable';
       creditRows+=`<tr>
         <td style="font-weight:600">${name}</td>
         <td class="dt-num" style="color:${netPKR>0?'var(--amber)':netPKR<0?'var(--rose)':'var(--text3)'};font-weight:700">
-          ${netPKR?( (netPKR<0?'−':'')+' PKR '+fmt(Math.abs(netPKR)) ):'—'}
-        </td>
+          ${netPKR?(netPKR<0?'− ':'')+' PKR '+fmt(Math.abs(netPKR)):'—'}</td>
         <td class="dt-num" style="color:${netSAR>0?'var(--amber)':netSAR<0?'var(--rose)':'var(--text3)'};font-weight:${netSAR?700:400}">
-          ${netSAR?( (netSAR<0?'−':'')+' SAR '+fmt(Math.abs(netSAR)) ):'—'}
-        </td>
+          ${netSAR?(netSAR<0?'− ':'')+' SAR '+fmt(Math.abs(netSAR)):'—'}</td>
         <td><span class="badge" style="background:${col}22;color:${col}">${tag}</span></td>
       </tr>`;
     });
-  html+=`<div class="sec-hdr" style="margin-top:16px">👥 Credit Balances <span style="font-size:10px;font-weight:400">(settled entries hidden)</span></div>
+  html+=`<div class="sec-hdr" style="margin-top:14px">👥 Credit Balances <span style="font-size:10px;font-weight:400">(settled hidden)</span></div>
   <div class="dt-wrap"><table class="dt">
-    <thead><tr>
-      <th>Name</th><th class="dt-num">Net (PKR)</th><th class="dt-num">Net (SAR)</th><th>Status</th>
-    </tr></thead>
-    <tbody>${creditRows}</tbody>
-  </table></div>`;
+    <thead><tr><th>Name</th><th class="dt-num">Net (PKR)</th><th class="dt-num">Net (SAR)</th><th>Status</th></tr></thead>
+    <tbody>${creditRows}
+      <tr class="dt-total">
+        <td>TOTAL</td>
+        <td class="dt-num" style="color:${totPKR>=0?'var(--amber)':'var(--rose)'};font-weight:700">
+          ${totPKR?(totPKR<0?'− ':'')+' PKR '+fmt(Math.abs(totPKR)):'—'}</td>
+        <td class="dt-num" style="color:${totSAR>=0?'var(--amber)':'var(--rose)'};font-weight:700">
+          ${totSAR?(totSAR<0?'− ':'')+' SAR '+fmt(Math.abs(totSAR)):'—'}</td>
+        <td></td>
+      </tr>
+    </tbody></table></div>`;
 
+  html+='</div>'; // end left col
+
+  // Remittance — latest year, by month, Z to A
+  let remitRows='', remSAR=0, remPKR=0;
+  Object.entries(monthMap).sort((a,b)=>mNum(b[0])-mNum(a[0])).forEach(([m,v])=>{
+    remSAR+=v.sar; remPKR+=v.pkr;
+    remitRows+=`<tr><td style="font-weight:600">${m}</td>
+      <td class="dt-num" style="color:var(--accent)">SAR ${fmt(v.sar)}</td>
+      <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(v.pkr)}</td></tr>`;
+  });
+  html+=`<div>
+    <div class="sec-hdr">💸 Remittance <span style="font-size:10px;font-weight:400">(${latestYr})</span></div>
+    <div class="dt-wrap"><table class="dt">
+      <thead><tr><th>Month</th><th class="dt-num">SAR</th><th class="dt-num">PKR</th></tr></thead>
+      <tbody>${remitRows}
+        <tr class="dt-total"><td>TOTAL</td>
+          <td class="dt-num" style="color:var(--accent)">SAR ${fmt(remSAR)}</td>
+          <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(remPKR)}</td>
+        </tr>
+      </tbody></table></div>
+  </div>`;
+
+  html+='</div>'; // end grid
   document.getElementById('content').innerHTML=html;
 }
 
