@@ -665,6 +665,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.2</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -692,11 +693,15 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       <div class="filter-group">
         <span class="filter-label">Momentum</span>
         <button class="fpill active" onclick="setFilter('momentum','')">All</button>
-        <button class="fpill" onclick="setFilter('momentum','bullish')">↑ Bullish</button>
-        <button class="fpill" onclick="setFilter('momentum','bearish')">↓ Bearish</button>
-        <button class="fpill" onclick="setFilter('momentum','building')">▲ Building</button>
-        <button class="fpill" onclick="setFilter('momentum','slowing')">▲ Slowing</button>
-        <button class="fpill" onclick="setFilter('momentum','weak')">▼ Weak</button>
+        <button class="fpill" onclick="setFilter('momentum','Strong ↑')">Strong ↑</button>
+        <button class="fpill" onclick="setFilter('momentum','Moderate ↑')">Moderate ↑</button>
+        <button class="fpill" onclick="setFilter('momentum','Forming ↑')">Forming ↑</button>
+        <button class="fpill" onclick="setFilter('momentum','Strong ↓')">Strong ↓</button>
+        <button class="fpill" onclick="setFilter('momentum','Moderate ↓')">Moderate ↓</button>
+        <button class="fpill" onclick="setFilter('momentum','Mild ↓')">Mild ↓</button>
+        <button class="fpill" onclick="setFilter('momentum','Building')">Building</button>
+        <button class="fpill" onclick="setFilter('momentum','Slowing')">Slowing</button>
+        <button class="fpill" onclick="setFilter('momentum','Weak')">Weak</button>
       </div>
       <span class="filter-count" id="filterCount"></span>
     </div>
@@ -981,7 +986,8 @@ function processAll(){
     let momOrd=0;
     if(vr.verdict==='BUY'){ momOrd=mom.includes('Strong ↑')?3:mom.includes('Moderate ↑')?2:1; }
     else if(vr.verdict==='EXIT'){ momOrd=mom.includes('Strong ↓')?3:mom.includes('Moderate ↓')?2:1; }
-    const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,S1Level:z.s1Level,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,SheetTrend:(s['Trend']||'').trim(),Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:mom,MomentumOrder:momOrd,RR:'0',PriceChg:priceChg,SetupQuality:sq};
+    const momText=mom.replace(/<[^>]+>/g,'').trim();
+    const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,S1Level:z.s1Level,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,SheetTrend:(s['Trend']||'').trim(),Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:mom,MomentumText:momText,MomentumOrder:momOrd,RR:'0',PriceChg:priceChg,SetupQuality:sq};
     row.RR=((Math.abs(vr.target-p))/(Math.abs(p-z.s1Level)||1)).toFixed(2);
     return row;
   }).sort((a,b)=>{
@@ -1100,20 +1106,11 @@ function setFilter(type,val){
   });
   applyFilters();
 }
-function momCat(r){
-  const m=r.Momentum||'';
-  if(m.includes('↑'))return 'bullish';
-  if(m.includes('↓')||m.includes('Mild ↓'))return 'bearish';
-  if(m.includes('Building'))return 'building';
-  if(m.includes('Slowing'))return 'slowing';
-  if(m.includes('Weak'))return 'weak';
-  return '';
-}
 function applyFilters(){
   let rows=_allRows;
   if(_activeFilters.verdict) rows=rows.filter(r=>r.Verdict===_activeFilters.verdict);
   if(_activeFilters.quality) rows=rows.filter(r=>(r.SetupQuality?.grade||'')===_activeFilters.quality);
-  if(_activeFilters.momentum) rows=rows.filter(r=>momCat(r)===_activeFilters.momentum);
+  if(_activeFilters.momentum) rows=rows.filter(r=>(r.MomentumText||'').includes(_activeFilters.momentum));
   const total=_allRows.length,shown=rows.length;
   const fc=document.getElementById('filterCount');
   if(fc)fc.textContent=shown===total?total+' symbols':shown+' / '+total+' symbols';
