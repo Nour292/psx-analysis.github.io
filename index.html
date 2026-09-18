@@ -285,6 +285,19 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .qual-b{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);cursor:default;}
 .qual-c{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber);cursor:default;}
 .qual-d{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--rose-dim);color:var(--rose);border:1px solid var(--rose);cursor:default;}
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);}
+.filter-group{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.filter-label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);letter-spacing:.06em;margin-right:2px;white-space:nowrap;}
+.filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px;}
+.fpill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s;white-space:nowrap;}
+.fpill:hover{border-color:var(--accent);color:var(--accent);}
+.fpill.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.fpill.fv-buy.active{background:var(--emerald);border-color:var(--emerald);}
+.fpill.fv-watch.active{background:var(--amber);border-color:var(--amber);}
+.fpill.fv-caution.active{background:#FB923C;border-color:#FB923C;}
+.fpill.fv-exit.active{background:var(--rose);border-color:var(--rose);}
+.fpill.fv-wait.active{background:var(--slate);border-color:var(--slate);}
+.filter-count{font-size:11px;color:var(--text3);margin-left:auto;font-family:var(--mono);white-space:nowrap;}
 
 /* ═══════════════════════════════════════════
    ANALYSIS PAGE
@@ -656,6 +669,37 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
     <div class="signal-strip" id="signalSummary" style="margin-bottom:16px"></div>
+    <div class="filter-bar" id="filterBar">
+      <div class="filter-group">
+        <span class="filter-label">Verdict</span>
+        <button class="fpill active" onclick="setFilter('verdict','')">All</button>
+        <button class="fpill fv-buy"     onclick="setFilter('verdict','BUY')">🟢 BUY</button>
+        <button class="fpill fv-watch"   onclick="setFilter('verdict','WATCH')">🟡 WATCH</button>
+        <button class="fpill fv-caution" onclick="setFilter('verdict','CAUTION')">⚠️ CAUTION</button>
+        <button class="fpill fv-wait"    onclick="setFilter('verdict','WAIT')">⚪ WAIT</button>
+        <button class="fpill fv-exit"    onclick="setFilter('verdict','EXIT')">🔴 EXIT</button>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <span class="filter-label">Quality</span>
+        <button class="fpill active" onclick="setFilter('quality','')">All</button>
+        <button class="fpill" onclick="setFilter('quality','A')">A</button>
+        <button class="fpill" onclick="setFilter('quality','B')">B</button>
+        <button class="fpill" onclick="setFilter('quality','C')">C</button>
+        <button class="fpill" onclick="setFilter('quality','D')">D</button>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <span class="filter-label">Momentum</span>
+        <button class="fpill active" onclick="setFilter('momentum','')">All</button>
+        <button class="fpill" onclick="setFilter('momentum','bullish')">↑ Bullish</button>
+        <button class="fpill" onclick="setFilter('momentum','bearish')">↓ Bearish</button>
+        <button class="fpill" onclick="setFilter('momentum','building')">▲ Building</button>
+        <button class="fpill" onclick="setFilter('momentum','slowing')">▲ Slowing</button>
+        <button class="fpill" onclick="setFilter('momentum','weak')">▼ Weak</button>
+      </div>
+      <span class="filter-count" id="filterCount"></span>
+    </div>
     <div class="tbl-wrap"><table class="dtbl" id="fullTable"><tbody></tbody></table></div>
     <div class="plans-grid" id="tradePlans" style="display:none"></div>
   </div>
@@ -1038,10 +1082,50 @@ function renderHome(){
   et.innerHTML=exits.length?tableHeader()+exits.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="11" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No EXIT signals this week</td></tr>';
 }
 
+let _allRows=[];
+const _activeFilters={verdict:'',quality:'',momentum:''};
+function setFilter(type,val){
+  _activeFilters[type]=val;
+  document.querySelectorAll('#filterBar .filter-group').forEach(grp=>{
+    const label=grp.querySelector('.filter-label');
+    if(!label)return;
+    const t=label.textContent.trim().toLowerCase();
+    if(t!==type)return;
+    grp.querySelectorAll('.fpill').forEach(btn=>{
+      const bval=btn.textContent.trim();
+      const isAll=(bval==='All'&&val==='');
+      const isMatch=!isAll&&btn.onclick&&btn.getAttribute('onclick')&&btn.getAttribute('onclick').includes("'"+val+"'");
+      btn.classList.toggle('active',isAll||(val!==''&&isMatch));
+    });
+  });
+  applyFilters();
+}
+function momCat(r){
+  const m=r.Momentum||'';
+  if(m.includes('↑'))return 'bullish';
+  if(m.includes('↓')||m.includes('Mild ↓'))return 'bearish';
+  if(m.includes('Building'))return 'building';
+  if(m.includes('Slowing'))return 'slowing';
+  if(m.includes('Weak'))return 'weak';
+  return '';
+}
+function applyFilters(){
+  let rows=_allRows;
+  if(_activeFilters.verdict) rows=rows.filter(r=>r.Verdict===_activeFilters.verdict);
+  if(_activeFilters.quality) rows=rows.filter(r=>(r.SetupQuality?.grade||'')===_activeFilters.quality);
+  if(_activeFilters.momentum) rows=rows.filter(r=>momCat(r)===_activeFilters.momentum);
+  const total=_allRows.length,shown=rows.length;
+  const fc=document.getElementById('filterCount');
+  if(fc)fc.textContent=shown===total?total+' symbols':shown+' / '+total+' symbols';
+  document.getElementById('fullTable').innerHTML=rows.length
+    ?tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('')
+    :'<tr><td colspan="11" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">No results match the selected filters.</td></tr>';
+}
 function runWeekly(){
   showPage('pgAnalysis');
   if(!_rawData.length){ document.getElementById('fullTable').innerHTML='<tr><td style="padding:20px;color:var(--text3)">No data loaded yet.</td></tr>'; return; }
   const rows=processAll();
+  _allRows=rows;
   const g=v=>rows.filter(r=>r.Verdict===v).map(r=>r.Symbol).join(', ')||'—';
   document.getElementById('signalSummary').innerHTML=`
     <div class="sig-pill"><span class="s-label">BUY</span><span class="s-val" style="color:#10B981">${g('BUY')}</span></div>
@@ -1049,7 +1133,7 @@ function runWeekly(){
     <div class="sig-pill"><span class="s-label">CAUTION</span><span class="s-val" style="color:#FB923C">${g('CAUTION')}</span></div>
     <div class="sig-pill"><span class="s-label">WAIT</span><span class="s-val" style="color:#64748B">${g('WAIT')}</span></div>
     <div class="sig-pill"><span class="s-label">EXIT</span><span class="s-val" style="color:#F43F5E">${g('EXIT')}</span></div>`;
-  document.getElementById('fullTable').innerHTML=tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('');
+  applyFilters();
 
   const planRows=rows.filter(r=>['BUY','EXIT','CAUTION'].includes(r.Verdict));
   const tp=document.getElementById('tradePlans');
