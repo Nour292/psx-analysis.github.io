@@ -298,6 +298,11 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .fpill.fv-exit.active{background:var(--rose);border-color:var(--rose);}
 .fpill.fv-wait.active{background:var(--slate);border-color:var(--slate);}
 .filter-count{font-size:11px;color:var(--text3);margin-left:auto;font-family:var(--mono);white-space:nowrap;}
+.filter-row-break{width:100%;height:0;border-top:1px solid var(--border);margin:2px 0;}
+.price-input{width:80px;padding:3px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;text-align:center;}
+.price-input:focus{border-color:var(--accent);}
+.price-go{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);}
+.price-go:hover{background:var(--accent);color:#fff;}
 
 /* ═══════════════════════════════════════════
    ANALYSIS PAGE
@@ -703,6 +708,22 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         <button class="fpill" onclick="setFilter('momentum','Slowing')">Slowing</button>
         <button class="fpill" onclick="setFilter('momentum','Weak')">Weak</button>
       </div>
+      <div class="filter-row-break"></div>
+      <div class="filter-group" style="flex-wrap:wrap">
+        <span class="filter-label">Price</span>
+        <button class="fpill active" id="pricePillAll" onclick="setPricePreset(0,0,this)">All</button>
+        <button class="fpill" onclick="setPricePreset(0,50,this)">&lt; 50</button>
+        <button class="fpill" onclick="setPricePreset(50,200,this)">50–200</button>
+        <button class="fpill" onclick="setPricePreset(200,500,this)">200–500</button>
+        <button class="fpill" onclick="setPricePreset(500,1000,this)">500–1000</button>
+        <button class="fpill" onclick="setPricePreset(1000,0,this)">1000+</button>
+        <span style="color:var(--text3);font-size:11px;margin:0 4px">|</span>
+        <input class="price-input" id="priceMin" type="number" placeholder="Min" min="0">
+        <span style="color:var(--text3);font-size:12px;margin:0 2px">–</span>
+        <input class="price-input" id="priceMax" type="number" placeholder="Max" min="0">
+        <button class="price-go" onclick="applyCustomPrice()">Go</button>
+        <button class="fpill" id="priceClearBtn" style="display:none;border-color:var(--rose);color:var(--rose)" onclick="setPricePreset(0,0,document.getElementById('pricePillAll'))">✕ Clear</button>
+      </div>
       <span class="filter-count" id="filterCount"></span>
     </div>
     <div class="tbl-wrap"><table class="dtbl" id="fullTable"><tbody></tbody></table></div>
@@ -1089,7 +1110,7 @@ function renderHome(){
 }
 
 let _allRows=[];
-const _activeFilters={verdict:'',quality:'',momentum:''};
+const _activeFilters={verdict:'',quality:'',momentum:'',priceMin:0,priceMax:0};
 function setFilter(type,val){
   _activeFilters[type]=val;
   document.querySelectorAll('#filterBar .filter-group').forEach(grp=>{
@@ -1106,11 +1127,37 @@ function setFilter(type,val){
   });
   applyFilters();
 }
+function setPricePreset(mn,mx,btn){
+  _activeFilters.priceMin=mn; _activeFilters.priceMax=mx;
+  document.querySelectorAll('#filterBar .fpill[onclick*="setPricePreset"]').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const ci=document.getElementById('priceClearBtn');
+  if(ci)ci.style.display=(mn===0&&mx===0)?'none':'inline-block';
+  document.getElementById('priceMin').value='';
+  document.getElementById('priceMax').value='';
+  applyFilters();
+}
+function applyCustomPrice(){
+  const mn=parseFloat(document.getElementById('priceMin').value)||0;
+  const mx=parseFloat(document.getElementById('priceMax').value)||0;
+  _activeFilters.priceMin=mn; _activeFilters.priceMax=mx;
+  document.querySelectorAll('#filterBar .fpill[onclick*="setPricePreset"]').forEach(b=>b.classList.remove('active'));
+  const ci=document.getElementById('priceClearBtn');
+  if(ci)ci.style.display=(mn===0&&mx===0)?'none':'inline-block';
+  applyFilters();
+}
 function applyFilters(){
   let rows=_allRows;
   if(_activeFilters.verdict) rows=rows.filter(r=>r.Verdict===_activeFilters.verdict);
   if(_activeFilters.quality) rows=rows.filter(r=>(r.SetupQuality?.grade||'')===_activeFilters.quality);
   if(_activeFilters.momentum) rows=rows.filter(r=>(r.MomentumText||'').includes(_activeFilters.momentum));
+  const pmn=_activeFilters.priceMin, pmx=_activeFilters.priceMax;
+  if(pmn>0||pmx>0) rows=rows.filter(r=>{
+    const p=parseFloat(r.Price)||0;
+    if(pmn>0&&p<pmn)return false;
+    if(pmx>0&&p>pmx)return false;
+    return true;
+  });
   const total=_allRows.length,shown=rows.length;
   const fc=document.getElementById('filterCount');
   if(fc)fc.textContent=shown===total?total+' symbols':shown+' / '+total+' symbols';
