@@ -171,7 +171,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.5</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.6</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -642,7 +642,7 @@ function buildFields(){
     html+=sel('fCurrency','Currency',['PKR','SAR']);
     html+=combo('fName','Name','dl-names',names,'e.g. USMAN');
     html+=inp('fAmount','Amount','number','0');
-    html+=radioRow('Debit (You gave)','Credit (You received)','span2');
+    html+=radioRow('Debit (You received)','Credit (You gave)','span2');
     html+=combo('fDesc','Description','dl-descs',descs,'Transaction description','','span2');
     html+=`</div>`;
 
@@ -681,7 +681,7 @@ function buildFields(){
     html+=combo('fBank','Bank','dl-banks',banks,'e.g. MCB, HBL');
     html+=combo('fDesc','Description','dl-descs',descs,'Transaction description');
     html+=combo('fType2','Type','dl-types',types,'e.g. Transfer, Salary');
-    html+=radioRow('Debit (Money Out)','Credit (Money In)','span2');
+    html+=radioRow('Debit (Money In)','Credit (Money Out)','span2');
     html+=inp('fAmount','Amount','number','0');
     html+=inp('fDetails','Details (optional)','text','Additional details');
     html+=`</div>`;
