@@ -172,7 +172,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.7</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.8</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -317,7 +317,7 @@ function renderDash(){
   DATA.allAcc.rows.forEach(r=>{
     const b=r['Bank']||'Other';
     if(!bankMap[b]) bankMap[b]={in:0,out:0};
-    bankMap[b].in+=n(r['Credit']); bankMap[b].out+=n(r['Debit']);
+    bankMap[b].in+=n(r['Debit']); bankMap[b].out+=n(r['Credit']);
   });
 
   // ── B: Credit Balances
