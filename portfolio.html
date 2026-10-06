@@ -493,7 +493,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.16</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.17</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge" style="display:none">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -506,7 +506,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="ov-kpi"><div class="ov-val"         id="qpUnrealPL">—</div><div class="ov-lbl">Unrealized P/L</div></div>
       <div class="ov-kpi"><div class="ov-val"         id="qpRealPL">—</div><div class="ov-lbl">Realized P/L</div></div>
       <div class="ov-kpi"><div class="ov-val c-gold"  id="qpNetDiv">—</div><div class="ov-lbl">Net Dividends</div></div>
-      <div class="ov-kpi"><div class="ov-val"         id="qpTotalReturn">—</div><div class="ov-lbl">Total Return</div></div>
       <div class="ov-kpi"><div class="ov-val"         id="qpNetCashProfit">—</div><div class="ov-lbl">Net Cash Profit</div></div>
       <div class="ov-kpi"><div class="ov-val c-gold"  id="qpFreeCash">—</div><div class="ov-lbl">Free Cash</div></div>
     </div>
@@ -887,24 +886,23 @@ function renderQasimPortfolio(){
   document.getElementById('qpTotalCost').textContent=fmt(tCost);
   document.getElementById('qpMarketVal').textContent=fmt(tMV);
   setEl('qpUnrealPL',tUnreal);setEl('qpRealPL',tReal);
-  setEl('qpNetDiv',tDiv,'var(--amber)');setEl('qpTotalReturn',tReturn);
-  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>#</th><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost of Holdings</th><th>Current Price</th><th>Market Value</th><th>Unrealized P/L</th><th>Unreal %</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
+  setEl('qpNetDiv',tDiv,'var(--amber)');
+  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost of Holdings</th><th>Current Price</th><th>Market Value</th><th>Unrealized P/L</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
   rows.forEach((r,i)=>{
     const unreal=nv(r['Unrealized P/L']),real=nv(r['Realized P/L']),tot=nv(r['Total Return']);
     html+=`<tr>
-      <td class="c-gray">${i+1}</td><td class="sym">${r['Stock']||'—'}</td>
+      <td class="sym">${r['Stock']||'—'}</td>
       <td class="mono">${r['Units']||'—'}</td><td class="c-gold mono">${r['Avg Cost']||'—'}</td>
       <td class="mono">${r['Cost of Holdings']||'—'}</td><td class="c-blue mono">${r['Current Price']||'—'}</td>
       <td class="mono">${r['Market Value']||'—'}</td>
       <td class="mono ${unreal>=0?'c-green':'c-red'}">${r['Unrealized P/L']||'—'}</td>
-      <td class="mono ${unreal>=0?'c-green':'c-red'}">${(r['Unrealized P/L%']||'—').replace(/\s/g,'')}</td>
       <td class="mono ${real>=0?'c-green':'c-red'}">${r['Realized P/L']||'—'}</td>
       <td class="c-gold mono">${r['Net Dividends']||'—'}</td>
       <td class="mono ${tot>=0?'c-green':'c-red'}">${r['Total Return']||'—'}</td></tr>`;
   });
-  html+=`<tr class="total-r"><td colspan="4" class="c-gray">TOTAL</td>
+  html+=`<tr class="total-r"><td colspan="3" class="c-gray">TOTAL</td>
     <td class="mono">${fmt(tCost)}</td><td></td><td class="mono">${fmt(tMV)}</td>
-    <td class="mono ${tUnreal>=0?'c-green':'c-red'}">${(tUnreal>=0?'+':'-')}${fmt(tUnreal)}</td><td></td>
+    <td class="mono ${tUnreal>=0?'c-green':'c-red'}">${(tUnreal>=0?'+':'-')}${fmt(tUnreal)}</td>
     <td class="mono ${tReal>=0?'c-green':'c-red'}">${(tReal>=0?'+':'-')}${fmt(tReal)}</td>
     <td class="c-gold mono">${fmt(tDiv)}</td>
     <td class="mono ${tReturn>=0?'c-green':'c-red'}">${(tReturn>=0?'+':'-')}${fmt(tReturn)}</td>
