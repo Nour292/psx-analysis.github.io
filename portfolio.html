@@ -171,9 +171,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .pw-btn.green{background:var(--emerald);}
 .pw-err{font-size:12px;color:var(--rose);margin-top:8px;display:none;font-family:var(--mono);}
 .pw-ok{font-size:12px;color:var(--emerald);margin-top:6px;display:none;}
-#pgDividends,#pgCashFlow,#pgHistory,#pgQasimPortfolio,#pgQasimStock{position:fixed;top:0;left:var(--sidebar-w);right:0;bottom:0;background:var(--bg);z-index:7777;display:none;flex-direction:column;overflow-y:auto;transition:left .22s cubic-bezier(.4,0,.2,1);}
-#pgDividends.open,#pgCashFlow.open,#pgHistory.open,#pgQasimPortfolio.open,#pgQasimStock.open{display:flex;}
-:root.sb-collapsed #pgDividends,:root.sb-collapsed #pgCashFlow,:root.sb-collapsed #pgHistory,:root.sb-collapsed #pgQasimPortfolio,:root.sb-collapsed #pgQasimStock{left:var(--sidebar-w-collapsed);}
+#pgDividends,#pgCashFlow,#pgHistory,#pgQasimPortfolio,#pgQasimStock,#pgDataEntry{position:fixed;top:0;left:var(--sidebar-w);right:0;bottom:0;background:var(--bg);z-index:7777;display:none;flex-direction:column;overflow-y:auto;transition:left .22s cubic-bezier(.4,0,.2,1);}
+#pgDividends.open,#pgCashFlow.open,#pgHistory.open,#pgQasimPortfolio.open,#pgQasimStock.open,#pgDataEntry.open{display:flex;}
+:root.sb-collapsed #pgDividends,:root.sb-collapsed #pgCashFlow,:root.sb-collapsed #pgHistory,:root.sb-collapsed #pgQasimPortfolio,:root.sb-collapsed #pgQasimStock,:root.sb-collapsed #pgDataEntry{left:var(--sidebar-w-collapsed);}
 :root.sb-collapsed .main{margin-left:var(--sidebar-w-collapsed);}
 .overlay-nav{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .overlay-title{font-size:15px;font-weight:700;color:var(--text);flex:1;}
@@ -336,6 +336,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <button class="nav-sub-btn" id="navDivPage" onclick="toggleOverlay('pgDividends','navDivPage',loadDividendsCSV)">💵 Dividends</button>
         <button class="nav-sub-btn" id="navCashFlow" onclick="toggleOverlay('pgCashFlow','navCashFlow',loadCashFlow)">💳 Cash Flow</button>
         <button class="nav-sub-btn" id="navQasimStock" onclick="toggleOverlay('pgQasimStock','navQasimStock',loadQasimStock)">📋 Trade Ledger</button>
+        <button class="nav-sub-btn" id="navDataEntry" onclick="toggleOverlay('pgDataEntry','navDataEntry',initDataEntry)">📝 Data Entry</button>
       </div>
     </div>
     <div class="nav-divider"></div>
@@ -492,7 +493,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.20</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.21</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge" style="display:none">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -550,6 +551,59 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button onclick="resetQsFilters()" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;cursor:pointer;font-family:var(--font)">✕ Reset</button>
     </div>
     <div id="qsTable"><p style="color:var(--text3);padding:20px;text-align:center">Loading...</p></div>
+  </div>
+</div>
+
+<!-- DATA ENTRY FORM -->
+<div id="pgDataEntry">
+  <div class="overlay-nav">
+    <span class="overlay-title">📝 Data Entry — qasim-stock</span>
+    <span id="deStatus" style="font-size:12px;font-family:var(--mono);margin-left:8px"></span>
+  </div>
+  <div class="overlay-content">
+    <div style="max-width:560px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="modal-field">
+          <label>Date <span style="font-size:10px;color:var(--text3)">(DD-Mon-YY)</span></label>
+          <input type="text" id="deDate" placeholder="e.g. 07-Oct-26" style="font-family:var(--mono)">
+        </div>
+        <div class="modal-field">
+          <label>Type</label>
+          <select id="deType" onchange="deUpdateSummary()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;outline:none;font-family:var(--font);width:100%">
+            <option value="Buy">Buy</option>
+            <option value="Sell">Sell</option>
+            <option value="Dividend">Dividend</option>
+            <option value="Deposit">Deposit</option>
+            <option value="Adjustment">Adjustment</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label>Stock Symbol</label>
+          <input type="text" id="deStock" placeholder="e.g. HUBC" oninput="this.value=this.value.toUpperCase();deUpdateSummary()" style="font-family:var(--mono);text-transform:uppercase">
+        </div>
+        <div class="modal-field">
+          <label>Units</label>
+          <input type="number" id="deUnits" placeholder="0" min="0" step="1" oninput="deUpdateSummary()" style="font-family:var(--mono)">
+        </div>
+        <div class="modal-field">
+          <label>Price / Share <span style="font-size:10px;color:var(--text3)">(PKR)</span></label>
+          <input type="number" id="dePrice" placeholder="0.00" min="0" step="0.01" oninput="deUpdateSummary()" style="font-family:var(--mono)">
+        </div>
+        <div class="modal-field">
+          <label>Fees / Tax <span style="font-size:10px;color:var(--text3)">(optional)</span></label>
+          <input type="number" id="deFees" placeholder="0.00" min="0" step="0.01" oninput="deUpdateSummary()" style="font-family:var(--mono)">
+        </div>
+      </div>
+      <div class="modal-field" style="margin-bottom:14px">
+        <label>Notes <span style="font-size:10px;color:var(--text3)">(optional)</span></label>
+        <input type="text" id="deNotes" placeholder="Any remarks...">
+      </div>
+      <div id="deSummary" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;font-size:13px;font-family:var(--mono);line-height:1.8"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-success" style="flex:1;padding:12px" onclick="submitDataEntry()">✅ Save to Sheet</button>
+        <button class="btn btn-ghost" style="padding:12px 20px" onclick="clearDataEntry()">↺ Clear</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -710,8 +764,8 @@ function doLogout(){sessionStorage.removeItem(AUTH_KEY);localStorage.removeItem(
 function showAuthMsg(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',3500);}
 function togglePw(inputId,btn){const inp=document.getElementById(inputId);if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁';}}
 
-const ALL_OVERLAYS=['pgHistory','pgDividends','pgCashFlow','pgQasimPortfolio','pgQasimStock'];
-const ALL_OVERLAY_NAVS=['navHistory','navDivPage','navCashFlow','navQasimPortfolio','navQasimStock'];
+const ALL_OVERLAYS=['pgHistory','pgDividends','pgCashFlow','pgQasimPortfolio','pgQasimStock','pgDataEntry'];
+const ALL_OVERLAY_NAVS=['navHistory','navDivPage','navCashFlow','navQasimPortfolio','navQasimStock','navDataEntry'];
 function closeAllOverlays(){ALL_OVERLAYS.forEach(id=>{document.getElementById(id).classList.remove('open');});ALL_OVERLAY_NAVS.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});_activeOverlay=null;}
 let _ovActiveTab='portfolio';
 function switchOvTab(name,btn){
@@ -820,6 +874,59 @@ function updateBsSummary(){const sym=(document.getElementById('bsSym').value||''
 function hideBuySell(){document.getElementById('bsModal').classList.remove('open');}
 async function submitTrade(action){const sym=(document.getElementById('bsSym').value||'').toUpperCase().trim();const units=parseFloat(document.getElementById('bsUnits').value)||0;const rate=parseFloat(document.getElementById('bsRate').value)||0;const cash=CAPITAL.freeCash;if(!sym||!units||!rate){setStatus('❌ Please fill Symbol, Units and Rate','var(--rose)');return;}const now=new Date(),day=now.getDate(),mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()],yr=now.getFullYear().toString().slice(2);const date=`${day}-${mon}-${yr}`;setStatus('⏳ Saving...','var(--amber)');try{const row=[date,action,sym,String(units),rate.toFixed(2),'','','','','','','','','','','','',''];await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:'qasim-stock',row})});updateCAPITAL(action,units,rate,cash);setStatus(`✅ Saved! ${action} ${units} ${sym} @ PKR ${rate}`,'var(--emerald)');setTimeout(()=>{autoLoad();hideBuySell();},2000);}catch(err){setStatus('❌ '+err.message,'var(--rose)');}}
 function updateCAPITAL(action,units,rate,newCash){CAPITAL.freeCash=newCash;const el=document.getElementById('kFreeCash');if(el)el.textContent=Math.round(newCash).toLocaleString();}
+
+// ── Data Entry ──
+function initDataEntry(){
+  if(!document.getElementById('deDate').value){
+    const now=new Date();
+    const day=now.getDate();
+    const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()];
+    const yr=now.getFullYear().toString().slice(2);
+    document.getElementById('deDate').value=`${day}-${mon}-${yr}`;
+  }
+  deUpdateSummary();
+}
+function deUpdateSummary(){
+  const type=(document.getElementById('deType')||{}).value||'';
+  const stock=(document.getElementById('deStock')||{}).value||'';
+  const units=parseFloat((document.getElementById('deUnits')||{}).value)||0;
+  const price=parseFloat((document.getElementById('dePrice')||{}).value)||0;
+  const fees=parseFloat((document.getElementById('deFees')||{}).value)||0;
+  const el=document.getElementById('deSummary');if(!el)return;
+  if(!stock||!units||!price){el.style.display='none';return;}
+  const amount=units*price;
+  const col={Buy:'var(--rose)',Sell:'var(--emerald)',Dividend:'var(--amber)',Deposit:'var(--accent)',Adjustment:'var(--text2)'}[type]||'var(--text)';
+  el.style.display='block';
+  el.innerHTML=`<b style="color:${col}">${type}</b> &nbsp;<b style="color:var(--text)">${units.toLocaleString()} ${stock}</b> @ PKR ${price.toFixed(2)}<br>Amount: <b style="color:${col}">PKR ${Math.round(amount).toLocaleString()}</b>${fees?` &nbsp;· Fees: <span style="color:var(--rose)">PKR ${fees.toLocaleString()}</span>`:''}`;
+}
+function clearDataEntry(){
+  ['deStock','deUnits','dePrice','deFees','deNotes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('deType').value='Buy';
+  document.getElementById('deSummary').style.display='none';
+  document.getElementById('deStatus').textContent='';
+}
+async function submitDataEntry(){
+  const date=(document.getElementById('deDate').value||'').trim();
+  const type=document.getElementById('deType').value||'';
+  const stock=(document.getElementById('deStock').value||'').toUpperCase().trim();
+  const units=parseFloat(document.getElementById('deUnits').value)||0;
+  const price=parseFloat(document.getElementById('dePrice').value)||0;
+  const fees=parseFloat(document.getElementById('deFees').value)||0;
+  const notes=(document.getElementById('deNotes').value||'').trim();
+  const statusEl=document.getElementById('deStatus');
+  if(!date||!type||!stock||!units||!price){statusEl.textContent='❌ Date, Type, Stock, Units and Price are required';statusEl.style.color='var(--rose)';return;}
+  // 18 columns: Date,Type,Stock,Units,Price/Share,Net Price/Share,Amount,Fees/Tax,Cash Impact,Cash Balance,Avg Cost at Sale,Cost of Units Sold,Realized P/L,Commission,SST on Commission,CDC Charges (Rs),CGT on Profit (Rs),Notes
+  const row=[date,type,stock,String(units),price.toFixed(2),'','',fees?fees.toFixed(2):'','','','','','','','','','',notes];
+  statusEl.textContent='⏳ Saving...';statusEl.style.color='var(--amber)';
+  try{
+    const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:'qasim-stock',row})});
+    const result=await res.json();
+    if(result&&result.ok===false){statusEl.textContent='❌ '+(result.error||'Save failed');statusEl.style.color='var(--rose)';return;}
+    statusEl.textContent=`✅ Saved! ${type} ${units} ${stock} @ PKR ${price}`;statusEl.style.color='var(--emerald)';
+    clearDataEntry();
+    setTimeout(()=>{statusEl.textContent='';},4000);
+  }catch(err){statusEl.textContent='❌ '+err.message;statusEl.style.color='var(--rose)';}
+}
 function setStatus(msg,color){const el=document.getElementById('bsStatus');el.textContent=msg;el.style.color=color;}
 
 const TAX_RATE=0.15,DIV_HDRS=['Symbol','Units','DPS','AnnouncementDate','XDate','GrossAmount','TaxAmount','NetAmount','Status','PayDate'];
