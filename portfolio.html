@@ -493,7 +493,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.18</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.19</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge" style="display:none">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -541,7 +541,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <option value="Dividend">Dividend</option>
         <option value="Deposit">Deposit</option>
       </select>
-      <input type="text" id="qsSearch" placeholder="🔍 Search stock or notes..." oninput="renderQasimStock()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12.5px;outline:none;font-family:var(--font);flex:1;min-width:120px;max-width:220px">
+      <select id="qsStockFilter" onchange="renderQasimStock()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12.5px;outline:none;font-family:var(--font)">
+        <option value="">All Stocks</option>
+      </select>
+      <select id="qsYearFilter" onchange="renderQasimStock()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12.5px;outline:none;font-family:var(--font)">
+        <option value="">All Years</option>
+      </select>
+      <input type="text" id="qsSearch" placeholder="🔍 Search notes..." oninput="renderQasimStock()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12.5px;outline:none;font-family:var(--font);flex:1;min-width:120px;max-width:220px">
+      <button onclick="resetQsFilters()" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;cursor:pointer;font-family:var(--font)">✕ Reset</button>
     </div>
     <div id="qsTable"><p style="color:var(--text3);padding:20px;text-align:center">Loading...</p></div>
   </div>
@@ -926,11 +933,24 @@ async function loadQasimStock(){
     if(status)status.textContent='';
   }catch(e){document.getElementById('qsTable').innerHTML=`<p style="color:var(--rose);padding:20px;text-align:center">Error: ${e.message}</p>`;if(status)status.textContent='';}
 }
+function populateQsDropdowns(){
+  const stocks=[...new Set(_qasimStock.map(r=>(r['Stock']||'').trim().toUpperCase()).filter(Boolean))].sort();
+  const years=[...new Set(_qasimStock.map(r=>(r['Date']||'').split('-').pop().trim()).filter(y=>y.length===4))].sort((a,b)=>b-a);
+  const ss=document.getElementById('qsStockFilter');const sy=document.getElementById('qsYearFilter');
+  if(ss&&ss.options.length<=1){stocks.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;ss.appendChild(o);});}
+  if(sy&&sy.options.length<=1){years.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;sy.appendChild(o);});}
+}
+function resetQsFilters(){['qsTypeFilter','qsStockFilter','qsYearFilter'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const s=document.getElementById('qsSearch');if(s)s.value='';renderQasimStock();}
 function renderQasimStock(){
+  populateQsDropdowns();
   const typeF=((document.getElementById('qsTypeFilter')||{}).value||'').toLowerCase();
+  const stockF=((document.getElementById('qsStockFilter')||{}).value||'').toUpperCase();
+  const yearF=(document.getElementById('qsYearFilter')||{}).value||'';
   const srch=((document.getElementById('qsSearch')||{}).value||'').toLowerCase();
   let rows=[..._qasimStock].reverse();
   if(typeF) rows=rows.filter(r=>(r['Type']||'').toLowerCase()===typeF);
+  if(stockF) rows=rows.filter(r=>(r['Stock']||'').trim().toUpperCase()===stockF);
+  if(yearF) rows=rows.filter(r=>(r['Date']||'').includes(yearF));
   if(srch) rows=rows.filter(r=>Object.values(r).some(v=>(v||'').toLowerCase().includes(srch)));
   const all=_qasimStock;
   const lastBal=all.length?nv(all[all.length-1]['Cash Balance']):0;
