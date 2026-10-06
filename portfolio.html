@@ -108,7 +108,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .prog-bar{background:var(--surface2);border-radius:20px;height:10px;overflow:hidden;border:1px solid var(--border);}
 .prog-fill{background:linear-gradient(90deg,var(--emerald),#34D399);height:100%;border-radius:20px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;transition:width .8s;}
 .prog-pct{font-size:9px;font-weight:700;color:#000;}
-.tab-bar{display:flex;padding:12px 24px 0;gap:4px;border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab-bar{display:flex;padding:12px 24px 0;gap:4px;border-bottom:1px solid var(--border);overflow-x:auto;position:sticky;top:0;z-index:50;background:var(--bg);}
 .tab-btn{padding:8px 16px;font-size:12.5px;font-weight:600;border:none;background:none;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-family:var(--font);}
 .tab-btn:hover{color:var(--text);}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
@@ -361,7 +361,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <main class="main" id="mainContent">
   <div class="topbar">
-    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.13</span></div>
+    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.14</span></div>
     <span class="asof-badge" id="asofBadge">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
   </div>
