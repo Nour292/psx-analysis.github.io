@@ -361,7 +361,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <main class="main" id="mainContent">
   <div class="topbar">
-    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.10</span></div>
+    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.11</span></div>
     <span class="asof-badge" id="asofBadge">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
   </div>
@@ -741,7 +741,26 @@ function buildAll(){if(!_holdings.length)return;
 function showErr(id,e){const el=document.getElementById(id);if(el)el.innerHTML=`<p style="color:var(--rose);padding:20px">Error: ${e.message}</p>`;}
 
 
-function buildPortfolio(){const hasSheetPrices=Object.values(_priceSource).some(s=>s==='sheet');const sorted=[..._holdings].sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));let legendHtml=hasSheetPrices?`<div class="price-note">📡 Prices from Prices tab. <span class="psb-sheet">🟢 Sheet</span></div>`:`<div class="price-note">⚠️ No price data — update Prices tab or refresh.</div>`;let html=legendHtml+`<div class="tbl-wrap"><table class="tbl"><tr><th>#</th><th>Symbol</th><th>Units</th><th>Last Price</th><th>Src</th><th>Avg Cost</th><th>Invested</th><th>Worth</th><th>P / L</th><th>P/L %</th><th>DPS</th><th>YoC</th></tr>`;let ti=0,tw=0;sorted.forEach((h,i)=>{const price=h.price||null,src=h.priceSource||null;const worth=price!==null?h.qty*price:null,inv=h.qty*h.avg,pl=worth!==null?worth-inv:null;const plpct=pl!==null&&inv>0?(pl/inv)*100:null,yoc=h.avg>0?(h.dps/h.avg)*100:0;ti+=inv;if(worth!==null)tw+=worth;const srcBadge=src==='sheet'?`<span class="psb-sheet">🟢</span>`:src==='data'?`<span class="psb-data">🔵</span>`:`<span class="c-gray">—</span>`;html+=`<tr><td class="c-gray mono">${i+1}</td><td class="sym">${h.symbol}</td><td class="mono">${h.qty.toLocaleString()}</td><td class="c-blue mono">${price!==null?fmtD(price):'—'}</td><td>${srcBadge}</td><td class="mono ${h.avg<0?'c-red':''}">${fmtD(h.avg)}</td><td class="mono ${inv<0?'c-red':''}">${fmtN(inv)}</td><td class="mono">${worth!==null?fmtN(worth):'—'}</td><td class="mono ${pl!==null&&pl>=0?'c-green':'c-red'}">${pl!==null?(pl>=0?'+':'')+fmtN(pl):'—'}</td><td class="mono ${plpct!==null&&plpct>=0?'c-green':'c-red'}">${plpct!==null?(plpct>=0?'+':'')+plpct.toFixed(1)+'%':'—'}</td><td class="c-gold bold">${h.dps||'—'}</td><td class="${yoc>=8?'c-green':yoc>=5?'c-gold':'c-gray'} bold">${yoc.toFixed(1)}%</td></tr>`;});const totalPL=tw>0?tw-ti:null;html+=`<tr class="total-row"><td colspan="6" class="c-gray">TOTAL</td><td class="mono">${fmtN(ti)}</td><td class="mono">${tw>0?fmtN(tw):'—'}</td><td class="mono ${totalPL!==null&&totalPL>=0?'c-green':'c-red'}">${totalPL!==null?(totalPL>=0?'+':'')+fmtN(totalPL):'—'}</td><td colspan="3"></td></tr></table></div>`;document.getElementById('tab-portfolio').innerHTML=html;}
+function buildPortfolio(){
+  const sorted=[..._holdings].sort((a,b)=>(a.symbol||'').localeCompare(b.symbol||''));
+  const qpMap={};_qasimPortfolio.forEach(r=>{const s=(r['Stock']||'').trim().toUpperCase();if(s)qpMap[s]=r;});
+  const plClr=v=>v>0?'c-green':v<0?'c-red':'c-gray';
+  const plFmt=v=>v===0?'—':(v>=0?'+':'-')+fmtN(Math.abs(v));
+  let html=`<div class="tbl-wrap"><table class="tbl"><tr><th>Symbol</th><th>Units</th><th>Last Price</th><th>Avg Cost</th><th>Invested</th><th>Worth</th><th>Unrealized P/L</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
+  let ti=0,tw=0;
+  sorted.forEach(h=>{
+    const price=h.price||null,worth=price!==null?h.qty*price:null,inv=h.qty*h.avg;
+    ti+=inv;if(worth!==null)tw+=worth;
+    const qp=qpMap[h.symbol]||{};
+    const unreal=nv(qp['Unrealized P/L']),real=nv(qp['Realized P/L']),div=nv(qp['Net Dividends']),tot=nv(qp['Total Return']);
+    const hasQp=!!qpMap[h.symbol];
+    html+=`<tr><td class="sym">${h.symbol}</td><td class="mono">${h.qty.toLocaleString()}</td><td class="c-blue mono">${price!==null?fmtD(price):'—'}</td><td class="mono">${fmtD(h.avg)}</td><td class="mono">${fmtN(inv)}</td><td class="mono">${worth!==null?fmtN(worth):'—'}</td><td class="mono ${hasQp?plClr(unreal):''}">${hasQp?plFmt(unreal):'—'}</td><td class="mono ${hasQp?plClr(real):''}">${hasQp?plFmt(real):'—'}</td><td class="c-gold mono">${hasQp&&div!==0?fmtN(Math.abs(div)):'—'}</td><td class="mono ${hasQp?plClr(tot):''}">${hasQp?plFmt(tot):'—'}</td></tr>`;
+  });
+  let tUnreal=0,tReal=0,tDiv=0,tTot=0;
+  _qasimPortfolio.forEach(r=>{tUnreal+=nv(r['Unrealized P/L']);tReal+=nv(r['Realized P/L']);tDiv+=nv(r['Net Dividends']);tTot+=nv(r['Total Return']);});
+  html+=`<tr class="total-row"><td colspan="4" class="c-gray">TOTAL</td><td class="mono">${fmtN(ti)}</td><td class="mono">${tw>0?fmtN(tw):'—'}</td><td class="mono ${plClr(tUnreal)}">${plFmt(tUnreal)}</td><td class="mono ${plClr(tReal)}">${plFmt(tReal)}</td><td class="c-gold mono">${fmtN(Math.abs(tDiv))}</td><td class="mono ${plClr(tTot)}">${plFmt(tTot)}</td></tr></table></div>`;
+  document.getElementById('tab-portfolio').innerHTML=html;
+}
 
 
 function buildSector(){const map={},totalInv=_holdings.reduce((s,h)=>s+Math.max(0,h.qty*h.avg),0);_holdings.filter(h=>!EXCLUDE_SEC.includes(h.symbol)).forEach(h=>{map[h.sector]=(map[h.sector]||0)+Math.max(0,h.qty*h.avg);});const sectors=Object.entries(map).map(([sec,inv])=>({sec,inv,pct:totalInv>0?(inv/totalInv)*100:0})).sort((a,b)=>b.pct-a.pct);const TARGET=20;let html='<div style="max-width:800px">';sectors.forEach(({sec,inv,pct})=>{const over=pct>22,under=pct<18;const flag=over?'🔴 Over':under?'🟡 Under':'✅ OK';const fc=over?'var(--rose)':under?'var(--amber)':'var(--emerald)';const greenW=Math.min(pct,TARGET),redW=pct>TARGET?pct-TARGET:0;html+=`<div class="sec-row"><div class="sec-lbl">${sec}</div><div class="sec-bar"><div style="position:absolute;left:0;top:0;bottom:0;width:${greenW}%;background:var(--emerald-dim);border-radius:${redW>0?'6px 0 0 6px':'6px'};border:1px solid #064E3B"></div>${redW>0?`<div style="position:absolute;left:${TARGET}%;top:0;bottom:0;width:${Math.min(redW,100-TARGET)}%;background:var(--rose-dim);border-radius:0 6px 6px 0;border:1px solid #4C0519"></div>`:''}<div style="position:absolute;left:${TARGET}%;top:0;bottom:0;width:2px;background:var(--amber);opacity:.9;z-index:2"></div><div style="position:absolute;left:0;top:0;bottom:0;right:0;display:flex;align-items:center;padding-left:${Math.max(pct+0.5,1)}%;z-index:3"><span style="font-size:12px;font-weight:700;font-family:var(--mono);color:${over?'var(--rose)':under?'var(--amber)':'var(--emerald)'};padding-left:6px">${pct.toFixed(1)}%</span></div></div><div class="sec-flag" style="color:${fc}">${flag}</div><div class="sec-amt">PKR ${fmtN(inv)}</div></div>`;});html+=`<div style="font-size:11px;color:var(--text3);margin-top:12px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm);border-left:2px solid var(--amber);display:flex;gap:14px;flex-wrap:wrap;align-items:center"><span>🎯 Target 20% per sector</span><span style="color:var(--text3)">ENGROH &amp; FCL excluded</span></div></div>`;document.getElementById('tab-sector').innerHTML=html;}
