@@ -960,7 +960,10 @@ async function autoLoad(){
     const res=await fetch(gsUrl('qasim-stock'));if(!res.ok)return;
     const json=await res.json();const rows=json.values||[];if(rows.length<2)return;
     const hdrs=rows[0].map(h=>(h||'').trim());
-    const fi=nm=>{const i=hdrs.indexOf(nm);return i>=0?i:-1;};
+    const fiExact=nm=>{const i=hdrs.indexOf(nm);return i>=0?i:-1;};
+    const fiFuzzy=nm=>{const n=nm.toLowerCase().replace(/\s/g,'');const i=hdrs.findIndex(h=>h.toLowerCase().replace(/\s/g,'')===n);return i>=0?i:-1;};
+    const fi=nm=>{const e=fiExact(nm);return e>=0?e:fiFuzzy(nm);};
+    const stripFmt=v=>(v||'').toString().replace(/,/g,'').trim();
     const cS=fi('Stock'),cD=fi('Date'),cA=fi('Type'),cU=fi('Units'),cR=fi('Price/Share');
     const trades=rows.slice(1)
       .filter(r=>r&&(r[cS]||'').trim()&&['buy','sell'].includes((r[cA]||'').trim().toLowerCase()))
@@ -968,8 +971,8 @@ async function autoLoad(){
         symbol:(r[cS]||'').trim().toUpperCase(),
         date:  (r[cD]||'').trim(),
         action:(r[cA]||'').trim(),
-        units: (r[cU]||'').trim(),
-        rate:  (r[cR]||'').trim()
+        units: stripFmt(r[cU]),
+        rate:  stripFmt(r[cR])
       }));
     // Two-pass build — same math as Trade History (order-independent)
     const hm={};
