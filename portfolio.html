@@ -361,7 +361,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <main class="main" id="mainContent">
   <div class="topbar">
-    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.12</span></div>
+    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.13</span></div>
     <span class="asof-badge" id="asofBadge">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
   </div>
@@ -754,11 +754,12 @@ function buildPortfolio(){
     const qp=qpMap[h.symbol]||{};
     const unreal=nv(qp['Unrealized P/L']),real=nv(qp['Realized P/L']),div=nv(qp['Net Dividends']),tot=nv(qp['Total Return']);
     const hasQp=!!qpMap[h.symbol];
-    html+=`<tr><td class="sym">${h.symbol}</td><td class="mono">${h.qty.toLocaleString()}</td><td class="c-blue mono">${price!==null?fmtD(price):'—'}</td><td class="mono">${fmtD(h.avg)}</td><td class="mono">${fmtN(inv)}</td><td class="mono">${worth!==null?fmtN(worth):'—'}</td><td class="mono ${hasQp?plClr(unreal):''}">${hasQp?plFmt(unreal):'—'}</td><td class="mono ${hasQp?plClr(real):''}">${hasQp?plFmt(real):'—'}</td><td class="c-gold mono">${hasQp&&div!==0?fmtN(Math.abs(div)):'—'}</td><td class="mono ${hasQp?plClr(tot):''}">${hasQp?plFmt(tot):'—'}</td></tr>`;
+    const cost=hasQp?nv(qp['Cost of Holdings']):inv;
+    html+=`<tr><td class="sym">${h.symbol}</td><td class="mono">${h.qty.toLocaleString()}</td><td class="c-blue mono">${price!==null?fmtD(price):'—'}</td><td class="mono">${fmtD(h.avg)}</td><td class="mono">${fmtN(cost)}</td><td class="mono">${worth!==null?fmtN(worth):'—'}</td><td class="mono ${hasQp?plClr(unreal):''}">${hasQp?plFmt(unreal):'—'}</td><td class="mono ${hasQp?plClr(real):''}">${hasQp?plFmt(real):'—'}</td><td class="c-gold mono">${hasQp&&div!==0?fmtN(Math.abs(div)):'—'}</td><td class="mono ${hasQp?plClr(tot):''}">${hasQp?plFmt(tot):'—'}</td></tr>`;
   });
-  let tUnreal=0,tReal=0,tDiv=0,tTot=0;
-  _qasimPortfolio.forEach(r=>{tUnreal+=nv(r['Unrealized P/L']);tReal+=nv(r['Realized P/L']);tDiv+=nv(r['Net Dividends']);tTot+=nv(r['Total Return']);});
-  html+=`<tr class="total-row"><td colspan="4" class="c-gray">TOTAL</td><td class="mono">${fmtN(ti)}</td><td class="mono">${tw>0?fmtN(tw):'—'}</td><td class="mono ${plClr(tUnreal)}">${plFmt(tUnreal)}</td><td class="mono ${plClr(tReal)}">${plFmt(tReal)}</td><td class="c-gold mono">${fmtN(Math.abs(tDiv))}</td><td class="mono ${plClr(tTot)}">${plFmt(tTot)}</td></tr></table></div>`;
+  let tQpCost=0,tUnreal=0,tReal=0,tDiv=0,tTot=0;
+  _qasimPortfolio.forEach(r=>{tQpCost+=nv(r['Cost of Holdings']);tUnreal+=nv(r['Unrealized P/L']);tReal+=nv(r['Realized P/L']);tDiv+=nv(r['Net Dividends']);tTot+=nv(r['Total Return']);});
+  html+=`<tr class="total-row"><td colspan="4" class="c-gray">TOTAL</td><td class="mono">${fmtN(tQpCost||ti)}</td><td class="mono">${tw>0?fmtN(tw):'—'}</td><td class="mono ${plClr(tUnreal)}">${plFmt(tUnreal)}</td><td class="mono ${plClr(tReal)}">${plFmt(tReal)}</td><td class="c-gold mono">${fmtN(Math.abs(tDiv))}</td><td class="mono ${plClr(tTot)}">${plFmt(tTot)}</td></tr></table></div>`;
   document.getElementById('tab-portfolio').innerHTML=html;
 }
 
