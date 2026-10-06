@@ -361,7 +361,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <main class="main" id="mainContent">
   <div class="topbar">
-    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.11</span></div>
+    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.12</span></div>
     <span class="asof-badge" id="asofBadge">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
   </div>
@@ -370,7 +370,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="kpi c3"><div class="kl">Market Value</div><div class="kv-cur">PKR</div><div class="kv" id="kQpMarketVal">—</div></div>
     <div class="kpi c5"><div class="kl">Unrealised P/L</div><div class="kv-cur">PKR</div><div class="kv" id="kQpUnrealPL">—</div></div>
     <div class="kpi c2"><div class="kl">Net Dividends</div><div class="kv-cur">PKR</div><div class="kv" style="color:var(--amber)" id="kQpNetDiv">—</div></div>
-    <div class="kpi c4"><div class="kl">Total Return</div><div class="kv-cur">PKR</div><div class="kv" id="kQpTotalReturn">—</div></div>
+    <div class="kpi c4"><div class="kl">Net Cash Profit</div><div class="kv-cur">PKR</div><div class="kv" id="kNetCashProfit">—</div></div>
     <div class="kpi c6"><div class="kl">Free Cash</div><div class="kv-cur">PKR</div><div class="kv" id="kFreeCash">—</div></div>
   </div>
   <span id="kInvested" style="display:none"></span>
@@ -737,7 +737,7 @@ async function loadPricesSheet(){try{const res=await fetch(gsUrl(gsTabFor('Price
 
 
 function buildAll(){if(!_holdings.length)return;
-  const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);const totalDiv=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);const totalWorth=_holdings.reduce((s,h)=>s+h.qty*(h.price||h.avg),0);const totalPL=totalWorth-totalInv;const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};set('kInvested',fmtN(totalInv));set('kWorth',fmtN(totalWorth));set('kPL',(totalPL>=0?'+':'')+fmtN(totalPL));set('kFreeCash',fmtN(CAPITAL.freeCash));const kplEl=document.getElementById('kPL');if(kplEl)kplEl.className='kv '+(totalPL>=0?'c-green':'c-red');try{buildPortfolio();}catch(e){showErr('tab-portfolio',e);}try{buildSector();}catch(e){showErr('tab-sector',e);}try{buildCapital();}catch(e){showErr('tab-capital',e);}}
+  const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);const totalDiv=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);const totalWorth=_holdings.reduce((s,h)=>s+h.qty*(h.price||h.avg),0);const totalPL=totalWorth-totalInv;const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};set('kInvested',fmtN(totalInv));set('kWorth',fmtN(totalWorth));set('kPL',(totalPL>=0?'+':'')+fmtN(totalPL));set('kFreeCash',fmtN(CAPITAL.freeCash));const netCashProfit=CAPITAL.withdrawn-CAPITAL.invested;const ncpEl=document.getElementById('kNetCashProfit');if(ncpEl){ncpEl.textContent=(netCashProfit>=0?'+':'')+fmtN(netCashProfit);ncpEl.style.color=netCashProfit>=0?'var(--emerald)':'var(--rose)';}const kplEl=document.getElementById('kPL');if(kplEl)kplEl.className='kv '+(totalPL>=0?'c-green':'c-red');try{buildPortfolio();}catch(e){showErr('tab-portfolio',e);}try{buildSector();}catch(e){showErr('tab-sector',e);}try{buildCapital();}catch(e){showErr('tab-capital',e);}}
 function showErr(id,e){const el=document.getElementById(id);if(el)el.innerHTML=`<p style="color:var(--rose);padding:20px">Error: ${e.message}</p>`;}
 
 
