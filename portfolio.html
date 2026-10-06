@@ -361,7 +361,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <main class="main" id="mainContent">
   <div class="topbar">
-    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.8.1</span></div>
+    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.8.2</span></div>
     <span class="asof-badge" id="asofBadge">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
   </div>
@@ -990,8 +990,7 @@ async function autoLoad(){
       .filter(([s,d])=>(d.buyU-d.sellU)>0.5&&s)
       .map(([s,d])=>{
         const qty=Math.round(d.buyU-d.sellU);
-        const netCost=d.buyAmt-d.sellAmt;
-        const avg=parseFloat((qty>0?netCost/qty:0).toFixed(2));
+        const avg=parseFloat((d.buyU>0?d.buyAmt/d.buyU:0).toFixed(2));
         return{symbol:s,qty,avg,dps:DPS[s]||0,sector:SECTOR[s]||'Other',
                price:_prices[s]||null,priceSource:_priceSource[s]||null};
       }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
