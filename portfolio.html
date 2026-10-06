@@ -171,9 +171,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .pw-btn.green{background:var(--emerald);}
 .pw-err{font-size:12px;color:var(--rose);margin-top:8px;display:none;font-family:var(--mono);}
 .pw-ok{font-size:12px;color:var(--emerald);margin-top:6px;display:none;}
-#pgDividends,#pgCashFlow,#pgHistory{position:fixed;top:0;left:var(--sidebar-w);right:0;bottom:0;background:var(--bg);z-index:7777;display:none;flex-direction:column;overflow-y:auto;transition:left .22s cubic-bezier(.4,0,.2,1);}
-#pgDividends.open,#pgCashFlow.open,#pgHistory.open{display:flex;}
-:root.sb-collapsed #pgDividends,:root.sb-collapsed #pgCashFlow,:root.sb-collapsed #pgHistory{left:var(--sidebar-w-collapsed);}
+#pgDividends,#pgCashFlow,#pgHistory,#pgQasimPortfolio,#pgQasimStock{position:fixed;top:0;left:var(--sidebar-w);right:0;bottom:0;background:var(--bg);z-index:7777;display:none;flex-direction:column;overflow-y:auto;transition:left .22s cubic-bezier(.4,0,.2,1);}
+#pgDividends.open,#pgCashFlow.open,#pgHistory.open,#pgQasimPortfolio.open,#pgQasimStock.open{display:flex;}
+:root.sb-collapsed #pgDividends,:root.sb-collapsed #pgCashFlow,:root.sb-collapsed #pgHistory,:root.sb-collapsed #pgQasimPortfolio,:root.sb-collapsed #pgQasimStock{left:var(--sidebar-w-collapsed);}
 :root.sb-collapsed .main{margin-left:var(--sidebar-w-collapsed);}
 .overlay-nav{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .overlay-title{font-size:15px;font-weight:700;color:var(--text);flex:1;}
@@ -349,6 +349,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <button class="nav-item" data-tip="Finance" onclick="openFinance()">
       <span class="nav-icon">💰</span><span class="nav-label"> Finance</span>
     </button>
+    <div class="nav-divider"></div>
+    <div class="nav-grp">
+      <button class="nav-grp-btn" id="navMyAccBtn" data-tip="My Account" onclick="toggleGrp('myacc')">
+        <span class="nav-icon">📂</span><span class="nav-label"> My Account</span><span class="nav-grp-chevron">▼</span>
+      </button>
+      <div class="nav-sub" id="navMyAccSub">
+        <button class="nav-sub-btn" id="navQasimPortfolio" onclick="toggleOverlay('pgQasimPortfolio','navQasimPortfolio',loadQasimPortfolio)">💼 My Portfolio</button>
+        <button class="nav-sub-btn" id="navQasimStock" onclick="toggleOverlay('pgQasimStock','navQasimStock',loadQasimStock)">📋 Trade Ledger</button>
+      </div>
+    </div>
   </nav>
   <div class="sidebar-footer">
     <button class="footer-btn" onclick="toggleTheme()" id="themeBtn" style="margin-bottom:4px"><span id="themeIcon" style="font-size:15px">☀️</span><span class="footer-label" id="themeLabel"> Light Mode</span></button>
@@ -360,7 +370,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <main class="main" id="mainContent">
   <div class="topbar">
-    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.5</span></div>
+    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.6</span></div>
     <span class="asof-badge" id="asofBadge">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
   </div>
@@ -516,6 +526,55 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div id="cfTableWrap"><p style="color:var(--text3);padding:20px;text-align:center">Loading...</p></div>
   </div>
 </div>
+<!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
+<div id="pgQasimPortfolio">
+  <div class="overlay-nav">
+    <span class="overlay-title">💼 My Portfolio</span>
+    <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
+    <span id="qpStatus" style="font-size:12px;margin-left:8px;font-family:var(--mono)"></span>
+  </div>
+  <div class="overlay-content">
+    <div class="ov-strip">
+      <div class="ov-kpi"><div class="ov-val c-blue"  id="qpTotalCost">—</div><div class="ov-lbl">Total Cost</div></div>
+      <div class="ov-kpi"><div class="ov-val c-gold"  id="qpMarketVal">—</div><div class="ov-lbl">Market Value</div></div>
+      <div class="ov-kpi"><div class="ov-val"         id="qpUnrealPL">—</div><div class="ov-lbl">Unrealized P/L</div></div>
+      <div class="ov-kpi"><div class="ov-val"         id="qpRealPL">—</div><div class="ov-lbl">Realized P/L</div></div>
+      <div class="ov-kpi"><div class="ov-val c-gold"  id="qpNetDiv">—</div><div class="ov-lbl">Net Dividends</div></div>
+      <div class="ov-kpi"><div class="ov-val"         id="qpTotalReturn">—</div><div class="ov-lbl">Total Return</div></div>
+    </div>
+    <div id="qpTable"><p style="color:var(--text3);padding:20px;text-align:center">Loading...</p></div>
+  </div>
+</div>
+
+<!-- TRADE LEDGER (qasim-stock sheet) -->
+<div id="pgQasimStock">
+  <div class="overlay-nav">
+    <span class="overlay-title">📋 Trade Ledger</span>
+    <button class="btn btn-ghost" onclick="loadQasimStock()" style="font-size:11px">↺ Refresh</button>
+    <span id="qsStatus" style="font-size:12px;margin-left:8px;font-family:var(--mono)"></span>
+  </div>
+  <div class="overlay-content">
+    <div class="ov-strip">
+      <div class="ov-kpi"><div class="ov-val c-blue"               id="qsCashBal">—</div><div class="ov-lbl">Cash Balance</div></div>
+      <div class="ov-kpi"><div class="ov-val"                      id="qsRealPL">—</div><div class="ov-lbl">Realized P/L</div></div>
+      <div class="ov-kpi"><div class="ov-val c-gold"               id="qsTotalDiv">—</div><div class="ov-lbl">Dividends</div></div>
+      <div class="ov-kpi"><div class="ov-val c-red"                id="qsTotalCGT">—</div><div class="ov-lbl">CGT Paid</div></div>
+      <div class="ov-kpi"><div class="ov-val" style="color:var(--text2)" id="qsTxCount">—</div><div class="ov-lbl">Transactions</div></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <select id="qsTypeFilter" onchange="renderQasimStock()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12.5px;outline:none;font-family:var(--font)">
+        <option value="">All Types</option>
+        <option value="Buy">Buy</option>
+        <option value="Sell">Sell</option>
+        <option value="Dividend">Dividend</option>
+        <option value="Deposit">Deposit</option>
+      </select>
+      <input type="text" id="qsSearch" placeholder="🔍 Search stock or notes..." oninput="renderQasimStock()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12.5px;outline:none;font-family:var(--font);flex:1;min-width:120px;max-width:220px">
+    </div>
+    <div id="qsTable"><p style="color:var(--text3);padding:20px;text-align:center">Loading...</p></div>
+  </div>
+</div>
+
 <script>
 (function(){
   const s=localStorage.getItem('psx_theme');if(s==='light')document.documentElement.classList.add('light');
@@ -526,10 +585,10 @@ function applyDark(){document.documentElement.classList.remove('light');const i=
 function toggleTheme(){const isLight=document.documentElement.classList.contains('light');if(isLight){applyDark();localStorage.setItem('psx_theme','dark');}else{applyLight();localStorage.setItem('psx_theme','light');}}
 function hardRefresh(){window.location.reload(true);}
 function openFinance(){window.location.href='finance.html';}
-function goPortDash(){['pgHistory','pgDividends','pgCashFlow'].forEach(id=>{document.getElementById(id).classList.remove('open');});document.querySelectorAll('.nav-sub-btn').forEach(n=>n.classList.remove('active'));const d=document.getElementById('navPortDash');if(d)d.classList.add('active');_activeOverlay=null;}
-function toggleGrp(grp){if(grp==='port'){const btn=document.getElementById('navPortBtn'),sub=document.getElementById('navPortSub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');goPortDash();}}else{const btn=document.getElementById('navTABtn'),sub=document.getElementById('navTASub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');window.location.href='index.html';}}}
+function goPortDash(){ALL_OVERLAYS.forEach(id=>{document.getElementById(id).classList.remove('open');});document.querySelectorAll('.nav-sub-btn').forEach(n=>n.classList.remove('active'));const d=document.getElementById('navPortDash');if(d)d.classList.add('active');_activeOverlay=null;}
+function toggleGrp(grp){if(grp==='port'){const btn=document.getElementById('navPortBtn'),sub=document.getElementById('navPortSub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');goPortDash();}}else if(grp==='myacc'){const btn=document.getElementById('navMyAccBtn'),sub=document.getElementById('navMyAccSub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');}}else{const btn=document.getElementById('navTABtn'),sub=document.getElementById('navTASub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');window.location.href='index.html';}}}
 let _activeOverlay=null;
-function toggleOverlay(overlayId,navId,onOpenFn){const overlay=document.getElementById(overlayId);const isOpen=overlay.classList.contains('open');['pgHistory','pgDividends','pgCashFlow'].forEach(id=>{document.getElementById(id).classList.remove('open');});['navHistory','navDivPage','navCashFlow'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});if(!isOpen){overlay.classList.add('open');const nav=document.getElementById(navId);if(nav)nav.classList.add('active');_activeOverlay=overlayId;if(onOpenFn)onOpenFn();}else{_activeOverlay=null;}}
+function toggleOverlay(overlayId,navId,onOpenFn){const overlay=document.getElementById(overlayId);const isOpen=overlay.classList.contains('open');ALL_OVERLAYS.forEach(id=>{document.getElementById(id).classList.remove('open');});ALL_OVERLAY_NAVS.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});if(!isOpen){overlay.classList.add('open');const nav=document.getElementById(navId);if(nav)nav.classList.add('active');_activeOverlay=overlayId;if(onOpenFn)onOpenFn();}else{_activeOverlay=null;}}
 function initHistory(){populateSymbolDropdown();document.getElementById('srchSym').value='';document.getElementById('srchResult').innerHTML='';}
 function goBack(){document.getElementById('pgHistory').classList.remove('open');const n=document.getElementById('navHistory');if(n)n.classList.remove('active');}
 function closeDividends(){document.getElementById('pgDividends').classList.remove('open');const n=document.getElementById('navDivPage');if(n)n.classList.remove('active');}
@@ -673,7 +732,9 @@ function doLogout(){sessionStorage.removeItem(AUTH_KEY);localStorage.removeItem(
 function showAuthMsg(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',3500);}
 function togglePw(inputId,btn){const inp=document.getElementById(inputId);if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁';}}
 
-function closeAllOverlays(){['pgHistory','pgDividends','pgCashFlow'].forEach(id=>{document.getElementById(id).classList.remove('open');});['navHistory','navDivPage','navCashFlow'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});_activeOverlay=null;}
+const ALL_OVERLAYS=['pgHistory','pgDividends','pgCashFlow','pgQasimPortfolio','pgQasimStock'];
+const ALL_OVERLAY_NAVS=['navHistory','navDivPage','navCashFlow','navQasimPortfolio','navQasimStock'];
+function closeAllOverlays(){ALL_OVERLAYS.forEach(id=>{document.getElementById(id).classList.remove('open');});ALL_OVERLAY_NAVS.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});_activeOverlay=null;}
 function switchTab(name,clickedBtn,navId){closeAllOverlays();document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');if(clickedBtn)clickedBtn.classList.add('active');const cap=name.charAt(0).toUpperCase()+name.slice(1);const tabBtn=document.getElementById('tabBtn'+cap);if(tabBtn&&tabBtn!==clickedBtn)tabBtn.classList.add('active');}
 
 const DPS={HUBC:20,POL:75,UBL:40,FFC:34,MCB:36,OGDC:14.50,MTL:17.50,EFERT:13,BAFL:3,MEBL:30,HBL:22};
@@ -788,6 +849,116 @@ function cfSetStatus(msg,color){['cfStatus','cfFormStatus'].forEach(id=>{const e
 async function deleteTrade(idx,sym){if(!confirm('Delete this trade entry?\nThis cannot be undone.'))return;const filtered=_allTrades.filter((_,i)=>i!==idx);const HDRS=['Symbol','Date','Action','Units','Rate'],rows=[HDRS,...filtered.map(r=>[r.symbol,r.date,r.action,r.units,r.rate])];try{const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'replaceSheet',tab:gsTabFor('holdings'),rows})});const result=await res.json();if(!result.ok){alert('Delete failed: '+(result.error||'unknown'));return;}_allTrades=filtered;runSearch();autoLoad();}catch(e){alert('Error: '+e.message);}}
 async function deleteDividend(sortedIdx){if(!confirm('Delete this dividend record?\nCannot be undone.'))return;const sorted=[..._dividends].sort((a,b)=>{if(a.Status==='Waiting'&&b.Status!=='Waiting')return -1;if(b.Status==='Waiting'&&a.Status!=='Waiting')return 1;return(b.XDate||'').localeCompare(a.XDate||'');});const toDelete=sorted[sortedIdx];if(!toDelete){alert('Record not found.');return;}_dividends=_dividends.filter(r=>r!==toDelete);const allRows=[DIV_HDRS,..._dividends.map(r=>DIV_HDRS.map(h=>r[h]||''))];try{const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'replaceSheet',tab:gsTabFor('Dividends'),rows:allRows})});const result=await res.json();if(!result.ok){alert('Delete failed: '+(result.error||'unknown'));return;}renderDividends();}catch(e){alert('Error: '+e.message);}}
 async function deleteCashFlow(origIdx){if(!confirm('Delete this cash flow entry?\nCannot be undone.'))return;const entry=_cashFlow[origIdx];if(!entry){alert('Entry not found.');return;}_cashFlow=_cashFlow.filter((_,i)=>i!==origIdx);const allRows=[CF_HDRS,..._cashFlow.map(r=>CF_HDRS.map(h=>r[h]||''))];try{const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'replaceSheet',tab:gsTabFor('Cashflow'),rows:allRows})});const result=await res.json();if(!result.ok){alert('Delete failed: '+(result.error||'unknown'));return;}if(_cashFlow.length>0){CAPITAL.freeCash=parseFloat(_cashFlow[_cashFlow.length-1].ClosingCash||0);const el=document.getElementById('kFreeCash');if(el)el.textContent='PKR '+Math.round(CAPITAL.freeCash).toLocaleString();}renderCashFlow();}catch(e){alert('Error: '+e.message);}}
+
+// ── qasim-Portfolio ──
+let _qasimPortfolio=[];
+async function loadQasimPortfolio(){
+  const status=document.getElementById('qpStatus');
+  if(status)status.textContent='⏳ Loading...';
+  try{
+    const res=await fetch(gsUrl('qasim-Portfolio'));
+    if(!res.ok){document.getElementById('qpTable').innerHTML='<p style="color:var(--rose);padding:20px;text-align:center">Failed to load sheet (check API key / tab name)</p>';if(status)status.textContent='';return;}
+    const json=await res.json();const rows=json.values||[];
+    if(rows.length<2){document.getElementById('qpTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No data found</p>';if(status)status.textContent='';return;}
+    const hdrs=rows[0].map(h=>(h||'').trim());
+    _qasimPortfolio=rows.slice(1).filter(r=>(r[0]||'').trim()).map(r=>{const obj={};hdrs.forEach((h,i)=>obj[h]=(r[i]||'').toString().trim());return obj;});
+    renderQasimPortfolio();
+    if(status)status.textContent='';
+  }catch(e){document.getElementById('qpTable').innerHTML=`<p style="color:var(--rose);padding:20px;text-align:center">Error: ${e.message}</p>`;if(status)status.textContent='';}
+}
+function nv(v){return parseFloat((v||'0').toString().replace(/[^0-9.\-]/g,''))||0;}
+function renderQasimPortfolio(){
+  const rows=_qasimPortfolio;
+  if(!rows.length){document.getElementById('qpTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No holdings data</p>';return;}
+  let tCost=0,tMV=0,tUnreal=0,tReal=0,tDiv=0,tReturn=0;
+  rows.forEach(r=>{tCost+=nv(r['Cost of Holdings']);tMV+=nv(r['Market Value']);tUnreal+=nv(r['Unrealized P/L']);tReal+=nv(r['Realized P/L']);tDiv+=nv(r['Net Dividends']);tReturn+=nv(r['Total Return']);});
+  const fmt=v=>Math.round(Math.abs(v)).toLocaleString();
+  const plColor=v=>v>=0?'var(--emerald)':'var(--rose)';
+  const setEl=(id,val,forceColor)=>{const e=document.getElementById(id);if(!e)return;e.textContent=(val<0?'-':'')+fmt(val);e.style.color=forceColor||plColor(val);};
+  document.getElementById('qpTotalCost').textContent=fmt(tCost);
+  document.getElementById('qpMarketVal').textContent=fmt(tMV);
+  setEl('qpUnrealPL',tUnreal);setEl('qpRealPL',tReal);
+  setEl('qpNetDiv',tDiv,'var(--amber)');setEl('qpTotalReturn',tReturn);
+  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>#</th><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost of Holdings</th><th>Current Price</th><th>Market Value</th><th>Unrealized P/L</th><th>Unreal %</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
+  rows.forEach((r,i)=>{
+    const unreal=nv(r['Unrealized P/L']),real=nv(r['Realized P/L']),tot=nv(r['Total Return']);
+    html+=`<tr>
+      <td class="c-gray">${i+1}</td><td class="sym">${r['Stock']||'—'}</td>
+      <td class="mono">${r['Units']||'—'}</td><td class="c-gold mono">${r['Avg Cost']||'—'}</td>
+      <td class="mono">${r['Cost of Holdings']||'—'}</td><td class="c-blue mono">${r['Current Price']||'—'}</td>
+      <td class="mono">${r['Market Value']||'—'}</td>
+      <td class="mono ${unreal>=0?'c-green':'c-red'}">${r['Unrealized P/L']||'—'}</td>
+      <td class="mono ${unreal>=0?'c-green':'c-red'}">${(r['Unrealized P/L%']||'—').replace(/\s/g,'')}</td>
+      <td class="mono ${real>=0?'c-green':'c-red'}">${r['Realized P/L']||'—'}</td>
+      <td class="c-gold mono">${r['Net Dividends']||'—'}</td>
+      <td class="mono ${tot>=0?'c-green':'c-red'}">${r['Total Return']||'—'}</td></tr>`;
+  });
+  html+=`<tr class="total-r"><td colspan="4" class="c-gray">TOTAL</td>
+    <td class="mono">${fmt(tCost)}</td><td></td><td class="mono">${fmt(tMV)}</td>
+    <td class="mono ${tUnreal>=0?'c-green':'c-red'}">${(tUnreal>=0?'+':'-')}${fmt(tUnreal)}</td><td></td>
+    <td class="mono ${tReal>=0?'c-green':'c-red'}">${(tReal>=0?'+':'-')}${fmt(tReal)}</td>
+    <td class="c-gold mono">${fmt(tDiv)}</td>
+    <td class="mono ${tReturn>=0?'c-green':'c-red'}">${(tReturn>=0?'+':'-')}${fmt(tReturn)}</td>
+  </tr></table></div>`;
+  document.getElementById('qpTable').innerHTML=html;
+}
+
+// ── qasim-stock ──
+let _qasimStock=[];
+async function loadQasimStock(){
+  const status=document.getElementById('qsStatus');
+  if(status)status.textContent='⏳ Loading...';
+  try{
+    const res=await fetch(gsUrl('qasim-stock'));
+    if(!res.ok){document.getElementById('qsTable').innerHTML='<p style="color:var(--rose);padding:20px;text-align:center">Failed to load sheet (check API key / tab name)</p>';if(status)status.textContent='';return;}
+    const json=await res.json();const rows=json.values||[];
+    if(rows.length<2){document.getElementById('qsTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No data found</p>';if(status)status.textContent='';return;}
+    const hdrs=rows[0].map(h=>(h||'').trim());
+    _qasimStock=rows.slice(1).filter(r=>(r[0]||'').trim()).map(r=>{const obj={};hdrs.forEach((h,i)=>obj[h]=(r[i]||'').toString().trim());return obj;});
+    renderQasimStock();
+    if(status)status.textContent='';
+  }catch(e){document.getElementById('qsTable').innerHTML=`<p style="color:var(--rose);padding:20px;text-align:center">Error: ${e.message}</p>`;if(status)status.textContent='';}
+}
+function renderQasimStock(){
+  const typeF=((document.getElementById('qsTypeFilter')||{}).value||'').toLowerCase();
+  const srch=((document.getElementById('qsSearch')||{}).value||'').toLowerCase();
+  let rows=[..._qasimStock].reverse();
+  if(typeF) rows=rows.filter(r=>(r['Type']||'').toLowerCase()===typeF);
+  if(srch) rows=rows.filter(r=>Object.values(r).some(v=>(v||'').toLowerCase().includes(srch)));
+  const all=_qasimStock;
+  const lastBal=all.length?nv(all[all.length-1]['Cash Balance']):0;
+  const tReal=all.reduce((s,r)=>s+nv(r['Realized P/L']),0);
+  const tDiv=all.filter(r=>(r['Type']||'').toLowerCase()==='dividend').reduce((s,r)=>s+nv(r['Amount']),0);
+  const tCGT=all.reduce((s,r)=>s+nv(r['CGT on Profit (Rs)']),0);
+  document.getElementById('qsCashBal').textContent=Math.round(lastBal).toLocaleString();
+  const qsPL=document.getElementById('qsRealPL');if(qsPL){qsPL.textContent=(tReal<0?'-':'')+Math.round(Math.abs(tReal)).toLocaleString();qsPL.style.color=tReal>=0?'var(--emerald)':'var(--rose)';}
+  document.getElementById('qsTotalDiv').textContent=Math.round(Math.abs(tDiv)).toLocaleString();
+  document.getElementById('qsTotalCGT').textContent=Math.round(Math.abs(tCGT)).toLocaleString();
+  document.getElementById('qsTxCount').textContent=all.length+' rows';
+  if(!rows.length){document.getElementById('qsTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No matching transactions</p>';return;}
+  const typeCls={buy:'buy-r',sell:'sell-r',dividend:'div-r',deposit:'dep-r'};
+  const typeColor={Buy:'var(--rose)',Sell:'var(--emerald)',Dividend:'var(--amber)',Deposit:'var(--accent)'};
+  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>#</th><th>Date</th><th>Type</th><th>Stock</th><th>Units</th><th>Price/Share</th><th>Amount</th><th>Fees/Tax</th><th>Cash Impact</th><th>Cash Balance</th><th>Realized P/L</th><th>CGT</th><th>Notes</th></tr>`;
+  rows.forEach((r,i)=>{
+    const type=r['Type']||'',cls=typeCls[type.toLowerCase()]||'',realPL=nv(r['Realized P/L']),ci=nv(r['Cash Impact']);
+    html+=`<tr class="${cls}"><td class="c-gray">${i+1}</td>
+      <td style="color:var(--accent);font-family:var(--mono);white-space:nowrap">${r['Date']||'—'}</td>
+      <td style="font-weight:700;white-space:nowrap;color:${typeColor[type]||'var(--text2)'}">${type||'—'}</td>
+      <td class="sym">${r['Stock']||'—'}</td>
+      <td class="mono">${r['Units']||'—'}</td>
+      <td class="c-gold mono">${r['Price/Share']||'—'}</td>
+      <td class="mono">${r['Amount']||'—'}</td>
+      <td class="c-red mono">${r['Fees/Tax']||'—'}</td>
+      <td class="mono ${ci>=0?'c-green':'c-red'}">${r['Cash Impact']||'—'}</td>
+      <td class="c-blue mono">${r['Cash Balance']||'—'}</td>
+      <td class="mono ${realPL>0?'c-green':realPL<0?'c-red':'c-gray'}">${r['Realized P/L']||'—'}</td>
+      <td class="c-red mono">${r['CGT on Profit (Rs)']||'—'}</td>
+      <td style="color:var(--text3);font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r['Notes']||'').replace(/"/g,'&quot;')}">${r['Notes']||'—'}</td>
+    </tr>`;
+  });
+  html+=`</table></div>`;
+  document.getElementById('qsTable').innerHTML=html;
+}
 
 async function autoLoad(){
   await loadCashFlow();
