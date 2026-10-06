@@ -327,11 +327,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <span class="nav-icon">📈</span><span class="nav-label"> Portfolio</span><span class="nav-grp-chevron">▼</span>
       </button>
       <div class="nav-sub open" id="navPortSub">
-        <button class="nav-sub-btn active" id="navPortDash" onclick="goPortDash()">📊 Dashboard</button>
+        <button class="nav-sub-btn" id="navQasimPortfolio" onclick="toggleOverlay('pgQasimPortfolio','navQasimPortfolio',loadQasimPortfolio)">📊 Dashboard</button>
         <button class="nav-sub-btn" onclick="showBuySell()">💱 Buy / Sell</button>
         <button class="nav-sub-btn" id="navHistory" onclick="toggleOverlay('pgHistory','navHistory',initHistory)">🔍 Trade History</button>
         <button class="nav-sub-btn" id="navDivPage" onclick="toggleOverlay('pgDividends','navDivPage',loadDividendsCSV)">💵 Dividends</button>
         <button class="nav-sub-btn" id="navCashFlow" onclick="toggleOverlay('pgCashFlow','navCashFlow',loadCashFlow)">💳 Cash Flow</button>
+        <button class="nav-sub-btn" id="navQasimStock" onclick="toggleOverlay('pgQasimStock','navQasimStock',loadQasimStock)">📋 Trade Ledger</button>
       </div>
     </div>
     <div class="nav-divider"></div>
@@ -349,16 +350,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <button class="nav-item" data-tip="Finance" onclick="openFinance()">
       <span class="nav-icon">💰</span><span class="nav-label"> Finance</span>
     </button>
-    <div class="nav-divider"></div>
-    <div class="nav-grp">
-      <button class="nav-grp-btn" id="navMyAccBtn" data-tip="My Account" onclick="toggleGrp('myacc')">
-        <span class="nav-icon">📂</span><span class="nav-label"> My Account</span><span class="nav-grp-chevron">▼</span>
-      </button>
-      <div class="nav-sub" id="navMyAccSub">
-        <button class="nav-sub-btn" id="navQasimPortfolio" onclick="toggleOverlay('pgQasimPortfolio','navQasimPortfolio',loadQasimPortfolio)">💼 My Portfolio</button>
-        <button class="nav-sub-btn" id="navQasimStock" onclick="toggleOverlay('pgQasimStock','navQasimStock',loadQasimStock)">📋 Trade Ledger</button>
-      </div>
-    </div>
   </nav>
   <div class="sidebar-footer">
     <button class="footer-btn" onclick="toggleTheme()" id="themeBtn" style="margin-bottom:4px"><span id="themeIcon" style="font-size:15px">☀️</span><span class="footer-label" id="themeLabel"> Light Mode</span></button>
@@ -370,7 +361,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <main class="main" id="mainContent">
   <div class="topbar">
-    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.6</span></div>
+    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.7</span></div>
     <span class="asof-badge" id="asofBadge">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
   </div>
@@ -586,7 +577,7 @@ function toggleTheme(){const isLight=document.documentElement.classList.contains
 function hardRefresh(){window.location.reload(true);}
 function openFinance(){window.location.href='finance.html';}
 function goPortDash(){ALL_OVERLAYS.forEach(id=>{document.getElementById(id).classList.remove('open');});document.querySelectorAll('.nav-sub-btn').forEach(n=>n.classList.remove('active'));const d=document.getElementById('navPortDash');if(d)d.classList.add('active');_activeOverlay=null;}
-function toggleGrp(grp){if(grp==='port'){const btn=document.getElementById('navPortBtn'),sub=document.getElementById('navPortSub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');goPortDash();}}else if(grp==='myacc'){const btn=document.getElementById('navMyAccBtn'),sub=document.getElementById('navMyAccSub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');}}else{const btn=document.getElementById('navTABtn'),sub=document.getElementById('navTASub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');window.location.href='index.html';}}}
+function toggleGrp(grp){if(grp==='port'){const btn=document.getElementById('navPortBtn'),sub=document.getElementById('navPortSub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');}}else{const btn=document.getElementById('navTABtn'),sub=document.getElementById('navTASub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');window.location.href='index.html';}}}
 let _activeOverlay=null;
 function toggleOverlay(overlayId,navId,onOpenFn){const overlay=document.getElementById(overlayId);const isOpen=overlay.classList.contains('open');ALL_OVERLAYS.forEach(id=>{document.getElementById(id).classList.remove('open');});ALL_OVERLAY_NAVS.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});if(!isOpen){overlay.classList.add('open');const nav=document.getElementById(navId);if(nav)nav.classList.add('active');_activeOverlay=overlayId;if(onOpenFn)onOpenFn();}else{_activeOverlay=null;}}
 function initHistory(){populateSymbolDropdown();document.getElementById('srchSym').value='';document.getElementById('srchResult').innerHTML='';}
