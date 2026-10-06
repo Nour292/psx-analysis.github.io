@@ -361,26 +361,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <main class="main" id="mainContent">
   <div class="topbar">
-    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.9</span></div>
+    <div class="topbar-title">Portfolio Dashboard <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:6px">v3.10</span></div>
     <span class="asof-badge" id="asofBadge">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
   </div>
   <div class="kpi-bar">
-    <div class="kpi c1"><div class="kl">Holdings at Cost</div><div class="kv-cur">PKR</div><div class="kv" id="kInvested">—</div></div>
-    <div class="kpi c3"><div class="kl">Portfolio Worth</div><div class="kv-cur">PKR</div><div class="kv" id="kWorth">—</div></div>
-    <div class="kpi c5"><div class="kl">Unrealised P/L</div><div class="kv-cur">PKR</div><div class="kv" id="kPL">—</div></div>
+    <div class="kpi c1"><div class="kl">Total Cost</div><div class="kv-cur">PKR</div><div class="kv" id="kQpTotalCost">—</div></div>
+    <div class="kpi c3"><div class="kl">Market Value</div><div class="kv-cur">PKR</div><div class="kv" id="kQpMarketVal">—</div></div>
+    <div class="kpi c5"><div class="kl">Unrealised P/L</div><div class="kv-cur">PKR</div><div class="kv" id="kQpUnrealPL">—</div></div>
+    <div class="kpi c2"><div class="kl">Net Dividends</div><div class="kv-cur">PKR</div><div class="kv" style="color:var(--amber)" id="kQpNetDiv">—</div></div>
+    <div class="kpi c4"><div class="kl">Total Return</div><div class="kv-cur">PKR</div><div class="kv" id="kQpTotalReturn">—</div></div>
     <div class="kpi c6"><div class="kl">Free Cash</div><div class="kv-cur">PKR</div><div class="kv" id="kFreeCash">—</div></div>
   </div>
+  <span id="kInvested" style="display:none"></span>
+  <span id="kWorth" style="display:none"></span>
+  <span id="kPL" style="display:none"></span>
   <div class="tab-bar">
     <button class="tab-btn active" id="tabBtnPortfolio" onclick="switchTab('portfolio',this,'navPortfolio')">📋 Portfolio</button>
 <button class="tab-btn" id="tabBtnSector" onclick="switchTab('sector',this,'navSector')">⚖️ Sector Balance</button>
     <button class="tab-btn" id="tabBtnCapital" onclick="switchTab('capital',this,'navCapital')">💼 Capital</button>
-    <button class="tab-btn" id="tabBtnPrices" onclick="switchTab('prices',this,'navPrices')">💹 Prices</button>
   </div>
   <div id="tab-portfolio" class="tab-pane active"><p class="c-gray" style="padding:20px">Loading...</p></div>
 <div id="tab-sector"    class="tab-pane"></div>
   <div id="tab-capital"   class="tab-pane"></div>
-  <div id="tab-prices"    class="tab-pane"></div>
 </main>
 </div>
 
@@ -734,7 +737,7 @@ async function loadPricesSheet(){try{const res=await fetch(gsUrl(gsTabFor('Price
 
 
 function buildAll(){if(!_holdings.length)return;
-  const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);const totalDiv=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);const totalWorth=_holdings.reduce((s,h)=>s+h.qty*(h.price||h.avg),0);const totalPL=totalWorth-totalInv;const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};set('kInvested',fmtN(totalInv));set('kWorth',fmtN(totalWorth));set('kPL',(totalPL>=0?'+':'')+fmtN(totalPL));set('kFreeCash',fmtN(CAPITAL.freeCash));document.getElementById('kPL').className='kv '+(totalPL>=0?'c-green':'c-red');try{buildPortfolio();}catch(e){showErr('tab-portfolio',e);}try{buildSector();}catch(e){showErr('tab-sector',e);}try{buildCapital();}catch(e){showErr('tab-capital',e);}try{buildPrices();}catch(e){showErr('tab-prices',e);}}
+  const totalInv=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);const totalDiv=_holdings.reduce((s,h)=>s+h.qty*h.dps,0);const totalWorth=_holdings.reduce((s,h)=>s+h.qty*(h.price||h.avg),0);const totalPL=totalWorth-totalInv;const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};set('kInvested',fmtN(totalInv));set('kWorth',fmtN(totalWorth));set('kPL',(totalPL>=0?'+':'')+fmtN(totalPL));set('kFreeCash',fmtN(CAPITAL.freeCash));const kplEl=document.getElementById('kPL');if(kplEl)kplEl.className='kv '+(totalPL>=0?'c-green':'c-red');try{buildPortfolio();}catch(e){showErr('tab-portfolio',e);}try{buildSector();}catch(e){showErr('tab-sector',e);}try{buildCapital();}catch(e){showErr('tab-capital',e);}}
 function showErr(id,e){const el=document.getElementById(id);if(el)el.innerHTML=`<p style="color:var(--rose);padding:20px">Error: ${e.message}</p>`;}
 
 
@@ -858,6 +861,13 @@ function renderQasimPortfolio(){
   document.getElementById('qpMarketVal').textContent=fmt(tMV);
   setEl('qpUnrealPL',tUnreal);setEl('qpRealPL',tReal);
   setEl('qpNetDiv',tDiv,'var(--amber)');setEl('qpTotalReturn',tReturn);
+  // Update topbar KPIs
+  const setKpi=(id,txt,clr)=>{const e=document.getElementById(id);if(!e)return;e.textContent=txt;if(clr)e.style.color=clr;};
+  setKpi('kQpTotalCost',fmt(tCost));
+  setKpi('kQpMarketVal',fmt(tMV));
+  setKpi('kQpUnrealPL',(tUnreal>=0?'+':'-')+fmt(Math.abs(tUnreal)),tUnreal>=0?'var(--emerald)':'var(--rose)');
+  setKpi('kQpNetDiv',fmt(tDiv),'var(--amber)');
+  setKpi('kQpTotalReturn',(tReturn>=0?'+':'-')+fmt(Math.abs(tReturn)),tReturn>=0?'var(--emerald)':'var(--rose)');
   let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>#</th><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost of Holdings</th><th>Current Price</th><th>Market Value</th><th>Unrealized P/L</th><th>Unreal %</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
   rows.forEach((r,i)=>{
     const unreal=nv(r['Unrealized P/L']),real=nv(r['Realized P/L']),tot=nv(r['Total Return']);
@@ -944,6 +954,7 @@ async function autoLoad(){
   await loadDataCSV();
   await loadPricesSheet();
   await loadDividendsCSV();
+  await loadQasimPortfolio();
   try{
     const res=await fetch(gsUrl('qasim-stock'));if(!res.ok)return;
     const json=await res.json();const rows=json.values||[];if(rows.length<2)return;
