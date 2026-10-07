@@ -495,7 +495,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="overlay-nav">
     <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.21</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
-    <span class="user-badge" id="userBadge" style="display:none">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
+    <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
     <span id="qpStatus" style="font-size:12px;margin-left:8px;font-family:var(--mono)"></span>
   </div>
@@ -977,7 +977,8 @@ async function loadQasimPortfolio(){
   const status=document.getElementById('qpStatus');
   if(status)status.textContent='⏳ Loading...';
   try{
-    const res=await fetch(gsUrl('qasim-Portfolio'));
+    const portfolioTab=isAdmin()?'qasim-Portfolio':_currentUser+'-Portfolio';
+    const res=await fetch(gsUrl(portfolioTab));
     if(!res.ok){document.getElementById('qpTable').innerHTML='<p style="color:var(--rose);padding:20px;text-align:center">Failed to load sheet (check API key / tab name)</p>';if(status)status.textContent='';return;}
     const json=await res.json();const rows=json.values||[];
     if(rows.length<2){document.getElementById('qpTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No data found</p>';if(status)status.textContent='';return;}
@@ -1029,7 +1030,8 @@ async function loadQasimStock(){
   const status=document.getElementById('qsStatus');
   if(status)status.textContent='⏳ Loading...';
   try{
-    const res=await fetch(gsUrl('qasim-stock'));
+    const stockTab=isAdmin()?'qasim-stock':_currentUser+'-stock';
+    const res=await fetch(gsUrl(stockTab));
     if(!res.ok){document.getElementById('qsTable').innerHTML='<p style="color:var(--rose);padding:20px;text-align:center">Failed to load sheet (check API key / tab name)</p>';if(status)status.textContent='';return;}
     const json=await res.json();const rows=json.values||[];
     if(rows.length<2){document.getElementById('qsTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No data found</p>';if(status)status.textContent='';return;}
@@ -1100,7 +1102,7 @@ async function autoLoad(){
   await loadDividendsCSV();
   await loadQasimPortfolio();
   try{
-    const res=await fetch(gsUrl('qasim-stock'));if(!res.ok)return;
+    const res=await fetch(gsUrl(isAdmin()?'qasim-stock':_currentUser+'-stock'));if(!res.ok)return;
     const json=await res.json();const rows=json.values||[];if(rows.length<2)return;
     const hdrs=rows[0].map(h=>(h||'').trim());
     const fiExact=nm=>{const i=hdrs.indexOf(nm);return i>=0?i:-1;};
