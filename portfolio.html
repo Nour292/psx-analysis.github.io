@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.28</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.29</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -504,7 +504,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="ov-kpi"><div class="ov-val"         id="qpUnrealPL">—</div><div class="ov-lbl">Unrealized P/L</div></div>
       <div class="ov-kpi"><div class="ov-val"         id="qpRealPL">—</div><div class="ov-lbl">Realized P/L</div></div>
       <div class="ov-kpi"><div class="ov-val c-gold"  id="qpNetDiv">—</div><div class="ov-lbl">Net Dividends</div></div>
-      <div class="ov-kpi"><div class="ov-val"         id="qpNetCashProfit">—</div><div class="ov-lbl">Net Cash Profit</div></div>
+      <div class="ov-kpi"><div class="ov-val"          id="qpNetCashProfit">—</div><div class="ov-lbl">Capital Deployed</div></div>
       <div class="ov-kpi"><div class="ov-val c-gold"  id="qpFreeCash">—</div><div class="ov-lbl">Free Cash</div></div>
     </div>
     <div class="ov-tab-bar">
@@ -793,7 +793,7 @@ async function loadPricesSheet(){try{const res=await fetch(gsUrl(gsTabFor('Price
 function buildAll(){if(!_holdings.length)return;
   const netCashProfit=CAPITAL.withdrawn-CAPITAL.invested;
   const setEl=(id,v,clr)=>{const e=document.getElementById(id);if(!e)return;e.textContent=v;if(clr)e.style.color=clr;};
-  setEl('qpNetCashProfit',(netCashProfit>=0?'+':'')+fmtN(netCashProfit),netCashProfit>=0?'var(--emerald)':'var(--rose)');
+  setEl('qpNetCashProfit',fmtN(netCashProfit),'var(--text3)');
   setEl('qpFreeCash',fmtN(CAPITAL.freeCash));
   setEl('bsCashDisplay',fmtN(CAPITAL.freeCash));
   if(_ovActiveTab==='portfolio')try{renderQasimPortfolio();}catch(e){}
