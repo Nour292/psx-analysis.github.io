@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.26</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.27</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -655,8 +655,8 @@ function isAdmin(){return _currentUser===ADMIN_USER;}
 function applyRoleUI(){
   const admin=isAdmin();
   if(admin){Object.assign(CAPITAL,CAPITAL_ADMIN);}else{Object.assign(CAPITAL,CAPITAL_USER);}
-  document.getElementById('tab-portfolio').classList.add('active');
-  document.getElementById('tabBtnPortfolio').classList.add('active');
+  const tp=document.getElementById('tab-portfolio');if(tp)tp.classList.add('active');
+  const tbp=document.getElementById('tabBtnPortfolio');if(tbp)tbp.classList.add('active');
 }
 function showUserBadge(name){document.getElementById('userBadgeName').textContent=name;document.getElementById('userBadge').classList.add('show');applyRoleUI();}
 
