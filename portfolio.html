@@ -493,7 +493,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.22</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.23</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -557,7 +557,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- DATA ENTRY FORM -->
 <div id="pgDataEntry">
   <div class="overlay-nav">
-    <span class="overlay-title">📝 Data Entry — qasim-stock</span>
+    <span class="overlay-title">📝 Data Entry — <span id="deTabLabel">qasim-stock</span></span>
     <span id="deStatus" style="font-size:12px;font-family:var(--mono);margin-left:8px"></span>
   </div>
   <div class="overlay-content">
@@ -877,6 +877,8 @@ function updateCAPITAL(action,units,rate,newCash){CAPITAL.freeCash=newCash;const
 
 // ── Data Entry ──
 function initDataEntry(){
+  const lbl=document.getElementById('deTabLabel');
+  if(lbl)lbl.textContent=isAdmin()?'qasim-stock':_currentUser+'-stock';
   if(!document.getElementById('deDate').value){
     const now=new Date();
     const day=now.getDate();
@@ -919,7 +921,8 @@ async function submitDataEntry(){
   const row=[date,type,stock,String(units),price.toFixed(2),'','',fees?fees.toFixed(2):'','','','','','','','','','',notes];
   statusEl.textContent='⏳ Saving...';statusEl.style.color='var(--amber)';
   try{
-    const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:'qasim-stock',row})});
+    const deTab=isAdmin()?'qasim-stock':_currentUser+'-stock';
+    const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:deTab,row})});
     const result=await res.json();
     if(result&&result.ok===false){statusEl.textContent='❌ '+(result.error||'Save failed');statusEl.style.color='var(--rose)';return;}
     statusEl.textContent=`✅ Saved! ${type} ${units} ${stock} @ PKR ${price}`;statusEl.style.color='var(--emerald)';
