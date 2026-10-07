@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.27</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.28</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -991,7 +991,7 @@ async function loadCashFlow(){try{const res=await fetch(gsUrl(isAdmin()?'qasim-s
         _cashFlow.forEach(r=>{
           const net=parseFloat(r.NetChange||0),type=(r.Type||'').toLowerCase();
           if(type==='deposit'&&net>0)totDep+=net;
-          else if(type==='withdrawal')totWdr+=Math.abs(net);
+          else if(type==='withdraw'||type==='withdrawal')totWdr+=Math.abs(net);
         });
         CAPITAL.invested=Math.round(totDep);CAPITAL.withdrawn=Math.round(totWdr);
         if(fe&&fe.Date){const p=(fe.Date||'').split(/[-/]/);const yr=p[0].length===4?p[0]:(p[2]?'20'+p[2]:'');if(yr)CAPITAL.started=yr;}
