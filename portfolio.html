@@ -493,7 +493,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.23</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.24</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -913,15 +913,48 @@ async function submitDataEntry(){
   const stock=(document.getElementById('deStock').value||'').toUpperCase().trim();
   const units=parseFloat(document.getElementById('deUnits').value)||0;
   const price=parseFloat(document.getElementById('dePrice').value)||0;
-  const fees=parseFloat(document.getElementById('deFees').value)||0;
+  const manualFees=parseFloat(document.getElementById('deFees').value)||0;
   const notes=(document.getElementById('deNotes').value||'').trim();
   const statusEl=document.getElementById('deStatus');
   if(!date||!type||!stock||!units||!price){statusEl.textContent='❌ Date, Type, Stock, Units and Price are required';statusEl.style.color='var(--rose)';return;}
-  // 18 columns: Date,Type,Stock,Units,Price/Share,Net Price/Share,Amount,Fees/Tax,Cash Impact,Cash Balance,Avg Cost at Sale,Cost of Units Sold,Realized P/L,Commission,SST on Commission,CDC Charges (Rs),CGT on Profit (Rs),Notes
-  const row=[date,type,stock,String(units),price.toFixed(2),'','',fees?fees.toFixed(2):'','','','','','','','','','',notes];
+  const r2=(n)=>Math.round(n*100)/100;
+  const r4=(n)=>Math.round(n*10000)/10000;
+  const amount=r2(units*price); // G: Amount
+  let commission=0,sstComm=0,cdc=0,totalFees=0;
+  if(manualFees>0){
+    totalFees=manualFees; // user override
+  } else if(type==='Buy'||type==='Sell'){
+    commission=r2(amount*0.0015);   // N: 0.15% brokerage
+    sstComm=r2(commission*0.15);    // O: 15% SST on brokerage
+    cdc=r2(units*0.005);            // P: Rs 0.005/share CDC
+    totalFees=r2(commission+sstComm+cdc);
+  } else if(type==='Dividend'){
+    totalFees=r2(amount*0.15);      // H: 15% dividend tax
+  }
+  let netPrice='',cashImpact=0;
+  if(type==='Buy'){netPrice=r4((amount+totalFees)/units);cashImpact=r2(-(amount+totalFees));}
+  else if(type==='Sell'||type==='Dividend'){netPrice=r4((amount-totalFees)/units);cashImpact=r2(amount-totalFees);}
+  else{cashImpact=r2(amount);}
   statusEl.textContent='⏳ Saving...';statusEl.style.color='var(--amber)';
+  const deTab=isAdmin()?'qasim-stock':_currentUser+'-stock';
+  let prevBalance=0;
   try{
-    const deTab=isAdmin()?'qasim-stock':_currentUser+'-stock';
+    const prev=await fetch(gsUrl(deTab));
+    if(prev.ok){const pj=await prev.json();const pr=(pj.values||[]);if(pr.length>1){prevBalance=parseFloat(((pr[pr.length-1][9])||'0').toString().replace(/,/g,''))||0;}}
+  }catch(e){}
+  const newBal=r2(prevBalance+cashImpact);
+  const row=[date,type,stock,String(units),price.toFixed(2),
+    netPrice!==''?String(netPrice):'', // F: Net Price/Share
+    amount.toFixed(2),                 // G: Amount
+    totalFees?totalFees.toFixed(2):'', // H: Fees/Tax
+    cashImpact.toFixed(2),             // I: Cash Impact
+    newBal.toFixed(2),                 // J: Cash Balance
+    '','','',                          // K,L,M
+    commission?commission.toFixed(2):'', // N: Commission
+    sstComm?sstComm.toFixed(2):'',       // O: SST
+    cdc?cdc.toFixed(2):'',               // P: CDC
+    '',notes];                           // Q, R
+  try{
     const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:deTab,row})});
     const result=await res.json();
     if(result&&result.ok===false){statusEl.textContent='❌ '+(result.error||'Save failed');statusEl.style.color='var(--rose)';return;}
