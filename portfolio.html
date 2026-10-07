@@ -333,8 +333,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="nav-sub open" id="navPortSub">
         <button class="nav-sub-btn" id="navQasimPortfolio" onclick="toggleOverlay('pgQasimPortfolio','navQasimPortfolio',loadQasimPortfolio)">📊 Dashboard</button>
         <button class="nav-sub-btn" id="navHistory" onclick="toggleOverlay('pgHistory','navHistory',initHistory)">🔍 Trade History</button>
-        <button class="nav-sub-btn" id="navDivPage" onclick="toggleOverlay('pgDividends','navDivPage',loadDividendsCSV)">💵 Dividends</button>
-        <button class="nav-sub-btn" id="navCashFlow" onclick="toggleOverlay('pgCashFlow','navCashFlow',loadCashFlow)">💳 Cash Flow</button>
         <button class="nav-sub-btn" id="navQasimStock" onclick="toggleOverlay('pgQasimStock','navQasimStock',loadQasimStock)">📋 Trade Ledger</button>
         <button class="nav-sub-btn" id="navDataEntry" onclick="toggleOverlay('pgDataEntry','navDataEntry',initDataEntry)">📝 Data Entry</button>
       </div>
@@ -493,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.25</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.26</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
