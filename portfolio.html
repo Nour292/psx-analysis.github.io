@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.34</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.35</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1037,7 +1037,7 @@ async function loadQasimPortfolio(){
     const json=await res.json();const rows=json.values||[];
     if(rows.length<2){document.getElementById('qpTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No data found</p>';if(status)status.textContent='';return;}
     const hdrs=rows[0].map(h=>(h||'').trim());
-    _qasimPortfolio=rows.slice(1).filter(r=>(r[0]||'').trim()).map(r=>{const obj={};hdrs.forEach((h,i)=>obj[h]=(r[i]||'').toString().trim());return obj;});
+    _qasimPortfolio=rows.slice(1).filter(r=>(r[0]||'').trim()).map(r=>{const obj={};hdrs.forEach((h,i)=>obj[h]=(r[i]||'').toString().trim());if(!obj['Cost of Holdings']&&obj['Cost Value'])obj['Cost of Holdings']=obj['Cost Value'];if(!obj['Net Dividends']&&obj['Dividends'])obj['Net Dividends']=obj['Dividends'];return obj;});
     renderQasimPortfolio();
     if(status)status.textContent='';
   }catch(e){document.getElementById('qpTable').innerHTML=`<p style="color:var(--rose);padding:20px;text-align:center">Error: ${e.message}</p>`;if(status)status.textContent='';}
@@ -1150,7 +1150,6 @@ function renderQasimStock(){
 }
 
 function buildPortfolioFromLedger(rows,hdrs){
-  if(!isAdmin())_qasimPortfolio=[];  // non-admin always builds from own ledger
   if(_qasimPortfolio.length||!_holdings.length)return;
   const r2=n=>Math.round(n*100)/100;
   const strip=v=>parseFloat((v||'').toString().replace(/,/g,''))||0;
