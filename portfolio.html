@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.29</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.30</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -935,23 +935,42 @@ async function submitDataEntry(){
   else{cashImpact=r2(amount);}
   statusEl.textContent='⏳ Saving...';statusEl.style.color='var(--amber)';
   const deTab=isAdmin()?'qasim-stock':_currentUser+'-stock';
-  let prevBalance=0;
+  let prevBalance=0,sheetRows=[];
   try{
     const prev=await fetch(gsUrl(deTab));
-    if(prev.ok){const pj=await prev.json();const pr=(pj.values||[]);if(pr.length>1){prevBalance=parseFloat(((pr[pr.length-1][9])||'0').toString().replace(/,/g,''))||0;}}
+    if(prev.ok){const pj=await prev.json();sheetRows=(pj.values||[]);if(sheetRows.length>1){prevBalance=parseFloat(((sheetRows[sheetRows.length-1][9])||'0').toString().replace(/,/g,''))||0;}}
   }catch(e){}
   const newBal=r2(prevBalance+cashImpact);
+  let kAvgCost='',lCostSold='',mRealPL='',qCGT='';
+  if(type==='Sell'&&sheetRows.length>1){
+    let hUnits=0,hCost=0;
+    sheetRows.slice(1).forEach(r=>{
+      if((r[2]||'').trim().toUpperCase()!==stock)return;
+      const ru=parseFloat((r[3]||'0').toString().replace(/,/g,''))||0;
+      const rnp=parseFloat((r[5]||'0').toString().replace(/,/g,''))||0;
+      const rt=(r[1]||'').trim().toLowerCase();
+      if(rt==='buy'){hCost+=ru*rnp;hUnits+=ru;}
+      else if(rt==='sell'){const av=hUnits>0?hCost/hUnits:0;hCost-=Math.min(ru,hUnits)*av;hUnits=Math.max(0,hUnits-ru);}
+    });
+    if(hUnits>0){
+      const ac=r2(hCost/hUnits);
+      const cu=r2(ac*units);
+      const pl=r2(cashImpact-cu);
+      kAvgCost=ac.toFixed(2);lCostSold=cu.toFixed(2);mRealPL=pl.toFixed(2);
+      if(pl>0)qCGT=r2(pl*0.15).toFixed(2);
+    }
+  }
   const row=[date,type,stock,String(units),price.toFixed(2),
     netPrice!==''?String(netPrice):'', // F: Net Price/Share
     amount.toFixed(2),                 // G: Amount
     totalFees?totalFees.toFixed(2):'', // H: Fees/Tax
     cashImpact.toFixed(2),             // I: Cash Impact
     newBal.toFixed(2),                 // J: Cash Balance
-    '','','',                          // K,L,M
+    kAvgCost,lCostSold,mRealPL,        // K,L,M
     commission?commission.toFixed(2):'', // N: Commission
     sstComm?sstComm.toFixed(2):'',       // O: SST
     cdc?cdc.toFixed(2):'',               // P: CDC
-    '',notes];                           // Q, R
+    qCGT,notes];                         // Q, R
   try{
     const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:deTab,row})});
     const result=await res.json();
