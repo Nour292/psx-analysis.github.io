@@ -931,7 +931,8 @@ async function submitDataEntry(){
   }
   let netPrice='',cashImpact=0;
   if(type==='Buy'){netPrice=r4((amount+totalFees)/units);cashImpact=r2(-(amount+totalFees));}
-  else if(type==='Sell'||type==='Dividend'){netPrice=r4((amount-totalFees)/units);cashImpact=r2(amount-totalFees);}
+  else if(type==='Sell'){netPrice=r4((amount-totalFees)/units);cashImpact=r2(amount-totalFees);}
+  else if(type==='Dividend'){cashImpact=r2(amount-totalFees);}
   else{cashImpact=r2(amount);}
   statusEl.textContent='⏳ Saving...';statusEl.style.color='var(--amber)';
   const deTab=isAdmin()?'qasim-stock':_currentUser+'-stock';
