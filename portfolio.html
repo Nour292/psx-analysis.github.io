@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.31</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.32</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1148,6 +1148,33 @@ function renderQasimStock(){
   document.getElementById('qsTable').innerHTML=html;
 }
 
+function buildPortfolioFromLedger(rows,hdrs){
+  if(_qasimPortfolio.length||!_holdings.length)return;
+  const r2=n=>Math.round(n*100)/100;
+  const strip=v=>parseFloat((v||'').toString().replace(/,/g,''))||0;
+  const fi=nm=>{let i=hdrs.indexOf(nm);if(i>=0)return i;const n=nm.toLowerCase().replace(/\s/g,'');return hdrs.findIndex(h=>h.toLowerCase().replace(/\s/g,'')===n);};
+  const fType=fi('Type'),fStock=fi('Stock'),fM=fi('Realized P/L'),fCI=fi('Cash Impact');
+  const realPL={},netDiv={};
+  rows.slice(1).forEach(r=>{
+    const sym=(r[fStock]||'').trim().toUpperCase(),type=(r[fType]||'').trim().toLowerCase();
+    if(!sym)return;
+    if(type==='sell')realPL[sym]=(realPL[sym]||0)+strip(r[fM]);
+    if(type==='dividend')netDiv[sym]=(netDiv[sym]||0)+strip(r[fCI]);
+  });
+  const totalCost=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
+  _qasimPortfolio=_holdings.map(h=>{
+    const cost=r2(h.qty*h.avg),price=h.price||0,mv=r2(h.qty*price);
+    const unreal=price?r2(mv-cost):0,real=r2(realPL[h.symbol]||0),div=r2(netDiv[h.symbol]||0);
+    const tot=r2(unreal+real+div),pct=totalCost>0?((cost/totalCost)*100).toFixed(1)+'%':'—';
+    return{'Stock':h.symbol,'Units':String(h.qty),'Avg Cost':h.avg.toFixed(2),
+      'Cost of Holdings':String(Math.round(cost)),'Current Price':price?price.toFixed(2):'',
+      'Market Value':price?String(Math.round(mv)):'','Unrealized P/L':price?String(Math.round(unreal)):'',
+      'Realized P/L':String(Math.round(real)),'Net Dividends':String(Math.round(div)),
+      'Total Return':price?String(Math.round(tot)):'','%':pct};
+  });
+  renderQasimPortfolio();
+}
+
 async function autoLoad(){
   await loadCashFlow();
   await loadDataCSV();
@@ -1193,6 +1220,7 @@ async function autoLoad(){
                price:_prices[s]||null,priceSource:_priceSource[s]||null};
       }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
     buildAll();
+    buildPortfolioFromLedger(rows,hdrs);
   }catch(e){console.log('holdings GS:',e.message);}
 }
 
