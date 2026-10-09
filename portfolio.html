@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.52</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.53</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1205,15 +1205,12 @@ function renderQasimStock(){
   const effectiveBal=all.reduce((s,r)=>isDeclDiv(r)?s:s+nv(r['Cash Impact']),0);
   const tReal=all.reduce((s,r)=>s+nv(r['Realized P/L']),0);
   const tDiv=all.filter(r=>(r['Type']||'').toLowerCase()==='dividend'&&!isDeclDiv(r)).reduce((s,r)=>s+nv(r['Cash Impact']),0);
-  const tCGT=all.reduce((s,r)=>s+nv(r['CGT on Profit (Rs)']),0);
   CAPITAL.freeCash=effectiveBal;
   const _fcEl=document.getElementById('qpFreeCash');if(_fcEl)_fcEl.textContent=Math.round(effectiveBal).toLocaleString();
   const _kfEl=document.getElementById('kFreeCash');if(_kfEl)_kfEl.textContent=Math.round(effectiveBal).toLocaleString();
   document.getElementById('qsCashBal').textContent=Math.round(effectiveBal).toLocaleString();
   const qsPL=document.getElementById('qsRealPL');if(qsPL){qsPL.textContent=(tReal<0?'-':'')+Math.round(Math.abs(tReal)).toLocaleString();qsPL.style.color=tReal>=0?'var(--emerald)':'var(--rose)';}
   document.getElementById('qsTotalDiv').textContent=Math.round(Math.abs(tDiv)).toLocaleString();
-  document.getElementById('qsTotalCGT').textContent=Math.round(Math.abs(tCGT)).toLocaleString();
-  document.getElementById('qsTxCount').textContent=all.length+' rows';
   if(!rows.length){document.getElementById('qsTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No matching transactions</p>';return;}
   const typeCls={buy:'buy-r',sell:'sell-r',dividend:'div-r',deposit:'dep-r'};
   const typeColor={Buy:'var(--rose)',Sell:'var(--emerald)',Dividend:'var(--amber)',Deposit:'var(--accent)'};
