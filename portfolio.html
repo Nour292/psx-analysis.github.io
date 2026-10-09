@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.48</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.49</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1178,7 +1178,7 @@ async function loadQasimStock(){
     const json=await res.json();const rows=json.values||[];
     if(rows.length<2){document.getElementById('qsTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No data found</p>';if(status)status.textContent='';return;}
     const hdrs=rows[0].map(h=>(h||'').trim());
-    _qasimStock=rows.slice(1).filter(r=>(r[0]||'').trim()).map(r=>{const obj={};hdrs.forEach((h,i)=>obj[h]=(r[i]||'').toString().trim());return obj;});
+    _qasimStock=rows.slice(1).filter(r=>(r[0]||'').trim()).map(r=>{const obj={};hdrs.forEach((h,i)=>obj[h]=(r[i]||'').toString().trim());obj._col4=(r[4]||'').toString().trim();obj._col5=(r[5]||'').toString().trim();return obj;});
     renderQasimStock();
     if(status)status.textContent='';
   }catch(e){document.getElementById('qsTable').innerHTML=`<p style="color:var(--rose);padding:20px;text-align:center">Error: ${e.message}</p>`;if(status)status.textContent='';}
@@ -1235,7 +1235,7 @@ function renderQasimStock(){
       <td style="font-weight:700;white-space:nowrap;color:${typeColor[type]||'var(--text2)'}">${type||'—'}${divBadge}</td>
       <td class="sym">${r['Stock']||'—'}</td>
       <td class="mono">${r['Units']||'—'}</td>
-      <td class="c-gold mono">${r['Net Price/Share']||r['Price/Share']||'—'}</td>
+      <td class="c-gold mono">${r['Net Price/Share']||r._col5||r['Price/Share']||r._col4||'—'}</td>
       <td class="mono">${r['Amount']||'—'}</td>
       <td class="mono ${ci>=0?'c-green':'c-red'}">${r['Cash Impact']||'—'}</td>
       <td class="c-blue mono">${r['Cash Balance']||'—'}</td>
