@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.40</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.41</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -594,6 +594,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="modal-field" style="margin-bottom:14px">
         <label>Notes <span style="font-size:10px;color:var(--text3)">(optional)</span></label>
         <input type="text" id="deNotes" placeholder="Any remarks...">
+      </div>
+      <div id="deDivFields" style="display:none;background:var(--amber-dim);border:1px solid var(--amber);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px">💰 Dividend Status</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="modal-field" style="margin:0">
+            <label>Status</label>
+            <select id="deDivStatus" onchange="deDivStatusChange()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;outline:none;font-family:var(--font);width:100%">
+              <option value="Declared">Declared — not received yet</option>
+              <option value="Paid">Paid — cash received</option>
+            </select>
+          </div>
+          <div class="modal-field" id="deDivPayDateField" style="margin:0;display:none">
+            <label>Pay Date <span style="font-size:10px;color:var(--text3)">(DD-Mon-YY)</span></label>
+            <input type="text" id="deDivPayDate" placeholder="e.g. 15-Oct-26" style="font-family:var(--mono)">
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--amber)" id="deDivNote">⚠️ Declared dividend will NOT be added to Free Cash until marked Paid.</div>
       </div>
       <div id="deSummary" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;font-size:13px;font-family:var(--mono);line-height:1.8"></div>
       <div style="display:flex;gap:10px">
@@ -885,8 +902,18 @@ function initDataEntry(){
   }
   deUpdateSummary();
 }
+function deDivStatusChange(){
+  const status=(document.getElementById('deDivStatus')||{}).value||'Declared';
+  const pf=document.getElementById('deDivPayDateField');
+  if(pf)pf.style.display=status==='Paid'?'block':'none';
+  const note=document.getElementById('deDivNote');
+  if(note)note.textContent=status==='Paid'?'✅ Cash Impact will be added to Free Cash.':'⚠️ Declared dividend will NOT be added to Free Cash until marked Paid.';
+}
 function deUpdateSummary(){
   const type=(document.getElementById('deType')||{}).value||'';
+  // Show/hide dividend status section
+  const divFields=document.getElementById('deDivFields');
+  if(divFields)divFields.style.display=type==='Dividend'?'block':'none';
   const stock=(document.getElementById('deStock')||{}).value||'';
   const units=parseFloat((document.getElementById('deUnits')||{}).value)||0;
   const price=parseFloat((document.getElementById('dePrice')||{}).value)||0;
@@ -899,10 +926,14 @@ function deUpdateSummary(){
   el.innerHTML=`<b style="color:${col}">${type}</b> &nbsp;<b style="color:var(--text)">${units.toLocaleString()} ${stock}</b> @ PKR ${price.toFixed(2)}<br>Amount: <b style="color:${col}">PKR ${Math.round(amount).toLocaleString()}</b>${fees?` &nbsp;· Fees: <span style="color:var(--rose)">PKR ${fees.toLocaleString()}</span>`:''}`;
 }
 function clearDataEntry(){
-  ['deStock','deUnits','dePrice','deFees','deNotes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['deStock','deUnits','dePrice','deFees','deNotes','deDivPayDate'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('deType').value='Buy';
   document.getElementById('deSummary').style.display='none';
   document.getElementById('deStatus').textContent='';
+  const ds=document.getElementById('deDivStatus');if(ds)ds.value='Declared';
+  const ddf=document.getElementById('deDivFields');if(ddf)ddf.style.display='none';
+  const ddpf=document.getElementById('deDivPayDateField');if(ddpf)ddpf.style.display='none';
+  deDivStatusChange();
 }
 async function submitDataEntry(){
   const date=(document.getElementById('deDate').value||'').trim();
@@ -911,6 +942,8 @@ async function submitDataEntry(){
   const units=parseFloat(document.getElementById('deUnits').value)||0;
   const price=parseFloat(document.getElementById('dePrice').value)||0;
   const manualFees=parseFloat(document.getElementById('deFees').value)||0;
+  const divStatus=type==='Dividend'?(document.getElementById('deDivStatus').value||'Declared'):'';
+  const divPayDate=type==='Dividend'&&divStatus==='Paid'?(document.getElementById('deDivPayDate').value||'').trim():'';
   const notes=(document.getElementById('deNotes').value||'').trim();
   const statusEl=document.getElementById('deStatus');
   if(!date||!type||!stock||!units||!price){statusEl.textContent='❌ Date, Type, Stock, Units and Price are required';statusEl.style.color='var(--rose)';return;}
@@ -931,7 +964,7 @@ async function submitDataEntry(){
   let netPrice='',cashImpact=0;
   if(type==='Buy'){netPrice=r4((amount+totalFees)/units);cashImpact=r2(-(amount+totalFees));}
   else if(type==='Sell'){netPrice=r4((amount-totalFees)/units);cashImpact=r2(amount-totalFees);}
-  else if(type==='Dividend'){cashImpact=r2(amount-totalFees);}
+  else if(type==='Dividend'){cashImpact=divStatus==='Declared'?0:r2(amount-totalFees);}
   else{cashImpact=r2(amount);}
   statusEl.textContent='⏳ Saving...';statusEl.style.color='var(--amber)';
   const deTab=isAdmin()?'qasim-stock':_currentUser+'-stock';
@@ -970,7 +1003,8 @@ async function submitDataEntry(){
     commission?commission.toFixed(2):'', // N: Commission
     sstComm?sstComm.toFixed(2):'',       // O: SST
     cdc?cdc.toFixed(2):'',               // P: CDC
-    qCGT,notes];                         // Q, R
+    qCGT,notes,                          // Q, R
+    divStatus,divPayDate];               // S, T
   try{
     const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:deTab,row})});
     const result=await res.json();
