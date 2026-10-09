@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.39</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.40</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1189,7 +1189,7 @@ async function autoLoad(){
     const fiFuzzy=nm=>{const n=nm.toLowerCase().replace(/\s/g,'');const i=hdrs.findIndex(h=>h.toLowerCase().replace(/\s/g,'')===n);return i>=0?i:-1;};
     const fi=nm=>{const e=fiExact(nm);return e>=0?e:fiFuzzy(nm);};
     const stripFmt=v=>(v||'').toString().replace(/,/g,'').trim();
-    const cS=fi('Stock'),cD=fi('Date'),cA=fi('Type'),cU=fi('Units'),cR=fi('Price/Share');
+    const cS=fi('Stock'),cD=fi('Date'),cA=fi('Type'),cU=fi('Units'),cR=fi('Price/Share'),cNR=fi('Net Price/Share');
     const trades=rows.slice(1)
       .filter(r=>r&&(r[cS]||'').trim()&&['buy','sell'].includes((r[cA]||'').trim().toLowerCase()))
       .map(r=>({
@@ -1197,7 +1197,7 @@ async function autoLoad(){
         date:  (r[cD]||'').trim(),
         action:(r[cA]||'').trim(),
         units: stripFmt(r[cU]),
-        rate:  stripFmt(r[cR])
+        rate:  stripFmt(cNR>=0&&(r[cNR]||'').trim()?r[cNR]:r[cR])
       }));
     // Two-pass build — same math as Trade History (order-independent)
     const hm={};
