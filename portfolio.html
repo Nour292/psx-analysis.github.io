@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.56</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.57</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1041,7 +1041,7 @@ async function submitDataEntry(){
         const ob=parseFloat((rx[cbIdx]||'0').toString().replace(/,/g,''))||0;
         rx[cbIdx]=(Math.round((ob+delta)*100)/100).toFixed(2);
       }
-      {const nc=sheetRows[0].length;sheetRows.forEach(r=>{while(r.length<nc)r.push('');});}
+      {const nc=sheetRows.reduce((m,r)=>Math.max(m,r.length),0);sheetRows.forEach(r=>{while(r.length<nc)r.push('');});}
       const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'replaceSheet',tab:deTab,rows:sheetRows})});
       const result=await res.json();
       if(result&&result.ok===false)throw new Error(result.error||'Update failed');
@@ -1293,7 +1293,7 @@ async function markDividendPaid(allIdx,payDate){
     const old=parseFloat((rx[cbCol>=0?cbCol:9]||'0').toString().replace(/,/g,''))||0;
     rx[cbCol>=0?cbCol:9]=(Math.round((old+delta)*100)/100).toFixed(2);
   }
-  {const nc=sheetRows[0].length;sheetRows.forEach(r=>{while(r.length<nc)r.push('');});}
+  {const nc=sheetRows.reduce((m,r)=>Math.max(m,r.length),0);sheetRows.forEach(r=>{while(r.length<nc)r.push('');});}
   const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'replaceSheet',tab,rows:sheetRows})});
   const result=await res.json();
   if(result&&result.ok===false)throw new Error(result.error||'Write failed');
@@ -1320,7 +1320,7 @@ async function deleteStockRow(allIdx){
       const old=parseFloat((rx[cbIdx]||'0').toString().replace(/,/g,''))||0;
       rx[cbIdx]=(Math.round((old-removedCI)*100)/100).toFixed(2);
     }
-    {const nc=sheetRows[0].length;sheetRows.forEach(r=>{while(r.length<nc)r.push('');});}
+    {const nc=sheetRows.reduce((m,r)=>Math.max(m,r.length),0);sheetRows.forEach(r=>{while(r.length<nc)r.push('');});}
     const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'replaceSheet',tab,rows:sheetRows})});
     const result=await res.json();
     if(result&&result.ok===false)throw new Error(result.error||'Write failed');
