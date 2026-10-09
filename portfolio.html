@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.55</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.56</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1203,6 +1203,9 @@ function renderQasimStock(){
   if(srch) rows=rows.filter(r=>Object.values(r).some(v=>(v||'').toLowerCase().includes(srch)));
   const all=_qasimStock;
   const isDeclDiv=r=>(r['Type']||'').toLowerCase()==='dividend'&&(r['Div Status']||'').trim().toLowerCase()==='declared';
+  const pDMs=s=>{if(!s)return 0;const d=new Date(s);if(!isNaN(d.getTime())&&d.getFullYear()>1970)return d.getTime();const m=s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);if(m){const mo={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};let yr=parseInt(m[3]);if(yr<100)yr+=2000;return new Date(yr,(mo[(m[2]||'').toLowerCase()]??0),parseInt(m[1])).getTime();}return 0;};
+  const _sbRows=[..._qasimStock].map((r,i)=>({r,i})).sort((a,b)=>pDMs(a.r['Date'])-pDMs(b.r['Date'])||a.i-b.i);
+  let _rb=0;const rBM=new Map();_sbRows.forEach(({r})=>{if(!isDeclDiv(r))_rb=Math.round((_rb+nv(r['Cash Impact']))*100)/100;rBM.set(r,_rb);});
   const effectiveBal=all.reduce((s,r)=>isDeclDiv(r)?s:s+nv(r['Cash Impact']),0);
   const tReal=all.reduce((s,r)=>s+nv(r['Realized P/L']),0);
   const tDiv=all.filter(r=>(r['Type']||'').toLowerCase()==='dividend'&&!isDeclDiv(r)).reduce((s,r)=>s+nv(r['Cash Impact']),0);
@@ -1219,6 +1222,7 @@ function renderQasimStock(){
   rows.forEach((r,i)=>{
     const type=r['Type']||'',cls=typeCls[type.toLowerCase()]||'',realPL=nv(r['Realized P/L']),ci=nv(r['Cash Impact']);
     const ds=(r['Div Status']||'').trim(),dp=(r['Div Pay Date']||'').trim(),allIdx=_qasimStock.indexOf(r);
+    const cbv=rBM.get(r)??0;
     const divBadge=type.toLowerCase()==='dividend'
       ?(ds.toLowerCase()==='paid'
         ?`<div style="margin-top:3px"><span style="font-size:10px;background:var(--emerald);color:#000;border-radius:3px;padding:1px 5px;font-weight:700">PAID</span>${dp?` <span style="font-size:10px;color:var(--text3)">${dp}</span>`:''}</div>`
@@ -1232,7 +1236,7 @@ function renderQasimStock(){
       <td class="c-gold mono">${r['Net Price/Share']||r._col5||r['Price/Share']||r._col4||'—'}</td>
       <td class="mono">${r['Amount']||'—'}</td>
       <td class="mono ${ci>=0?'c-green':'c-red'}">${r['Cash Impact']||'—'}</td>
-      <td class="c-blue mono">${r['Cash Balance']||'—'}</td>
+      <td class="${cbv<0?'c-red':'c-blue'} mono">${Math.round(cbv).toLocaleString()}</td>
       <td style="white-space:nowrap"><button onclick="openEditInDataEntry(${allIdx})" style="font-size:10px;background:var(--accent);color:#fff;border:none;border-radius:3px;padding:2px 7px;cursor:pointer;font-family:var(--font);margin-right:4px">Edit</button><button onclick="deleteStockRow(${allIdx})" style="font-size:10px;background:var(--rose);color:#fff;border:none;border-radius:3px;padding:2px 7px;cursor:pointer;font-family:var(--font)">Del</button></td>
     </tr>`;
   });
