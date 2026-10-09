@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.57</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.58</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1226,7 +1226,9 @@ function renderQasimStock(){
     const divBadge=type.toLowerCase()==='dividend'
       ?(ds.toLowerCase()==='paid'
         ?`<div style="margin-top:3px"><span style="font-size:10px;background:var(--emerald);color:#000;border-radius:3px;padding:1px 5px;font-weight:700">PAID</span>${dp?` <span style="font-size:10px;color:var(--text3)">${dp}</span>`:''}</div>`
-        :`<div style="margin-top:3px"><span style="font-size:10px;background:var(--amber);color:#000;border-radius:3px;padding:1px 5px;font-weight:700">DECLARED</span> <button onclick="showMarkPaidModal(${allIdx})" style="font-size:10px;background:transparent;border:1px solid var(--emerald);color:var(--emerald);border-radius:3px;padding:1px 5px;cursor:pointer;font-family:var(--font)">✓ Mark Paid</button></div>`)
+        :ds.toLowerCase()==='declared'
+          ?`<div style="margin-top:3px"><span style="font-size:10px;background:var(--amber);color:#000;border-radius:3px;padding:1px 5px;font-weight:700">DECLARED</span> <button onclick="showMarkPaidModal(${allIdx})" style="font-size:10px;background:transparent;border:1px solid var(--emerald);color:var(--emerald);border-radius:3px;padding:1px 5px;cursor:pointer;font-family:var(--font)">✓ Mark Paid</button></div>`
+          :'')
       :'';
     html+=`<tr class="${cls}">
       <td style="color:var(--accent);font-family:var(--mono);white-space:nowrap">${r['Date']||'—'}</td>
