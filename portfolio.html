@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.47</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.48</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -951,6 +951,7 @@ function clearDataEntry(){
   const ddf=document.getElementById('deDivFields');if(ddf)ddf.style.display='none';
   const ddpf=document.getElementById('deDivPayDateField');if(ddpf)ddpf.style.display='none';
   deDivStatusChange();
+  if(_editRowIdx!==-1){_editRowIdx=-1;const btn=document.querySelector('#pgDataEntry button[onclick="submitDataEntry()"]');if(btn)btn.textContent='✅ Save to Sheet';const lbl=document.getElementById('deTabLabel');if(lbl)lbl.textContent=isAdmin()?'qasim-stock':_currentUser+'-stock';}
 }
 async function submitDataEntry(){
   const date=(document.getElementById('deDate').value||'').trim();
@@ -1023,12 +1024,43 @@ async function submitDataEntry(){
     qCGT,notes,                          // Q, R
     divStatus,divPayDate];               // S, T
   try{
-    const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:deTab,row})});
-    const result=await res.json();
-    if(result&&result.ok===false){statusEl.textContent='❌ '+(result.error||'Save failed');statusEl.style.color='var(--rose)';return;}
-    statusEl.textContent=`✅ Saved! ${type} ${units} ${stock} @ PKR ${price}`;statusEl.style.color='var(--emerald)';
-    clearDataEntry();
-    setTimeout(()=>{statusEl.textContent='';},4000);
+    if(_editRowIdx!==-1){
+      const editIdx=_editRowIdx;
+      if(sheetRows.length<2)throw new Error('Sheet data not loaded for update');
+      const eHdrs=sheetRows[0]||[];
+      const eFi=nm=>{const i=eHdrs.indexOf(nm);return i>=0?i:eHdrs.findIndex(h=>(h||'').toLowerCase().replace(/\s/g,'')===(nm||'').toLowerCase().replace(/\s/g,''));};
+      const eCiCol=eFi('Cash Impact'),eCbCol=eFi('Cash Balance');
+      const dataRowIdx=editIdx+1;
+      if(dataRowIdx>=sheetRows.length)throw new Error('Row not found in sheet');
+      const oldCI=parseFloat((sheetRows[dataRowIdx][eCiCol>=0?eCiCol:8]||'0').toString().replace(/,/g,''))||0;
+      const oldCB=parseFloat((sheetRows[dataRowIdx][eCbCol>=0?eCbCol:9]||'0').toString().replace(/,/g,''))||0;
+      const delta=r2(cashImpact-oldCI);
+      sheetRows[dataRowIdx]=row;
+      const cbIdx=eCbCol>=0?eCbCol:9;
+      sheetRows[dataRowIdx][cbIdx]=(Math.round((oldCB+delta)*100)/100).toFixed(2);
+      for(let i=dataRowIdx+1;i<sheetRows.length;i++){
+        const rx=sheetRows[i];while(rx.length<=cbIdx)rx.push('');
+        const ob=parseFloat((rx[cbIdx]||'0').toString().replace(/,/g,''))||0;
+        rx[cbIdx]=(Math.round((ob+delta)*100)/100).toFixed(2);
+      }
+      const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'replaceSheet',tab:deTab,rows:sheetRows})});
+      const result=await res.json();
+      if(result&&result.ok===false)throw new Error(result.error||'Update failed');
+      statusEl.textContent=`✅ Updated! ${type} ${stock}`;statusEl.style.color='var(--emerald)';
+      _editRowIdx=-1;
+      const btn=document.querySelector('#pgDataEntry button[onclick="submitDataEntry()"]');
+      if(btn)btn.textContent='✅ Save to Sheet';
+      const lbl=document.getElementById('deTabLabel');if(lbl)lbl.textContent=isAdmin()?'qasim-stock':_currentUser+'-stock';
+      clearDataEntry();
+      setTimeout(()=>{statusEl.textContent='';loadQasimStock();},1500);
+    }else{
+      const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:deTab,row})});
+      const result=await res.json();
+      if(result&&result.ok===false){statusEl.textContent='❌ '+(result.error||'Save failed');statusEl.style.color='var(--rose)';return;}
+      statusEl.textContent=`✅ Saved! ${type} ${units} ${stock} @ PKR ${price}`;statusEl.style.color='var(--emerald)';
+      clearDataEntry();
+      setTimeout(()=>{statusEl.textContent='';},4000);
+    }
   }catch(err){statusEl.textContent='❌ '+err.message;statusEl.style.color='var(--rose)';}
 }
 function setStatus(msg,color){const el=document.getElementById('bsStatus');el.textContent=msg;el.style.color=color;}
@@ -1187,7 +1219,7 @@ function renderQasimStock(){
   if(!rows.length){document.getElementById('qsTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No matching transactions</p>';return;}
   const typeCls={buy:'buy-r',sell:'sell-r',dividend:'div-r',deposit:'dep-r'};
   const typeColor={Buy:'var(--rose)',Sell:'var(--emerald)',Dividend:'var(--amber)',Deposit:'var(--accent)'};
-  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>#</th><th>Date</th><th>Type</th><th>Stock</th><th>Units</th><th>Price/Share</th><th>Amount</th><th>Fees/Tax</th><th>Cash Impact</th><th>Cash Balance</th><th>Realized P/L</th><th>CGT</th><th>Notes</th></tr>`;
+  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Date</th><th>Type</th><th>Stock</th><th>Units</th><th>Net Price/Share</th><th>Amount</th><th>Cash Impact</th><th>Cash Balance</th><th></th><th>Realized P/L</th><th>CGT</th><th>Notes</th></tr>`;
   rows.forEach((r,i)=>{
     const type=r['Type']||'',cls=typeCls[type.toLowerCase()]||'',realPL=nv(r['Realized P/L']),ci=nv(r['Cash Impact']);
     const ds=(r['Div Status']||'').trim(),dp=(r['Div Pay Date']||'').trim(),allIdx=_qasimStock.indexOf(r);
@@ -1198,16 +1230,16 @@ function renderQasimStock(){
           ?`<div style="margin-top:3px"><span style="font-size:10px;background:var(--emerald);color:#000;border-radius:3px;padding:1px 5px;font-weight:700">PAID</span>${dp?` <span style="font-size:10px;color:var(--text3)">${dp}</span>`:''}</div>`
           :''))
       :'';
-    html+=`<tr class="${cls}"><td class="c-gray">${i+1}</td>
+    html+=`<tr class="${cls}">
       <td style="color:var(--accent);font-family:var(--mono);white-space:nowrap">${r['Date']||'—'}</td>
       <td style="font-weight:700;white-space:nowrap;color:${typeColor[type]||'var(--text2)'}">${type||'—'}${divBadge}</td>
       <td class="sym">${r['Stock']||'—'}</td>
       <td class="mono">${r['Units']||'—'}</td>
-      <td class="c-gold mono">${r['Price/Share']||'—'}</td>
+      <td class="c-gold mono">${r['Net Price/Share']||r['Price/Share']||'—'}</td>
       <td class="mono">${r['Amount']||'—'}</td>
-      <td class="c-red mono">${r['Fees/Tax']||'—'}</td>
       <td class="mono ${ci>=0?'c-green':'c-red'}">${r['Cash Impact']||'—'}</td>
       <td class="c-blue mono">${r['Cash Balance']||'—'}</td>
+      <td style="white-space:nowrap"><button onclick="openEditInDataEntry(${allIdx})" style="font-size:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:3px;padding:2px 6px;cursor:pointer;font-family:var(--font);margin-right:4px">✏️</button><button onclick="deleteStockRow(${allIdx})" style="font-size:10px;background:transparent;border:1px solid var(--rose);color:var(--rose);border-radius:3px;padding:2px 6px;cursor:pointer;font-family:var(--font)">🗑</button></td>
       <td class="mono ${realPL>0?'c-green':realPL<0?'c-red':'c-gray'}">${r['Realized P/L']||'—'}</td>
       <td class="c-red mono">${r['CGT on Profit (Rs)']||'—'}</td>
       <td style="color:var(--text3);font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r['Notes']||'').replace(/"/g,'&quot;')}">${r['Notes']||'—'}</td>
@@ -1270,6 +1302,60 @@ async function markDividendPaid(allIdx,payDate){
   const result=await res.json();
   if(result&&result.ok===false)throw new Error(result.error||'Write failed');
   await loadQasimStock();
+}
+async function deleteStockRow(allIdx){
+  const r=_qasimStock[allIdx]||{};
+  if(!confirm(`Delete ${r['Type']||'row'} — ${r['Date']||'?'}${r['Stock']?' · '+r['Stock']:''}?\nThis cannot be undone.`))return;
+  const tab=isAdmin()?'qasim-stock':_currentUser+'-stock';
+  try{
+    const resp=await fetch(gsUrl(tab));
+    if(!resp.ok)throw new Error('Failed to read sheet');
+    const pj=await resp.json();const sheetRows=pj.values||[];
+    if(sheetRows.length<2)throw new Error('Sheet empty');
+    const hdrs=sheetRows[0]||[];
+    const fi=nm=>{const i=hdrs.indexOf(nm);return i>=0?i:hdrs.findIndex(h=>(h||'').toLowerCase().replace(/\s/g,'')===(nm||'').toLowerCase().replace(/\s/g,''));};
+    const ciCol=fi('Cash Impact'),cbCol=fi('Cash Balance');
+    const dataRowIdx=allIdx+1;
+    if(dataRowIdx>=sheetRows.length)throw new Error('Row not found');
+    const removedCI=parseFloat((sheetRows[dataRowIdx][ciCol>=0?ciCol:8]||'0').toString().replace(/,/g,''))||0;
+    sheetRows.splice(dataRowIdx,1);
+    for(let i=dataRowIdx;i<sheetRows.length;i++){
+      const rx=sheetRows[i];const cbIdx=cbCol>=0?cbCol:9;while(rx.length<=cbIdx)rx.push('');
+      const old=parseFloat((rx[cbIdx]||'0').toString().replace(/,/g,''))||0;
+      rx[cbIdx]=(Math.round((old-removedCI)*100)/100).toFixed(2);
+    }
+    const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'replaceSheet',tab,rows:sheetRows})});
+    const result=await res.json();
+    if(result&&result.ok===false)throw new Error(result.error||'Write failed');
+    await loadQasimStock();
+  }catch(e){alert('Delete failed: '+e.message);}
+}
+let _editRowIdx=-1;
+function openEditInDataEntry(allIdx){
+  _editRowIdx=allIdx;
+  const r=_qasimStock[allIdx]||{};
+  closeAllOverlays();
+  document.getElementById('pgDataEntry').classList.add('open');
+  document.getElementById('navDataEntry').classList.add('active');
+  _activeOverlay='pgDataEntry';
+  const lbl=document.getElementById('deTabLabel');
+  if(lbl)lbl.textContent=(isAdmin()?'qasim-stock':_currentUser+'-stock')+' — EDIT';
+  document.getElementById('deDate').value=r['Date']||'';
+  document.getElementById('deType').value=r['Type']||'Buy';
+  document.getElementById('deStock').value=(r['Stock']||'').toUpperCase();
+  document.getElementById('deUnits').value=r['Units']||'';
+  document.getElementById('dePrice').value=r['Price/Share']||'';
+  document.getElementById('deFees').value=r['Fees/Tax']||'';
+  document.getElementById('deNotes').value=r['Notes']||'';
+  if((r['Type']||'')==='Dividend'){
+    const dds=document.getElementById('deDivStatus');if(dds)dds.value=r['Div Status']||'Declared';
+    const ddp=document.getElementById('deDivPayDate');if(ddp)ddp.value=r['Div Pay Date']||'';
+    deDivStatusChange();
+  }
+  const btn=document.querySelector('#pgDataEntry button[onclick="submitDataEntry()"]');
+  if(btn)btn.textContent='✏️ Update Entry';
+  document.getElementById('deStatus').textContent='';
+  deUpdateSummary();
 }
 
 function buildPortfolioFromLedger(rows,hdrs){
