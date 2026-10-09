@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.42</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.43</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -548,6 +548,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button onclick="resetQsFilters()" style="background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 14px;font-size:12px;cursor:pointer;font-family:var(--font)">✕ Reset</button>
     </div>
     <div id="qsTable"><p style="color:var(--text3);padding:20px;text-align:center">Loading...</p></div>
+  </div>
+</div>
+
+<!-- MARK AS PAID MODAL -->
+<div id="mpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9998;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--amber);border-radius:var(--radius);padding:24px 28px;width:340px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    <div style="font-size:14px;font-weight:700;color:var(--amber);margin-bottom:4px">💰 Mark Dividend as Paid</div>
+    <div id="mpInfo" style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5">—</div>
+    <div class="modal-field">
+      <label>Pay Date <span style="font-size:10px;color:var(--text3)">(DD-Mon-YY)</span></label>
+      <input type="text" id="mpPayDate" placeholder="e.g. 15-Oct-26" style="font-family:var(--mono)">
+    </div>
+    <div id="mpStatus" style="font-size:12px;min-height:18px;margin-top:6px"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button onclick="mpConfirm()" style="flex:1;background:var(--amber);color:#000;font-weight:700;border:none;border-radius:var(--radius-sm);padding:10px 0;cursor:pointer;font-size:13px">✓ Confirm Paid</button>
+      <button onclick="mpClose()" style="flex:1;background:var(--bg2);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 0;cursor:pointer;font-size:13px">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -1165,9 +1182,17 @@ function renderQasimStock(){
   let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>#</th><th>Date</th><th>Type</th><th>Stock</th><th>Units</th><th>Price/Share</th><th>Amount</th><th>Fees/Tax</th><th>Cash Impact</th><th>Cash Balance</th><th>Realized P/L</th><th>CGT</th><th>Notes</th></tr>`;
   rows.forEach((r,i)=>{
     const type=r['Type']||'',cls=typeCls[type.toLowerCase()]||'',realPL=nv(r['Realized P/L']),ci=nv(r['Cash Impact']);
+    const ds=(r['Div Status']||'').trim(),dp=(r['Div Pay Date']||'').trim(),allIdx=_qasimStock.indexOf(r);
+    const divBadge=type.toLowerCase()==='dividend'
+      ?(ds.toLowerCase()==='declared'
+        ?`<div style="margin-top:3px"><span style="font-size:10px;background:var(--amber);color:#000;border-radius:3px;padding:1px 5px;font-weight:700">DECLARED</span> <button onclick="showMarkPaidModal(${allIdx})" style="font-size:10px;background:transparent;border:1px solid var(--emerald);color:var(--emerald);border-radius:3px;padding:1px 5px;cursor:pointer;font-family:var(--font)">✓ Mark Paid</button></div>`
+        :(ds.toLowerCase()==='paid'
+          ?`<div style="margin-top:3px"><span style="font-size:10px;background:var(--emerald);color:#000;border-radius:3px;padding:1px 5px;font-weight:700">PAID</span>${dp?` <span style="font-size:10px;color:var(--text3)">${dp}</span>`:''}</div>`
+          :''))
+      :'';
     html+=`<tr class="${cls}"><td class="c-gray">${i+1}</td>
       <td style="color:var(--accent);font-family:var(--mono);white-space:nowrap">${r['Date']||'—'}</td>
-      <td style="font-weight:700;white-space:nowrap;color:${typeColor[type]||'var(--text2)'}">${type||'—'}</td>
+      <td style="font-weight:700;white-space:nowrap;color:${typeColor[type]||'var(--text2)'}">${type||'—'}${divBadge}</td>
       <td class="sym">${r['Stock']||'—'}</td>
       <td class="mono">${r['Units']||'—'}</td>
       <td class="c-gold mono">${r['Price/Share']||'—'}</td>
@@ -1182,6 +1207,61 @@ function renderQasimStock(){
   });
   html+=`</table></div>`;
   document.getElementById('qsTable').innerHTML=html;
+}
+
+let _mpRowIdx=-1;
+function showMarkPaidModal(allIdx){
+  _mpRowIdx=allIdx;
+  const r=_qasimStock[allIdx]||{};
+  const net=Math.round(nv(r['Amount'])*0.85).toLocaleString();
+  document.getElementById('mpInfo').textContent=`${r['Stock']||'?'}  ·  ${r['Date']||'?'}  ·  Gross PKR ${r['Amount']||'?'}  →  Net PKR ${net}`;
+  document.getElementById('mpPayDate').value='';
+  document.getElementById('mpStatus').textContent='';
+  const m=document.getElementById('mpModal');m.style.display='flex';
+  setTimeout(()=>document.getElementById('mpPayDate').focus(),80);
+}
+function mpClose(){document.getElementById('mpModal').style.display='none';}
+async function mpConfirm(){
+  const payDate=(document.getElementById('mpPayDate').value||'').trim();
+  if(!payDate){const st=document.getElementById('mpStatus');st.textContent='❌ Pay Date is required';st.style.color='var(--rose)';return;}
+  const st=document.getElementById('mpStatus');
+  st.textContent='⏳ Updating sheet...';st.style.color='var(--amber)';
+  try{
+    await markDividendPaid(_mpRowIdx,payDate);
+    st.textContent='✅ Done!';st.style.color='var(--emerald)';
+    setTimeout(mpClose,1200);
+  }catch(e){st.textContent='❌ '+e.message;st.style.color='var(--rose)';}
+}
+async function markDividendPaid(allIdx,payDate){
+  const tab=isAdmin()?'qasim-stock':_currentUser+'-stock';
+  const resp=await fetch(gsUrl(tab));
+  if(!resp.ok)throw new Error('Failed to read sheet');
+  const pj=await resp.json();const sheetRows=pj.values||[];
+  if(sheetRows.length<2)throw new Error('Sheet empty');
+  const hdrs=sheetRows[0]||[];
+  const fi=nm=>{const i=hdrs.indexOf(nm);return i>=0?i:hdrs.findIndex(h=>(h||'').toLowerCase().replace(/\s/g,'')===(nm||'').toLowerCase().replace(/\s/g,''));};
+  const ciCol=fi('Cash Impact'),cbCol=fi('Cash Balance'),dsCol=fi('Div Status'),dpCol=fi('Div Pay Date'),amtCol=fi('Amount'),feeCol=fi('Fees/Tax');
+  const dataRowIdx=allIdx+1;
+  if(dataRowIdx>=sheetRows.length)throw new Error('Row index out of range');
+  const row=sheetRows[dataRowIdx];
+  const amount=parseFloat((row[amtCol>=0?amtCol:6]||'0').toString().replace(/,/g,''))||0;
+  const fees=parseFloat((row[feeCol>=0?feeCol:7]||'0').toString().replace(/,/g,''))||0;
+  const newCI=Math.round((amount-fees)*100)/100;
+  const oldCI=parseFloat((row[ciCol>=0?ciCol:8]||'0').toString().replace(/,/g,''))||0;
+  const delta=newCI-oldCI;
+  while(row.length<=Math.max(dsCol>=0?dsCol:18,dpCol>=0?dpCol:19))row.push('');
+  row[ciCol>=0?ciCol:8]=newCI.toFixed(2);
+  row[dsCol>=0?dsCol:18]='Paid';
+  row[dpCol>=0?dpCol:19]=payDate;
+  for(let i=dataRowIdx;i<sheetRows.length;i++){
+    const rx=sheetRows[i];while(rx.length<=(cbCol>=0?cbCol:9))rx.push('');
+    const old=parseFloat((rx[cbCol>=0?cbCol:9]||'0').toString().replace(/,/g,''))||0;
+    rx[cbCol>=0?cbCol:9]=(Math.round((old+delta)*100)/100).toFixed(2);
+  }
+  const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'replaceSheet',tab,rows:sheetRows})});
+  const result=await res.json();
+  if(result&&result.ok===false)throw new Error(result.error||'Write failed');
+  await loadQasimStock();
 }
 
 function buildPortfolioFromLedger(rows,hdrs){
