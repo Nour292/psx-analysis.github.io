@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.49</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.50</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1219,7 +1219,7 @@ function renderQasimStock(){
   if(!rows.length){document.getElementById('qsTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No matching transactions</p>';return;}
   const typeCls={buy:'buy-r',sell:'sell-r',dividend:'div-r',deposit:'dep-r'};
   const typeColor={Buy:'var(--rose)',Sell:'var(--emerald)',Dividend:'var(--amber)',Deposit:'var(--accent)'};
-  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Date</th><th>Type</th><th>Stock</th><th>Units</th><th>Net Price/Share</th><th>Amount</th><th>Cash Impact</th><th>Cash Balance</th><th></th><th>Realized P/L</th><th>CGT</th><th>Notes</th></tr>`;
+  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Date</th><th>Type</th><th>Stock</th><th>Units</th><th>Net Price/Share</th><th>Amount</th><th>Cash Impact</th><th>Cash Balance</th><th></th></tr>`;
   rows.forEach((r,i)=>{
     const type=r['Type']||'',cls=typeCls[type.toLowerCase()]||'',realPL=nv(r['Realized P/L']),ci=nv(r['Cash Impact']);
     const ds=(r['Div Status']||'').trim(),dp=(r['Div Pay Date']||'').trim(),allIdx=_qasimStock.indexOf(r);
@@ -1240,9 +1240,6 @@ function renderQasimStock(){
       <td class="mono ${ci>=0?'c-green':'c-red'}">${r['Cash Impact']||'—'}</td>
       <td class="c-blue mono">${r['Cash Balance']||'—'}</td>
       <td style="white-space:nowrap"><button onclick="openEditInDataEntry(${allIdx})" style="font-size:10px;background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:3px;padding:2px 6px;cursor:pointer;font-family:var(--font);margin-right:4px">✏️</button><button onclick="deleteStockRow(${allIdx})" style="font-size:10px;background:transparent;border:1px solid var(--rose);color:var(--rose);border-radius:3px;padding:2px 6px;cursor:pointer;font-family:var(--font)">🗑</button></td>
-      <td class="mono ${realPL>0?'c-green':realPL<0?'c-red':'c-gray'}">${r['Realized P/L']||'—'}</td>
-      <td class="c-red mono">${r['CGT on Profit (Rs)']||'—'}</td>
-      <td style="color:var(--text3);font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r['Notes']||'').replace(/"/g,'&quot;')}">${r['Notes']||'—'}</td>
     </tr>`;
   });
   html+=`</table></div>`;
