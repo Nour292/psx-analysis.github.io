@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.41</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.42</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -971,7 +971,7 @@ async function submitDataEntry(){
   let prevBalance=0,sheetRows=[];
   try{
     const prev=await fetch(gsUrl(deTab));
-    if(prev.ok){const pj=await prev.json();sheetRows=(pj.values||[]);if(sheetRows.length>1){prevBalance=parseFloat(((sheetRows[sheetRows.length-1][9])||'0').toString().replace(/,/g,''))||0;}}
+    if(prev.ok){const pj=await prev.json();sheetRows=(pj.values||[]);if(sheetRows.length>1){const sh=sheetRows[0]||[];const ciCol=sh.indexOf('Cash Impact');const dsCol=sh.indexOf('Div Status');prevBalance=sheetRows.slice(1).reduce((s,r)=>{const rt=(r[1]||'').trim().toLowerCase();const ds=dsCol>=0?(r[dsCol]||'').trim().toLowerCase():'';if(rt==='dividend'&&ds==='declared')return s;return s+(parseFloat((r[ciCol>=0?ciCol:8]||'0').toString().replace(/,/g,''))||0);},0);}}
   }catch(e){}
   const newBal=r2(prevBalance+cashImpact);
   let kAvgCost='',lCostSold='',mRealPL='',qCGT='';
@@ -1148,11 +1148,13 @@ function renderQasimStock(){
   if(yearF) rows=rows.filter(r=>(r['Date']||'').includes(yearF));
   if(srch) rows=rows.filter(r=>Object.values(r).some(v=>(v||'').toLowerCase().includes(srch)));
   const all=_qasimStock;
-  const lastBal=all.length?nv(all[all.length-1]['Cash Balance']):0;
+  const isDeclDiv=r=>(r['Type']||'').toLowerCase()==='dividend'&&(r['Div Status']||'').trim().toLowerCase()==='declared';
+  const effectiveBal=all.reduce((s,r)=>isDeclDiv(r)?s:s+nv(r['Cash Impact']),0);
   const tReal=all.reduce((s,r)=>s+nv(r['Realized P/L']),0);
-  const tDiv=all.filter(r=>(r['Type']||'').toLowerCase()==='dividend').reduce((s,r)=>s+nv(r['Cash Impact']),0);
+  const tDiv=all.filter(r=>(r['Type']||'').toLowerCase()==='dividend'&&!isDeclDiv(r)).reduce((s,r)=>s+nv(r['Cash Impact']),0);
   const tCGT=all.reduce((s,r)=>s+nv(r['CGT on Profit (Rs)']),0);
-  document.getElementById('qsCashBal').textContent=Math.round(lastBal).toLocaleString();
+  CAPITAL.freeCash=effectiveBal;
+  document.getElementById('qsCashBal').textContent=Math.round(effectiveBal).toLocaleString();
   const qsPL=document.getElementById('qsRealPL');if(qsPL){qsPL.textContent=(tReal<0?'-':'')+Math.round(Math.abs(tReal)).toLocaleString();qsPL.style.color=tReal>=0?'var(--emerald)':'var(--rose)';}
   document.getElementById('qsTotalDiv').textContent=Math.round(Math.abs(tDiv)).toLocaleString();
   document.getElementById('qsTotalCGT').textContent=Math.round(Math.abs(tCGT)).toLocaleString();
@@ -1187,13 +1189,13 @@ function buildPortfolioFromLedger(rows,hdrs){
   const r2=n=>Math.round(n*100)/100;
   const strip=v=>parseFloat((v||'').toString().replace(/,/g,''))||0;
   const fi=nm=>{let i=hdrs.indexOf(nm);if(i>=0)return i;const n=nm.toLowerCase().replace(/\s/g,'');return hdrs.findIndex(h=>h.toLowerCase().replace(/\s/g,'')===n);};
-  const fType=fi('Type'),fStock=fi('Stock'),fM=fi('Realized P/L'),fCI=fi('Cash Impact');
+  const fType=fi('Type'),fStock=fi('Stock'),fM=fi('Realized P/L'),fCI=fi('Cash Impact'),fDS=fi('Div Status');
   const realPL={},netDiv={};
   rows.slice(1).forEach(r=>{
     const sym=(r[fStock]||'').trim().toUpperCase(),type=(r[fType]||'').trim().toLowerCase();
     if(!sym)return;
     if(type==='sell')realPL[sym]=(realPL[sym]||0)+strip(r[fM]);
-    if(type==='dividend')netDiv[sym]=(netDiv[sym]||0)+strip(r[fCI]);
+    if(type==='dividend'&&(fDS<0||(r[fDS]||'').trim().toLowerCase()!=='declared'))netDiv[sym]=(netDiv[sym]||0)+strip(r[fCI]);
   });
   const totalCost=_holdings.reduce((s,h)=>s+h.qty*h.avg,0);
   _qasimPortfolio=_holdings.map(h=>{
