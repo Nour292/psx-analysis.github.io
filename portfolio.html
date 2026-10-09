@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.46</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.47</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1056,6 +1056,7 @@ async function loadCashFlow(){try{const res=await fetch(gsUrl(isAdmin()?'qasim-s
       const iDS2=iDS>=0?iDS:hdrs.findIndex(h=>(h||'').toLowerCase().replace(/\s/g,'')==='divstatus');
       const derived=raw.reduce((s,r)=>{const rt=(r[iType]||'').trim().toLowerCase(),ds=iDS2>=0?(r[iDS2]||'').trim().toLowerCase():'';return(rt==='dividend'&&ds==='declared')?s:s+(parseFloat((r[iCI]||'0').replace(/[^0-9.\-]/g,''))||0);},0);
       {CAPITAL.freeCash=derived;CAPITAL.cashAsOf=(raw[raw.length-1]?raw[raw.length-1][iDate]||'':'');const el=document.getElementById('kFreeCash');if(el)el.textContent=Math.round(derived).toLocaleString();const el2=document.getElementById('qpFreeCash');if(el2)el2.textContent=Math.round(derived).toLocaleString();}
+      window._declaredDivBySym={};raw.forEach(r=>{const rt=(r[iType]||'').trim().toLowerCase(),ds=iDS2>=0?(r[iDS2]||'').trim().toLowerCase():'';if(rt==='dividend'&&ds==='declared'){const sym=(r[iStock]||'').trim().toUpperCase(),ci=parseFloat((r[iCI]||'0').replace(/[^0-9.\-]/g,''))||0;if(sym)window._declaredDivBySym[sym]=(window._declaredDivBySym[sym]||0)+ci;}});
       if(!isAdmin()){
         const fe=_cashFlow[0];
         let totDep=parseFloat(fe&&fe.OpeningCash||0),totWdr=0;
@@ -1077,7 +1078,7 @@ async function deleteDividend(sortedIdx){if(!confirm('Delete this dividend recor
 async function deleteCashFlow(origIdx){if(!confirm('Delete this cash flow entry?\nCannot be undone.'))return;const entry=_cashFlow[origIdx];if(!entry){alert('Entry not found.');return;}_cashFlow=_cashFlow.filter((_,i)=>i!==origIdx);const allRows=[CF_HDRS,..._cashFlow.map(r=>CF_HDRS.map(h=>r[h]||''))];try{const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'replaceSheet',tab:gsTabFor('Cashflow'),rows:allRows})});const result=await res.json();if(!result.ok){alert('Delete failed: '+(result.error||'unknown'));return;}if(_cashFlow.length>0){CAPITAL.freeCash=parseFloat(_cashFlow[_cashFlow.length-1].ClosingCash||0);const el=document.getElementById('kFreeCash');if(el)el.textContent='PKR '+Math.round(CAPITAL.freeCash).toLocaleString();}renderCashFlow();}catch(e){alert('Error: '+e.message);}}
 
 // ── qasim-Portfolio ──
-let _qasimPortfolio=[];
+let _qasimPortfolio=[],_qasimPortfolioFromSheet=false;
 async function loadQasimPortfolio(){
   const status=document.getElementById('qpStatus');
   if(status)status.textContent='⏳ Loading...';
@@ -1089,6 +1090,7 @@ async function loadQasimPortfolio(){
     if(rows.length<2){document.getElementById('qpTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No data found</p>';if(status)status.textContent='';return;}
     const hdrs=rows[0].map(h=>(h||'').trim());
     _qasimPortfolio=rows.slice(1).filter(r=>(r[0]||'').trim()).map(r=>{const obj={};hdrs.forEach((h,i)=>obj[h]=(r[i]||'').toString().trim());if(!obj['Cost of Holdings']&&obj['Cost Value'])obj['Cost of Holdings']=obj['Cost Value'];if(!obj['Net Dividends']&&obj['Dividends'])obj['Net Dividends']=obj['Dividends'];return obj;});
+    _qasimPortfolioFromSheet=true;
     renderQasimPortfolio();
     if(status)status.textContent='';
   }catch(e){document.getElementById('qpTable').innerHTML=`<p style="color:var(--rose);padding:20px;text-align:center">Error: ${e.message}</p>`;if(status)status.textContent='';}
@@ -1097,8 +1099,9 @@ function nv(v){return parseFloat((v||'0').toString().replace(/[^0-9.\-]/g,''))||
 function renderQasimPortfolio(){
   const rows=_qasimPortfolio;
   if(!rows.length){document.getElementById('qpTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No holdings data</p>';return;}
+  const _decl=_qasimPortfolioFromSheet?(window._declaredDivBySym||{}):{};
   let tCost=0,tMV=0,tUnreal=0,tReal=0,tDiv=0,tReturn=0;
-  rows.forEach(r=>{tCost+=nv(r['Cost of Holdings']);tMV+=nv(r['Market Value']);tUnreal+=nv(r['Unrealized P/L']);tReal+=nv(r['Realized P/L']);tDiv+=nv(r['Net Dividends']);tReturn+=nv(r['Total Return']);});
+  rows.forEach(r=>{const da=_decl[(r['Stock']||'').trim().toUpperCase()]||0;tCost+=nv(r['Cost of Holdings']);tMV+=nv(r['Market Value']);tUnreal+=nv(r['Unrealized P/L']);tReal+=nv(r['Realized P/L']);tDiv+=nv(r['Net Dividends'])-da;tReturn+=nv(r['Total Return'])-da;});
   const fmt=v=>Math.round(Math.abs(v)).toLocaleString();
   const plColor=v=>v>=0?'var(--emerald)':'var(--rose)';
   const setEl=(id,val,forceColor)=>{const e=document.getElementById(id);if(!e)return;e.textContent=(val<0?'-':'')+fmt(val);e.style.color=forceColor||plColor(val);};
@@ -1108,7 +1111,9 @@ function renderQasimPortfolio(){
   setEl('qpNetDiv',tDiv,'var(--amber)');
   let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost of Holdings</th><th>Current Price</th><th>Market Value</th><th>Unrealized P/L</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
   rows.forEach((r,i)=>{
-    const unreal=nv(r['Unrealized P/L']),real=nv(r['Realized P/L']),tot=nv(r['Total Return']);
+    const da=_decl[(r['Stock']||'').trim().toUpperCase()]||0;
+    const unreal=nv(r['Unrealized P/L']),real=nv(r['Realized P/L']),div=nv(r['Net Dividends'])-da,tot=nv(r['Total Return'])-da;
+    const fmt2=v=>(v<0?'-':'')+Math.round(Math.abs(v)).toLocaleString();
     html+=`<tr>
       <td class="sym">${r['Stock']||'—'}</td>
       <td class="mono">${r['Units']||'—'}</td><td class="c-gold mono">${r['Avg Cost']||'—'}</td>
@@ -1116,8 +1121,8 @@ function renderQasimPortfolio(){
       <td class="mono">${r['Market Value']||'—'}</td>
       <td class="mono ${unreal>=0?'c-green':'c-red'}">${r['Unrealized P/L']||'—'}</td>
       <td class="mono ${real>=0?'c-green':'c-red'}">${r['Realized P/L']||'—'}</td>
-      <td class="c-gold mono">${r['Net Dividends']||'—'}</td>
-      <td class="mono ${tot>=0?'c-green':'c-red'}">${r['Total Return']||'—'}</td></tr>`;
+      <td class="c-gold mono">${div>0?Math.round(div).toLocaleString():'—'}</td>
+      <td class="mono ${tot>=0?'c-green':'c-red'}">${fmt2(tot)}</td></tr>`;
   });
   html+=`<tr class="total-r"><td colspan="3" class="c-gray">TOTAL</td>
     <td class="mono">${fmt(tCost)}</td><td></td><td class="mono">${fmt(tMV)}</td>
@@ -1269,6 +1274,7 @@ async function markDividendPaid(allIdx,payDate){
 
 function buildPortfolioFromLedger(rows,hdrs){
   if(_qasimPortfolio.length||!_holdings.length)return;
+  _qasimPortfolioFromSheet=false;
   const r2=n=>Math.round(n*100)/100;
   const strip=v=>parseFloat((v||'').toString().replace(/,/g,''))||0;
   const fi=nm=>{let i=hdrs.indexOf(nm);if(i>=0)return i;const n=nm.toLowerCase().replace(/\s/g,'');return hdrs.findIndex(h=>h.toLowerCase().replace(/\s/g,'')===n);};
