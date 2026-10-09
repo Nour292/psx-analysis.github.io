@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.45</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.46</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -988,7 +988,7 @@ async function submitDataEntry(){
   let prevBalance=0,sheetRows=[];
   try{
     const prev=await fetch(gsUrl(deTab));
-    if(prev.ok){const pj=await prev.json();sheetRows=(pj.values||[]);if(sheetRows.length>1){const sh=sheetRows[0]||[];const cbCol=sh.indexOf('Cash Balance');prevBalance=parseFloat(((sheetRows[sheetRows.length-1][cbCol>=0?cbCol:9])||'0').toString().replace(/,/g,''))||0;}}
+    if(prev.ok){const pj=await prev.json();sheetRows=(pj.values||[]);if(sheetRows.length>1){const sh=sheetRows[0]||[];const ciCol=sh.indexOf('Cash Impact'),dsCol=sh.findIndex(h=>(h||'').toLowerCase().replace(/\s/g,'')==='divstatus');prevBalance=sheetRows.slice(1).reduce((s,r)=>{const rt=(r[1]||'').trim().toLowerCase(),ds=dsCol>=0?(r[dsCol]||'').trim().toLowerCase():'';if(rt==='dividend'&&ds==='declared')return s;return s+(parseFloat((r[ciCol>=0?ciCol:8]||'0').toString().replace(/,/g,''))||0);},0);}}
   }catch(e){}
   const newBal=r2(prevBalance+cashImpact);
   let kAvgCost='',lCostSold='',mRealPL='',qCGT='';
@@ -1053,8 +1053,9 @@ function toggleCfForm(){const f=document.getElementById('cfForm'),isOpen=f.class
 function cfTypeChanged(){const type=document.getElementById('cfType').value,label=document.getElementById('cfAmountLabel'),amtEl=document.getElementById('cfAmount'),clsEl=document.getElementById('cfClose');if(type==='Trading'){amtEl.value='';amtEl.disabled=true;amtEl.placeholder='N/A for Trading';amtEl.style.opacity='0.4';label.textContent='Amount';clsEl.readOnly=false;clsEl.placeholder='e.g. 394,210';}else{amtEl.disabled=false;amtEl.style.opacity='1';amtEl.placeholder='e.g. 50,000';clsEl.readOnly=true;clsEl.placeholder='Auto-calculated';if(type==='Deposit'){label.textContent='⬇️ Deposit Amount';}if(type==='Withdrawal'){label.textContent='⬆️ Withdrawal Amount';}if(type==='Dividend'){label.textContent='💰 Dividend Amount';}if(type==='Mixed'){label.textContent='🔀 Net Amount (+/-)';};}cfDayCalc();}
 function cfDayCalc(){const open=parseFloat(document.getElementById('cfOpen').value)||0,type=document.getElementById('cfType').value,box=document.getElementById('cfCalcBox'),amount=parseFloat(document.getElementById('cfAmount').value)||0;let close;if(type==='Trading'){close=parseFloat(document.getElementById('cfClose').value)||0;if(!open||!close){box.style.display='none';return;}}else{if(!open||!amount){box.style.display='none';return;}close=type==='Withdrawal'?open-amount:open+amount;document.getElementById('cfClose').value=Math.round(close);}const net=close-open,netClr=net>=0?'var(--emerald)':'var(--rose)';box.style.display='block';document.getElementById('cfNetDisp').textContent=(net>=0?'+':'')+'PKR '+Math.round(Math.abs(net)).toLocaleString();document.getElementById('cfNetDisp').style.color=netClr;document.getElementById('cfFeesDisp').textContent='—';document.getElementById('cfCloseDisp').textContent='PKR '+Math.round(close).toLocaleString();document.getElementById('cfFeeNote').textContent=type==='Trading'?'Fees included in closing cash':type==='Withdrawal'?`New balance: PKR ${Math.round(open).toLocaleString()} \u2212 ${Math.round(amount).toLocaleString()} = ${Math.round(close).toLocaleString()}`:`New balance: PKR ${Math.round(open).toLocaleString()} + ${Math.round(amount).toLocaleString()} = ${Math.round(close).toLocaleString()}`;}
 async function loadCashFlow(){try{const res=await fetch(gsUrl(isAdmin()?'qasim-stock':_currentUser+'-stock'));if(!res.ok){_cashFlow=[];renderCashFlow();return;}const json=await res.json(),rows=json.values||[];if(rows.length<2){_cashFlow=[];renderCashFlow();return;}const hdrs=rows[0].map(h=>h.trim());const fi=nm=>hdrs.indexOf(nm);const iDate=fi('Date'),iType=fi('Type'),iStock=fi('Stock'),iCI=fi('Cash Impact'),iCB=fi('Cash Balance'),iFees=fi('Fees/Tax'),iNotes=fi('Notes'),iDS=fi('Div Status');const raw=rows.slice(1).filter(r=>(r[iDate]||'').trim());_cashFlow=raw.map((r,i)=>{const prev=i>0?raw[i-1]:null;const opening=prev?(parseFloat((prev[iCB]||'0').replace(/[^0-9.\-]/g,''))||0):0;const closing=parseFloat((r[iCB]||'0').replace(/[^0-9.\-]/g,''))||0;const netChange=parseFloat((r[iCI]||'0').replace(/[^0-9.\-]/g,''))||0;const stock=(r[iStock]||'').trim(),notes=(r[iNotes]||'').trim();return{Date:(r[iDate]||'').trim(),OpeningCash:String(opening),ClosingCash:String(closing),NetChange:String(netChange),Fees:(r[iFees]||'').replace(/[^0-9.\-]/g,''),Type:(r[iType]||'').trim(),Notes:stock&&notes?stock+': '+notes:stock||notes||'—'};});if(_cashFlow.length>0){
-      const last=_cashFlow[_cashFlow.length-1],derived=parseFloat(last.ClosingCash||0);
-      if(derived>0){CAPITAL.freeCash=derived;CAPITAL.cashAsOf=last.Date||'';const el=document.getElementById('kFreeCash');if(el)el.textContent=Math.round(derived).toLocaleString();const el2=document.getElementById('qpFreeCash');if(el2)el2.textContent=Math.round(derived).toLocaleString();}
+      const iDS2=iDS>=0?iDS:hdrs.findIndex(h=>(h||'').toLowerCase().replace(/\s/g,'')==='divstatus');
+      const derived=raw.reduce((s,r)=>{const rt=(r[iType]||'').trim().toLowerCase(),ds=iDS2>=0?(r[iDS2]||'').trim().toLowerCase():'';return(rt==='dividend'&&ds==='declared')?s:s+(parseFloat((r[iCI]||'0').replace(/[^0-9.\-]/g,''))||0);},0);
+      {CAPITAL.freeCash=derived;CAPITAL.cashAsOf=(raw[raw.length-1]?raw[raw.length-1][iDate]||'':'');const el=document.getElementById('kFreeCash');if(el)el.textContent=Math.round(derived).toLocaleString();const el2=document.getElementById('qpFreeCash');if(el2)el2.textContent=Math.round(derived).toLocaleString();}
       if(!isAdmin()){
         const fe=_cashFlow[0];
         let totDep=parseFloat(fe&&fe.OpeningCash||0),totWdr=0;
@@ -1166,14 +1167,14 @@ function renderQasimStock(){
   if(srch) rows=rows.filter(r=>Object.values(r).some(v=>(v||'').toLowerCase().includes(srch)));
   const all=_qasimStock;
   const isDeclDiv=r=>(r['Type']||'').toLowerCase()==='dividend'&&(r['Div Status']||'').trim().toLowerCase()==='declared';
-  const lastBal=all.length?nv(all[all.length-1]['Cash Balance']):0;
+  const effectiveBal=all.reduce((s,r)=>isDeclDiv(r)?s:s+nv(r['Cash Impact']),0);
   const tReal=all.reduce((s,r)=>s+nv(r['Realized P/L']),0);
   const tDiv=all.filter(r=>(r['Type']||'').toLowerCase()==='dividend'&&!isDeclDiv(r)).reduce((s,r)=>s+nv(r['Cash Impact']),0);
   const tCGT=all.reduce((s,r)=>s+nv(r['CGT on Profit (Rs)']),0);
-  CAPITAL.freeCash=lastBal;
-  const _fcEl=document.getElementById('qpFreeCash');if(_fcEl)_fcEl.textContent=Math.round(lastBal).toLocaleString();
-  const _kfEl=document.getElementById('kFreeCash');if(_kfEl)_kfEl.textContent=Math.round(lastBal).toLocaleString();
-  document.getElementById('qsCashBal').textContent=Math.round(lastBal).toLocaleString();
+  CAPITAL.freeCash=effectiveBal;
+  const _fcEl=document.getElementById('qpFreeCash');if(_fcEl)_fcEl.textContent=Math.round(effectiveBal).toLocaleString();
+  const _kfEl=document.getElementById('kFreeCash');if(_kfEl)_kfEl.textContent=Math.round(effectiveBal).toLocaleString();
+  document.getElementById('qsCashBal').textContent=Math.round(effectiveBal).toLocaleString();
   const qsPL=document.getElementById('qsRealPL');if(qsPL){qsPL.textContent=(tReal<0?'-':'')+Math.round(Math.abs(tReal)).toLocaleString();qsPL.style.color=tReal>=0?'var(--emerald)':'var(--rose)';}
   document.getElementById('qsTotalDiv').textContent=Math.round(Math.abs(tDiv)).toLocaleString();
   document.getElementById('qsTotalCGT').textContent=Math.round(Math.abs(tCGT)).toLocaleString();
