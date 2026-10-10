@@ -504,6 +504,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="ov-kpi"><div class="ov-val"         id="qpUnrealPL">—</div><div class="ov-lbl">Unrealized P/L</div></div>
       <div class="ov-kpi"><div class="ov-val"         id="qpRealPL">—</div><div class="ov-lbl">Realized P/L</div></div>
       <div class="ov-kpi"><div class="ov-val c-gold"  id="qpNetDiv">—</div><div class="ov-lbl">Net Dividends</div></div>
+      <div class="ov-kpi"><div class="ov-val" style="color:var(--amber)" id="qpDeclaredDiv">—</div><div class="ov-lbl">Declared Dividends</div></div>
       <div class="ov-kpi"><div class="ov-val c-gold"  id="qpFreeCash">—</div><div class="ov-lbl">Free Cash</div></div>
     </div>
     <div class="ov-tab-bar">
@@ -527,6 +528,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="ov-kpi"><div class="ov-val c-blue" id="qsCashBal">—</div><div class="ov-lbl">Cash Balance</div></div>
       <div class="ov-kpi"><div class="ov-val"        id="qsRealPL">—</div><div class="ov-lbl">Realized P/L</div></div>
       <div class="ov-kpi"><div class="ov-val c-gold" id="qsTotalDiv">—</div><div class="ov-lbl">Net Dividends</div></div>
+      <div class="ov-kpi"><div class="ov-val" style="color:var(--amber)" id="qsDeclaredDiv">—</div><div class="ov-lbl">Declared Dividends</div></div>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
       <select id="qsTypeFilter" onchange="renderQasimStock()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12.5px;outline:none;font-family:var(--font)">
@@ -1133,6 +1135,7 @@ function renderQasimPortfolio(){
   const _decl=_qasimPortfolioFromSheet?(window._declaredDivBySym||{}):{};
   let tCost=0,tMV=0,tUnreal=0,tReal=0,tDiv=0,tReturn=0;
   rows.forEach(r=>{const da=_decl[(r['Stock']||'').trim().toUpperCase()]||0;tCost+=nv(r['Cost of Holdings']);tMV+=nv(r['Market Value']);tUnreal+=nv(r['Unrealized P/L']);tReal+=nv(r['Realized P/L']);tDiv+=nv(r['Net Dividends'])-da;tReturn+=nv(r['Total Return'])-da;});
+  const tDeclared=Object.values(_decl).reduce((s,v)=>s+Math.abs(v),0);
   const fmt=v=>Math.round(Math.abs(v)).toLocaleString();
   const plColor=v=>v>=0?'var(--emerald)':'var(--rose)';
   const setEl=(id,val,forceColor)=>{const e=document.getElementById(id);if(!e)return;e.textContent=(val<0?'-':'')+fmt(val);e.style.color=forceColor||plColor(val);};
@@ -1140,6 +1143,7 @@ function renderQasimPortfolio(){
   document.getElementById('qpMarketVal').textContent=fmt(tMV);
   setEl('qpUnrealPL',tUnreal);setEl('qpRealPL',tReal);
   setEl('qpNetDiv',tDiv,'var(--amber)');
+  const _qdEl=document.getElementById('qpDeclaredDiv');if(_qdEl)_qdEl.textContent=Math.round(tDeclared).toLocaleString();
   let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost of Holdings</th><th>Current Price</th><th>Market Value</th><th>Unrealized P/L</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
   rows.forEach((r,i)=>{
     const da=_decl[(r['Stock']||'').trim().toUpperCase()]||0;
@@ -1210,12 +1214,14 @@ function renderQasimStock(){
   const effectiveBal=all.reduce((s,r)=>isDeclDiv(r)?s:s+nv(r['Cash Impact']),0);
   const tReal=all.reduce((s,r)=>s+nv(r['Realized P/L']),0);
   const tDiv=all.filter(r=>(r['Type']||'').toLowerCase()==='dividend'&&!isDeclDiv(r)).reduce((s,r)=>s+nv(r['Cash Impact']),0);
+  const tDeclaredDiv=all.filter(r=>isDeclDiv(r)).reduce((s,r)=>s+Math.abs(nv(r['Cash Impact'])),0);
   CAPITAL.freeCash=effectiveBal;
   const _fcEl=document.getElementById('qpFreeCash');if(_fcEl)_fcEl.textContent=Math.round(effectiveBal).toLocaleString();
   const _kfEl=document.getElementById('kFreeCash');if(_kfEl)_kfEl.textContent=Math.round(effectiveBal).toLocaleString();
   document.getElementById('qsCashBal').textContent=Math.round(effectiveBal).toLocaleString();
   const qsPL=document.getElementById('qsRealPL');if(qsPL){qsPL.textContent=(tReal<0?'-':'')+Math.round(Math.abs(tReal)).toLocaleString();qsPL.style.color=tReal>=0?'var(--emerald)':'var(--rose)';}
   document.getElementById('qsTotalDiv').textContent=Math.round(Math.abs(tDiv)).toLocaleString();
+  const _qdEl2=document.getElementById('qsDeclaredDiv');if(_qdEl2)_qdEl2.textContent=Math.round(tDeclaredDiv).toLocaleString();
   if(!rows.length){document.getElementById('qsTable').innerHTML='<p style="color:var(--text3);padding:20px;text-align:center">No matching transactions</p>';return;}
   const typeCls={buy:'buy-r',sell:'sell-r',dividend:'div-r',deposit:'dep-r'};
   const typeColor={Buy:'var(--rose)',Sell:'var(--emerald)',Dividend:'var(--amber)',Deposit:'var(--accent)'};
