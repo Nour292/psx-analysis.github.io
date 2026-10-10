@@ -558,7 +558,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div id="mpInfo" style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5">—</div>
     <div class="modal-field">
       <label>Pay Date <span style="font-size:10px;color:var(--text3)">(DD-Mon-YY)</span></label>
-      <input type="text" id="mpPayDate" placeholder="e.g. 15-Oct-26" style="font-family:var(--mono)">
+      <div style="position:relative">
+        <input type="text" id="mpPayDate" placeholder="e.g. 15-Oct-26" style="font-family:var(--mono);padding-right:32px;width:100%">
+        <input type="date" id="mpPayDatePicker" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none" onchange="mpPickDate()">
+        <button type="button" onclick="const p=document.getElementById('mpPayDatePicker');if(p.showPicker)p.showPicker();else p.click();" title="Pick date" style="position:absolute;right:7px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:2px;line-height:1">📅</button>
+      </div>
     </div>
     <div id="mpStatus" style="font-size:12px;min-height:18px;margin-top:6px"></div>
     <div style="display:flex;gap:10px;margin-top:16px">
@@ -1265,6 +1269,7 @@ function showMarkPaidModal(allIdx){
   setTimeout(()=>document.getElementById('mpPayDate').focus(),80);
 }
 function mpClose(){document.getElementById('mpModal').style.display='none';}
+function mpPickDate(){const v=document.getElementById('mpPayDatePicker').value;if(!v)return;const d=new Date(v+'T00:00:00');const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];document.getElementById('mpPayDate').value=String(d.getDate()).padStart(2,'0')+'-'+mo[d.getMonth()]+'-'+String(d.getFullYear()).slice(-2);}
 async function mpConfirm(){
   const payDate=(document.getElementById('mpPayDate').value||'').trim();
   if(!payDate){const st=document.getElementById('mpStatus');st.textContent='❌ Pay Date is required';st.style.color='var(--rose)';return;}
