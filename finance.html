@@ -172,7 +172,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.8</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.9</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -508,8 +508,8 @@ function buildRows(headers,rows){
     const v=r[h]||'';
     let cls='';
     if(h==='Balance'){cls=n(v)>=0?'mono c-g':'mono c-r';}
-    else if(h==='Credit'&&v){cls='mono c-g';}
-    else if(h==='Debit'&&v){cls='mono c-r';}
+    else if(h==='Credit'&&v){cls='mono c-r';}
+    else if(h==='Debit'&&v){cls='mono c-g';}
     else if(['Saudi Riyals','Pakistani Rupees','Rate'].includes(h)&&v){cls='mono c-b';}
     return `<td class="${cls}">${v||'—'}</td>`;
   }).join('')+'</tr>').join('');
