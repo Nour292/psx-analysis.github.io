@@ -172,7 +172,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v2.9</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.0</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -494,9 +494,10 @@ function renderTable(key){
     <button class="exp-btn pdf" onclick="exportPDF('${key}')">🖨 PDF</button>
   </div>${fbar}
   <div class="tbl-wrap"><table class="tbl"><thead><tr>`;
-  headers.forEach(h=>html+=`<th>${h}</th>`);
+  const visHeaders=headers.filter(h=>h!=='Balance');
+  visHeaders.forEach(h=>html+=`<th>${h}</th>`);
   html+=`</tr></thead><tbody id="tbody_${key}">`;
-  html+=buildRows(headers,display);
+  html+=buildRows(visHeaders,display);
   html+=`</tbody></table></div>`;
   if(rows.length>300) html+=`<p style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center">Showing 300 of ${rows.length} — use filters or search to narrow</p>`;
 
@@ -540,7 +541,7 @@ function getFilteredRows(key){
 
 function applyFilters(key){
   const filtered=getFilteredRows(key);
-  document.getElementById('tbody_'+key).innerHTML=buildRows(DATA[key].headers,filtered.slice(0,500));
+  document.getElementById('tbody_'+key).innerHTML=buildRows(DATA[key].headers.filter(h=>h!=='Balance'),filtered.slice(0,500));
   document.getElementById('tblCount_'+key).textContent=`${filtered.length} of ${DATA[key].rows.length} records${filtered.length>500?' (showing 500)':''}`;
 }
 function filterTbl(key){applyFilters(key);}
