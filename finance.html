@@ -172,7 +172,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.1</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.2</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -371,13 +371,13 @@ function renderDash(){
     .forEach(({name,netPKR,netSAR})=>{
       totPKR+=netPKR; totSAR+=netSAR;
       const pNet=netPKR!==0?netPKR:netSAR;
-      const col=pNet>0?'var(--amber)':'var(--rose)';
+      const col=pNet>0?'var(--emerald)':'var(--rose)';
       const tag=pNet>0?'Receivable':'Payable';
       creditRows+=`<tr>
         <td style="font-weight:600">${name}</td>
-        <td class="dt-num" style="color:${netPKR>0?'var(--amber)':netPKR<0?'var(--rose)':'var(--text3)'};font-weight:700">
+        <td class="dt-num" style="color:${netPKR>0?'var(--emerald)':netPKR<0?'var(--rose)':'var(--text3)'};font-weight:700">
           ${netPKR?(netPKR<0?'− ':'')+' PKR '+fmt(Math.abs(netPKR)):'—'}</td>
-        <td class="dt-num" style="color:${netSAR>0?'var(--amber)':netSAR<0?'var(--rose)':'var(--text3)'};font-weight:${netSAR?700:400}">
+        <td class="dt-num" style="color:${netSAR>0?'var(--emerald)':netSAR<0?'var(--rose)':'var(--text3)'};font-weight:${netSAR?700:400}">
           ${netSAR?(netSAR<0?'− ':'')+' SAR '+fmt(Math.abs(netSAR)):'—'}</td>
         <td><span class="badge" style="background:${col}22;color:${col}">${tag}</span></td>
       </tr>`;
@@ -388,9 +388,9 @@ function renderDash(){
     <tbody>${creditRows}
       <tr class="dt-total">
         <td>TOTAL</td>
-        <td class="dt-num" style="color:${totPKR>=0?'var(--amber)':'var(--rose)'};font-weight:700">
+        <td class="dt-num" style="color:${totPKR>=0?'var(--emerald)':'var(--rose)'};font-weight:700">
           ${totPKR?(totPKR<0?'− ':'')+' PKR '+fmt(Math.abs(totPKR)):'—'}</td>
-        <td class="dt-num" style="color:${totSAR>=0?'var(--amber)':'var(--rose)'};font-weight:700">
+        <td class="dt-num" style="color:${totSAR>=0?'var(--emerald)':'var(--rose)'};font-weight:700">
           ${totSAR?(totSAR<0?'− ':'')+' SAR '+fmt(Math.abs(totSAR)):'—'}</td>
         <td></td>
       </tr>
