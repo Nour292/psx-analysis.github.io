@@ -172,7 +172,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.0</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.1</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -559,17 +559,23 @@ function exportCSV(key){
 
 function exportPDF(key){
   const cfg=TABLE_CFG[key];
-  const {headers}=DATA[key];
+  const visHeaders=DATA[key].headers.filter(h=>h!=='Balance');
   const rows=getFilteredRows(key);
+  const colColor=h=>h==='Debit'?'#16a34a':h==='Credit'?'#dc2626':'inherit';
   const th=`padding:6px 10px;text-align:left;border-bottom:2px solid #555;font-size:10px;text-transform:uppercase;background:#eee;`;
   const td=`padding:5px 10px;border-bottom:1px solid #ddd;font-size:11px;`;
   const tbl=`<table style="width:100%;border-collapse:collapse">
-    <thead><tr>${headers.map(h=>`<th style="${th}">${h}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map(r=>`<tr>${headers.map(h=>`<td style="${td}">${r[h]||''}</td>`).join('')}</tr>`).join('')}</tbody>
+    <thead><tr>${visHeaders.map(h=>`<th style="${th}">${h}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${visHeaders.map(h=>{
+      const v=r[h]||'';
+      const clr=colColor(h);
+      const style=td+(v&&clr!=='inherit'?`color:${clr};font-weight:700;`:'');
+      return `<td style="${style}">${v||'—'}</td>`;
+    }).join('')}</tr>`).join('')}</tbody>
   </table>`;
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html><head><title>${cfg.title}</title>
-    <style>body{font-family:Arial,sans-serif;margin:16px;}h3{font-size:14px;margin-bottom:4px;}p{font-size:10px;color:#666;margin-bottom:10px;}@media print{@page{margin:12mm;}}</style>
+    <style>body{font-family:Arial,sans-serif;margin:16px;}h3{font-size:14px;margin-bottom:4px;}p{font-size:10px;color:#666;margin-bottom:10px;}@media print{@page{margin:12mm;}-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style>
     </head><body><h3>${cfg.title}</h3><p>${rows.length} records · ${new Date().toLocaleDateString()}</p>${tbl}</body></html>`);
   w.document.close();w.print();
 }
