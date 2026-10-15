@@ -107,6 +107,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);}
 .exp-btn.pdf:hover{background:var(--rose);color:#fff;}
 .exp-btn.xls{border-color:var(--emerald);color:var(--emerald);}
 .exp-btn.xls:hover{background:var(--emerald);color:#000;}
+.exp-btn.copy{border-color:var(--accent);color:var(--accent);}
+.exp-btn.copy:hover{background:var(--accent);color:#000;}
+.copy-wrap{position:relative;display:inline-block;}
+.copy-menu{display:none;position:absolute;top:calc(100% + 4px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:99;min-width:140px;box-shadow:0 4px 12px rgba(0,0,0,.35);}
+.copy-menu.open{display:block;}
+.copy-menu button{display:block;width:100%;padding:8px 14px;background:none;border:none;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;text-align:left;font-family:var(--font);white-space:nowrap;}
+.copy-menu button:hover{background:var(--surface2);color:var(--accent);}
 
 /* ---- FORM ---- */
 .form-wrap{width:100%;display:flex;flex-direction:column;}
@@ -172,7 +179,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.3</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.4</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -492,6 +499,13 @@ function renderTable(key){
     <input class="srch" id="srch_${key}" placeholder="Search…" oninput="applyFilters('${key}')">
     <button class="exp-btn xls" onclick="exportCSV('${key}')">⬇ Excel</button>
     <button class="exp-btn pdf" onclick="exportPDF('${key}')">🖨 PDF</button>
+    <div class="copy-wrap" id="copyWrap_${key}">
+      <button class="exp-btn copy" onclick="toggleCopyMenu('${key}')">📋 Copy ▾</button>
+      <div class="copy-menu" id="copyMenu_${key}">
+        <button onclick="copyTable('${key}','text')">📝 Plain Text</button>
+        <button onclick="copyTable('${key}','image')">🖼 As Image</button>
+      </div>
+    </div>
   </div>${fbar}
   <div class="tbl-wrap"><table class="tbl"><thead><tr>`;
   const visHeaders=headers.filter(h=>h!=='Balance');
@@ -557,6 +571,45 @@ function applyFilters(key){
   document.getElementById('tblCount_'+key).textContent=`${filtered.length} of ${DATA[key].rows.length} records${filtered.length>500?' (showing 500)':''}`;
 }
 function filterTbl(key){applyFilters(key);}
+
+function toggleCopyMenu(key){
+  const m=document.getElementById('copyMenu_'+key);
+  if(!m) return;
+  const isOpen=m.classList.contains('open');
+  document.querySelectorAll('.copy-menu.open').forEach(el=>el.classList.remove('open'));
+  if(!isOpen){ m.classList.add('open'); setTimeout(()=>document.addEventListener('click',function h(e){if(!e.target.closest('#copyWrap_'+key)){m.classList.remove('open');document.removeEventListener('click',h);}},),50); }
+}
+function showCopyToast(msg){
+  let t=document.getElementById('copyToast');
+  if(!t){t=document.createElement('div');t.id='copyToast';t.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 18px;font-size:13px;font-weight:600;color:var(--text);z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.4);transition:opacity .3s;pointer-events:none';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';clearTimeout(t._to);t._to=setTimeout(()=>t.style.opacity='0',2500);
+}
+async function copyTable(key,mode){
+  document.getElementById('copyMenu_'+key)?.classList.remove('open');
+  const rows=getFilteredRows(key);
+  const headers=DATA[key].headers.filter(h=>h!=='Balance');
+  if(mode==='text'){
+    const lines=[headers.join('\t')];
+    rows.forEach(r=>lines.push(headers.map(h=>{const v=r[h]||'';return h==='Date'?fmtDate(v):v||'';}).join('\t')));
+    try{await navigator.clipboard.writeText(lines.join('\n'));showCopyToast('✅ Copied as text!');}
+    catch(e){showCopyToast('❌ Copy failed');}
+  } else {
+    const tbl=document.querySelector('#tbody_'+key)?.closest('table');
+    if(!tbl){showCopyToast('❌ Table not found');return;}
+    if(!window.html2canvas){
+      showCopyToast('⏳ Loading…');
+      await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+    }
+    try{
+      showCopyToast('📸 Capturing…');
+      const canvas=await html2canvas(tbl,{scale:2,useCORS:true,backgroundColor:getComputedStyle(document.body).getPropertyValue('--bg')||'#0d1117'});
+      canvas.toBlob(async blob=>{
+        try{await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);showCopyToast('✅ Copied as image!');}
+        catch(e){showCopyToast('❌ Clipboard error: '+e.message);}
+      });
+    }catch(e){showCopyToast('❌ '+e.message);}
+  }
+}
 
 function exportCSV(key){
   const {headers}=DATA[key];
