@@ -670,7 +670,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.2</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.3</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1258,11 +1258,20 @@ function loadSavedToken(){ try{ const t=localStorage.getItem(TOKEN_KEY); if(t){ 
 
 // ── AUTO-ARCHIVE ────────────────────────
 const ARCH_LAST_KEY='psx_last_archived';
+// PSX week ends Friday — returns most recent Friday as YYYY-MM-DD
+function getLastFriday(){
+  const d=new Date();
+  // day: 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat → days since last Fri: Fri=0,Sat=1,Sun=2,Mon=3,Tue=4,Wed=5,Thu=6
+  const diff=(d.getDay()+2)%7;
+  d.setDate(d.getDate()-diff);
+  return d.toISOString().split('T')[0];
+}
 async function autoArchive(dateStr){
   const token=_idxToken;
   if(!token||!dateStr) return;
+  const fridayStr=getLastFriday();
   const lastArch=localStorage.getItem(ARCH_LAST_KEY)||'';
-  if(lastArch===dateStr){ console.log('Already archived:',dateStr); return; }
+  if(lastArch===fridayStr){ console.log('Already archived:',fridayStr); return; }
   // Build CSV — include Trend (from sheet) and Date
   const headers=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D',
                  'MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low','Trend','Date'];
@@ -1272,18 +1281,18 @@ async function autoArchive(dateStr){
     return r[h]||'';
   }).join(',')));
   const csv=lines.join('\n');
-  console.log('Auto-archiving:',dateStr);
+  console.log('Auto-archiving week ending:',fridayStr,'(data date:',dateStr+')');
   try{
-    const filename=`archive/${dateStr}.csv`;
+    const filename=`archive/${fridayStr}.csv`;
     const encoded=btoa(unescape(encodeURIComponent(csv)));
     let sha='';
     try{ const chk=await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`,{headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}}); if(chk.ok){const j=await chk.json();sha=j.sha||'';} }catch(e){}
-    const body={message:`Auto-archive: ${dateStr}`,content:encoded};
+    const body={message:`Auto-archive: week ending ${fridayStr}`,content:encoded};
     if(sha) body.sha=sha;
     const res=await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`,{method:'PUT',headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
     if(res.ok){
-      localStorage.setItem(ARCH_LAST_KEY,dateStr);
-      console.log('✅ Auto-archived:',dateStr);
+      localStorage.setItem(ARCH_LAST_KEY,fridayStr);
+      console.log('✅ Auto-archived week ending:',fridayStr);
       loadWeekPicker();
     }
   }catch(e){ console.log('Auto-archive error:',e.message); }
