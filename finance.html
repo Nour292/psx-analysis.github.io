@@ -179,7 +179,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.0</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.1</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -385,8 +385,11 @@ function renderDash(){
     </div>
   </div>`;
 
-  // ── 2. Middle: Bank (left) | Credit (right)
+  // ── 2. Left: Bank + Remittance | Right: Credit
   html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;align-items:start">`;
+
+  // Left column: Bank Balances + Remittance stacked
+  html+=`<div style="display:flex;flex-direction:column;gap:16px">`;
 
   // Bank Balances
   let bankRows='';
@@ -408,7 +411,34 @@ function renderDash(){
       </tbody></table></div>
   </div>`;
 
-  // Credit Balances
+  // Remittance (under Bank Balances, same width)
+  const yearOpts=allYears.map(y=>`<option value="${y}"${y===_remitYear?'selected':''}>${y}</option>`).join('');
+  let remitRows='',remSAR=0,remPKR=0;
+  Object.entries(monthMap).sort((a,b)=>mNum(b[0])-mNum(a[0])).forEach(([m,v])=>{
+    remSAR+=v.sar; remPKR+=v.pkr;
+    remitRows+=`<tr><td style="font-weight:600">${m}</td>
+      <td class="dt-num" style="color:var(--accent)">SAR ${fmt(v.sar)}</td>
+      <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(v.pkr)}</td></tr>`;
+  });
+  html+=`<div>
+    <div class="sec-hdr">💸 Remittance
+      <select onchange="_remitYear=this.value;renderDash()" style="font-size:11px;padding:2px 8px;background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--mono);font-weight:700;outline:none">
+        ${yearOpts}
+      </select>
+    </div>
+    <div class="dt-wrap"><table class="dt">
+      <thead><tr><th>Month</th><th class="dt-num">SAR</th><th class="dt-num">PKR</th></tr></thead>
+      <tbody>${remitRows}
+        <tr class="dt-total"><td>TOTAL</td>
+          <td class="dt-num" style="color:var(--accent)">SAR ${fmt(remSAR)}</td>
+          <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(remPKR)}</td>
+        </tr>
+      </tbody></table></div>
+  </div>`;
+
+  html+=`</div>`; // end left column
+
+  // Credit Balances (right column)
   let creditRows='';
   creditEntries.forEach(({name,netPKR,netSAR})=>{
     const pNet=netPKR!==0?netPKR:netSAR;
@@ -449,32 +479,7 @@ function renderDash(){
       </tbody></table></div>
   </div>`;
 
-  html+=`</div>`; // end middle grid
-
-  // ── 3. Remittance — full width with year selector
-  const yearOpts=allYears.map(y=>`<option value="${y}"${y===_remitYear?'selected':''}>${y}</option>`).join('');
-  let remitRows='',remSAR=0,remPKR=0;
-  Object.entries(monthMap).sort((a,b)=>mNum(b[0])-mNum(a[0])).forEach(([m,v])=>{
-    remSAR+=v.sar; remPKR+=v.pkr;
-    remitRows+=`<tr><td style="font-weight:600">${m}</td>
-      <td class="dt-num" style="color:var(--accent)">SAR ${fmt(v.sar)}</td>
-      <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(v.pkr)}</td></tr>`;
-  });
-  html+=`<div>
-    <div class="sec-hdr">💸 Remittance
-      <select onchange="_remitYear=this.value;renderDash()" style="font-size:11px;padding:2px 8px;background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--mono);font-weight:700;outline:none">
-        ${yearOpts}
-      </select>
-    </div>
-    <div class="dt-wrap"><table class="dt">
-      <thead><tr><th>Month</th><th class="dt-num">SAR</th><th class="dt-num">PKR</th></tr></thead>
-      <tbody>${remitRows}
-        <tr class="dt-total"><td>TOTAL</td>
-          <td class="dt-num" style="color:var(--accent)">SAR ${fmt(remSAR)}</td>
-          <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(remPKR)}</td>
-        </tr>
-      </tbody></table></div>
-  </div>`;
+  html+=`</div>`; // end main grid
 
   document.getElementById('content').innerHTML=html;
 }
