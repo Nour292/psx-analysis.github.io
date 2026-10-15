@@ -179,7 +179,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.9</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.0</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -698,6 +698,37 @@ function exportPDF(key){
   const cfg=TABLE_CFG[key];
   const visHeaders=DATA[key].headers.filter(h=>h!=='Balance');
   const rows=getFilteredRows(key);
+
+  // Dynamic title for allAcc tab
+  let pdfTitle=cfg.title;
+  if(key==='allAcc'){
+    const parts=[];
+    if(FSTATE.allAcc.bank) parts.push(FSTATE.allAcc.bank);
+    const q=(document.getElementById('srch_allAcc')||{}).value?.trim()||'';
+    if(q) parts.push(q);
+    if(FSTATE.allAcc.dir==='in') parts.push('Money In');
+    else if(FSTATE.allAcc.dir==='out') parts.push('Money Out');
+    if(parts.length) pdfTitle=parts.join(' · ');
+  }
+
+  // Totals row based on direction filter
+  const _n=v=>parseFloat((v||'').toString().replace(/,/g,''))||0;
+  const dir=key==='allAcc'?FSTATE.allAcc.dir:(key==='credit'?FSTATE.credit.dir:'');
+  let totalsRow='';
+  if(dir==='out'||dir==='in'){
+    const totalCol=dir==='out'?'Credit':'Debit';
+    const totalColor=dir==='out'?'#dc2626':'#16a34a';
+    const total=rows.reduce((s,r)=>s+_n(r[totalCol]),0);
+    const fmt=v=>v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const ttr=`border-top:2px solid #333;padding:6px 10px;font-size:11px;font-weight:700;`;
+    const labelCol=visHeaders.find(h=>['Description','Particulars','Name','Narration'].includes(h))||visHeaders[0];
+    totalsRow=`<tr>${visHeaders.map(h=>{
+      if(h===totalCol) return `<td style="${ttr}color:${totalColor}">${fmt(total)}</td>`;
+      if(h===labelCol) return `<td style="${ttr}">Total</td>`;
+      return `<td style="${ttr}"></td>`;
+    }).join('')}</tr>`;
+  }
+
   const colColor=h=>h==='Debit'?'#16a34a':h==='Credit'?'#dc2626':'inherit';
   const th=`padding:6px 10px;text-align:left;border-bottom:2px solid #555;font-size:10px;text-transform:uppercase;background:#eee;`;
   const td=`padding:5px 10px;border-bottom:1px solid #ddd;font-size:11px;`;
@@ -709,13 +740,13 @@ function exportPDF(key){
       const style=td+(v&&clr!=='inherit'?`color:${clr};font-weight:700;`:'');
       const display=h==='Date'?fmtDate(v):v||'—';
       return `<td style="${style}">${display}</td>`;
-    }).join('')}</tr>`).join('')}</tbody>
+    }).join('')}</tr>`).join('')}${totalsRow}</tbody>
   </table>`;
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>${cfg.title}</title>
+  w.document.write(`<!DOCTYPE html><html><head><title>${pdfTitle}</title>
     <style>body{font-family:Arial,sans-serif;margin:16px;}h3{font-size:14px;margin-bottom:4px;}p{font-size:10px;color:#666;margin-bottom:10px;}@media print{@page{margin:12mm;}-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style>
     <script>window.onafterprint=function(){window.close();}<\/script>
-    </head><body><h3>${cfg.title}</h3><p>${rows.length} records · ${new Date().toLocaleDateString()}</p>${tbl}</body></html>`);
+    </head><body><h3>${pdfTitle}</h3><p>${rows.length} records · ${new Date().toLocaleDateString()}</p>${tbl}</body></html>`);
   w.document.close();w.print();
 }
 
