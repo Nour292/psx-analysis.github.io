@@ -179,7 +179,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.4</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.5</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -439,7 +439,7 @@ const TABLE_CFG={
 };
 
 // Filter state per tab
-const FSTATE={allAcc:{bank:'',dir:''},credit:{name:'',cur:''},remit:{year:'',month:'',to:''}};
+const FSTATE={allAcc:{bank:'',dir:'',dateFrom:'',dateTo:''},credit:{name:'',cur:'',dateFrom:'',dateTo:''},remit:{year:'',month:'',to:'',dateFrom:'',dateTo:''}};
 
 function yrFromDate(d){
   const p=(d||'').split('/');
@@ -490,6 +490,12 @@ function renderTable(key){
         <option value="">All</option>${tos.map(t=>`<option>${t}</option>`).join('')}
       </select>`;
   }
+  const _di=`background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:12px;font-family:var(--mono);outline:none;cursor:pointer;color-scheme:dark`;
+  fbar+=`<span class="filter-lbl" style="margin-left:8px">From</span>
+    <input type="date" style="${_di}" onchange="FSTATE['${key}'].dateFrom=this.value;applyFilters('${key}')">
+    <span class="filter-lbl">To</span>
+    <input type="date" style="${_di}" onchange="FSTATE['${key}'].dateTo=this.value;applyFilters('${key}')">
+    <button title="Clear dates" onclick="FSTATE['${key}'].dateFrom='';FSTATE['${key}'].dateTo='';this.closest('.filter-bar').querySelectorAll('input[type=date]').forEach(i=>i.value='');applyFilters('${key}')" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text3);font-size:11px;padding:4px 7px;cursor:pointer;margin-left:2px">✕</button>`;
   fbar+='</div>';
 
   const display=getFilteredRows(key).slice(0,300);
@@ -518,6 +524,14 @@ function renderTable(key){
   document.getElementById('content').innerHTML=html;
 }
 
+function toIsoDate(v){
+  if(!v) return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const _mo={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+  const m=v.match(/^(\d{1,2})\/([A-Za-z]{3,4})\/(\d{2,4})$/);
+  if(m){ const yr=m[3].length===2?'20'+m[3]:m[3]; const mm=_mo[m[2].toLowerCase().slice(0,3)]||'00'; return `${yr}-${mm}-${String(+m[1]).padStart(2,'0')}`; }
+  return '';
+}
 const _MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtDate(v){
   if(!v||v==='—') return '—';
@@ -560,6 +574,14 @@ function getFilteredRows(key){
     if(month) out=out.filter(r=>r['Month']===month);
     if(to) out=out.filter(r=>r['To']===to);
   }
+  const {dateFrom,dateTo}=FSTATE[key];
+  if(dateFrom||dateTo) out=out.filter(r=>{
+    const d=toIsoDate(r['Date']||'');
+    if(!d) return true;
+    if(dateFrom&&d<dateFrom) return false;
+    if(dateTo&&d>dateTo) return false;
+    return true;
+  });
   const q=(document.getElementById('srch_'+key)||{}).value?.toLowerCase()||'';
   if(q) out=out.filter(r=>Object.values(r).some(v=>(v||'').toLowerCase().includes(q)));
   return out;
