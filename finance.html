@@ -179,7 +179,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.7</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.8</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -490,7 +490,7 @@ function renderTable(key){
         <option value="">All</option>${tos.map(t=>`<option>${t}</option>`).join('')}
       </select>`;
   }
-  const _di=`background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:12px;font-family:var(--mono);outline:none;cursor:pointer;color-scheme:dark`;
+  const _di=`background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:12px;font-family:var(--mono);outline:none;cursor:pointer;`;
   fbar+=`<span class="filter-lbl" style="margin-left:8px">From</span>
     <input type="date" style="${_di}" onchange="FSTATE['${key}'].dateFrom=this.value;applyFilters('${key}')">
     <span class="filter-lbl">To</span>
