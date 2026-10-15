@@ -179,7 +179,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.1</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.2</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -716,23 +716,23 @@ function exportPDF(key){
     if(parts.length) pdfTitle=parts.join(' · ');
   }
 
-  // Totals row based on direction filter
+  // Totals row — always show for columns that have values
   const _n=v=>parseFloat((v||'').toString().replace(/,/g,''))||0;
+  const _fmt=v=>v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   const dir=key==='allAcc'?FSTATE.allAcc.dir:(key==='credit'?FSTATE.credit.dir:'');
-  let totalsRow='';
-  if(dir==='out'||dir==='in'){
-    const totalCol=dir==='out'?'Credit':'Debit';
-    const totalColor=dir==='out'?'#dc2626':'#16a34a';
-    const total=rows.reduce((s,r)=>s+_n(r[totalCol]),0);
-    const fmt=v=>v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const ttr=`border-top:2px solid #333;padding:6px 10px;font-size:11px;font-weight:700;`;
-    const labelCol=visHeaders.find(h=>['Description','Particulars','Name','Narration'].includes(h))||visHeaders[0];
-    totalsRow=`<tr>${visHeaders.map(h=>{
-      if(h===totalCol) return `<td style="${ttr}color:${totalColor}">${fmt(total)}</td>`;
-      if(h===labelCol) return `<td style="${ttr}">Total</td>`;
-      return `<td style="${ttr}"></td>`;
-    }).join('')}</tr>`;
-  }
+  const ttr=`border-top:2px solid #333;padding:6px 10px;font-size:11px;font-weight:700;`;
+  const labelCol=visHeaders.find(h=>['Description','Particulars','Name','Narration'].includes(h))||visHeaders[0];
+  // When direction filter active: show only that column; otherwise show both Debit+Credit if non-zero
+  const totDebit=rows.reduce((s,r)=>s+_n(r['Debit']),0);
+  const totCredit=rows.reduce((s,r)=>s+_n(r['Credit']),0);
+  const showDebit=dir==='in'||(dir===''&&totDebit>0);
+  const showCredit=dir==='out'||(dir===''&&totCredit>0);
+  const totalsRow=`<tr>${visHeaders.map(h=>{
+    if(h==='Debit'&&showDebit) return `<td style="${ttr}color:#16a34a">${_fmt(totDebit)}</td>`;
+    if(h==='Credit'&&showCredit) return `<td style="${ttr}color:#dc2626">${_fmt(totCredit)}</td>`;
+    if(h===labelCol) return `<td style="${ttr}">Total</td>`;
+    return `<td style="${ttr}"></td>`;
+  }).join('')}</tr>`;
 
   const colColor=h=>h==='Debit'?'#16a34a':h==='Credit'?'#dc2626':'inherit';
   const th=`padding:6px 10px;text-align:left;border-bottom:2px solid #555;font-size:10px;text-transform:uppercase;background:#eee;`;
@@ -748,7 +748,7 @@ function exportPDF(key){
     }).join('')}</tr>`).join('')}${totalsRow}</tbody>
   </table>`;
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>${pdfTitle}</title>
+  w.document.write(`<!DOCTYPE html><html><head><title></title>
     <style>body{font-family:Arial,sans-serif;margin:16px;}h3{font-size:14px;margin-bottom:4px;}p{font-size:10px;color:#666;margin-bottom:10px;}@media print{@page{margin:12mm;}-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style>
     <script>window.onafterprint=function(){window.close();}<\/script>
     </head><body><h3>${pdfTitle}</h3><p>${rows.length} records · ${new Date().toLocaleDateString()}</p>${tbl}</body></html>`);
