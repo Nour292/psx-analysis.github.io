@@ -338,100 +338,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .plan-card p{ font-size:12px; color:var(--text2); line-height:1.5; }
 
 /* ═══════════════════════════════════════════
-   SINGLE TICKER PAGE
-═══════════════════════════════════════════ */
-.single-layout{ display:grid; grid-template-columns:340px 1fr; gap:20px; align-items:start; }
-@media(max-width:900px){ .single-layout{ grid-template-columns:1fr; } }
-
-.input-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
-.card-header{
-  padding:12px 16px; border-bottom:1px solid var(--border);
-  font-size:13px; font-weight:600; color:var(--text);
-}
-/* ── single-ticker table ── */
-.s-tbl{ width:100%; border-collapse:collapse; }
-.s-tbl th{
-  padding:7px 12px; font-size:10px; font-weight:700; text-transform:uppercase;
-  letter-spacing:.6px; color:var(--text3); background:var(--surface2);
-  border-bottom:2px solid var(--border); text-align:center;
-}
-.s-tbl th:first-child{ text-align:left; width:36%; border-right:1px solid var(--border); }
-.s-tbl th:not(:first-child){ width:32%; border-left:1px solid var(--border); }
-.s-tbl td{ border-bottom:1px solid var(--border); padding:0; }
-.s-tbl tr:last-child td{ border-bottom:none; }
-.s-lbl{
-  padding:9px 12px; font-size:12px; color:var(--text2); font-weight:500;
-  border-right:1px solid var(--border); white-space:nowrap;
-}
-.s-tbl input{
-  width:100%; background:transparent; color:var(--accent); border:none;
-  border-left:1px solid var(--border); padding:9px 10px; font-size:12.5px;
-  font-family:var(--mono); font-weight:500; text-align:center; outline:none;
-  transition:background .1s; display:block;
-}
-.s-tbl input:first-child{ border-left:none; }
-.s-tbl input:focus{ background:var(--surface2); }
-.s-tbl .s-span input{ border-left:none; }
-
-.analyse-btn{
-  width:100%; padding:12px; background:var(--accent); color:#000;
-  border:none; font-size:13px; font-weight:700; cursor:pointer;
-  transition:opacity .15s; letter-spacing:.3px;
-}
-.analyse-btn:hover{ opacity:.85; }
-
-.result-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
-.result-empty{ padding:40px; text-align:center; color:var(--text3); font-size:14px; }
-
-.verdict-block{ padding:20px; }
-.verdict-main{ font-size:28px; font-weight:800; margin-bottom:2px; line-height:1; }
-.verdict-score{ font-size:13px; color:var(--text2); margin-bottom:14px; font-family:var(--mono); }
-.verdict-buy  .verdict-main{ color:var(--emerald); }
-.verdict-exit .verdict-main{ color:var(--rose); }
-.verdict-watch .verdict-main{ color:var(--amber); }
-.verdict-wait  .verdict-main{ color:var(--slate); }
-.verdict-avoid .verdict-main{ color:var(--text3); }
-
-.zone-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
-.zone-card{
-  background:var(--bg); border-radius:var(--radius-sm); padding:10px 12px;
-  border-left:2px solid var(--border);
-}
-.zone-card.sup  { border-color:var(--emerald); }
-.zone-card.sup2 { border-color:var(--orange); }
-.zone-card.res  { border-color:var(--rose); }
-.zone-card.tgt  { border-color:var(--accent); }
-.zone-card .zlbl{ font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:4px; }
-.zone-card .zval{ font-size:16px; font-weight:700; font-family:var(--mono); color:var(--text); }
-
-.tp-card{ background:var(--bg); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:10px; border-left:2px solid var(--border); }
-.tp-card.buy{ border-color:var(--emerald); }
-.tp-card.exit{ border-color:var(--rose); }
-.tp-head{ font-size:12px; font-weight:700; margin-bottom:5px; }
-.tp-code{ font-family:var(--mono); font-size:12px; background:var(--surface2); padding:6px 10px; border-radius:4px; color:var(--accent); margin-bottom:4px; }
-.tp-note{ font-size:11px; color:var(--text2); font-style:italic; }
-
-.ind-grid{ display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:12px; }
-.ind-row{
-  background:var(--bg); border-radius:4px; padding:7px 10px;
-  display:flex; justify-content:space-between; align-items:center;
-}
-.ind-name{ font-size:11px; color:var(--text3); }
-.ind-val{ font-size:11.5px; font-weight:700; font-family:var(--mono); }
-.ind-val.bull{ color:var(--emerald); }
-.ind-val.bear{ color:var(--rose); }
-.ind-val.neut{ color:var(--amber); }
-
-.mbadge{ display:inline-block; padding:5px 12px; border-radius:16px; font-size:12px; font-weight:700; margin-bottom:14px; }
-.mbadge-strong-up{ background:var(--emerald-dim); color:var(--emerald); }
-.mbadge-mod-up   { background:var(--emerald-dim); color:#6ee7b7; }
-.mbadge-form-up  { background:var(--emerald-dim); color:#a7f3d0; }
-.mbadge-strong-dn{ background:var(--rose-dim); color:var(--rose); }
-.mbadge-mod-dn   { background:var(--rose-dim); color:#fca5a5; }
-.mbadge-mild-dn  { background:var(--amber-dim); color:var(--amber); }
-.mbadge-watch    { background:var(--surface2); color:var(--text2); }
-
-/* ═══════════════════════════════════════════
    IMPORT PAGE
 ═══════════════════════════════════════════ */
 .import-actions{
@@ -584,7 +490,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       <div class="nav-sub open" id="navTASub">
         <button class="nav-sub-btn active" id="navHome"     onclick="goHome()">⌂ Dashboard</button>
         <button class="nav-sub-btn"        id="navAnalysis" onclick="goAnalysis()">▶ Weekly Analysis</button>
-        <button class="nav-sub-btn"        id="navSingle"   onclick="goSingle()">◎ Single Ticker</button>
       </div>
     </div>
 
@@ -670,7 +575,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.3</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.4</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -731,37 +636,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
   </div>
 
   <!-- ══════════ SINGLE TICKER ══════════ -->
-  <div id="pgSingle" class="page content">
-    <div class="page-header"><h1>Single Ticker</h1><p>Analyse any symbol with custom indicator values</p></div>
-    <div class="single-layout">
-      <div class="input-card">
-        <div class="card-header">📋 Enter Indicators</div>
-        <table class="s-tbl">
-          <thead>
-            <tr><th>Field</th><th>1D</th><th>1W</th></tr>
-          </thead>
-          <tbody>
-            <tr><td class="s-lbl">Symbol</td><td colspan="2" class="s-span"><input id="sSymbol" placeholder="e.g. MCB"></td></tr>
-            <tr><td class="s-lbl">Price</td><td colspan="2" class="s-span"><input id="sPrice" placeholder="403.86"></td></tr>
-            <tr><td class="s-lbl">MA 50</td><td><input id="sMA50D" placeholder="401.2"></td><td><input id="sMA50W" placeholder="399.1"></td></tr>
-            <tr><td class="s-lbl">MA 200</td><td><input id="sMA200D" placeholder="385.5"></td><td><input id="sMA200W" placeholder="280.4"></td></tr>
-            <tr><td class="s-lbl">RSI</td><td><input id="sRSID" placeholder="52.1"></td><td><input id="sRSIW" placeholder="58.3"></td></tr>
-            <tr><td class="s-lbl">MACD-H</td><td><input id="sMACDHD" placeholder="-1.2"></td><td><input id="sMACDHW" placeholder="4.2"></td></tr>
-            <tr><td class="s-lbl">Signal</td><td><input id="sSignalD" placeholder="0.8"></td><td><input id="sSignalW" placeholder="3.1"></td></tr>
-            <tr><td class="s-lbl">Volume</td><td><input id="sVolume" placeholder="1D vol"></td><td><input id="sVolumeW" placeholder="1W vol"></td></tr>
-            <tr><td class="s-lbl">52W High</td><td colspan="2" class="s-span"><input id="s52High" placeholder="452"></td></tr>
-            <tr><td class="s-lbl">52W Low</td><td colspan="2" class="s-span"><input id="s52Low" placeholder="280"></td></tr>
-          </tbody>
-        </table>
-        <button class="analyse-btn" onclick="analyseSingle()">Analyse Symbol</button>
-      </div>
-      <div class="result-card" id="singleResult">
-        <div class="card-header">Analysis Result</div>
-        <div class="result-empty">Enter indicator values on the left<br>and click <b>Analyse Symbol</b></div>
-      </div>
-    </div>
-  </div>
-
   <!-- ══════════ IMPORT PAGE ══════════ -->
 
 </main><!-- /main -->
@@ -871,7 +745,6 @@ function showPage(id){
 function goHome()    { showPage('pgHome');     setNav('navHome','Dashboard');      renderHome(); }
 function goAnalysis(){ showPage('pgAnalysis'); setNav('navAnalysis','Weekly Analysis'); runWeekly(); }
 function goImport()  { showImportPage();       setNav('navImport','Add / Update Data'); setTimeout(loadArchiveList,500); }
-function goSingle()  { showPage('pgSingle');   setNav('navSingle','Single Ticker'); }
 
 /* ════════════════════════════════════════════
    ORIGINAL LOGIC — unchanged from your working app
@@ -1197,50 +1070,6 @@ function runWeekly(){
     </div>`;
 }
 
-function analyseSingle(){
-  const ids=['sSymbol','sPrice','sMA50D','sMA200D','sRSID','sMACDHD','sSignalD','sMA50W','sMA200W','sRSIW','sMACDHW','sSignalW','sVolume','s52High','s52Low'];
-  const keys=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume','52W-High','52W-Low'];
-  const s={}; ids.forEach((id,i)=>s[keys[i]]=(document.getElementById(id).value||'').trim());
-  if(!s.Symbol||!s.Price){ alert('Symbol and Price are required.'); return; }
-  const z=computeZones(s),sc=scoreRow(s),vr=verdictFn(s,sc,z);
-  const p=parseFloat(s.Price); const mom=momentumLabel(s,vr.verdict);
-  const rr=((Math.abs(vr.target-p))/(Math.abs(p-z.s1Level)||1)).toFixed(2);
-  const mbcls=mom.includes('Strong ↑')?'mbadge-strong-up':mom.includes('Moderate ↑')?'mbadge-mod-up':mom.includes('Forming')?'mbadge-form-up':mom.includes('Strong ↓')?'mbadge-strong-dn':mom.includes('Moderate ↓')?'mbadge-mod-dn':mom.includes('Mild ↓')?'mbadge-mild-dn':'mbadge-watch';
-  const vcls=vr.verdict==='BUY'?'verdict-buy':vr.verdict==='EXIT'?'verdict-exit':vr.verdict==='WATCH'?'verdict-watch':vr.verdict==='WAIT'?'verdict-wait':'verdict-avoid';
-  const ma50d=num(s['MA50-D']),ma200d=num(s['MA200-D']),rsid=num(s['RSI-D']),macdD=num(s['MACD-H-D']),sigD=num(s['Signal-D']),macdW=num(s['MACD-H-W']),sigW=num(s['Signal-W']),ma50w=num(s['MA50-W']),ma200w=num(s['MA200-W']);
-  function iv(v,bull,bear){ return `<span class="ind-val ${v?'bull':'bear'}">${v?bull:bear}</span>`; }
-  let planHtml='';
-  if(vr.verdict==='BUY'){ const action=p<=z.s1Level*1.03?'BUY NOW — price is at support':'WAIT — pullback to '+z.supportZone; planHtml=`<div class="tp-card buy"><div class="tp-head" style="color:#10B981">🟢 Buy Plan</div><div class="tp-code">Entry: ${z.supportZone} | Target: ₨${fmt(vr.target)} | R:R ≈ ${rr}</div><div class="tp-note">At ₨${p}: ${action}</div></div>`; }
-  else if(vr.verdict==='EXIT'){ planHtml=`<div class="tp-card exit"><div class="tp-head" style="color:#F43F5E">🔴 Exit Signal</div><div class="tp-code">Current: ₨${fmt(p)} | Downside Risk: ₨${fmt(vr.target)}</div><div class="tp-note">MA50 broken. Consider closing.</div></div>`; }
-  document.getElementById('singleResult').innerHTML=`
-    <div class="card-header">📈 ${s.Symbol}</div>
-    <div class="verdict-block">
-      <div class="${vcls}">
-        <div class="verdict-main">${vr.v}</div>
-        <div class="verdict-score">Score: ${sc} / 100 · R:R ${rr}:1</div>
-      </div>
-      <span class="mbadge ${mbcls}">${mom}</span>
-      <div class="zone-grid">
-        <div class="zone-card sup"><div class="zlbl">Support S1</div><div class="zval">${z.supportZone}</div></div>
-        <div class="zone-card sup2"><div class="zlbl">Support S2</div><div class="zval">${z.s2Zone||'—'}</div></div>
-        <div class="zone-card res"><div class="zlbl">Resistance</div><div class="zval">${z.resistanceZone}</div></div>
-        <div class="zone-card tgt"><div class="zlbl">${vr.verdict==='EXIT'?'Downside':'Target'}</div><div class="zval">₨${fmt(vr.target)}</div></div>
-      </div>
-      ${planHtml}
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin:14px 0 8px">Indicators</div>
-      <div class="ind-grid">
-        <div class="ind-row"><span class="ind-name">Price vs MA50-D</span>${iv(ma50d!==null&&p>ma50d,'Above ✓','Below ✗')}</div>
-        <div class="ind-row"><span class="ind-name">Price vs MA200-D</span>${iv(ma200d!==null&&p>ma200d,'Above ✓','Below ✗')}</div>
-        <div class="ind-row"><span class="ind-name">MA50-D vs MA200-D</span>${iv(ma50d!==null&&ma200d!==null&&ma50d>=ma200d,'Golden ✓','Death ✗')}</div>
-        <div class="ind-row"><span class="ind-name">MA50-W vs MA200-W</span>${iv(ma50w!==null&&ma200w!==null&&ma50w>ma200w,'Golden ✓','Death ✗')}</div>
-        <div class="ind-row"><span class="ind-name">RSI-D (${rsid||'—'})</span><span class="ind-val ${rsid!==null&&rsid>=30&&rsid<=53?'bull':rsid!==null&&rsid>70?'bear':'neut'}">${rsid!==null?(rsid<30?'Oversold':rsid<=53?'Cool Zone':rsid<=70?'Rising':'Overbought'):'—'}</span></div>
-        <div class="ind-row"><span class="ind-name">MACD-D</span><span class="ind-val ${macdD!==null&&macdD>0?'bull':'bear'}">${macdD!==null?(macdD>0&&sigD!==null&&macdD>sigD?'Pos + Rising':macdD>0?'Pos':'Neg'):'—'}</span></div>
-        <div class="ind-row"><span class="ind-name">MACD-W</span><span class="ind-val ${macdW!==null&&macdW>0?'bull':'bear'}">${macdW!==null?(macdW>0&&sigW!==null&&macdW>sigW?'Pos + Rising':macdW>0?'Pos':'Neg'):'—'}</span></div>
-        <div class="ind-row"><span class="ind-name">R:R Ratio</span><span class="ind-val ${parseFloat(rr)>=2?'bull':parseFloat(rr)>=1.5?'neut':'bear'}">${rr}:1</span></div>
-      </div>
-    </div>`;
-}
-
 /* ── Import / Save ── */
 const FIELDS=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume','52W-High','52W-Low','Swing-Low','Swing-High'];
 let _rawData=[],_archiveWeeks=[],_prevData={},_prevDate='',_parsedRows=[],_prevWeekIdx=0;
@@ -1448,8 +1277,7 @@ loadCSV();
 /* Deep-link from portfolio sub-items */
 (function(){
   const h=window.location.hash;
-  if(h==='#weekly')      setTimeout(goAnalysis,120);
-  else if(h==='#single') setTimeout(goSingle,120);
+  if(h==='#weekly') setTimeout(goAnalysis,120);
 })();
 </script>
 </body>
