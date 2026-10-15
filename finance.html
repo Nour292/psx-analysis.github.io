@@ -179,7 +179,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.6</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.7</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -664,6 +664,7 @@ function exportPDF(key){
   const w=window.open('','_blank');
   w.document.write(`<!DOCTYPE html><html><head><title>${cfg.title}</title>
     <style>body{font-family:Arial,sans-serif;margin:16px;}h3{font-size:14px;margin-bottom:4px;}p{font-size:10px;color:#666;margin-bottom:10px;}@media print{@page{margin:12mm;}-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style>
+    <script>window.onafterprint=function(){window.close();}<\/script>
     </head><body><h3>${cfg.title}</h3><p>${rows.length} records · ${new Date().toLocaleDateString()}</p>${tbl}</body></html>`);
   w.document.close();w.print();
 }
