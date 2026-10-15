@@ -179,7 +179,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.5</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v3.6</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -562,8 +562,8 @@ function getFilteredRows(key){
   if(key==='allAcc'){
     const {bank,dir}=FSTATE.allAcc;
     if(bank) out=out.filter(r=>r['Bank']===bank);
-    if(dir==='in') out=out.filter(r=>n(r['Credit'])>0);
-    if(dir==='out') out=out.filter(r=>n(r['Debit'])>0);
+    if(dir==='in') out=out.filter(r=>n(r['Debit'])>0);
+    if(dir==='out') out=out.filter(r=>n(r['Credit'])>0);
   } else if(key==='credit'){
     const {name,cur}=FSTATE.credit;
     if(name) out=out.filter(r=>(r['Name']||'').trim()===name);
