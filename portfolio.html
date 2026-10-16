@@ -582,8 +582,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div style="max-width:560px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
         <div class="modal-field">
-          <label>Date <span style="font-size:10px;color:var(--text3)">(DD-Mon-YY)</span></label>
-          <input type="text" id="deDate" placeholder="e.g. 07-Oct-26" style="font-family:var(--mono)">
+          <label>Date</label>
+          <input type="date" id="deDate" style="font-family:var(--mono)">
         </div>
         <div class="modal-field">
           <label>Type</label>
@@ -597,7 +597,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         </div>
         <div class="modal-field">
           <label>Stock Symbol</label>
-          <input type="text" id="deStock" placeholder="e.g. HUBC" oninput="this.value=this.value.toUpperCase();deUpdateSummary()" style="font-family:var(--mono);text-transform:uppercase">
+          <input type="text" id="deStock" list="deStockList" placeholder="Select or type..." oninput="this.value=this.value.toUpperCase();deStockChanged()" style="font-family:var(--mono);text-transform:uppercase">
+          <datalist id="deStockList"></datalist>
         </div>
         <div class="modal-field">
           <label>Units</label>
@@ -627,8 +628,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
             </select>
           </div>
           <div class="modal-field" id="deDivPayDateField" style="margin:0;display:none">
-            <label>Pay Date <span style="font-size:10px;color:var(--text3)">(DD-Mon-YY)</span></label>
-            <input type="text" id="deDivPayDate" placeholder="e.g. 15-Oct-26" style="font-family:var(--mono)">
+            <label>Pay Date</label>
+            <input type="date" id="deDivPayDate" style="font-family:var(--mono)">
           </div>
         </div>
         <div style="margin-top:10px;font-size:11px;color:var(--amber)" id="deDivNote">⚠️ Declared dividend will NOT be added to Free Cash until marked Paid.</div>
@@ -911,16 +912,23 @@ async function submitTrade(action){const sym=(document.getElementById('bsSym').v
 function updateCAPITAL(action,units,rate,newCash){CAPITAL.freeCash=newCash;const el=document.getElementById('kFreeCash');if(el)el.textContent=Math.round(newCash).toLocaleString();}
 
 // ── Data Entry ──
+function todayISO(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');}
+function toSheetDate(v){if(!v)return '';const d=new Date(v+'T00:00:00');if(isNaN(d.getTime()))return v;const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];return `${d.getDate()}-${mon}-${d.getFullYear().toString().slice(2)}`;}
+function deAutoFillUnits(){
+  const type=(document.getElementById('deType')||{}).value||'';
+  if(type!=='Dividend')return;
+  const stock=(document.getElementById('deStock')||{}).value.toUpperCase().trim();
+  const h=_holdings.find(x=>x.symbol===stock);
+  if(h&&h.qty>0){const u=document.getElementById('deUnits');if(u)u.value=h.qty;deUpdateSummary();}
+}
+function deStockChanged(){deAutoFillUnits();deUpdateSummary();}
 function initDataEntry(){
   const lbl=document.getElementById('deTabLabel');
   if(lbl)lbl.textContent=isAdmin()?'qasim-stock':_currentUser+'-stock';
-  if(!document.getElementById('deDate').value){
-    const now=new Date();
-    const day=now.getDate();
-    const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()];
-    const yr=now.getFullYear().toString().slice(2);
-    document.getElementById('deDate').value=`${day}-${mon}-${yr}`;
-  }
+  if(!document.getElementById('deDate').value)document.getElementById('deDate').value=todayISO();
+  // Populate stock symbol datalist from holdings
+  const dl=document.getElementById('deStockList');
+  if(dl)dl.innerHTML=_holdings.map(h=>`<option value="${h.symbol}">`).join('');
   deUpdateSummary();
 }
 function deDivStatusChange(){
@@ -935,6 +943,8 @@ function deUpdateSummary(){
   // Show/hide dividend status section
   const divFields=document.getElementById('deDivFields');
   if(divFields)divFields.style.display=type==='Dividend'?'block':'none';
+  // Auto-fill units from portfolio when switching to Dividend (only if units empty)
+  if(type==='Dividend'){const u=document.getElementById('deUnits');if(u&&!u.value){const s=(document.getElementById('deStock')||{}).value.toUpperCase().trim();const h=_holdings.find(x=>x.symbol===s);if(h&&h.qty>0)u.value=h.qty;}}
   const stock=(document.getElementById('deStock')||{}).value||'';
   const units=parseFloat((document.getElementById('deUnits')||{}).value)||0;
   const price=parseFloat((document.getElementById('dePrice')||{}).value)||0;
@@ -948,6 +958,7 @@ function deUpdateSummary(){
 }
 function clearDataEntry(){
   ['deStock','deUnits','dePrice','deFees','deNotes','deDivPayDate'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('deDate').value=todayISO();
   document.getElementById('deType').value='Buy';
   document.getElementById('deSummary').style.display='none';
   document.getElementById('deStatus').textContent='';
@@ -958,14 +969,14 @@ function clearDataEntry(){
   if(_editRowIdx!==-1){_editRowIdx=-1;const btn=document.querySelector('#pgDataEntry button[onclick="submitDataEntry()"]');if(btn)btn.textContent='✅ Save to Sheet';const lbl=document.getElementById('deTabLabel');if(lbl)lbl.textContent=isAdmin()?'qasim-stock':_currentUser+'-stock';}
 }
 async function submitDataEntry(){
-  const date=(document.getElementById('deDate').value||'').trim();
+  const date=toSheetDate((document.getElementById('deDate').value||'').trim());
   const type=document.getElementById('deType').value||'';
   const stock=(document.getElementById('deStock').value||'').toUpperCase().trim();
   const units=parseFloat(document.getElementById('deUnits').value)||0;
   const price=parseFloat(document.getElementById('dePrice').value)||0;
   const manualFees=parseFloat(document.getElementById('deFees').value)||0;
   const divStatus=type==='Dividend'?(document.getElementById('deDivStatus').value||'Declared'):'';
-  const divPayDate=type==='Dividend'&&divStatus==='Paid'?(document.getElementById('deDivPayDate').value||'').trim():'';
+  const divPayDate=type==='Dividend'&&divStatus==='Paid'?toSheetDate((document.getElementById('deDivPayDate').value||'').trim()):'';
   const notes=(document.getElementById('deNotes').value||'').trim();
   const statusEl=document.getElementById('deStatus');
   if(!date||!type||!stock||!units||!price){statusEl.textContent='❌ Date, Type, Stock, Units and Price are required';statusEl.style.color='var(--rose)';return;}
