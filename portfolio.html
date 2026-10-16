@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.62</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.63</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1442,6 +1442,18 @@ async function autoLoad(){
         return{symbol:s,qty,avg,dps:DPS[s]||0,sector:SECTOR[s]||'Other',
                price:_prices[s]||null,priceSource:_priceSource[s]||null};
       }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
+    // Patch Avg Cost in sheet-loaded portfolio using net investment formula
+    if(_qasimPortfolio.length){
+      _qasimPortfolio.forEach(r=>{
+        const s=(r['Stock']||'').trim().toUpperCase();
+        const d=hm[s];
+        if(d&&d.buyU>0){
+          const qty=parseFloat(r['Units'])||0;
+          if(qty>0)r['Avg Cost']=((d.buyAmt-d.sellAmt)/qty).toFixed(2);
+        }
+      });
+      renderQasimPortfolio();
+    }
     buildAll();
     buildPortfolioFromLedger(rows,hdrs);
   }catch(e){console.log('holdings GS:',e.message);}
