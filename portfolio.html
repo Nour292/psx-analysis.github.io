@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.61</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.62</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1437,7 +1437,8 @@ async function autoLoad(){
       .filter(([s,d])=>(d.buyU-d.sellU)>0.5&&s)
       .map(([s,d])=>{
         const qty=Math.round(d.buyU-d.sellU);
-        const avg=parseFloat((d.buyU>0?d.buyAmt/d.buyU:0).toFixed(2));
+        const netInv=d.buyAmt-d.sellAmt;
+        const avg=parseFloat((qty>0?netInv/qty:0).toFixed(2));
         return{symbol:s,qty,avg,dps:DPS[s]||0,sector:SECTOR[s]||'Other',
                price:_prices[s]||null,priceSource:_priceSource[s]||null};
       }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
