@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.68</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.69</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -880,7 +880,7 @@ function renderOvDivRecord(){
   let totGross=0,totFees=0,totNet=0;
   sorted.forEach(r=>{totGross+=nv2(r.Amount);totFees+=nv2(r.Fees);totNet+=nv2(r.Amount)-nv2(r.Fees);});
   let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Date</th><th>Stock</th><th>Units</th><th>Price/Share</th><th>Net Price/Share</th><th>Gross Amount</th><th>Fees/Tax</th><th>Net Amount</th><th>Status</th><th>Pay Date</th></tr>`;
-  sorted.forEach(r=>{const amt=nv2(r.Amount),fees=nv2(r.Fees),net=amt-fees,st=(r.Status||'').toLowerCase();html+=`<tr><td style="color:var(--accent);font-family:var(--mono);white-space:nowrap;font-weight:600">${r.Date||'—'}</td><td class="sym">${r.Stock||'—'}</td><td class="mono">${r.Units||'—'}</td><td class="c-blue mono">${r.DPS||'—'}</td><td class="mono" style="color:var(--emerald)">${r.NetDPS||'—'}</td><td class="c-gold mono">${amt?Math.round(amt).toLocaleString():'—'}</td><td class="mono" style="color:var(--rose)">${fees?Math.round(fees).toLocaleString():'—'}</td><td class="c-gold mono">${net>0?Math.round(net).toLocaleString():'—'}</td><td style="color:${statColor[st]||'var(--text)'};font-weight:700;white-space:nowrap">${statLabel[st]||r.Status||'—'}</td><td class="mono" style="color:var(--text3);white-space:nowrap">${r.PayDate||'—'}</td></tr>`;});
+  sorted.forEach(r=>{const amt=nv2(r.Amount),fees=nv2(r.Fees),net=amt-fees,st=(r.Status||'').toLowerCase();const dps=parseFloat(r.DPS)||0;const netDpsDisp=r.NetDPS||(dps>0?(dps*0.85).toFixed(dps%1===0?0:3).replace(/\.?0+$/,''):'');html+=`<tr><td style="color:var(--accent);font-family:var(--mono);white-space:nowrap;font-weight:600">${r.Date||'—'}</td><td class="sym">${r.Stock||'—'}</td><td class="mono">${r.Units||'—'}</td><td class="c-blue mono">${r.DPS||'—'}</td><td class="mono" style="color:var(--emerald)">${netDpsDisp||'—'}</td><td class="c-gold mono">${amt?Math.round(amt).toLocaleString():'—'}</td><td class="mono" style="color:var(--rose)">${fees?Math.round(fees).toLocaleString():'—'}</td><td class="c-gold mono">${net>0?Math.round(net).toLocaleString():'—'}</td><td style="color:${statColor[st]||'var(--text)'};font-weight:700;white-space:nowrap">${statLabel[st]||r.Status||'—'}</td><td class="mono" style="color:var(--text3);white-space:nowrap">${r.PayDate||'—'}</td></tr>`;});
   html+=`<tr class="total-r"><td colspan="5" class="c-gray">TOTAL (${sorted.length} records)</td><td class="c-gold mono">${Math.round(totGross).toLocaleString()}</td><td class="mono" style="color:var(--rose)">${Math.round(totFees).toLocaleString()}</td><td class="c-gold mono">${Math.round(totNet).toLocaleString()}</td><td colspan="2"></td></tr></table></div>`;
   document.getElementById('qpTable').innerHTML=html;
 }
