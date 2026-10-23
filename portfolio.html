@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.74</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.75</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -505,6 +505,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="ov-kpi"><div class="ov-val"         id="qpRealPL">—</div><div class="ov-lbl">Realized P/L</div></div>
       <div class="ov-kpi"><div class="ov-val c-gold"  id="qpNetDiv">—</div><div class="ov-lbl">Net Dividends</div></div>
       <div class="ov-kpi"><div class="ov-val" style="color:var(--amber)" id="qpDeclaredDiv">—</div><div class="ov-lbl">Declared Dividends</div></div>
+      <div class="ov-kpi"><div class="ov-val c-gold"  id="qpTotalDiv">—</div><div class="ov-lbl">Total Dividends</div></div>
       <div class="ov-kpi"><div class="ov-val c-gold"  id="qpFreeCash">—</div><div class="ov-lbl">Free Cash</div></div>
     </div>
     <div class="ov-tab-bar">
@@ -1183,6 +1184,7 @@ function renderQasimPortfolio(){
   setEl('qpUnrealPL',tUnreal);setEl('qpRealPL',tReal);
   setEl('qpNetDiv',tDiv,'var(--amber)');
   const _qdEl=document.getElementById('qpDeclaredDiv');if(_qdEl)_qdEl.textContent=Math.round(tDeclared).toLocaleString();
+  const _qtdEl=document.getElementById('qpTotalDiv');if(_qtdEl)_qtdEl.textContent=Math.round(tDiv+tDeclared).toLocaleString();
   let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost of Holdings</th><th>Current Price</th><th>Market Value</th><th>Unrealized P/L</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
   rows.forEach((r,i)=>{
     const da=_decl[(r['Stock']||'').trim().toUpperCase()]||0;
