@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.72</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.73</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1015,7 +1015,7 @@ async function submitDataEntry(){
   let netPrice='',cashImpact=0;
   if(type==='Buy'){netPrice=r4((amount+totalFees)/units);cashImpact=r2(-(amount+totalFees));}
   else if(type==='Sell'){netPrice=r4((amount-totalFees)/units);cashImpact=r2(amount-totalFees);}
-  else if(type==='Dividend'){netPrice=r4((amount-totalFees)/units);cashImpact=divStatus==='Declared'?0:r2(amount-totalFees);}
+  else if(type==='Dividend'){netPrice=r4((amount-totalFees)/units);cashImpact=r2(amount-totalFees);}
   else{cashImpact=r2(amount);}
   statusEl.textContent='⏳ Saving...';statusEl.style.color='var(--amber)';
   const deTab=isAdmin()?'qasim-stock':_currentUser+'-stock';
@@ -1024,7 +1024,7 @@ async function submitDataEntry(){
     const prev=await fetch(gsUrl(deTab));
     if(prev.ok){const pj=await prev.json();sheetRows=(pj.values||[]);if(sheetRows.length>1){const sh=sheetRows[0]||[];const ciCol=sh.indexOf('Cash Impact'),dsCol=sh.findIndex(h=>(h||'').toLowerCase().replace(/\s/g,'')==='divstatus');prevBalance=sheetRows.slice(1).reduce((s,r)=>{const rt=(r[1]||'').trim().toLowerCase(),ds=dsCol>=0?(r[dsCol]||'').trim().toLowerCase():'';if(rt==='dividend'&&ds==='declared')return s;return s+(parseFloat((r[ciCol>=0?ciCol:8]||'0').toString().replace(/,/g,''))||0);},0);}}
   }catch(e){}
-  const newBal=r2(prevBalance+cashImpact);
+  const newBal=r2(prevBalance+(type==='Dividend'&&divStatus==='Declared'?0:cashImpact));
   let kAvgCost='',lCostSold='',mRealPL='',qCGT='';
   if(type==='Sell'&&sheetRows.length>1){
     let hUnits=0,hCost=0;
@@ -1063,11 +1063,15 @@ async function submitDataEntry(){
       const eHdrs=sheetRows[0]||[];
       const eFi=nm=>{const i=eHdrs.indexOf(nm);return i>=0?i:eHdrs.findIndex(h=>(h||'').toLowerCase().replace(/\s/g,'')===(nm||'').toLowerCase().replace(/\s/g,''));};
       const eCiCol=eFi('Cash Impact'),eCbCol=eFi('Cash Balance');
+      const eDsCol=eHdrs.findIndex(h=>(h||'').toLowerCase().replace(/\s/g,'')==='divstatus');
       const dataRowIdx=editIdx+1;
       if(dataRowIdx>=sheetRows.length)throw new Error('Row not found in sheet');
       const oldCI=parseFloat((sheetRows[dataRowIdx][eCiCol>=0?eCiCol:8]||'0').toString().replace(/,/g,''))||0;
       const oldCB=parseFloat((sheetRows[dataRowIdx][eCbCol>=0?eCbCol:9]||'0').toString().replace(/,/g,''))||0;
-      const delta=r2(cashImpact-oldCI);
+      const oldDivStatus=eDsCol>=0?(sheetRows[dataRowIdx][eDsCol]||'').trim().toLowerCase():'';
+      const effOldCI=(sheetRows[dataRowIdx][1]||'').trim().toLowerCase()==='dividend'&&oldDivStatus==='declared'?0:oldCI;
+      const effNewCI=type==='Dividend'&&divStatus==='Declared'?0:cashImpact;
+      const delta=r2(effNewCI-effOldCI);
       sheetRows[dataRowIdx]=row;
       const cbIdx=eCbCol>=0?eCbCol:9;
       sheetRows[dataRowIdx][cbIdx]=(Math.round((oldCB+delta)*100)/100).toFixed(2);
