@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.73</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.74</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -624,8 +624,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <div class="modal-field" style="margin:0">
             <label>Status</label>
             <select id="deDivStatus" onchange="deDivStatusChange()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;outline:none;font-family:var(--font);width:100%">
-              <option value="Paid">Paid — cash received</option>
               <option value="Declared">Declared — not received yet</option>
+              <option value="Paid">Paid — cash received</option>
             </select>
           </div>
           <div class="modal-field" id="deDivPayDateField" style="margin:0;display:none">
@@ -980,7 +980,7 @@ function clearDataEntry(){
   document.getElementById('deType').value='Buy';
   document.getElementById('deSummary').style.display='none';
   document.getElementById('deStatus').textContent='';
-  const ds=document.getElementById('deDivStatus');if(ds)ds.value='Paid';
+  const ds=document.getElementById('deDivStatus');if(ds)ds.value='Declared';
   const ddf=document.getElementById('deDivFields');if(ddf)ddf.style.display='none';
   const ddpf=document.getElementById('deDivPayDateField');if(ddpf)ddpf.style.display='none';
   deDivStatusChange();
