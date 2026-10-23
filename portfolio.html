@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.67</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.68</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1123,7 +1123,8 @@ async function loadCashFlow(){try{const res=await fetch(gsUrl(isAdmin()?'qasim-s
       const derived=raw.reduce((s,r)=>{const rt=(r[iType]||'').trim().toLowerCase(),ds=iDS2>=0?(r[iDS2]||'').trim().toLowerCase():'';return(rt==='dividend'&&ds==='declared')?s:s+(parseFloat((r[iCI]||'0').replace(/[^0-9.\-]/g,''))||0);},0);
       {CAPITAL.freeCash=derived;CAPITAL.cashAsOf=(raw[raw.length-1]?raw[raw.length-1][iDate]||'':'');const el=document.getElementById('kFreeCash');if(el)el.textContent=Math.round(derived).toLocaleString();const el2=document.getElementById('qpFreeCash');if(el2)el2.textContent=Math.round(derived).toLocaleString();}
       window._declaredDivBySym={};window._declaredDivBySymNew={};const _pN=v=>parseFloat((v||'0').replace(/[^0-9.\-]/g,''))||0;raw.forEach(r=>{const rt=(r[iType]||'').trim().toLowerCase(),ds=iDS2>=0?(r[iDS2]||'').trim().toLowerCase():'';if(rt==='dividend'&&ds==='declared'){const sym=(r[iStock]||'').trim().toUpperCase(),ci=_pN(r[iCI]);if(!sym)return;if(ci>0){window._declaredDivBySym[sym]=(window._declaredDivBySym[sym]||0)+ci;}else{const net=_pN(iAmt>=0?r[iAmt]:'0')-_pN(r[iFees]);if(net>0)window._declaredDivBySymNew[sym]=(window._declaredDivBySymNew[sym]||0)+net;}}});
-      window._divRows=raw.filter(r=>(r[iType]||'').trim().toLowerCase()==='dividend').map(r=>({Date:(r[iDate]||'').trim(),Stock:(r[iStock]||'').trim().toUpperCase(),Units:iUnits>=0?(r[iUnits]||'').trim():'',DPS:iDPS>=0?(r[iDPS]||'').trim():'',NetDPS:iNetDPS>=0?(r[iNetDPS]||'').trim():'',Amount:iAmt>=0?(r[iAmt]||'').trim():'',Fees:(r[iFees]||'').trim(),CI:(r[iCI]||'').trim(),Status:iDS2>=0?(r[iDS2]||'').trim():'',PayDate:iDivPayDate>=0?(r[iDivPayDate]||'').trim():''}));
+      const _fiN=nm=>{const n=nm.toLowerCase().replace(/[\s\/]/g,'');return hdrs.findIndex(h=>(h||'').toLowerCase().replace(/[\s\/]/g,'')===n);};const _iDPS=iDPS>=0?iDPS:_fiN('PriceShare');const _iNetDPS=iNetDPS>=0?iNetDPS:_fiN('NetPriceShare');
+      window._divRows=raw.filter(r=>(r[iType]||'').trim().toLowerCase()==='dividend').map(r=>({Date:(r[iDate]||'').trim(),Stock:(r[iStock]||'').trim().toUpperCase(),Units:iUnits>=0?(r[iUnits]||'').trim():'',DPS:_iDPS>=0?(r[_iDPS]||'').trim():'',NetDPS:_iNetDPS>=0?(r[_iNetDPS]||'').trim():'',Amount:iAmt>=0?(r[iAmt]||'').trim():'',Fees:(r[iFees]||'').trim(),CI:(r[iCI]||'').trim(),Status:iDS2>=0?(r[iDS2]||'').trim():'',PayDate:iDivPayDate>=0?(r[iDivPayDate]||'').trim():''}));
       if(!isAdmin()){
         const fe=_cashFlow[0];
         let totDep=parseFloat(fe&&fe.OpeningCash||0),totWdr=0;
