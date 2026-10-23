@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.70</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.71</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1015,7 +1015,7 @@ async function submitDataEntry(){
   let netPrice='',cashImpact=0;
   if(type==='Buy'){netPrice=r4((amount+totalFees)/units);cashImpact=r2(-(amount+totalFees));}
   else if(type==='Sell'){netPrice=r4((amount-totalFees)/units);cashImpact=r2(amount-totalFees);}
-  else if(type==='Dividend'){cashImpact=divStatus==='Declared'?0:r2(amount-totalFees);}
+  else if(type==='Dividend'){netPrice=r4((amount-totalFees)/units);cashImpact=divStatus==='Declared'?0:r2(amount-totalFees);}
   else{cashImpact=r2(amount);}
   statusEl.textContent='⏳ Saving...';statusEl.style.color='var(--amber)';
   const deTab=isAdmin()?'qasim-stock':_currentUser+'-stock';
