@@ -417,18 +417,51 @@ function renderDash(){
   if(_remitMonth!=='All'&&!allMonths.includes(_remitMonth))_remitMonth='All';
   const monthOpts='<option value="All">All Months</option>'+allMonths.map(m=>`<option value="${m}"${m===_remitMonth?'selected':''}>${m}</option>`).join('');
   let remitRows='',remSAR=0,remPKR=0,remCopyRows='',remCopyLines='';
-  const filteredMonths=_remitMonth==='All'?Object.entries(monthMap).sort((a,b)=>mNum(b[0])-mNum(a[0])):[[_remitMonth,monthMap[_remitMonth]]];
-  filteredMonths.forEach(([m,v])=>{
-    remSAR+=v.sar; remPKR+=v.pkr;
-    remitRows+=`<tr><td style="font-weight:600">${m}</td>
-      <td class="dt-num" style="color:var(--accent)">SAR ${fmt(v.sar)}</td>
-      <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(v.pkr)}</td></tr>`;
-    remCopyRows+=`<tr><td style="padding:4px 10px;font-weight:600;border:1px solid #ccc">${m}</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a6fb5">SAR ${fmt(v.sar)}</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a7a4a">PKR ${fmt(v.pkr)}</td></tr>`;
-    remCopyLines+=`${m}\tSAR ${fmt(v.sar)}\tPKR ${fmt(v.pkr)}\n`;
-  });
+  let remitThead='',remitTotalCols='',remCopyHead='',remCopyTotalCols='',remTextHead='';
   const _remitTitle=`Remittance ${_remitYear}${_remitMonth!=='All'?' — '+_remitMonth:''}`;
-  window._remitCopyHTML=`<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px"><caption style="font-weight:700;font-size:14px;padding-bottom:6px;text-align:left">${_remitTitle}</caption><thead><tr><th style="padding:4px 10px;border:1px solid #ccc;background:#f0f0f0">Month</th><th style="padding:4px 14px;border:1px solid #ccc;background:#f0f0f0;text-align:right">SAR</th><th style="padding:4px 14px;border:1px solid #ccc;background:#f0f0f0;text-align:right">PKR</th></tr></thead><tbody>${remCopyRows}<tr style="font-weight:700;background:#f5f5f5"><td style="padding:4px 10px;border:1px solid #ccc">TOTAL</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a6fb5">SAR ${fmt(remSAR)}</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a7a4a">PKR ${fmt(remPKR)}</td></tr></tbody></table>`;
-  window._remitCopyText=`${_remitTitle}\nMonth\tSAR\tPKR\n${remCopyLines}TOTAL\tSAR ${fmt(remSAR)}\tPKR ${fmt(remPKR)}`;
+
+  if(_remitMonth==='All'){
+    // Summary view: one row per month
+    remitThead=`<tr><th>Month</th><th class="dt-num">SAR</th><th class="dt-num">PKR</th></tr>`;
+    remitTotalCols=`<td>TOTAL</td><td class="dt-num" style="color:var(--accent)">SAR ${fmt(remSAR)}</td><td class="dt-num" style="color:var(--emerald)">PKR ${fmt(remPKR)}</td>`;
+    remCopyHead=`<tr><th style="padding:4px 10px;border:1px solid #ccc;background:#f0f0f0">Month</th><th style="padding:4px 14px;border:1px solid #ccc;background:#f0f0f0;text-align:right">SAR</th><th style="padding:4px 14px;border:1px solid #ccc;background:#f0f0f0;text-align:right">PKR</th></tr>`;
+    remTextHead=`Month\tSAR\tPKR\n`;
+    Object.entries(monthMap).sort((a,b)=>mNum(b[0])-mNum(a[0])).forEach(([m,v])=>{
+      remSAR+=v.sar; remPKR+=v.pkr;
+      remitRows+=`<tr><td style="font-weight:600">${m}</td>
+        <td class="dt-num" style="color:var(--accent)">SAR ${fmt(v.sar)}</td>
+        <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(v.pkr)}</td></tr>`;
+      remCopyRows+=`<tr><td style="padding:4px 10px;font-weight:600;border:1px solid #ccc">${m}</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a6fb5">SAR ${fmt(v.sar)}</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a7a4a">PKR ${fmt(v.pkr)}</td></tr>`;
+      remCopyLines+=`${m}\tSAR ${fmt(v.sar)}\tPKR ${fmt(v.pkr)}\n`;
+    });
+    remitTotalCols=`<td>TOTAL</td><td class="dt-num" style="color:var(--accent)">SAR ${fmt(remSAR)}</td><td class="dt-num" style="color:var(--emerald)">PKR ${fmt(remPKR)}</td>`;
+    remCopyTotalCols=`<td style="padding:4px 10px;border:1px solid #ccc">TOTAL</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a6fb5">SAR ${fmt(remSAR)}</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a7a4a">PKR ${fmt(remPKR)}</td>`;
+  } else {
+    // Detail view: individual transactions for the selected month
+    remitThead=`<tr><th>Date</th><th>To</th><th>Description</th><th class="dt-num">SAR</th><th class="dt-num">PKR</th></tr>`;
+    remCopyHead=`<tr><th style="padding:4px 10px;border:1px solid #ccc;background:#f0f0f0">Date</th><th style="padding:4px 10px;border:1px solid #ccc;background:#f0f0f0">To</th><th style="padding:4px 10px;border:1px solid #ccc;background:#f0f0f0">Description</th><th style="padding:4px 14px;border:1px solid #ccc;background:#f0f0f0;text-align:right">SAR</th><th style="padding:4px 14px;border:1px solid #ccc;background:#f0f0f0;text-align:right">PKR</th></tr>`;
+    remTextHead=`Date\tTo\tDescription\tSAR\tPKR\n`;
+    const txns=DATA.remit.rows.filter(r=>getYear(r['Date'])===_remitYear&&(r['Month']||'?')===_remitMonth)
+      .sort((a,b)=>new Date(a['Date'])-new Date(b['Date']));
+    txns.forEach(r=>{
+      const d=r['Date']||'',to=r['To']||'—',desc=r['DESCRIPTION']||'—';
+      const sar=n(r['Saudi Riyals']),pkr=n(r['Pakistani Rupees']);
+      remSAR+=sar; remPKR+=pkr;
+      remitRows+=`<tr>
+        <td style="color:var(--text2);font-size:12px">${d}</td>
+        <td style="font-weight:600">${to}</td>
+        <td style="color:var(--text2);font-size:12px">${desc}</td>
+        <td class="dt-num" style="color:var(--accent)">SAR ${fmt(sar)}</td>
+        <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(pkr)}</td></tr>`;
+      remCopyRows+=`<tr><td style="padding:4px 10px;border:1px solid #ccc">${d}</td><td style="padding:4px 10px;border:1px solid #ccc;font-weight:600">${to}</td><td style="padding:4px 10px;border:1px solid #ccc">${desc}</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a6fb5">SAR ${fmt(sar)}</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a7a4a">PKR ${fmt(pkr)}</td></tr>`;
+      remCopyLines+=`${d}\t${to}\t${desc}\tSAR ${fmt(sar)}\tPKR ${fmt(pkr)}\n`;
+    });
+    remitTotalCols=`<td colspan="3">TOTAL (${txns.length} transactions)</td><td class="dt-num" style="color:var(--accent)">SAR ${fmt(remSAR)}</td><td class="dt-num" style="color:var(--emerald)">PKR ${fmt(remPKR)}</td>`;
+    remCopyTotalCols=`<td colspan="3" style="padding:4px 10px;border:1px solid #ccc">TOTAL (${txns.length} transactions)</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a6fb5">SAR ${fmt(remSAR)}</td><td style="padding:4px 14px;text-align:right;border:1px solid #ccc;color:#1a7a4a">PKR ${fmt(remPKR)}</td>`;
+  }
+
+  window._remitCopyHTML=`<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px"><caption style="font-weight:700;font-size:14px;padding-bottom:6px;text-align:left">${_remitTitle}</caption><thead>${remCopyHead}</thead><tbody>${remCopyRows}<tr style="font-weight:700;background:#f5f5f5">${remCopyTotalCols}</tr></tbody></table>`;
+  window._remitCopyText=`${_remitTitle}\n${remTextHead}${remCopyLines}TOTAL\tSAR ${fmt(remSAR)}\tPKR ${fmt(remPKR)}`;
   const selStyle='font-size:11px;padding:2px 8px;background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--mono);font-weight:700;outline:none';
   html+=`<div>
     <div class="sec-hdr">💸 Remittance
@@ -437,12 +470,9 @@ function renderDash(){
       <button onclick="navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([window._remitCopyHTML],{type:'text/html'}),'text/plain':new Blob([window._remitCopyText],{type:'text/plain'})})]).then(()=>{this.textContent='✅ Copied';setTimeout(()=>this.textContent='📋 Copy',1500)})" style="font-size:11px;padding:2px 10px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--mono)">📋 Copy</button>
     </div>
     <div class="dt-wrap"><table class="dt">
-      <thead><tr><th>Month</th><th class="dt-num">SAR</th><th class="dt-num">PKR</th></tr></thead>
+      <thead>${remitThead}</thead>
       <tbody>${remitRows}
-        <tr class="dt-total"><td>TOTAL</td>
-          <td class="dt-num" style="color:var(--accent)">SAR ${fmt(remSAR)}</td>
-          <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(remPKR)}</td>
-        </tr>
+        <tr class="dt-total">${remitTotalCols}</tr>
       </tbody></table></div>
   </div>`;
 
