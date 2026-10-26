@@ -711,7 +711,7 @@ async function copyRemit(btn){
       await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
     }
     const tmp=document.createElement('div');
-    tmp.style.cssText='position:fixed;top:-9999px;left:-9999px;background:#ffffff;padding:16px;font-family:Arial,sans-serif;font-size:13px';
+    tmp.style.cssText='position:fixed;top:-9999px;left:-9999px;background:#ffffff;color:#000000;padding:16px;font-family:Arial,sans-serif;font-size:13px';
     tmp.innerHTML=window._remitCopyHTML;
     document.body.appendChild(tmp);
     const canvas=await html2canvas(tmp,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
