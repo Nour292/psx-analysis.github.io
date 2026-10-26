@@ -467,7 +467,7 @@ function renderDash(){
     <div class="sec-hdr">💸 Remittance
       <select onchange="_remitYear=this.value;_remitMonth='All';renderDash()" style="${selStyle}">${yearOpts}</select>
       <select onchange="_remitMonth=this.value;renderDash()" style="${selStyle}">${monthOpts}</select>
-      <button onclick="navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([window._remitCopyHTML],{type:'text/html'}),'text/plain':new Blob([window._remitCopyText],{type:'text/plain'})})]).then(()=>{this.textContent='✅ Copied';setTimeout(()=>this.textContent='📋 Copy',1500)})" style="font-size:11px;padding:2px 10px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--mono)">📋 Copy</button>
+      <button onclick="copyRemit(this)" style="font-size:11px;padding:2px 10px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--mono)">📋 Copy</button>
     </div>
     <div class="dt-wrap"><table class="dt">
       <thead>${remitThead}</thead>
@@ -700,6 +700,34 @@ function showCopyToast(msg){
   let t=document.getElementById('copyToast');
   if(!t){t=document.createElement('div');t.id='copyToast';t.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 18px;font-size:13px;font-weight:600;color:var(--text);z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.4);transition:opacity .3s;pointer-events:none';document.body.appendChild(t);}
   t.textContent=msg;t.style.opacity='1';clearTimeout(t._to);t._to=setTimeout(()=>t.style.opacity='0',2500);
+}
+async function copyRemit(btn){
+  btn.textContent='⏳ Copying…';
+  try{
+    if(!window.html2canvas){
+      await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+    }
+    const tmp=document.createElement('div');
+    tmp.style.cssText='position:fixed;top:-9999px;left:-9999px;background:#ffffff;padding:16px;font-family:Arial,sans-serif;font-size:13px';
+    tmp.innerHTML=window._remitCopyHTML;
+    document.body.appendChild(tmp);
+    const canvas=await html2canvas(tmp,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+    document.body.removeChild(tmp);
+    await new Promise(res=>canvas.toBlob(async blob=>{
+      await navigator.clipboard.write([new ClipboardItem({
+        'image/png':blob,
+        'text/html':new Blob([window._remitCopyHTML],{type:'text/html'}),
+        'text/plain':new Blob([window._remitCopyText],{type:'text/plain'})
+      })]);
+      res();
+    },'image/png'));
+    btn.textContent='✅ Copied';
+  }catch(e){
+    // fallback: html+text only
+    try{await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([window._remitCopyHTML],{type:'text/html'}),'text/plain':new Blob([window._remitCopyText],{type:'text/plain'})})]);btn.textContent='✅ Copied';}
+    catch(e2){btn.textContent='❌ Failed';}
+  }
+  setTimeout(()=>btn.textContent='📋 Copy',1800);
 }
 async function copyTable(key,mode){
   document.getElementById('copyMenu_'+key)?.classList.remove('open');
