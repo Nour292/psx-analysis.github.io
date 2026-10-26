@@ -179,7 +179,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.2</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.3</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -308,7 +308,7 @@ function renderTab(tab){
 // ==============================
 // DASHBOARD
 // ==============================
-let _remitYear='';
+let _remitYear='',_remitMonth='All';
 
 function renderDash(){
   function getYear(d){
@@ -413,18 +413,25 @@ function renderDash(){
 
   // Remittance (under Bank Balances, same width)
   const yearOpts=allYears.map(y=>`<option value="${y}"${y===_remitYear?'selected':''}>${y}</option>`).join('');
-  let remitRows='',remSAR=0,remPKR=0;
-  Object.entries(monthMap).sort((a,b)=>mNum(b[0])-mNum(a[0])).forEach(([m,v])=>{
+  const allMonths=Object.keys(monthMap).sort((a,b)=>mNum(b)-mNum(a));
+  if(_remitMonth!=='All'&&!allMonths.includes(_remitMonth))_remitMonth='All';
+  const monthOpts='<option value="All">All Months</option>'+allMonths.map(m=>`<option value="${m}"${m===_remitMonth?'selected':''}>${m}</option>`).join('');
+  let remitRows='',remSAR=0,remPKR=0,remCopyLines='';
+  const filteredMonths=_remitMonth==='All'?Object.entries(monthMap).sort((a,b)=>mNum(b[0])-mNum(a[0])):[[_remitMonth,monthMap[_remitMonth]]];
+  filteredMonths.forEach(([m,v])=>{
     remSAR+=v.sar; remPKR+=v.pkr;
     remitRows+=`<tr><td style="font-weight:600">${m}</td>
       <td class="dt-num" style="color:var(--accent)">SAR ${fmt(v.sar)}</td>
       <td class="dt-num" style="color:var(--emerald)">PKR ${fmt(v.pkr)}</td></tr>`;
+    remCopyLines+=`${m}\tSAR ${fmt(v.sar)}\tPKR ${fmt(v.pkr)}\n`;
   });
+  const copyText=`Remittance ${_remitYear}${_remitMonth!=='All'?' — '+_remitMonth:''}\nMonth\tSAR\tPKR\n${remCopyLines}TOTAL\tSAR ${fmt(remSAR)}\tPKR ${fmt(remPKR)}`;
+  const selStyle='font-size:11px;padding:2px 8px;background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--mono);font-weight:700;outline:none';
   html+=`<div>
     <div class="sec-hdr">💸 Remittance
-      <select onchange="_remitYear=this.value;renderDash()" style="font-size:11px;padding:2px 8px;background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--mono);font-weight:700;outline:none">
-        ${yearOpts}
-      </select>
+      <select onchange="_remitYear=this.value;_remitMonth='All';renderDash()" style="${selStyle}">${yearOpts}</select>
+      <select onchange="_remitMonth=this.value;renderDash()" style="${selStyle}">${monthOpts}</select>
+      <button onclick="navigator.clipboard.writeText(${JSON.stringify(copyText).replace(/</g,'\\x3c')})" style="font-size:11px;padding:2px 10px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--mono)">📋 Copy</button>
     </div>
     <div class="dt-wrap"><table class="dt">
       <thead><tr><th>Month</th><th class="dt-num">SAR</th><th class="dt-num">PKR</th></tr></thead>
