@@ -491,7 +491,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.77</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.78</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -823,12 +823,12 @@ const EXCLUDE_SEC=['ENGROH','FCL'];
 const CAPITAL_ADMIN={started:'Sep 2021',invested:2690000,withdrawn:3000000,freeCash:0,cashAsOf:''};
 const CAPITAL_USER={started:new Date().getFullYear().toString(),invested:0,withdrawn:0,freeCash:0,cashAsOf:''};
 let CAPITAL=Object.assign({},CAPITAL_USER);
-let _holdings=[],_prices={},_priceSource={},_techVerdict={};
+let _holdings=[],_prices={},_priceSource={},_techVerdict={},_ldcp={};
 function fmtN(n){return Math.round(n).toLocaleString();}
 function fmtD(n){return parseFloat(n).toFixed(2);}
 
 async function loadDataCSV(){try{const res=await fetch(gsUrl('Data'));if(!res.ok)return;const json=await res.json();const rows=json.values||[];if(rows.length<2)return;const hdrs=rows[0].map(h=>h.trim());const gi=k=>hdrs.findIndex(h=>h===k);const si=gi('Symbol'),pi=gi('Price'),ma50di=gi('MA50-D'),ma200di=gi('MA200-D'),rsidi=gi('RSI-D'),macddi=gi('MACD-H-D'),macdwi=gi('MACD-H-W'),sigwi=gi('Signal-W'),ma50wi=gi('MA50-W'),ma200wi=gi('MA200-W'),h52i=gi('52W-High');rows.slice(1).forEach(l=>{const c=l;const sym=(c[si]||'').trim();if(!sym)return;const n=i=>parseFloat(c[i])||null;const p=n(pi);const ma50d=n(ma50di),ma200d=n(ma200di),rsid=n(rsidi);const macdD=n(macddi),macdW=n(macdwi),sigW=n(sigwi);const ma50w=n(ma50wi),ma200w=n(ma200wi),h52=n(h52i);if(!p)return;const belowBoth=ma50d&&ma200d&&p<ma50d&&p<ma200d;const belowMA50only=ma50d&&p<ma50d&&(!ma200d||p>=ma200d);const weeklyUp=ma50w&&ma200w&&ma50w>ma200w;const macdWposRis=macdW!==null&&sigW!==null&&macdW>0&&macdW>sigW;const rsiCool=rsid!==null&&rsid>=30&&rsid<=53;const near52H=h52&&(h52-p)/h52<=0.05;const aboveBoth=ma50d&&ma200d&&p>ma50d&&p>ma200d;const nearestMA=ma50d&&ma200d?[ma50d,ma200d].reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b):null;const atMA=nearestMA?Math.abs(p-nearestMA)/p<=0.03:false;let verdict='WAIT';if((atMA||aboveBoth)&&weeklyUp&&macdWposRis&&rsiCool&&!near52H)verdict='BUY';else if(belowMA50only&&macdD<0)verdict='CAUTION';else if(belowBoth&&macdD<0&&rsid<50)verdict='EXIT';else if(weeklyUp&&macdW>0)verdict='WATCH';_techVerdict[sym]=verdict;});}catch(e){console.log('Data tab:',e.message);}}
-async function loadPricesSheet(){try{const res=await fetch(gsUrl(gsTabFor('Prices')));if(!res.ok)return;const json=await res.json();const rows=json.values||[];if(rows.length<2)return;let count=0;rows.slice(1).forEach(r=>{const sym=(r[0]||'').trim().toUpperCase();const price=parseFloat(r[1]);if(sym&&!isNaN(price)&&price>0){_prices[sym]=price;_priceSource[sym]='sheet';count++;}});if(count>0){const h2val=(rows[1][2]||'').toString().trim();if(h2val){document.getElementById('asofBadge').style.display='inline-block';document.getElementById('asofVal').textContent=h2val;}}}catch(e){console.log('Prices tab:',e.message);}}
+async function loadPricesSheet(){try{const res=await fetch(gsUrl(gsTabFor('Prices')));if(!res.ok)return;const json=await res.json();const rows=json.values||[];if(rows.length<2)return;const hdrs=(rows[0]||[]).map(h=>(h||'').trim().toLowerCase());const ldcpIdx=hdrs.indexOf('ldcp');let count=0;rows.slice(1).forEach(r=>{const sym=(r[0]||'').trim().toUpperCase();const price=parseFloat(r[1]);if(sym&&!isNaN(price)&&price>0){_prices[sym]=price;_priceSource[sym]='sheet';count++;if(ldcpIdx>=0){const l=parseFloat(r[ldcpIdx]);if(!isNaN(l)&&l>0)_ldcp[sym]=l;}}});if(count>0){const h2val=(rows[1][2]||'').toString().trim();if(h2val){document.getElementById('asofBadge').style.display='inline-block';document.getElementById('asofVal').textContent=h2val;}}}catch(e){console.log('Prices tab:',e.message);}}
 
 
 function buildAll(){if(!_holdings.length)return;
@@ -1185,15 +1185,22 @@ function renderQasimPortfolio(){
   setEl('qpNetDiv',tDiv,'var(--emerald)');
   const _qdEl=document.getElementById('qpDeclaredDiv');if(_qdEl)_qdEl.textContent=Math.round(tDeclared).toLocaleString();
   const _qtdEl=document.getElementById('qpTotalDiv');if(_qtdEl)_qtdEl.textContent=Math.round(tDiv+tDeclared).toLocaleString();
-  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost of Holdings</th><th>Current Price</th><th>Market Value</th><th>Unrealized P/L</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
+  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost of Holdings</th><th>Current Price</th><th>Change</th><th>Market Value</th><th>Unrealized P/L</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
   rows.forEach((r,i)=>{
     const da=_decl[(r['Stock']||'').trim().toUpperCase()]||0;
     const unreal=nv(r['Unrealized P/L']),real=nv(r['Realized P/L']),div=nv(r['Net Dividends'])-da,tot=nv(r['Total Return'])-da;
     const fmt2=v=>(v<0?'-':'')+Math.round(Math.abs(v)).toLocaleString();
+    const sym=(r['Stock']||'').trim().toUpperCase();
+    const cp=nv(r['Current Price']);const lc=_ldcp[sym]||0;
+    const chg=lc?+(cp-lc).toFixed(2):null;
+    const chgPct=lc?+(chg/lc*100).toFixed(2):null;
+    const chgStr=chg!==null?(chg>=0?'+':'')+chg.toFixed(2)+' ('+(chgPct>=0?'+':'')+chgPct+'%)':'—';
+    const chgCls=chg===null?'c-gray':chg>0?'c-green':chg<0?'c-red':'c-gray';
     html+=`<tr>
       <td class="sym">${r['Stock']||'—'}</td>
       <td class="mono">${r['Units']||'—'}</td><td class="c-gold mono">${r['Avg Cost']||'—'}</td>
       <td class="mono">${r['Cost of Holdings']||'—'}</td><td class="c-blue mono">${r['Current Price']||'—'}</td>
+      <td class="mono ${chgCls}" style="font-size:12px">${chgStr}</td>
       <td class="mono">${r['Market Value']||'—'}</td>
       <td class="mono ${unreal>=0?'c-green':'c-red'}">${r['Unrealized P/L']||'—'}</td>
       <td class="mono ${real>=0?'c-green':'c-red'}">${r['Realized P/L']||'—'}</td>
@@ -1201,7 +1208,7 @@ function renderQasimPortfolio(){
       <td class="mono ${tot>=0?'c-green':'c-red'}">${fmt2(tot)}</td></tr>`;
   });
   html+=`<tr class="total-r"><td colspan="3" class="c-gray">TOTAL</td>
-    <td class="mono">${fmt(tCost)}</td><td></td><td class="mono">${fmt(tMV)}</td>
+    <td class="mono">${fmt(tCost)}</td><td></td><td></td><td class="mono">${fmt(tMV)}</td>
     <td class="mono ${tUnreal>=0?'c-green':'c-red'}">${(tUnreal>=0?'+':'-')}${fmt(tUnreal)}</td>
     <td class="mono ${tReal>=0?'c-green':'c-red'}">${(tReal>=0?'+':'-')}${fmt(tReal)}</td>
     <td class="c-gold mono">${fmt(tDiv)}</td>
