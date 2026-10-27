@@ -200,6 +200,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .ov-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
 .ov-tbl th{background:var(--surface);color:var(--text3);padding:9px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);white-space:nowrap;}
 .ov-tbl td{border-bottom:1px solid var(--border);padding:8px 12px;}
+.ov-tbl.pf-tbl{table-layout:fixed;font-size:11.5px;}
+.ov-tbl.pf-tbl th{padding:7px 6px;font-size:9px;letter-spacing:.4px;}
+.ov-tbl.pf-tbl td{padding:6px 6px;}
+.ov-tbl.pf-tbl .sym{font-weight:700;}
 .ov-tbl tbody tr:hover td{background:var(--surface2);}
 .ov-tbl tbody tr:last-child td{border-bottom:none;}
 .ov-tbl tr.paid-row td:first-child{border-left:2px solid var(--emerald);}
@@ -1189,7 +1193,7 @@ function renderQasimPortfolio(){
   setEl('qpNetDiv',tDiv,'var(--emerald)');
   const _qdEl=document.getElementById('qpDeclaredDiv');if(_qdEl)_qdEl.textContent=Math.round(tDeclared).toLocaleString();
   const _qtdEl=document.getElementById('qpTotalDiv');if(_qtdEl)_qtdEl.textContent=Math.round(tDiv+tDeclared).toLocaleString();
-  let html=`<div class="tbl-wrap"><table class="ov-tbl"><tr><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost of Holdings</th><th>Current Price</th><th>Change</th><th>Market Value</th><th>Unrealized P/L</th><th>Realized P/L</th><th>Net Dividends</th><th>Total Return</th></tr>`;
+  let html=`<div class="tbl-wrap" style="overflow-x:hidden"><table class="ov-tbl pf-tbl"><tr><th>Stock</th><th>Units</th><th>Avg Cost</th><th>Cost</th><th>Price</th><th>Change</th><th>Mkt Value</th><th>Unr P/L</th><th>Real P/L</th><th>Dividends</th><th>Total</th></tr>`;
   rows.forEach((r,i)=>{
     const da=_decl[(r['Stock']||'').trim().toUpperCase()]||0;
     const unreal=nv(r['Unrealized P/L']),real=nv(r['Realized P/L']),div=nv(r['Net Dividends'])-da,tot=nv(r['Total Return'])-da;
