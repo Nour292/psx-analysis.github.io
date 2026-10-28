@@ -1202,7 +1202,7 @@ function renderQasimPortfolio(){
     const cp=nv(r['Current Price']);const lc=_ldcp[sym]||0;
     const chg=lc?+(cp-lc).toFixed(2):null;
     const chgPct=lc?+(chg/lc*100).toFixed(2):null;
-    const chgStr=chg!==null?(chg>=0?'+':'')+chg.toFixed(2)+' ('+(chgPct>=0?'+':'')+chgPct+'%)':'—';
+    const chgStr=chg!==null?(chg>=0?'+':'')+chg.toFixed(2):'—';
     const chgCls=chg===null?'c-gray':chg>0?'c-green':chg<0?'c-red':'c-gray';
     html+=`<tr>
       <td class="sym">${r['Stock']||'—'}</td>
