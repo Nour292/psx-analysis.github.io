@@ -495,7 +495,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.81</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.82</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -522,6 +522,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="btn btn-ghost" onclick="ovCopyText()" style="font-size:11px;padding:4px 10px">📋 Copy Text</button>
       <button class="btn btn-ghost" onclick="ovCopyTable()" style="font-size:11px;padding:4px 10px">📊 Copy Table</button>
       <button class="btn btn-ghost" onclick="ovExportExcel()" style="font-size:11px;padding:4px 10px">📥 Excel</button>
+      <button class="btn btn-ghost" onclick="ovCopyImage()" style="font-size:11px;padding:4px 10px">📸 Image</button>
       <span id="ovExportMsg" style="font-size:11px;font-family:var(--mono);color:var(--emerald)"></span>
     </div>
     <div id="qpTable"><p style="color:var(--text3);padding:20px;text-align:center">Loading...</p></div>
@@ -876,6 +877,31 @@ function ovExportExcel(){
     _ovFlashMsg('✅ Excel downloaded');
   }
   if(window.XLSX){doExport();}else{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=doExport;s.onerror=()=>_ovFlashMsg('❌ Load failed','var(--rose)');document.head.appendChild(s);}
+}
+function ovCopyImage(){
+  function doCapture(){
+    const el=document.getElementById('qpTable');
+    if(!el||!el.querySelector('table')){_ovFlashMsg('No table to capture','var(--rose)');return;}
+    _ovFlashMsg('⏳ Generating image...');
+    const cs=getComputedStyle(document.documentElement);
+    const bg=cs.getPropertyValue('--bg').trim()||'#0f0f1a';
+    const tabName=_ovActiveTab==='portfolio'?'Portfolio':_ovActiveTab==='divRec'?'Dividends':_ovActiveTab==='sector'?'Sector':'Table';
+    html2canvas(el,{backgroundColor:bg,scale:2,useCORS:true,logging:false}).then(canvas=>{
+      canvas.toBlob(async blob=>{
+        try{
+          await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+          _ovFlashMsg('✅ Image copied — paste into WhatsApp');
+        }catch(e){
+          const a=document.createElement('a');
+          a.href=URL.createObjectURL(blob);
+          a.download=tabName+'_table.png';
+          a.click();
+          _ovFlashMsg('✅ Image saved — share on WhatsApp');
+        }
+      },'image/png');
+    }).catch(e=>_ovFlashMsg('❌ '+e.message,'var(--rose)'));
+  }
+  if(window.html2canvas){doCapture();}else{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';s.onload=doCapture;s.onerror=()=>_ovFlashMsg('❌ Load failed','var(--rose)');document.head.appendChild(s);}
 }
 function switchTab(name,clickedBtn,navId){closeAllOverlays();document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');if(clickedBtn)clickedBtn.classList.add('active');const cap=name.charAt(0).toUpperCase()+name.slice(1);const tabBtn=document.getElementById('tabBtn'+cap);if(tabBtn&&tabBtn!==clickedBtn)tabBtn.classList.add('active');}
 
