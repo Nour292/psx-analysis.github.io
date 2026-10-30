@@ -495,7 +495,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.83</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.84</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -916,6 +916,7 @@ function fmtN(n){return Math.round(n).toLocaleString();}
 function fmtD(n){return parseFloat(n).toFixed(2);}
 
 async function loadDataCSV(){try{const res=await fetch(gsUrl('Data'));if(!res.ok)return;const json=await res.json();const rows=json.values||[];if(rows.length<2)return;const hdrs=rows[0].map(h=>h.trim());const gi=k=>hdrs.findIndex(h=>h===k);const si=gi('Symbol'),pi=gi('Price'),ma50di=gi('MA50-D'),ma200di=gi('MA200-D'),rsidi=gi('RSI-D'),macddi=gi('MACD-H-D'),macdwi=gi('MACD-H-W'),sigwi=gi('Signal-W'),ma50wi=gi('MA50-W'),ma200wi=gi('MA200-W'),h52i=gi('52W-High');rows.slice(1).forEach(l=>{const c=l;const sym=(c[si]||'').trim();if(!sym)return;const n=i=>parseFloat(c[i])||null;const p=n(pi);const ma50d=n(ma50di),ma200d=n(ma200di),rsid=n(rsidi);const macdD=n(macddi),macdW=n(macdwi),sigW=n(sigwi);const ma50w=n(ma50wi),ma200w=n(ma200wi),h52=n(h52i);if(!p)return;const belowBoth=ma50d&&ma200d&&p<ma50d&&p<ma200d;const belowMA50only=ma50d&&p<ma50d&&(!ma200d||p>=ma200d);const weeklyUp=ma50w&&ma200w&&ma50w>ma200w;const macdWposRis=macdW!==null&&sigW!==null&&macdW>0&&macdW>sigW;const rsiCool=rsid!==null&&rsid>=30&&rsid<=53;const near52H=h52&&(h52-p)/h52<=0.05;const aboveBoth=ma50d&&ma200d&&p>ma50d&&p>ma200d;const nearestMA=ma50d&&ma200d?[ma50d,ma200d].reduce((a,b)=>Math.abs(p-a)<Math.abs(p-b)?a:b):null;const atMA=nearestMA?Math.abs(p-nearestMA)/p<=0.03:false;let verdict='WAIT';if((atMA||aboveBoth)&&weeklyUp&&macdWposRis&&rsiCool&&!near52H)verdict='BUY';else if(belowMA50only&&macdD<0)verdict='CAUTION';else if(belowBoth&&macdD<0&&rsid<50)verdict='EXIT';else if(weeklyUp&&macdW>0)verdict='WATCH';_techVerdict[sym]=verdict;});}catch(e){console.log('Data tab:',e.message);}}
+async function loadBaseLDCP(){try{const res=await fetch(gsUrl('Prices'));if(!res.ok)return;const json=await res.json();const rows=json.values||[];if(rows.length<2)return;const hdrs=(rows[0]||[]).map(h=>(h||'').trim().toLowerCase());const li=hdrs.indexOf('ldcp');if(li<0)return;rows.slice(1).forEach(r=>{const s=(r[0]||'').trim().toUpperCase();const l=parseFloat(r[li]);if(s&&!isNaN(l)&&l>0)_ldcp[s]=l;});}catch(e){console.log('loadBaseLDCP:',e.message);}}
 async function loadPricesSheet(){try{const res=await fetch(gsUrl(gsTabFor('Prices')));if(!res.ok)return;const json=await res.json();const rows=json.values||[];if(rows.length<2)return;const hdrs=(rows[0]||[]).map(h=>(h||'').trim().toLowerCase());const ldcpIdx=hdrs.indexOf('ldcp');let count=0;rows.slice(1).forEach(r=>{const sym=(r[0]||'').trim().toUpperCase();const price=parseFloat(r[1]);if(sym&&!isNaN(price)&&price>0){_prices[sym]=price;_priceSource[sym]='sheet';count++;if(ldcpIdx>=0){const l=parseFloat(r[ldcpIdx]);if(!isNaN(l)&&l>0)_ldcp[sym]=l;}}});if(!isAdmin()){try{const lr=await fetch(gsUrl('Prices'));if(lr.ok){const lj=await lr.json();const lrows=lj.values||[];if(lrows.length>=2){const lh=(lrows[0]||[]).map(h=>(h||'').trim().toLowerCase());const li=lh.indexOf('ldcp');if(li>=0)lrows.slice(1).forEach(r=>{const s=(r[0]||'').trim().toUpperCase();const l=parseFloat(r[li]);if(s&&!isNaN(l)&&l>0)_ldcp[s]=l;});}}}catch(e){}}if(count>0){const h2val=(rows[1][2]||'').toString().trim();if(h2val){document.getElementById('asofBadge').style.display='inline-block';document.getElementById('asofVal').textContent=h2val;}}
   // localStorage prev-close: use yesterday's saved prices as LDCP
   const todayStr=new Date().toISOString().slice(0,10);
@@ -1537,6 +1538,7 @@ async function autoLoad(){
   await loadCashFlow();
   await loadDataCSV();
   await loadPricesSheet();
+  if(!isAdmin())await loadBaseLDCP();
   await loadDividendsCSV();
   await loadQasimPortfolio();
   try{
