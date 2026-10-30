@@ -518,6 +518,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="ov-tab-btn" id="ovTabSector" onclick="switchOvTab('sector',this)">⚖️ Sector Balance</button>
       <button class="ov-tab-btn" id="ovTabCapital" onclick="switchOvTab('capital',this)">💼 Capital</button>
     </div>
+    <div style="display:flex;gap:6px;padding:8px 0 2px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-ghost" onclick="ovCopyText()" style="font-size:11px;padding:4px 10px">📋 Copy Text</button>
+      <button class="btn btn-ghost" onclick="ovCopyTable()" style="font-size:11px;padding:4px 10px">📊 Copy Table</button>
+      <button class="btn btn-ghost" onclick="ovExportExcel()" style="font-size:11px;padding:4px 10px">📥 Excel</button>
+      <span id="ovExportMsg" style="font-size:11px;font-family:var(--mono);color:var(--emerald)"></span>
+    </div>
     <div id="qpTable"><p style="color:var(--text3);padding:20px;text-align:center">Loading...</p></div>
   </div>
 </div>
@@ -818,6 +824,58 @@ function switchOvTab(name,btn){
   else if(name==='divRec')renderOvDivRecord();
   else if(name==='sector')renderOvSector();
   else if(name==='capital')renderOvCapital();
+}
+function _ovFlashMsg(msg,col='var(--emerald)'){const el=document.getElementById('ovExportMsg');if(!el)return;el.textContent=msg;el.style.color=col;setTimeout(()=>el.textContent='',2500);}
+function _ovExtractData(){
+  const nv2=v=>parseFloat((v||'0').toString().replace(/[^0-9.\-]/g,''))||0;
+  if(_ovActiveTab==='portfolio'){
+    const hdrs=['Stock','Units','Avg Cost','Cost','Price','Mkt Value','Unr P/L','Real P/L','Dividends','Total'];
+    const rows=_qasimPortfolio.map(r=>[r['Stock'],r['Units'],r['Avg Cost'],r['Cost of Holdings'],r['Current Price'],r['Market Value'],r['Unrealized P/L'],r['Realized P/L'],r['Net Dividends'],r['Total Return']]);
+    return{headers:hdrs,rows};
+  }
+  if(_ovActiveTab==='divRec'){
+    const hdrs=['Date','Stock','Units','Price/Share','Net Price/Share','Gross Amount','Fees/Tax','Net Amount','Status','Pay Date'];
+    const rows=(window._divRows||[]).map(r=>{const amt=nv2(r.Amount),fees=nv2(r.Fees),ci=Math.abs(nv2(r.CI)),st=(r.Status||'').toLowerCase();const net=st==='paid'?ci:(amt-fees);const dps=parseFloat(r.DPS)||0;const netDps=r.NetDPS||(dps>0?(dps*0.85).toFixed(dps%1===0?0:3).replace(/\.?0+$/,''):'');return[r.Date||'',r.Stock||'',r.Units||'',r.DPS||'',netDps,amt?Math.round(amt):'',fees?Math.round(fees):'',net>0?Math.round(net):'',r.Status||'',r.PayDate||''];});
+    return{headers:hdrs,rows};
+  }
+  if(_ovActiveTab==='sector'){
+    const map={},totalInv=_holdings.reduce((s,h)=>s+Math.max(0,h.qty*h.avg),0);
+    _holdings.filter(h=>!EXCLUDE_SEC.includes(h.symbol)).forEach(h=>{map[h.sector]=(map[h.sector]||0)+Math.max(0,h.qty*h.avg);});
+    const hdrs=['Sector','Investment (PKR)','%'];
+    const rows=Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([sec,inv])=>[sec,Math.round(inv),(totalInv>0?((inv/totalInv)*100):0).toFixed(1)+'%']);
+    return{headers:hdrs,rows};
+  }
+  return{headers:[],rows:[]};
+}
+function ovCopyText(){
+  const {headers,rows}=_ovExtractData();
+  if(!headers.length){_ovFlashMsg('No data','var(--rose)');return;}
+  const lines=[headers.join('\t'),...rows.map(r=>r.join('\t'))];
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>_ovFlashMsg('✅ Copied as text')).catch(()=>_ovFlashMsg('❌ Copy failed','var(--rose)'));
+}
+function ovCopyTable(){
+  const {headers,rows}=_ovExtractData();
+  if(!headers.length){_ovFlashMsg('No data','var(--rose)');return;}
+  const all=[headers,...rows];
+  const widths=headers.map((_,ci)=>Math.max(...all.map(r=>String(r[ci]||'').length)));
+  const pad=(s,w)=>String(s||'').padEnd(w);
+  const sep='+-'+widths.map(w=>'-'.repeat(w)).join('-+-')+'-+';
+  const fmtRow=r=>'| '+widths.map((w,ci)=>pad(r[ci],w)).join(' | ')+' |';
+  const lines=[sep,fmtRow(headers),sep,...rows.map(fmtRow),sep];
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>_ovFlashMsg('✅ Copied as table')).catch(()=>_ovFlashMsg('❌ Copy failed','var(--rose)'));
+}
+function ovExportExcel(){
+  const {headers,rows}=_ovExtractData();
+  if(!headers.length){_ovFlashMsg('No data','var(--rose)');return;}
+  function doExport(){
+    const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+    const wb=XLSX.utils.book_new();
+    const tabName=_ovActiveTab==='portfolio'?'Portfolio':_ovActiveTab==='divRec'?'Dividends':_ovActiveTab==='sector'?'Sector':'Data';
+    XLSX.utils.book_append_sheet(wb,ws,tabName);
+    XLSX.writeFile(wb,tabName+'_export.xlsx');
+    _ovFlashMsg('✅ Excel downloaded');
+  }
+  if(window.XLSX){doExport();}else{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=doExport;s.onerror=()=>_ovFlashMsg('❌ Load failed','var(--rose)');document.head.appendChild(s);}
 }
 function switchTab(name,clickedBtn,navId){closeAllOverlays();document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');if(clickedBtn)clickedBtn.classList.add('active');const cap=name.charAt(0).toUpperCase()+name.slice(1);const tabBtn=document.getElementById('tabBtn'+cap);if(tabBtn&&tabBtn!==clickedBtn)tabBtn.classList.add('active');}
 
