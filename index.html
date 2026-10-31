@@ -1489,7 +1489,7 @@ function tpAdvise(h,plan,s,lv){
   if(t2!=null&&p>=t2)return R('TAKE PROFIT','At T2 ('+tpF(t2)+'): sell the rest, or trail a tight stop.');
   if(t1!=null&&p>=t1)return R('TAKE PROFIT','At T1 ('+tpF(t1)+'): sell about half and move the stop to your cost ('+tpF(cost)+').');
   if(rsi!=null&&rsi>=75&&pl>3)return R('TAKE PROFIT','RSI '+Math.round(rsi)+' is overbought with a gain: take some profit.');
-  if(pl>=5&&(!hasStop||stop<cost))return R('TIGHTEN STOP','Up '+pl.toFixed(1)+'%: '+(hasStop?'move':'set')+' the stop at your cost ('+tpF(cost)+') so the trade cannot lose.');
+  if(pl>=5&&(!hasStop||stop<cost))return R('TIGHTEN STOP','Up '+pl.toFixed(1)+'%: '+(hasStop?'move the stop up to':'set the stop at')+' your cost ('+tpF(cost)+') so the trade cannot lose.');
   if(plan&&plan.trend==='Downtrend'&&l1!=null&&(stop==null||stop<l1*0.99)&&p>l1*0.99)return R('TIGHTEN STOP','Trend is down: put the stop just under the 1-month low ('+tpF(l1*0.99)+').');
   return R('HOLD','Trend and levels intact. '+(hasStop?'Keep the stop at '+tpF(stop)+'.':'Suggested stop '+tpF(stop)+' (not set yet).'));
 }
@@ -1508,7 +1508,7 @@ async function tpPositions(){
   });
   const opts=hold.map(h=>h.sym).concat(Object.keys(bySym).filter(x=>!_tpHeld[x]).sort()).map(x=>`<option>${tkEsc(x)}</option>`).join('');
   const mine=(_tpJournal||[]).filter(o=>o.User===u).slice(-12).reverse();
-  const jr=mine.map(o=>`<tr><td>${tkEsc(o.Date)}</td><td class="sym-cell">${tkEsc(o.Stock)}</td><td>${tkEsc(o.Action)}</td><td>${tkEsc(o.Price)}</td><td>${tkEsc(o.Stop)}</td><td>${tkEsc(o.T1)} / ${tkEsc(o.T2)}</td><td>${tkEsc(o.Qty)}</td><td style="font-size:12px">${tkEsc(o.Reason)}</td></tr>`).join('');
+  const jr=mine.map(o=>`<tr><td>${tkEsc(o.Date)}</td><td class="sym-cell">${tkEsc(o.Stock)}</td><td>${tkEsc(o.Action)}</td><td>${tkEsc(o.Price)}</td><td>${tkEsc(o.Stop)}</td><td>${(o.T1||o.T2)?tkEsc(o.T1)+' / '+tkEsc(o.T2):''}</td><td>${tkEsc(o.Qty)}</td><td style="font-size:12px">${tkEsc(o.Reason)}</td></tr>`).join('');
   const inp='style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;font-size:12px;font-family:var(--mono);width:84px"';
   box.innerHTML=`<div class="section-label"><span></span> My positions <span style="font-weight:400;color:var(--text3);margin-left:8px;font-size:11px">${tkEsc(u)} · * = suggested stop, not set yet (set yours in the journal)</span></div>`+
     (hold.length?`<div class="tbl-wrap"><table class="dtbl"><tr><th>Stock</th><th>Units</th><th>Avg cost</th><th>Price</th><th>P/L</th><th>Stop</th><th>T1 / T2</th><th>Action</th><th>My advice</th></tr>${rows}</table></div>`:'<div style="font-size:12px;color:var(--text3);margin-bottom:10px">No open positions found for your account.</div>')+
