@@ -570,9 +570,14 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         <p>Entry, stop and targets from the chat-system rules, on live sheet data</p>
       </div>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <label style="font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" id="tpOnlyList" checked onchange="tpToggleList(this.checked)"> My list only</label>
+        <label style="font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" id="tpOnlyList" checked onchange="tpToggleList(this.checked)"> <span id="tpListLbl">Show only my list</span></label>
         <button class="btn btn-primary" onclick="goPlan(true)">↻ Refresh</button>
       </div>
+    </div>
+    <div style="margin-bottom:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);line-height:1.8">
+      <b>For stocks to buy:</b> <b>BUY</b> = price is at support, enter now · <b>WAIT</b> = wait for a lower price · <b>REV-WATCH</b> = price is falling toward support, buy only after a green close · <b>SKIP</b> = reward is too small for the risk.<br>
+      <b>For stocks you own:</b> <b>HOLD</b> = keep · <b>TIGHTEN STOP</b> = raise your stop · <b>TAKE PROFIT</b> = sell some or all · <b>EXIT</b> = sell · <b>REVIEW</b> = check your cost first.<br>
+      <b>Columns:</b> Entry = where to buy · Stop = sell if price falls to this · T1 / T2 = target prices to sell · R:R = reward divided by risk (higher is better).
     </div>
     <div id="tpInfo" style="margin-bottom:12px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);font-family:var(--mono);line-height:1.7"></div>
     <div id="tpPos"></div>
@@ -1361,7 +1366,7 @@ function computeSetupQuality(sym,s,verdict){
 /* ════════════════════════════════════════════
    TRADE PLAN — chat-system rules on the live sheet
 ════════════════════════════════════════════ */
-let _tpLdcp={},_tpNews=null,_tpList=null,_tpOnlyList=true,_tpHeld={};
+let _tpLdcp={},_tpNews=null,_tpList=null,_tpOnlyList=true,_tpHeld={},_tpHoldAll=null;
 const tpN=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
 const tpF=v=>v==null||isNaN(v)?'—':fmt(v);
 function tpPlan(s,ldcp){
@@ -1418,14 +1423,15 @@ async function tpLoadExtras(){
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);_tpNews=r.ok?await r.json():null;}catch(e){_tpNews=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);_tpList=r.ok?await r.json():null;}catch(e){_tpList=null;}
 }
-function tpToggleList(v){_tpOnlyList=v;tpRender();}
-async function goPlan(force){showPage('pgPlan');setNav('navPlan','Trade Plan');document.getElementById('tpInfo').textContent='Loading…';await tpLoadExtras();tpRender();if(typeof tpPositions==='function')tpPositions();}
+function tpToggleList(v){_tpOnlyList=v;tpRender();tpPositions();}
+async function goPlan(force){_tpHoldAll=null;showPage('pgPlan');setNav('navPlan','Trade Plan');document.getElementById('tpInfo').textContent='Loading…';await tpLoadExtras();tpRender();if(typeof tpPositions==='function')tpPositions();}
 function tpRender(){
   const info=document.getElementById('tpInfo'),tbl=document.getElementById('tpTable');
   if(!_rawData||!_rawData.length){info.textContent='No sheet data loaded yet. Press Refresh in a moment.';tbl.innerHTML='';return;}
   const onList=_tpList?new Set(_tpList.rows.filter(r=>['New','Active','Override'].includes(r.status)).map(r=>r.symbol)):null;
   let rows=_rawData.map(s=>({s,sym:String(s.Symbol).toUpperCase(),plan:tpPlan(s,_tpLdcp[String(s.Symbol).toUpperCase()])})).filter(x=>x.plan);
   const total=rows.length;
+  const lb=document.getElementById('tpListLbl');if(lb)lb.textContent=(_tpOnlyList&&onList)?'Show only my list ('+onList.size+' stocks)':(onList?'Showing all '+total+' stocks':'Show only my list');
   if(_tpOnlyList&&onList)rows=rows.filter(x=>onList.has(x.sym));
   const groups=[['Buy and hold (BUY, REV-BUY)',x=>x.plan.verdict==='BUY'||x.plan.verdict==='REV-BUY'],['Wait list',x=>x.plan.verdict==='WAIT'],['Reversal watch',x=>x.plan.verdict==='REV-WATCH'],['Skip',x=>x.plan.verdict==='SKIP']];
   const badge=v=>{const m={'BUY':'background:#10B981;color:#04210f','REV-BUY':'background:#10B981;color:#04210f','WAIT':'background:#F59E0B;color:#2a1a00','REV-WATCH':'border:1px solid #38BDF8;color:#38BDF8','SKIP':'background:#F43F5E;color:#2b0509'};return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;${m[v]||''}">${v}</span>`;};
@@ -1478,8 +1484,11 @@ function tpAdvise(h,plan,s,lv){
 async function tpPositions(){
   const box=document.getElementById('tpPos');if(!box)return;
   const u=tpUser();if(!u){box.innerHTML='';return;}
-  const hold=await tpLoadHoldings();
-  _tpHeld={};hold.forEach(h=>_tpHeld[h.sym]=true);tpRender();
+  if(!_tpHoldAll)_tpHoldAll=await tpLoadHoldings();
+  const onList=_tpList?new Set(_tpList.rows.filter(r=>['New','Active','Override'].includes(r.status)).map(r=>r.symbol)):null;
+  const hold=(_tpOnlyList&&onList)?_tpHoldAll.filter(h=>onList.has(h.sym)):_tpHoldAll;
+  const hidden=_tpHoldAll.length-hold.length;
+  _tpHeld={};_tpHoldAll.forEach(h=>_tpHeld[h.sym]=true);tpRender();
   const bySym={};(_rawData||[]).forEach(r=>bySym[String(r.Symbol).toUpperCase()]=r);
   const badge=a=>{const m={'HOLD':'background:#38BDF8;color:#04202e','TIGHTEN STOP':'background:#F59E0B;color:#2a1a00','TAKE PROFIT':'background:#10B981;color:#04210f','EXIT':'background:#F43F5E;color:#2b0509','REVIEW':'background:#A78BFA;color:#1a0f33'};return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;${m[a]||''}">${a}</span>`;};
   let rows='';
@@ -1488,8 +1497,8 @@ async function tpPositions(){
     const a=tpAdvise(h,plan,s||{},lv),ex=s?tpExDiv(s):'';
     rows+=`<tr><td class="sym-cell">${tkEsc(h.sym)}</td><td>${Math.round(h.units).toLocaleString()}</td><td>${tpF(h.avg)}</td><td class="price-cell">${s?tpF(tpN(s.Price)):'—'}</td><td style="color:${a.pl>=0?'#10B981':'#F43F5E'};font-family:var(--mono)">${a.pl==null?'—':(a.pl>=0?'+':'')+a.pl.toFixed(1)+'%'}</td><td>${tpF(a.stop)}${a.defStop?'*':''}</td><td>${tpF(a.t1)} / ${tpF(a.t2)}</td><td>${badge(a.act)}</td><td style="font-size:12px;line-height:1.5;max-width:380px">${tkEsc(a.why)}${ex?' '+tkEsc(ex):''}</td></tr>`;
   });
-  box.innerHTML=`<div class="section-label"><span></span> My positions <span style="font-weight:400;color:var(--text3);margin-left:8px;font-size:11px">${tkEsc(u)} · * = suggested stop</span></div>`+
-    (hold.length?`<div class="tbl-wrap"><table class="dtbl"><tr><th>Stock</th><th>Units</th><th>Avg cost</th><th>Price</th><th>P/L</th><th>Stop</th><th>T1 / T2</th><th>Action</th><th>My advice</th></tr>${rows}</table></div>`:'<div style="font-size:12px;color:var(--text3);margin-bottom:10px">No open positions found for your account.</div>');
+  box.innerHTML=`<div class="section-label"><span></span> My positions <span style="font-weight:400;color:var(--text3);margin-left:8px;font-size:11px">${tkEsc(u)} · * = suggested stop${hidden?' · '+hidden+' of your holdings hidden (not on my list)':''}</span></div>`+
+    (hold.length?`<div class="tbl-wrap"><table class="dtbl"><tr><th>Stock</th><th>Units</th><th>Avg cost</th><th>Price</th><th>P/L</th><th>Stop</th><th>T1 / T2</th><th>Action</th><th>My advice</th></tr>${rows}</table></div>`:'<div style="font-size:12px;color:var(--text3);margin-bottom:10px">'+(hidden?'None of your holdings are on my list.':'No open positions found for your account.')+'</div>');
 }
 /* ════════════════════════════════════════════
    TICKERS TAB — admin ("qasim") only
