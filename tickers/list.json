@@ -1,0 +1,257 @@
+{
+ "updated": "2026-10-31T00:23:48Z",
+ "trigger": "manual",
+ "universe": 754,
+ "candidates": 80,
+ "counts": {
+  "New": 18,
+  "Review": 0,
+  "Override": 1,
+  "Active": 0,
+  "Dropped": 0
+ },
+ "rows": [
+  {
+   "symbol": "AGP",
+   "status": "New",
+   "price": 148.12,
+   "yield": 3.88,
+   "profit": [
+    2360314.0,
+    2083581.0,
+    1190186.0
+   ],
+   "divYears": 7,
+   "reason": ""
+  },
+  {
+   "symbol": "AHCL",
+   "status": "New",
+   "price": 12.92,
+   "yield": 7.82,
+   "profit": [
+    44480631.0,
+    23775344.0,
+    9430598.0
+   ],
+   "divYears": 3,
+   "reason": ""
+  },
+  {
+   "symbol": "AHL",
+   "status": "New",
+   "price": 103.8,
+   "yield": 10.75,
+   "profit": [
+    1177029.0,
+    979262.0,
+    611947.0
+   ],
+   "divYears": 7,
+   "reason": ""
+  },
+  {
+   "symbol": "AICL",
+   "status": "New",
+   "price": 94.74,
+   "yield": 5.27,
+   "profit": [
+    5132718.0,
+    4050202.0,
+    2262030.0
+   ],
+   "divYears": 21,
+   "reason": ""
+  },
+  {
+   "symbol": "BERG",
+   "status": "New",
+   "price": 100.69,
+   "yield": 4.17,
+   "profit": [
+    309427.0,
+    298523.0,
+    262863.0
+   ],
+   "divYears": 3,
+   "reason": ""
+  },
+  {
+   "symbol": "BOP",
+   "status": "New",
+   "price": 28.35,
+   "yield": 10.21,
+   "profit": [
+    15937630.0,
+    13375362.0,
+    11339185.0
+   ],
+   "divYears": 3,
+   "reason": ""
+  },
+  {
+   "symbol": "FCCL",
+   "status": "New",
+   "price": 52.28,
+   "yield": 2.84,
+   "profit": [
+    16182912.0,
+    13326202.0,
+    8223116.0
+   ],
+   "divYears": 3,
+   "reason": ""
+  },
+  {
+   "symbol": "FFC",
+   "status": "New",
+   "price": 559.49,
+   "yield": 9.24,
+   "profit": [
+    73564267.0,
+    64731439.0,
+    29673348.0
+   ],
+   "divYears": 31,
+   "reason": ""
+  },
+  {
+   "symbol": "GRR",
+   "status": "New",
+   "price": 16.39,
+   "yield": 18.2,
+   "profit": [
+    578181.0,
+    539225.0,
+    251915.0
+   ],
+   "divYears": 4,
+   "reason": ""
+  },
+  {
+   "symbol": "HCAR",
+   "status": "New",
+   "price": 198.38,
+   "yield": 3.74,
+   "profit": [
+    3233703.0,
+    2709141.0,
+    2333895.0
+   ],
+   "divYears": 3,
+   "reason": ""
+  },
+  {
+   "symbol": "IPAK",
+   "status": "New",
+   "price": 27.51,
+   "yield": 5.59,
+   "profit": [
+    1317364.0,
+    850995.0
+   ],
+   "divYears": 2,
+   "reason": "New listing, paid every year since listing"
+  },
+  {
+   "symbol": "KOHTM",
+   "status": "New",
+   "price": 92.13,
+   "yield": 1.63,
+   "profit": [
+    291946.0,
+    280766.0,
+    214117.0
+   ],
+   "divYears": 3,
+   "reason": ""
+  },
+  {
+   "symbol": "LUCK",
+   "status": "New",
+   "price": 391.38,
+   "yield": 1.2,
+   "profit": [
+    46629367.0,
+    33092162.0,
+    28106539.0
+   ],
+   "divYears": 4,
+   "reason": ""
+  },
+  {
+   "symbol": "NATF",
+   "status": "New",
+   "price": 309.05,
+   "yield": 3.51,
+   "profit": [
+    5654889.0,
+    3181400.0,
+    1268568.0
+   ],
+   "divYears": 17,
+   "reason": ""
+  },
+  {
+   "symbol": "NICL",
+   "status": "New",
+   "price": 279.26,
+   "yield": 1.89,
+   "profit": [
+    2393050.0,
+    2022684.0,
+    1002875.0
+   ],
+   "divYears": 12,
+   "reason": ""
+  },
+  {
+   "symbol": "PSX",
+   "status": "New",
+   "price": 40.59,
+   "yield": 2.15,
+   "profit": [
+    2241275.0,
+    1634078.0,
+    1027803.0
+   ],
+   "divYears": 3,
+   "reason": ""
+  },
+  {
+   "symbol": "SAZEW",
+   "status": "New",
+   "price": 1400.25,
+   "yield": 3.51,
+   "profit": [
+    23604643.0,
+    16336201.0,
+    7935677.0
+   ],
+   "divYears": 4,
+   "reason": ""
+  },
+  {
+   "symbol": "UBL",
+   "status": "New",
+   "price": 409.68,
+   "yield": 7.6,
+   "profit": [
+    128008847.0,
+    80527534.0,
+    53180413.0
+   ],
+   "divYears": 22,
+   "reason": ""
+  },
+  {
+   "symbol": "CPHL",
+   "status": "Override",
+   "price": 60.74,
+   "yield": 0.0,
+   "profit": [],
+   "divYears": null,
+   "reason": "Kept by owner decision"
+  }
+ ]
+}
