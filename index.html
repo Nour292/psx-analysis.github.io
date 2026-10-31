@@ -1361,7 +1361,7 @@ function computeSetupQuality(sym,s,verdict){
 /* ════════════════════════════════════════════
    TRADE PLAN — chat-system rules on the live sheet
 ════════════════════════════════════════════ */
-let _tpLdcp={},_tpNews=null,_tpList=null,_tpOnlyList=true,_tpHeld={},_tpJournal=null,_tpJErr='';
+let _tpLdcp={},_tpNews=null,_tpList=null,_tpOnlyList=true,_tpHeld={},_tpJournal=null,_tpJErr='',_tpJOpen=false;
 const tpN=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
 const tpF=v=>v==null||isNaN(v)?'—':fmt(v);
 function tpPlan(s,ldcp){
@@ -1512,7 +1512,7 @@ async function tpPositions(){
   const inp='style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;font-size:12px;font-family:var(--mono);width:84px"';
   box.innerHTML=`<div class="section-label"><span></span> My positions <span style="font-weight:400;color:var(--text3);margin-left:8px;font-size:11px">${tkEsc(u)} · * = suggested stop, not set yet (set yours in the journal)</span></div>`+
     (hold.length?`<div class="tbl-wrap"><table class="dtbl"><tr><th>Stock</th><th>Units</th><th>Avg cost</th><th>Price</th><th>P/L</th><th>Stop</th><th>T1 / T2</th><th>Action</th><th>My advice</th></tr>${rows}</table></div>`:'<div style="font-size:12px;color:var(--text3);margin-bottom:10px">No open positions found for your account.</div>')+
-    `<details style="margin:12px 0 18px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)"><summary style="cursor:pointer;font-size:13px">Trade journal ${_tpJournal?'('+mine.length+' recent)':''}</summary>`+
+    `<details${_tpJOpen?' open':''} ontoggle="_tpJOpen=this.open" style="margin:12px 0 18px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)"><summary style="cursor:pointer;font-size:13px">Trade journal ${_tpJournal?'('+mine.length+' recent)':''}</summary>`+
     (_tpJournal===null?`<div style="font-size:12px;color:var(--text3);margin-top:8px">${tkEsc(_tpJErr||'Journal not available.')}</div>`:
     `<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center"><select id="tjStock" ${inp.replace('width:84px','width:110px')}>${opts}</select><select id="tjAct" ${inp.replace('width:84px','width:110px')}><option>Entry</option><option>Stop update</option><option>Exit</option></select><input id="tjPrice" placeholder="Price" ${inp}><input id="tjStop" placeholder="Stop" ${inp}><input id="tjT1" placeholder="T1" ${inp}><input id="tjT2" placeholder="T2" ${inp}><input id="tjQty" placeholder="Qty" ${inp}><input id="tjReason" placeholder="Reason" ${inp.replace('width:84px','width:200px')}><button class="btn btn-primary" onclick="tpAddJournal()">Save</button><span id="tjMsg" style="font-size:12px;color:var(--text3)"></span></div>`+
     (jr?`<div class="tbl-wrap"><table class="dtbl"><tr><th>Date</th><th>Stock</th><th>Action</th><th>Price</th><th>Stop</th><th>T1 / T2</th><th>Qty</th><th>Reason</th></tr>${jr}</table></div>`:'<div style="font-size:12px;color:var(--text3)">No journal entries yet.</div>'))+
@@ -1524,13 +1524,21 @@ async function tpAddJournal(){
   const stock=g('tjStock'),act=g('tjAct'),price=g('tjPrice').trim(),stop=g('tjStop').trim(),t1=g('tjT1').trim(),t2=g('tjT2').trim(),qty=g('tjQty').trim(),reason=g('tjReason').trim();
   const bad=[price,stop,t1,t2,qty].some(v=>v!==''&&tpNum(v)==null);
   if(!stock||bad||(act==='Entry'&&(tpNum(price)==null||tpNum(stop)==null))||(act==='Exit'&&tpNum(price)==null)){msg.style.color='#F43F5E';msg.textContent=act==='Entry'?'Entry needs a price and a stop.':act==='Exit'?'Exit needs a price.':'Check the numbers.';return;}
-  const today=new Date().toISOString().slice(0,10);
+  const d=new Date(),today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   msg.style.color='var(--text3)';msg.textContent='Saving…';
+  let err='';
   try{
     const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:'Journal',row:[u,today,stock,act,price,stop,t1,t2,qty,reason]})});
-    const j=await res.json();if(!j.ok)throw new Error(j.error||'save failed');
-    msg.style.color='#10B981';msg.textContent='Saved.';await tpPositions();
-  }catch(e){msg.style.color='#F43F5E';msg.textContent='Could not save: '+e.message;}
+    const j=await res.json().catch(()=>({}));
+    if(j&&j.error)err=j.error;
+  }catch(e){err=e.message;}
+  _tpJOpen=true;
+  await tpLoadJournal();
+  const saved=(_tpJournal||[]).some(o=>o.User===u&&o.Date===today&&String(o.Stock).toUpperCase()===stock&&o.Action===act&&tpNum(o.Price)===tpNum(price));
+  await tpPositions();
+  const m2=document.getElementById('tjMsg');if(!m2)return;
+  if(saved){m2.style.color='#10B981';m2.textContent='Saved.';}
+  else{m2.style.color='#F43F5E';m2.textContent='Not saved'+(err?': '+err:'. Please try again.');}
 }
 
 /* ════════════════════════════════════════════
