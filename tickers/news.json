@@ -1,0 +1,1040 @@
+{
+ "updated": "2026-10-31T00:34:05Z",
+ "days": 30,
+ "rows": [
+  {
+   "symbol": "AGP",
+   "quarter": {
+    "label": "Q2 2026",
+    "pat": 318913.0,
+    "prev": 626928.0,
+    "change": -49.1
+   },
+   "flagged": 8,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "FINAL REPORT ON THE PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288184"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Financial Results for the Quarter Ended September 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287791"
+    },
+    {
+     "date": "2026-10-29",
+     "title": "Board Meeting In Progress",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "287728"
+    },
+    {
+     "date": "2026-10-22",
+     "title": "BOARD MEETING",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286536"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "COMPLETION OF PURCHASE PERIOD FOR BUY-BACK OF SHARES BY AGP LIMITED",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "286210"
+    },
+    {
+     "date": "2026-10-19",
+     "title": "INTIMATION OF PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "285930"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "INTIMATION OF PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "285787"
+    },
+    {
+     "date": "2026-10-15",
+     "title": "INTIMATION OF PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "285709"
+    }
+   ]
+  },
+  {
+   "symbol": "CPHL",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 275415.0,
+    "prev": 220375.0,
+    "change": 25.0
+   },
+   "flagged": 8,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "287790"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Board Meeting In Progress",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-26",
+     "title": "Change of Chief Financial Officer",
+     "flags": [
+      "Management"
+     ],
+     "doc": "286828"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286629"
+    },
+    {
+     "date": "2026-10-19",
+     "title": "Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "285929"
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Notice of Annual General Meeting - Post Publication",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285088"
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Notice of Annual General Meeting (Prior to Publication)",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "284857"
+    },
+    {
+     "date": "2026-10-05",
+     "title": "Financial Results for the Year Ended 30 June 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "284383"
+    }
+   ]
+  },
+  {
+   "symbol": "NATF",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 916361.0,
+    "prev": 1046797.0,
+    "change": -12.5
+   },
+   "flagged": 8,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "PRIOR NOTICE OF BOOK CLOSURE FOR FIRST INTERIM CASH DIVIDEND (D-43)",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "287879"
+    },
+    {
+     "date": "2026-10-28",
+     "title": "General Meetings / Briefing Sessions",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "287412"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "General Meetings / Briefing Sessions",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "286992"
+    },
+    {
+     "date": "2026-10-26",
+     "title": "Financial Results for the Quarter Ended September 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "286926"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "CORPORATE BRIEFING SESSION FOR THE YEAR ENDED JUNE 30, 2026",
+     "flags": [],
+     "doc": "286650"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": "285893"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "BOARD MEETING",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285846"
+    },
+    {
+     "date": "2026-10-13",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
+    }
+   ]
+  },
+  {
+   "symbol": "KOHTM",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 134693.0,
+    "prev": 114888.0,
+    "change": 17.2
+   },
+   "flagged": 6,
+   "items": [
+    {
+     "date": "2026-10-29",
+     "title": "Financial Results for the Quarter Ended 30.09.2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287590"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "Resolutions Passed in Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "286993"
+    },
+    {
+     "date": "2026-10-22",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-21",
+     "title": "Unusual Movement in price of the shares of Kohat Textile Mills Ltd.",
+     "flags": [
+      "Material"
+     ],
+     "doc": "286310"
+    },
+    {
+     "date": "2026-10-05",
+     "title": "Notice of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "284445"
+    },
+    {
+     "date": "2026-10-01",
+     "title": "Financial Results for the Year Ended 30.06.2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "284035"
+    }
+   ]
+  },
+  {
+   "symbol": "UBL",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 30218818.0,
+    "prev": 34702768.0,
+    "change": -12.9
+   },
+   "flagged": 6,
+   "items": [
+    {
+     "date": "2026-10-27",
+     "title": "Credit of Third Interim Cash Dividend (D-67)",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "287112"
+    },
+    {
+     "date": "2026-10-21",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Financial Results for the Quarter ended 30 September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "285852"
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Board Meeting of United Bank Limited (UBL)",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285150"
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-02",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
+    }
+   ]
+  },
+  {
+   "symbol": "BERG",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 68159.0,
+    "prev": 69704.0,
+    "change": -2.2
+   },
+   "flagged": 5,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "APPOINTMENT OF CHAIRMAN AND CHIEF EXECUTIVE OFFICER OF THE COMPANY",
+     "flags": [
+      "Management"
+     ],
+     "doc": "288241"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Financial Result for the Quarter Ended 30 September 2026",
+     "flags": [],
+     "doc": "288021"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Board Meetings",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286686"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Extracts of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "286683"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "WITHDRAWAL OF CANDIDATE FROM ELECTION OF DIRECTORS",
+     "flags": [],
+     "doc": "286080"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Notice under section 159 (4) and postal ballot paper for the annual general meeting (AGM) scheduled to be held on october 23, 2026.",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285843"
+    },
+    {
+     "date": "2026-10-02",
+     "title": "Notice of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "284222"
+    }
+   ]
+  },
+  {
+   "symbol": "LUCK",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 17130585.0,
+    "prev": 14617657.0,
+    "change": 17.2
+   },
+   "flagged": 5,
+   "items": [
+    {
+     "date": "2026-10-29",
+     "title": "Financial Results for the Quarter Ended 2026-09-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287455"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "Notice of Corporate Briefing Session",
+     "flags": [],
+     "doc": "287071"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "287015"
+    },
+    {
+     "date": "2026-10-22",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286396"
+    },
+    {
+     "date": "2026-10-19",
+     "title": "General Meetings / Briefing Sessions",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285989"
+    },
+    {
+     "date": "2026-10-19",
+     "title": "General Meetings / Briefing Sessions",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": ""
+    }
+   ]
+  },
+  {
+   "symbol": "NICL",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 666268.0,
+    "prev": 503516.0,
+    "change": 32.3
+   },
+   "flagged": 5,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "Notice of Corporate Briefing Session - NICL - November 06, 2026",
+     "flags": [],
+     "doc": "287850"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "Transfer of Full and Final Cash Dividend (D - 26) for the FY 2026",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "287002"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "Un-audited Financial Results For The First Quarter Ended September 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "286161"
+    },
+    {
+     "date": "2026-10-14",
+     "title": "Resolutions Passed in the NICL Annual General Meeting held on October 14, 2026",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285673"
+    },
+    {
+     "date": "2026-10-13",
+     "title": "Board Meeting and Closed Period",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285538"
+    },
+    {
+     "date": "2026-10-13",
+     "title": "Board Meeting and Closed Period REVOKED",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285537"
+    }
+   ]
+  },
+  {
+   "symbol": "SAZEW",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 4035691.0,
+    "prev": 4417012.0,
+    "change": -8.6
+   },
+   "flagged": 5,
+   "items": [
+    {
+     "date": "2026-10-27",
+     "title": "SAZEW | Sazgar Engineering Works Limited - Financial Results for the quarter ended 2026-09-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-26",
+     "title": "Board Meeting In Progress",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-19",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-08",
+     "title": "Credit of final cash dividend for the year ended June 30, 2026",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Production and Sales data regarding Four Wheelers and Three Wheelers for the months of August & September 2026",
+     "flags": [],
+     "doc": "284743"
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "284740"
+    }
+   ]
+  },
+  {
+   "symbol": "FFC",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 22318589.0,
+    "prev": 17476826.0,
+    "change": 27.7
+   },
+   "flagged": 4,
+   "items": [
+    {
+     "date": "2026-10-29",
+     "title": "Notice of Corporate Briefing Session",
+     "flags": [],
+     "doc": "287664"
+    },
+    {
+     "date": "2026-10-29",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-28",
+     "title": "Financial Results for the Quarter Ended 30 Sep 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287242"
+    },
+    {
+     "date": "2026-10-21",
+     "title": "242nd Board of Directors Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286309"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Change of Director - Fauji Fertilizer Company Limited",
+     "flags": [
+      "Management"
+     ],
+     "doc": "285815"
+    }
+   ]
+  },
+  {
+   "symbol": "PSX",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 558068.0,
+    "prev": 696391.0,
+    "change": -19.9
+   },
+   "flagged": 4,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "Notice of Corporate Briefing Session 2026",
+     "flags": [],
+     "doc": "288202"
+    },
+    {
+     "date": "2026-10-28",
+     "title": "Financial Results for the Quarter Ended September 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287134"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "Board Meeting In Progress",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "287103"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "Notice of Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286116"
+    },
+    {
+     "date": "2026-10-14",
+     "title": "Payment of Final Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "285656"
+    }
+   ]
+  },
+  {
+   "symbol": "ZAL",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": -296807.0,
+    "prev": 133666.0,
+    "change": -322.1
+   },
+   "flagged": 4,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "Declaration of Right Shares",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288278"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Financial Results for the Quarter Ended 30 September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "288274"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Video Recording of the Corporate Briefing Session of Zarea Limited",
+     "flags": [],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Notice of Corporate Briefing Session",
+     "flags": [],
+     "doc": "286755"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Notice of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285223"
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Successful Issuance of SUKUK - PKR 2,000,000,000/-",
+     "flags": [],
+     "doc": "284968"
+    }
+   ]
+  },
+  {
+   "symbol": "AHCL",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": -8374064.0,
+    "prev": 3094004.0,
+    "change": -370.7
+   },
+   "flagged": 3,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "Announcement - Financial Results for the Quarter Ended 30th September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287947"
+    },
+    {
+     "date": "2026-10-21",
+     "title": "BOARD MEETING / CLOSED PERIOD",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286303"
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Notice of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "284868"
+    }
+   ]
+  },
+  {
+   "symbol": "AHL",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 272796.0,
+    "prev": 246394.0,
+    "change": 10.7
+   },
+   "flagged": 3,
+   "items": [
+    {
+     "date": "2026-10-23",
+     "title": "Publication of Public Announcement of Intention to acquire at least 76.55% shareholding and control of Unilever Pakistan Foods Limited by McCormick & Company, Inc., through one or more affiliates",
+     "flags": [],
+     "doc": "286639"
+    },
+    {
+     "date": "2026-10-21",
+     "title": "Publication of Public Announcement of Intention by McCormick & Company, Inc., to acquire significant shareholding of Unilever Pakistan Foods Limited",
+     "flags": [],
+     "doc": "286230"
+    },
+    {
+     "date": "2026-10-19",
+     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED SEPTEMBER 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "285924"
+    },
+    {
+     "date": "2026-10-09",
+     "title": "BOARD MEETING",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285433"
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Notice of Extra Ordinary General Meeting 2026 - Arif Habib Limited",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "284791"
+    }
+   ]
+  },
+  {
+   "symbol": "BOP",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 4997190.0,
+    "prev": 5145137.0,
+    "change": -2.9
+   },
+   "flagged": 3,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "Receipt of Regulatory Approvals for Phased Equity Injection by Government of Punjab (GoPb)",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288277"
+    },
+    {
+     "date": "2026-10-29",
+     "title": "BOP | The Bank of Punjab Application for Further Issue of Shares by way of Other than Right",
+     "flags": [],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-26",
+     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-09-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": "286909"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285845"
+    }
+   ]
+  },
+  {
+   "symbol": "FCCL",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 4958143.0,
+    "prev": 3286437.0,
+    "change": 50.9
+   },
+   "flagged": 3,
+   "items": [
+    {
+     "date": "2026-10-27",
+     "title": "Financial Results for the 1st Quarter Ended 30th September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287026"
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Credit of Final Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "285013"
+    },
+    {
+     "date": "2026-10-05",
+     "title": "173 Board Meeting of FCCL - 27 October 2026",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "284522"
+    },
+    {
+     "date": "2026-10-05",
+     "title": "Corporate Briefing Session",
+     "flags": [],
+     "doc": "284516"
+    }
+   ]
+  },
+  {
+   "symbol": "GRR",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 76188.0,
+    "prev": 99406.0,
+    "change": -23.4
+   },
+   "flagged": 3,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "Financial Results of Globe Residency REIT For The Quarter Ended 30th September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "288234"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Board Meeting / Closed Period",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286745"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Credit of Final Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "285913"
+    }
+   ]
+  },
+  {
+   "symbol": "IPAK",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 211101.0,
+    "prev": 182613.0,
+    "change": 15.6
+   },
+   "flagged": 3,
+   "items": [
+    {
+     "date": "2026-10-27",
+     "title": "Financial Results for the First Quarter Ended 30 September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287027"
+    },
+    {
+     "date": "2026-10-19",
+     "title": "Board Meeting for the First Quarter ended 30th September 2026",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285947"
+    },
+    {
+     "date": "2026-10-02",
+     "title": "Notice of Annual General Meeting (Pre-Publication)",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "284243"
+    }
+   ]
+  },
+  {
+   "symbol": "AICL",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 1733242.0,
+    "prev": 1546927.0,
+    "change": 12.0
+   },
+   "flagged": 2,
+   "items": [
+    {
+     "date": "2026-10-28",
+     "title": "Financial Results for the Quarter Ended 30 September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287390"
+    },
+    {
+     "date": "2026-10-21",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    }
+   ]
+  },
+  {
+   "symbol": "HCAR",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 2485650.0,
+    "prev": 828439.0,
+    "change": 200.0
+   },
+   "flagged": 1,
+   "items": [
+    {
+     "date": "2026-10-01",
+     "title": "Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "284160"
+    }
+   ]
+  }
+ ]
+}
