@@ -1,0 +1,23 @@
+name: Test PSX access
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/test-psx-access.yml'
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PSX screener page
+        run: |
+          curl -sS -m 40 -A "Mozilla/5.0" https://dps.psx.com.pk/screener -o s.html -w "%{http_code} %{size_download}\n"
+          test "$(wc -c < s.html)" -gt 100000 && grep -q "dividendYield" s.html
+      - name: PSX company page
+        if: always()
+        run: |
+          curl -sS -m 40 -A "Mozilla/5.0" https://dps.psx.com.pk/company/UBL -o u.html -w "%{http_code} %{size_download}\n"
+          grep -q "Profit after" u.html
+      - name: TradingView scanner
+        if: always()
+        run: |
+          curl -sS -m 40 -H "Content-Type: application/json" -d '{"symbols":{"tickers":["PSX:UBL"]},"columns":["name","continuous_dividend_payout"]}' https://scanner.tradingview.com/pakistan/scan | grep -q '"UBL"'
