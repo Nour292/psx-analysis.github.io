@@ -1158,8 +1158,9 @@ async function _doArchive(dateStr, isManual){
   const fridayStr=getLastFriday();
   const lastArch=localStorage.getItem(ARCH_LAST_KEY)||'';
   if(!isManual && lastArch===fridayStr){ return false; }
-  const headers=['Symbol','Price','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D',
-                 'MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low','Trend','Date'];
+  const headers=['Symbol','Price','Date','MA50-D','MA200-D','RSI-D','MACD-H-D','Signal-D','Volume-D',
+                 'MA50-W','MA200-W','RSI-W','MACD-H-W','Signal-W','Volume-W','52W-High','52W-Low',
+                 'Low-1M','High-1M','Low-3M','High-3M','Vol-Avg30D','ExDiv-Date'];
   const lines=[headers.join(',')];
   _rawData.forEach(r=>lines.push(headers.map(h=>{ if(h==='Date') return dateStr; return r[h]||''; }).join(',')));
   const csv=lines.join('\n');
