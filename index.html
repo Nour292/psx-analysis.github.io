@@ -490,6 +490,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       <div class="nav-sub open" id="navTASub">
         <button class="nav-sub-btn active" id="navHome"     onclick="goHome()">⌂ Dashboard</button>
         <button class="nav-sub-btn"        id="navAnalysis" onclick="goAnalysis()">▶ Weekly Analysis</button>
+        <button class="nav-sub-btn"        id="navPlan"     onclick="goPlan()">🎯 Trade Plan</button>
       </div>
     </div>
 
@@ -559,6 +560,24 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
     <div class="topbar-date" id="topbarDate"></div>
     <span id="topbarBadge" class="topbar-badge"></span>
     <button class="btn btn-port" onclick="window.location.href='portfolio.html'" style="height:32px;font-size:12px">📈 Portfolio</button>
+  </div>
+
+  <!-- ══════════ TRADE PLAN PAGE ══════════ -->
+  <div id="pgPlan" class="page content">
+    <div class="analysis-header">
+      <div class="page-header" style="margin:0;flex:1">
+        <h1>Trade Plan</h1>
+        <p>Entry, stop and targets from the chat-system rules, on live sheet data</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <label style="font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" id="tpOnlyList" checked onchange="tpToggleList(this.checked)"> My list only</label>
+        <button class="btn btn-primary" onclick="goPlan(true)">↻ Refresh</button>
+      </div>
+    </div>
+    <div id="tpInfo" style="margin-bottom:12px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);font-family:var(--mono);line-height:1.7"></div>
+    <div id="tpPos"></div>
+    <div class="tbl-wrap"><table class="dtbl" id="tpTable"><tbody></tbody></table></div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text3);line-height:1.6">Technical read only, not financial advice. Zones are rule-based (MA50, MA200, 1-month and 3-month lows and highs), not checked on the weekly chart. Blue rows = watch daily. Risk only 1-2% of capital per trade.</div>
   </div>
 
   <!-- ══════════ TICKERS PAGE (admin only) ══════════ -->
@@ -845,8 +864,8 @@ function scoreRow(s){
   if(ma200d!==null){max+=10; pts+=(p>ma200d)?10:3;}
   if(ma50d!==null&&ma200d!==null){max+=8; pts+=(ma50d>=ma200d)?8:2;}
   if(ma50w!==null&&ma200w!==null){max+=8; pts+=(ma50w>ma200w)?8:2;}
-  if(rsid!==null){max+=10; pts+=(rsid>=40&&rsid<=70)?8:(rsid<40)?8:2;}
-  if(rsiw!==null){max+=10; pts+=(rsiw>=40&&rsiw<=70)?8:(rsiw<40)?8:2;}
+  if(rsid!==null){max+=10; pts+=(rsid>=40&&rsid<=70)?8:(rsid<40)?4:2;}
+  if(rsiw!==null){max+=10; pts+=(rsiw>=40&&rsiw<=70)?8:(rsiw<40)?4:2;}
   if(macdD!==null){max+=12; const pos=macdD>0,ris=sigD!==null?macdD>sigD:false; pts+=pos?(ris?12:6):(ris?4:2);}
   if(macdW!==null){max+=16; const pos=macdW>0,ris=sigW!==null?macdW>sigW:false; pts+=pos?(ris?16:8):(ris?5:2);}
   if(high52!==null&&low52!==null){max+=7; const dL=(p-low52)/(low52||1),dH=(high52-p)/(high52||1); pts+=dL<=0.10?7:dH<=0.05?1:dH<=0.09?2:5;}
@@ -1337,6 +1356,90 @@ function computeSetupQuality(sym,s,verdict){
   if(mw!==null&&mw1!==null){if(mw1<0&&mw>=0){pts+=2;tips.push('⚡ MACD-W cross ↑');}else if(mw>mw1&&(mw2===null||mw1>mw2)){pts+=1;tips.push('↑ MACD-W expnd');}}
   const grade=pts>=5?'A':pts>=3?'B':pts>=1?'C':'D';
   return {grade,tip:tips.join(' · ')};
+}
+
+/* ════════════════════════════════════════════
+   TRADE PLAN — chat-system rules on the live sheet
+════════════════════════════════════════════ */
+let _tpLdcp={},_tpNews=null,_tpList=null,_tpOnlyList=true;
+const tpN=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
+const tpF=v=>v==null||isNaN(v)?'—':fmt(v);
+function tpPlan(s,ldcp){
+  const p=tpN(s.Price),m50=tpN(s['MA50-D']),m200=tpN(s['MA200-D']),rsi=tpN(s['RSI-D']);
+  const l1=tpN(s['Low-1M']),h1=tpN(s['High-1M']),l3=tpN(s['Low-3M']),h3=tpN(s['High-3M']),h52=tpN(s['52W-High']);
+  const vol=tpN(s['Volume-D']),avg=tpN(s['Vol-Avg30D']);
+  if(p==null||m50==null||l3==null||h3==null) return null;
+  const volRatio=(vol!=null&&avg)?vol/avg:null,green=ldcp!=null&&p>ldcp;
+  let trend='Sideways';
+  if(m200!=null&&p>m50&&m50>m200) trend='Uptrend';
+  else if(p<m50&&(m200==null||p<m200)&&rsi!=null&&rsi<45&&l1!=null&&l1<=l3*1.02) trend='Downtrend';
+  const o={trend,p,rsi,volRatio,green,watch:false,low:false};
+  if(trend==='Downtrend'){
+    const zone=l3,top=zone*1.03,entry=zone*1.015,stop=zone*0.97;
+    const t1=m50>entry*1.03?m50:(h1!=null&&h1>entry*1.03?h1:m50);
+    const t2=(m200!=null&&m200>t1*1.01)?m200:(h3>t1*1.01?h3:t1*1.1);
+    const rr1=(t1-entry)/(entry-stop),rr2=(t2-entry)/(entry-stop);
+    Object.assign(o,{zoneLo:zone,zoneHi:top,entry,stop,t1,t2,rr1,rr2});
+    if(p<zone*0.995){o.verdict='SKIP';o.why='Zone broken: price is under the 3-month low.';}
+    else if(rr1<2){o.verdict='SKIP';o.why='Reward to T1 is under 1:2.';}
+    else if(green&&p<=top*1.03&&(volRatio==null||volRatio>=1)){o.verdict='REV-BUY';o.why='Green day up from the zone'+(volRatio!=null?', volume '+volRatio.toFixed(1)+'x average':'')+'. Small size, confirm on the close.';}
+    else{o.verdict='REV-WATCH';o.why='Buy only after a green daily close up from the zone (volume rising, RSI turning up).';}
+    o.watch=(p-top)/p<=0.03||o.verdict==='REV-BUY';
+  }else{
+    let entry,t1,t2;
+    if(trend==='Uptrend'){entry=m50;t1=(h1!=null&&h1>entry*1.02)?h1:h3;t2=h3>t1*1.01?h3:((h52!=null&&h52>t1*1.01)?h52:t1*1.05);}
+    else{entry=l3;const mid=(l3+h3)/2;t1=(h1!=null&&h1>mid&&h1>entry*1.02)?h1:mid;t2=h3>t1*1.01?h3:t1*1.05;}
+    let stop=entry*0.96;if(l1!=null&&l1<entry&&l1>=entry*0.95)stop=Math.min(stop,l1*0.99);stop=Math.max(entry*0.95,Math.min(stop,entry*0.97));
+    const rr1=(t1-entry)/(entry-stop),rr2=(t2-entry)/(entry-stop);
+    Object.assign(o,{zoneLo:entry,zoneHi:entry*1.01,entry,stop,t1,t2,rr1,rr2});
+    if(rr1<1.5){o.verdict='WAIT';o.low=true;o.why='Reward to T1 is under 1:1.5, low priority.';}
+    else if(p<=entry*1.03&&p>=stop){o.verdict='BUY';o.why='Price is at support. Risk '+((1-stop/p)*100).toFixed(1)+'% to the stop.';}
+    else{o.verdict='WAIT';o.why=p>entry?'Wait for a pullback to '+tpF(entry)+'.':'Price is under the entry zone, wait for it to hold.';}
+    o.watch=o.verdict==='BUY';
+  }
+  return o;
+}
+function tpExDiv(s){
+  const d=(s['ExDiv-Date']||'').trim();if(!d)return '';
+  const dt=new Date(d+'T00:00:00'),days=Math.round((dt-new Date(new Date().toDateString()))/86400000);
+  if(isNaN(days)||days<0||days>14)return '';
+  return 'Ex-div '+dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' ('+days+'d): price drops by the dividend that day, re-check levels.';
+}
+function tpNewsText(sym){
+  const n=_tpNews?(_tpNews.rows||[]).find(r=>r.symbol===sym):null;if(!n)return '';
+  const fl=[];(n.items||[]).forEach(i=>i.flags.forEach(f=>{if(f!=='Insider'&&!fl.includes(f))fl.push(f);}));
+  const q=n.quarter&&n.quarter.change!=null&&Math.abs(n.quarter.change)>=5?n.quarter.label+' profit '+(n.quarter.change>0?'+':'')+Math.round(n.quarter.change)+'%':'';
+  const parts=[];if(fl.length)parts.push(fl.slice(0,3).join(', '));if(q)parts.push(q);
+  return parts.length?'News: '+parts.join('; ')+'.':'';
+}
+async function tpLoadExtras(){
+  try{const r=await fetch(gsUrl('Prices'));const j=await r.json();const rows=j.values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());const li=h.indexOf('ldcp');_tpLdcp={};if(li>=0)rows.slice(1).forEach(r=>{const sy=String(r[0]||'').trim().toUpperCase(),l=parseFloat(r[li]);if(sy&&l>0)_tpLdcp[sy]=l;});}catch(e){}
+  try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);_tpNews=r.ok?await r.json():null;}catch(e){_tpNews=null;}
+  try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);_tpList=r.ok?await r.json():null;}catch(e){_tpList=null;}
+}
+function tpToggleList(v){_tpOnlyList=v;tpRender();}
+async function goPlan(force){showPage('pgPlan');setNav('navPlan','Trade Plan');document.getElementById('tpInfo').textContent='Loading…';await tpLoadExtras();tpRender();if(typeof tpPositions==='function')tpPositions();}
+function tpRender(){
+  const info=document.getElementById('tpInfo'),tbl=document.getElementById('tpTable');
+  if(!_rawData||!_rawData.length){info.textContent='No sheet data loaded yet. Press Refresh in a moment.';tbl.innerHTML='';return;}
+  const onList=_tpList?new Set(_tpList.rows.filter(r=>['New','Active','Override'].includes(r.status)).map(r=>r.symbol)):null;
+  let rows=_rawData.map(s=>({s,sym:String(s.Symbol).toUpperCase(),plan:tpPlan(s,_tpLdcp[String(s.Symbol).toUpperCase()])})).filter(x=>x.plan);
+  const total=rows.length;
+  if(_tpOnlyList&&onList)rows=rows.filter(x=>onList.has(x.sym));
+  const groups=[['Buy and hold (BUY, REV-BUY)',x=>x.plan.verdict==='BUY'||x.plan.verdict==='REV-BUY'],['Wait list',x=>x.plan.verdict==='WAIT'],['Reversal watch',x=>x.plan.verdict==='REV-WATCH'],['Skip',x=>x.plan.verdict==='SKIP']];
+  const badge=v=>{const m={'BUY':'background:#10B981;color:#04210f','REV-BUY':'background:#10B981;color:#04210f','WAIT':'background:#F59E0B;color:#2a1a00','REV-WATCH':'border:1px solid #38BDF8;color:#38BDF8','SKIP':'background:#F43F5E;color:#2b0509'};return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;${m[v]||''}">${v}</span>`;};
+  let html='<tr><th>Stock</th><th>Price</th><th>Verdict</th><th>Entry</th><th>Stop</th><th>T1 / T2</th><th>R:R</th><th>My advice</th></tr>';
+  groups.forEach(([title,f])=>{
+    const g=rows.filter(f).sort((a,b)=>(b.plan.watch-a.plan.watch)||(b.plan.rr1-a.plan.rr1));
+    html+=`<tr><td colspan="8" style="background:var(--surface2);font-weight:600;font-size:12px;padding:8px 12px">${title} <span style="color:var(--text3);font-weight:400">(${g.length})</span></td></tr>`;
+    if(!g.length)html+='<tr><td colspan="8" style="color:var(--text3);font-size:12px;padding:8px 12px">None</td></tr>';
+    g.forEach(x=>{const p=x.plan,ex=tpExDiv(x.s),nw=tpNewsText(x.sym);
+      const entry=p.trend==='Downtrend'?tpF(p.zoneLo)+'–'+tpF(p.zoneHi):tpF(p.entry);
+      const advice=[tkEsc(p.trend+'. '+p.why),ex?tkEsc(ex):'',nw?'<span style="color:var(--accent)">'+tkEsc(nw)+'</span>':''].filter(Boolean).join(' ');
+      html+=`<tr${p.watch?' style="background:var(--accent-dim)"':''}><td class="sym-cell">${tkEsc(x.sym)}</td><td class="price-cell">${tpF(p.p)}</td><td>${badge(p.verdict)}</td><td class="zone-cell">${entry}</td><td class="zone-cell">${tpF(p.stop)}</td><td class="zone-cell">${tpF(p.t1)} / ${tpF(p.t2)}</td><td style="font-family:var(--mono);font-size:12px">${p.rr1.toFixed(1)} / ${p.rr2.toFixed(1)}</td><td style="font-size:12px;line-height:1.5;max-width:420px">${advice}</td></tr>`;});
+  });
+  tbl.innerHTML=html;
+  info.innerHTML=`Data as of ${tkEsc(_dataAsOf||'—')} · ${rows.length} of ${total} stocks${_tpOnlyList&&onList?' (my list)':''} · prices from the sheet${_tpNews?' · news '+tkEsc(new Date(_tpNews.updated).toLocaleDateString('en-GB')):''}`;
 }
 
 /* ════════════════════════════════════════════
