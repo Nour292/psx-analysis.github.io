@@ -1,0 +1,30 @@
+name: Pull news
+on:
+  schedule:
+    - cron: '0 13 * * 1-5'   # Mon-Fri, 18:00 Pakistan time
+  workflow_dispatch:          # "News now" button in the web app
+  push:
+    paths:
+      - 'scripts/pull_news.py'
+      - '.github/workflows/pull-news.yml'
+permissions:
+  contents: write
+concurrency:
+  group: pull-news
+  cancel-in-progress: false
+jobs:
+  news:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pull announcements
+        run: python scripts/pull_news.py
+      - name: Save news
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tickers/news.json
+          git diff --cached --quiet || (git commit -m "Tickers: news $(date -u +%F)" && git pull --rebase -q && git push -q)

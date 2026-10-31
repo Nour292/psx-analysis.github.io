@@ -571,6 +571,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="loadTickers()">↻ Refresh</button>
+        <button class="btn btn-ghost" onclick="runNewsNow()">📰 News now</button>
         <button class="btn btn-primary" id="tkRunBtn" onclick="runTickersNow()">▶ Run now</button>
       </div>
     </div>
@@ -579,6 +580,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
     <div id="tkAddBar" style="margin-bottom:14px"></div>
     <div class="tbl-wrap"><table class="dtbl" id="tkTable"><tbody></tbody></table></div>
     <div id="tkExtra" style="margin-top:14px;font-size:12px;color:var(--text2)"></div>
+    <div id="tkNews" style="margin-top:20px"></div>
   </div>
 
   <!-- ══════════ HOME PAGE ══════════ -->
@@ -1341,7 +1343,7 @@ function computeSetupQuality(sym,s,verdict){
 ════════════════════════════════════════════ */
 function tkIsAdmin(){ try{ return (sessionStorage.getItem('psx_user')||localStorage.getItem('psx_user_r')||'')==='qasim'; }catch(e){ return false; } }
 (function(){ if(tkIsAdmin()) ['navTickDiv','navTickGrp'].forEach(id=>{ const e=document.getElementById(id); if(e) e.style.display=''; }); })();
-let _tkData=null,_tkAdded=new Set(),_tkPoll=null;
+let _tkData=null,_tkNews=null,_tkAdded=new Set(),_tkPoll=null;
 const TK_WF='pull-tickers.yml';
 function tkEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function goTickers(){ if(!tkIsAdmin()) return; showPage('pgTickers'); setNav('navTickBtn','Tickers'); document.getElementById('navTickBtn').classList.add('active'); loadTickers(); }
@@ -1354,6 +1356,10 @@ async function loadTickers(){
     const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);
     _tkData=r.ok?await r.json():null;
   }catch(e){ _tkData=null; }
+  try{
+    const n=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);
+    _tkNews=n.ok?await n.json():null;
+  }catch(e){ _tkNews=null; }
   renderTickers(); loadTkRunStatus();
 }
 async function loadTkRunStatus(){
@@ -1381,10 +1387,40 @@ function renderTickers(){
   bar.innerHTML=(!_rawData||!_rawData.length)?'<span style="font-size:12px;color:var(--accent)">Sheet data not loaded yet, so adding is switched off. Press Refresh once the dashboard has data.</span>':toAdd.length?`<button class="btn btn-primary" id="tkAddBtn" onclick="addTickersToSheet()">＋ Add ${toAdd.length} ticker${toAdd.length>1?'s':''} to sheet: ${tkEsc(toAdd.join(', '))}</button>`:'<span style="font-size:12px;color:var(--text3)">Every ticker on the list is already in the sheet.</span>';
   const badge=s=>{const m={New:'#10B981',Active:'#38BDF8',Override:'#F59E0B',Review:'#A78BFA',Dropped:'#F43F5E'};return `<span style="color:${m[s]||'#94A3B8'};font-weight:600;font-size:12px">${tkEsc(s)}</span>`;};
   const bn=v=>Math.abs(v)>=1e7?(v/1e6).toFixed(1)+'B':Math.round(v/1e3)+'M';
-  tbl.innerHTML='<tr><th>Symbol</th><th>Status</th><th>Price</th><th>Yield %</th><th>Profit (3 yrs, newest first)</th><th>Div yrs</th><th>In sheet</th><th>Note</th></tr>'+
-    d.rows.map(r=>`<tr><td class="sym-cell">${tkEsc(r.symbol)}</td><td>${badge(r.status)}</td><td class="price-cell">${r.price==null?'—':fmt(r.price)}</td><td>${r.yield==null?'—':r.yield.toFixed(1)}</td><td style="font-size:11px;font-family:var(--mono)">${(r.profit||[]).length?(r.profit||[]).map(bn).join(' › '):'—'}</td><td>${r.divYears==null?'—':r.divYears}</td><td>${sh.has(r.symbol)?'✓':'—'}</td><td style="font-size:11px;color:var(--text3)">${tkEsc(r.reason||'')}</td></tr>`).join('');
+  tbl.innerHTML='<tr><th>Symbol</th><th>Status</th><th>Price</th><th>Yield %</th><th>Profit (3 yrs, newest first)</th><th>Div yrs</th><th>In sheet</th><th>News</th><th>Note</th></tr>'+
+    d.rows.map(r=>`<tr><td class="sym-cell">${tkEsc(r.symbol)}</td><td>${badge(r.status)}</td><td class="price-cell">${r.price==null?'—':fmt(r.price)}</td><td>${r.yield==null?'—':r.yield.toFixed(1)}</td><td style="font-size:11px;font-family:var(--mono)">${(r.profit||[]).length?(r.profit||[]).map(bn).join(' › '):'—'}</td><td>${r.divYears==null?'—':r.divYears}</td><td>${sh.has(r.symbol)?'✓':'—'}</td><td style="font-size:11px">${tkNewsCell(r.symbol)}</td><td style="font-size:11px;color:var(--text3)">${tkEsc(r.reason||'')}</td></tr>`).join('');
+  renderTkNews();
   const passSet=new Set(pass.map(r=>r.symbol)),notOn=[...sh].filter(s=>!passSet.has(s)).sort();
   extra.innerHTML=notOn.length?`<b>In the sheet but not on the list (${notOn.length})</b> — kept as they are, nothing is deleted:<br><span style="font-family:var(--mono);font-size:11px">${notOn.map(tkEsc).join(', ')}</span>`:'';
+}
+function tkNewsRow(sym){ return _tkNews?(_tkNews.rows||[]).find(x=>x.symbol===sym):null; }
+function tkQChip(q){
+  if(!q||q.change==null) return '';
+  const c=q.change,col=c<=-5?'#F43F5E':c>=5?'#10B981':'#94A3B8';
+  return `<span style="color:${col};font-family:var(--mono)">${tkEsc(q.label)} ${c>0?'+':''}${Math.round(c)}%</span>`;
+}
+function tkNewsCell(sym){
+  const n=tkNewsRow(sym); if(!n) return '—';
+  const f=n.flagged?`<span style="color:var(--accent)">⚑ ${n.flagged}</span>`:'';
+  return [f,tkQChip(n.quarter)].filter(Boolean).join(' · ')||'—';
+}
+function renderTkNews(){
+  const box=document.getElementById('tkNews'); if(!box) return;
+  if(!_tkNews){ box.innerHTML='<div style="font-size:12px;color:var(--text3)">No news saved yet. Press <b>News now</b>.</div>'; return; }
+  const onList=new Set((_tkData?_tkData.rows:[]).map(r=>r.symbol));
+  const rows=(_tkNews.rows||[]).filter(r=>onList.has(r.symbol)&&r.items.length);
+  const chip=f=>`<span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--accent-dim);color:var(--accent);margin-right:4px">${tkEsc(f)}</span>`;
+  box.innerHTML=`<div class="section-label"><span></span> News — last ${_tkNews.days} days <span style="font-weight:400;color:var(--text3);margin-left:8px;font-size:11px">updated ${tkEsc(new Date(_tkNews.updated).toLocaleString('en-GB'))} · ⚑ = flagged item</span></div>`+
+    rows.map(r=>`<details style="margin:6px 0;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)"${r.flagged?' open':''}><summary style="cursor:pointer;font-size:13px"><b>${tkEsc(r.symbol)}</b> <span style="color:var(--text3);font-size:11px">${r.flagged} flagged</span> ${tkQChip(r.quarter)}</summary>`+
+      r.items.map(i=>`<div style="font-size:12px;padding:3px 0;color:${i.flags.length?'var(--text)':'var(--text3)'}"><span style="font-family:var(--mono);color:var(--text3)">${tkEsc(i.date)}</span> ${i.flags.map(chip).join('')}${tkEsc(i.title)}${i.doc?` <a href="https://dps.psx.com.pk/download/document/${tkEsc(i.doc)}.pdf" target="_blank" style="color:var(--accent)">PDF</a>`:''}</div>`).join('')+'</details>').join('');
+}
+async function runNewsNow(){
+  if(!tkIsAdmin()) return;
+  if(!_idxToken){ alert('Paste your GitHub token in the sidebar first (it needs the "workflow" permission).'); return; }
+  try{
+    const res=await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/pull-news.yml/dispatches`,{method:'POST',headers:{'Authorization':'Bearer '+_idxToken,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({ref:'main'})});
+    alert(res.status===204?'News run started. Press Refresh in about a minute.':'Could not start the news run (HTTP '+res.status+'). The token needs the "workflow" permission.');
+  }catch(e){ alert('Could not start the news run: '+e.message); }
 }
 async function addTickersToSheet(){
   if(!tkIsAdmin()) return;
