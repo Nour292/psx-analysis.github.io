@@ -1477,19 +1477,21 @@ function tpJLevels(sym){
 }
 function tpAdvise(h,plan,s,lv){
   const p=tpNum(s&&s.Price),rsi=plan?plan.rsi:null;
-  if(p==null)return {act:'HOLD',why:'No live price for this stock in the sheet.'};
-  const pl=(p-h.avg)/h.avg*100;
-  const defStop=lv.stop==null;
-  const stop=lv.stop!=null?lv.stop:h.avg*0.95,t1=lv.t1!=null?lv.t1:(plan?plan.t1:null),t2=lv.t2!=null?lv.t2:(plan?plan.t2:null);
-  const l1=tpN(s['Low-1M']);
-  let act='HOLD',why='Trend and levels intact. Keep the stop at '+tpF(stop)+(defStop?' (default: 5% under your cost).':'.');
-  if(p<=stop){act='EXIT';why='Stop hit: price is at or under '+tpF(stop)+'. Exit as planned.';}
-  else if(t2!=null&&p>=t2){act='TAKE PROFIT';why='At T2 ('+tpF(t2)+'): sell the rest, or trail a tight stop.';}
-  else if(t1!=null&&p>=t1){act='TAKE PROFIT';why='At T1 ('+tpF(t1)+'): sell about half and move the stop to your cost ('+tpF(h.avg)+').';}
-  else if(rsi!=null&&rsi>=75&&pl>3){act='TAKE PROFIT';why='RSI '+Math.round(rsi)+' is overbought with a gain: take some profit.';}
-  else if(pl>=5&&stop<h.avg){act='TIGHTEN STOP';why='Up '+pl.toFixed(1)+'%: move the stop up to your cost ('+tpF(h.avg)+') so the trade cannot lose.';}
-  else if(plan&&plan.trend==='Downtrend'&&l1!=null&&stop<l1*0.99&&p>l1*0.99){act='TIGHTEN STOP';why='Trend is down: raise the stop to just under the 1-month low ('+tpF(l1*0.99)+').';}
-  return {act,why,pl,stop,t1,t2,defStop};
+  if(p==null)return {act:'HOLD',why:'No live price for this stock in the sheet.',pl:null,stop:null,t1:null,t2:null,defStop:true};
+  const cost=lv.entry!=null?lv.entry:h.avg,pl=(p-cost)/cost*100;
+  const hasStop=lv.stop!=null,stop=hasStop?lv.stop:(plan?plan.stop:null);
+  const t1=lv.t1!=null?lv.t1:(plan?plan.t1:null),t2=lv.t2!=null?lv.t2:(plan?plan.t2:null);
+  const l1=tpN(s['Low-1M']),base={pl,stop,t1,t2,defStop:!hasStop};
+  const R=(act,why)=>Object.assign({act,why},base);
+  if(lv.entry==null&&(pl>100||pl<-45))return R('REVIEW','Your average cost in the sheet ('+tpF(h.avg)+') looks changed by sells or a split, so profit and stop advice would be wrong. Add your entry and stop in the journal.');
+  if(hasStop&&p<=stop)return R('EXIT','Stop hit: price is at or under '+tpF(stop)+'. Exit as planned.');
+  if(!hasStop&&stop!=null&&p<=stop)return R('REVIEW','Price is under the plan stop ('+tpF(stop)+'). Review this position, or set your own stop in the journal.');
+  if(t2!=null&&p>=t2)return R('TAKE PROFIT','At T2 ('+tpF(t2)+'): sell the rest, or trail a tight stop.');
+  if(t1!=null&&p>=t1)return R('TAKE PROFIT','At T1 ('+tpF(t1)+'): sell about half and move the stop to your cost ('+tpF(cost)+').');
+  if(rsi!=null&&rsi>=75&&pl>3)return R('TAKE PROFIT','RSI '+Math.round(rsi)+' is overbought with a gain: take some profit.');
+  if(pl>=5&&(!hasStop||stop<cost))return R('TIGHTEN STOP','Up '+pl.toFixed(1)+'%: '+(hasStop?'move':'set')+' the stop at your cost ('+tpF(cost)+') so the trade cannot lose.');
+  if(plan&&plan.trend==='Downtrend'&&l1!=null&&(stop==null||stop<l1*0.99)&&p>l1*0.99)return R('TIGHTEN STOP','Trend is down: put the stop just under the 1-month low ('+tpF(l1*0.99)+').');
+  return R('HOLD','Trend and levels intact. '+(hasStop?'Keep the stop at '+tpF(stop)+'.':'Suggested stop '+tpF(stop)+' (not set yet).'));
 }
 async function tpPositions(){
   const box=document.getElementById('tpPos');if(!box)return;
@@ -1497,7 +1499,7 @@ async function tpPositions(){
   const [hold]=await Promise.all([tpLoadHoldings(),tpLoadJournal()]);
   _tpHeld={};hold.forEach(h=>_tpHeld[h.sym]=true);tpRender();
   const bySym={};(_rawData||[]).forEach(r=>bySym[String(r.Symbol).toUpperCase()]=r);
-  const badge=a=>{const m={'HOLD':'background:#38BDF8;color:#04202e','TIGHTEN STOP':'background:#F59E0B;color:#2a1a00','TAKE PROFIT':'background:#10B981;color:#04210f','EXIT':'background:#F43F5E;color:#2b0509'};return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;${m[a]||''}">${a}</span>`;};
+  const badge=a=>{const m={'HOLD':'background:#38BDF8;color:#04202e','TIGHTEN STOP':'background:#F59E0B;color:#2a1a00','TAKE PROFIT':'background:#10B981;color:#04210f','EXIT':'background:#F43F5E;color:#2b0509','REVIEW':'background:#A78BFA;color:#1a0f33'};return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;${m[a]||''}">${a}</span>`;};
   let rows='';
   hold.forEach(h=>{
     const s=bySym[h.sym],plan=s?tpPlan(s,_tpLdcp[h.sym]):null,lv=tpJLevels(h.sym);
@@ -1508,7 +1510,7 @@ async function tpPositions(){
   const mine=(_tpJournal||[]).filter(o=>o.User===u).slice(-12).reverse();
   const jr=mine.map(o=>`<tr><td>${tkEsc(o.Date)}</td><td class="sym-cell">${tkEsc(o.Stock)}</td><td>${tkEsc(o.Action)}</td><td>${tkEsc(o.Price)}</td><td>${tkEsc(o.Stop)}</td><td>${tkEsc(o.T1)} / ${tkEsc(o.T2)}</td><td>${tkEsc(o.Qty)}</td><td style="font-size:12px">${tkEsc(o.Reason)}</td></tr>`).join('');
   const inp='style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;font-size:12px;font-family:var(--mono);width:84px"';
-  box.innerHTML=`<div class="section-label"><span></span> My positions <span style="font-weight:400;color:var(--text3);margin-left:8px;font-size:11px">${tkEsc(u)} · * = default stop (set yours in the journal)</span></div>`+
+  box.innerHTML=`<div class="section-label"><span></span> My positions <span style="font-weight:400;color:var(--text3);margin-left:8px;font-size:11px">${tkEsc(u)} · * = suggested stop, not set yet (set yours in the journal)</span></div>`+
     (hold.length?`<div class="tbl-wrap"><table class="dtbl"><tr><th>Stock</th><th>Units</th><th>Avg cost</th><th>Price</th><th>P/L</th><th>Stop</th><th>T1 / T2</th><th>Action</th><th>My advice</th></tr>${rows}</table></div>`:'<div style="font-size:12px;color:var(--text3);margin-bottom:10px">No open positions found for your account.</div>')+
     `<details style="margin:12px 0 18px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)"><summary style="cursor:pointer;font-size:13px">Trade journal ${_tpJournal?'('+mine.length+' recent)':''}</summary>`+
     (_tpJournal===null?`<div style="font-size:12px;color:var(--text3);margin-top:8px">${tkEsc(_tpJErr||'Journal not available.')}</div>`:
