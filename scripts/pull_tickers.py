@@ -118,13 +118,16 @@ def profit_rising(f):
 
 def tv_div_years(syms):
     body = json.dumps({"symbols": {"tickers": ["PSX:" + s for s in syms]},
-                       "columns": ["name", "continuous_dividend_payout", "Perf.3Y", "Perf.All"]}).encode()
+                       "columns": ["name", "continuous_dividend_payout", "Perf.Y", "Perf.3Y", "Perf.All"]}).encode()
     page = fetch(TV_URL, data=body, headers={"Content-Type": "application/json"})
     out = {}
     for d in json.loads(page)["data"]:
-        n, dy, p3, pall = d["d"]
-        # Perf.All equal to Perf.3Y means the stock has traded for under 3 years
-        out[n] = (dy, p3 is not None and pall is not None and abs(p3 - pall) < 1e-6)
+        n, dy, py, p3, pall = d["d"]
+        # Perf.All equal to Perf.3Y: traded under 3 years; equal to Perf.Y: under 1 year
+        def same(a, b):
+            return a is not None and b is not None and abs(a - b) < 1e-6
+        age = 1 if same(py, pall) else (3 if same(p3, pall) else 9)
+        out[n] = (dy, age)
     return out
 
 
@@ -169,7 +172,7 @@ def main(trigger):
         s = r["sym"]
         f = fin.get(s)
         ok, vals = profit_rising(f) if f else (False, [])
-        dy, recent = div.get(s, (None, False))
+        dy, age = div.get(s, (None, 9))
         shown = len(f["years"]) if f else 0
         status, reason = None, ""
         if not ok:
@@ -178,7 +181,7 @@ def main(trigger):
             reason = "No dividend data"
         elif dy >= MIN_DIV_YEARS:
             status = "pass"
-        elif recent and dy >= max(2, min(shown, 3)):
+        elif (age == 1 and dy >= 1) or (age == 3 and dy >= 2):
             status, reason = "pass", "New listing, paid every year since listing"
         else:
             reason = "Dividend record under 3 years"
@@ -193,7 +196,7 @@ def main(trigger):
     listed = {r["symbol"] for r in rows}
     for s in OVERRIDES:
         if s not in listed:
-            add(s, "Override", by_sym.get(s), [], div.get(s, (None, False))[0], "Kept by owner decision")
+            add(s, "Override", by_sym.get(s), [], div.get(s, (None, 9))[0], "Kept by owner decision")
     listed = {r["symbol"] for r in rows}
     for s, st in prev.items():  # earlier members that fell out of the candidate pool
         if s not in listed and st in ("Active", "New", "Override", "Review"):
