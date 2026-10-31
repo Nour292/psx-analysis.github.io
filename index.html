@@ -1347,7 +1347,7 @@ function tkEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;
 function goTickers(){ if(!tkIsAdmin()) return; showPage('pgTickers'); setNav('navTickBtn','Tickers'); document.getElementById('navTickBtn').classList.add('active'); loadTickers(); }
 function tkSheetSet(){ const s=new Set((_rawData||[]).map(r=>String(r.Symbol||'').trim().toUpperCase()).filter(Boolean)); _tkAdded.forEach(x=>s.add(x)); return s; }
 function tkPassRows(){ return _tkData?_tkData.rows.filter(r=>['New','Active','Override'].includes(r.status)):[]; }
-function tkToAdd(){ const sh=tkSheetSet(); return tkPassRows().map(r=>r.symbol).filter(s=>!sh.has(s)); }
+function tkToAdd(){ if(!_rawData||!_rawData.length) return []; const sh=tkSheetSet(); return tkPassRows().map(r=>r.symbol).filter(s=>!sh.has(s)); }
 async function loadTickers(){
   if(!tkIsAdmin()) return;
   try{
@@ -1378,7 +1378,7 @@ function renderTickers(){
   info.innerHTML=`<div id="tkRunLine"></div>List saved: ${tkEsc(new Date(d.updated).toLocaleString('en-GB'))} · ${tkEsc(d.trigger==='schedule'?'Auto (monthly)':'Manual')} · ${d.universe} stocks scanned · ${d.candidates} passed liquidity`;
   const card=(v,l,cls)=>`<div class="sig-card ${cls}"><div class="sv">${v}</div><div class="sl">${l}</div></div>`;
   strip.innerHTML=card(pass.length,'On list','buy')+card(c.New||0,'New','watch')+card(toAdd.length,'To add to sheet','caution')+card(c.Dropped||0,'Dropped','exit');
-  bar.innerHTML=toAdd.length?`<button class="btn btn-primary" id="tkAddBtn" onclick="addTickersToSheet()">＋ Add ${toAdd.length} ticker${toAdd.length>1?'s':''} to sheet: ${tkEsc(toAdd.join(', '))}</button>`:'<span style="font-size:12px;color:var(--text3)">Every ticker on the list is already in the sheet.</span>';
+  bar.innerHTML=(!_rawData||!_rawData.length)?'<span style="font-size:12px;color:var(--accent)">Sheet data not loaded yet, so adding is switched off. Press Refresh once the dashboard has data.</span>':toAdd.length?`<button class="btn btn-primary" id="tkAddBtn" onclick="addTickersToSheet()">＋ Add ${toAdd.length} ticker${toAdd.length>1?'s':''} to sheet: ${tkEsc(toAdd.join(', '))}</button>`:'<span style="font-size:12px;color:var(--text3)">Every ticker on the list is already in the sheet.</span>';
   const badge=s=>{const m={New:'#10B981',Active:'#38BDF8',Override:'#F59E0B',Review:'#A78BFA',Dropped:'#F43F5E'};return `<span style="color:${m[s]||'#94A3B8'};font-weight:600;font-size:12px">${tkEsc(s)}</span>`;};
   const bn=v=>(v/1e6).toFixed(1)+'B';
   tbl.innerHTML='<tr><th>Symbol</th><th>Status</th><th>Price</th><th>Yield %</th><th>Profit (3 yrs, newest first)</th><th>Div yrs</th><th>In sheet</th><th>Note</th></tr>'+
