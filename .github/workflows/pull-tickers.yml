@@ -1,0 +1,30 @@
+name: Pull tickers
+on:
+  schedule:
+    - cron: '0 3 1 * *'   # 1st of every month, 08:00 Pakistan time
+  workflow_dispatch:       # "Run now" button in the web app
+  push:
+    paths:
+      - 'scripts/pull_tickers.py'
+      - '.github/workflows/pull-tickers.yml'
+permissions:
+  contents: write
+concurrency:
+  group: pull-tickers
+  cancel-in-progress: false
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pull and filter tickers
+        run: python scripts/pull_tickers.py ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
+      - name: Save list
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tickers/list.json
+          git diff --cached --quiet || (git commit -m "Tickers: monthly pull $(date -u +%F)" && git pull --rebase -q && git push -q)

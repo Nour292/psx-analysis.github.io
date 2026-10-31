@@ -508,6 +508,15 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       </div>
     </div>
 
+    <!-- Tickers (admin only, shown by script) -->
+    <div class="nav-divider" id="navTickDiv" style="display:none"></div>
+    <div class="nav-grp" id="navTickGrp" style="display:none">
+      <button class="nav-grp-btn" id="navTickBtn" data-tip="Tickers" onclick="goTickers()">
+        <span class="nav-icon">🧾</span>
+        <span class="nav-label"> Tickers</span>
+      </button>
+    </div>
+
   </nav>
   <div class="sidebar-footer">
     <button class="footer-btn" onclick="toggleTheme()" id="themeBtn" style="margin-bottom:4px">
@@ -550,6 +559,26 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
     <div class="topbar-date" id="topbarDate"></div>
     <span id="topbarBadge" class="topbar-badge"></span>
     <button class="btn btn-port" onclick="window.location.href='portfolio.html'" style="height:32px;font-size:12px">📈 Portfolio</button>
+  </div>
+
+  <!-- ══════════ TICKERS PAGE (admin only) ══════════ -->
+  <style>#navTickBtn.active{background:var(--accent-dim);color:var(--accent)}</style>
+  <div id="pgTickers" class="page content">
+    <div class="analysis-header">
+      <div class="page-header" style="margin:0;flex:1">
+        <h1>Tickers</h1>
+        <p>Monthly list pulled from PSX by your 4 filters</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="loadTickers()">↻ Refresh</button>
+        <button class="btn btn-primary" id="tkRunBtn" onclick="runTickersNow()">▶ Run now</button>
+      </div>
+    </div>
+    <div id="tkInfo" style="margin-bottom:12px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);font-family:var(--mono);line-height:1.7"></div>
+    <div class="signal-strip" id="tkStrip" style="margin-bottom:14px"></div>
+    <div id="tkAddBar" style="margin-bottom:14px"></div>
+    <div class="tbl-wrap"><table class="dtbl" id="tkTable"><tbody></tbody></table></div>
+    <div id="tkExtra" style="margin-top:14px;font-size:12px;color:var(--text2)"></div>
   </div>
 
   <!-- ══════════ HOME PAGE ══════════ -->
@@ -710,7 +739,7 @@ function toggleTheme(){
    NAV
 ════════════════════════════════════════════ */
 function setNav(id,title){
-  document.querySelectorAll('.nav-sub-btn').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-sub-btn,#navTickBtn').forEach(n=>n.classList.remove('active'));
   const el=document.getElementById(id);
   if(el) el.classList.add('active');
   document.getElementById('topbarTitle').textContent=title;
@@ -1305,6 +1334,89 @@ function computeSetupQuality(sym,s,verdict){
   if(mw!==null&&mw1!==null){if(mw1<0&&mw>=0){pts+=2;tips.push('⚡ MACD-W cross ↑');}else if(mw>mw1&&(mw2===null||mw1>mw2)){pts+=1;tips.push('↑ MACD-W expnd');}}
   const grade=pts>=5?'A':pts>=3?'B':pts>=1?'C':'D';
   return {grade,tip:tips.join(' · ')};
+}
+
+/* ════════════════════════════════════════════
+   TICKERS TAB — admin ("qasim") only
+════════════════════════════════════════════ */
+function tkIsAdmin(){ try{ return (sessionStorage.getItem('psx_user')||localStorage.getItem('psx_user_r')||'')==='qasim'; }catch(e){ return false; } }
+(function(){ if(tkIsAdmin()) ['navTickDiv','navTickGrp'].forEach(id=>{ const e=document.getElementById(id); if(e) e.style.display=''; }); })();
+let _tkData=null,_tkAdded=new Set(),_tkPoll=null;
+const TK_WF='pull-tickers.yml';
+function tkEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function goTickers(){ if(!tkIsAdmin()) return; showPage('pgTickers'); setNav('navTickBtn','Tickers'); document.getElementById('navTickBtn').classList.add('active'); loadTickers(); }
+function tkSheetSet(){ const s=new Set((_rawData||[]).map(r=>String(r.Symbol||'').trim().toUpperCase()).filter(Boolean)); _tkAdded.forEach(x=>s.add(x)); return s; }
+function tkPassRows(){ return _tkData?_tkData.rows.filter(r=>['New','Active','Override'].includes(r.status)):[]; }
+function tkToAdd(){ const sh=tkSheetSet(); return tkPassRows().map(r=>r.symbol).filter(s=>!sh.has(s)); }
+async function loadTickers(){
+  if(!tkIsAdmin()) return;
+  try{
+    const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);
+    _tkData=r.ok?await r.json():null;
+  }catch(e){ _tkData=null; }
+  renderTickers(); loadTkRunStatus();
+}
+async function loadTkRunStatus(){
+  const el=document.getElementById('tkRunLine'); if(!el) return null;
+  try{
+    const r=await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${TK_WF}/runs?per_page=1`);
+    const j=await r.json(); const run=(j.workflow_runs||[])[0];
+    if(!run){ el.textContent='Last run: none yet'; return null; }
+    const how={schedule:'Auto (monthly)',workflow_dispatch:'Manual',push:'Test (code update)'}[run.event]||run.event;
+    const res=run.status==='completed'?(run.conclusion==='success'?'✅ success':'❌ '+run.conclusion):'⏳ '+run.status;
+    el.innerHTML=`Last run: ${tkEsc(new Date(run.created_at).toLocaleString('en-GB'))} · ${tkEsc(how)} · ${res} · <a href="${tkEsc(run.html_url)}" target="_blank" style="color:var(--accent)">log</a>`;
+    return run;
+  }catch(e){ el.textContent='Last run: could not read run history'; return null; }
+}
+function renderTickers(){
+  const info=document.getElementById('tkInfo'),strip=document.getElementById('tkStrip'),bar=document.getElementById('tkAddBar'),tbl=document.getElementById('tkTable'),extra=document.getElementById('tkExtra');
+  if(!_tkData){
+    info.innerHTML='<div id="tkRunLine"></div>No list saved yet. Press <b>Run now</b> to pull it from PSX.';
+    strip.innerHTML=''; bar.innerHTML=''; tbl.innerHTML=''; extra.innerHTML=''; return;
+  }
+  const d=_tkData,c=d.counts||{},pass=tkPassRows(),toAdd=tkToAdd(),sh=tkSheetSet();
+  info.innerHTML=`<div id="tkRunLine"></div>List saved: ${tkEsc(new Date(d.updated).toLocaleString('en-GB'))} · ${tkEsc(d.trigger==='schedule'?'Auto (monthly)':'Manual')} · ${d.universe} stocks scanned · ${d.candidates} passed liquidity`;
+  const card=(v,l,cls)=>`<div class="sig-card ${cls}"><div class="sv">${v}</div><div class="sl">${l}</div></div>`;
+  strip.innerHTML=card(pass.length,'On list','buy')+card(c.New||0,'New','watch')+card(toAdd.length,'To add to sheet','caution')+card(c.Dropped||0,'Dropped','exit');
+  bar.innerHTML=toAdd.length?`<button class="btn btn-primary" id="tkAddBtn" onclick="addTickersToSheet()">＋ Add ${toAdd.length} ticker${toAdd.length>1?'s':''} to sheet: ${tkEsc(toAdd.join(', '))}</button>`:'<span style="font-size:12px;color:var(--text3)">Every ticker on the list is already in the sheet.</span>';
+  const badge=s=>{const m={New:'#10B981',Active:'#38BDF8',Override:'#F59E0B',Review:'#A78BFA',Dropped:'#F43F5E'};return `<span style="color:${m[s]||'#94A3B8'};font-weight:600;font-size:12px">${tkEsc(s)}</span>`;};
+  const bn=v=>(v/1e6).toFixed(1)+'B';
+  tbl.innerHTML='<tr><th>Symbol</th><th>Status</th><th>Price</th><th>Yield %</th><th>Profit (3 yrs, newest first)</th><th>Div yrs</th><th>In sheet</th><th>Note</th></tr>'+
+    d.rows.map(r=>`<tr><td class="sym-cell">${tkEsc(r.symbol)}</td><td>${badge(r.status)}</td><td class="price-cell">${r.price==null?'—':fmt(r.price)}</td><td>${r.yield==null?'—':r.yield.toFixed(1)}</td><td style="font-size:11px;font-family:var(--mono)">${(r.profit||[]).length?(r.profit||[]).map(bn).join(' › '):'—'}</td><td>${r.divYears==null?'—':r.divYears}</td><td>${sh.has(r.symbol)?'✓':'—'}</td><td style="font-size:11px;color:var(--text3)">${tkEsc(r.reason||'')}</td></tr>`).join('');
+  const passSet=new Set(pass.map(r=>r.symbol)),notOn=[...sh].filter(s=>!passSet.has(s)).sort();
+  extra.innerHTML=notOn.length?`<b>In the sheet but not on the list (${notOn.length})</b> — kept as they are, nothing is deleted:<br><span style="font-family:var(--mono);font-size:11px">${notOn.map(tkEsc).join(', ')}</span>`:'';
+}
+async function addTickersToSheet(){
+  if(!tkIsAdmin()) return;
+  const list=tkToAdd(); if(!list.length) return;
+  if(!confirm('Add '+list.length+' ticker(s) to the Data sheet, column A?\n\n'+list.join(', ')+'\n\nOnly the symbol is added. Nothing else in the sheet changes.')) return;
+  const btn=document.getElementById('tkAddBtn'); if(btn){ btn.disabled=true; btn.textContent='Adding…'; }
+  let ok=0,fail=[];
+  for(const sym of list){
+    try{
+      const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:'Data',row:[sym]})});
+      const j=await res.json(); if(j.ok){ ok++; _tkAdded.add(sym); } else fail.push(sym);
+    }catch(e){ fail.push(sym); }
+  }
+  renderTickers();
+  alert(ok+' added'+(fail.length?'\nFailed: '+fail.join(', '):'')+'\n\nIndicators fill in at the next daily update.');
+}
+async function runTickersNow(){
+  if(!tkIsAdmin()) return;
+  if(!_idxToken){ alert('Paste your GitHub token in the sidebar first (it needs the "workflow" permission).'); return; }
+  const btn=document.getElementById('tkRunBtn'); btn.disabled=true; btn.textContent='Starting…';
+  try{
+    const res=await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${TK_WF}/dispatches`,{method:'POST',headers:{'Authorization':'Bearer '+_idxToken,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({ref:'main'})});
+    if(res.status!==204){ alert('Could not start the run (HTTP '+res.status+'). The token needs the "workflow" permission.'); btn.disabled=false; btn.textContent='▶ Run now'; return; }
+  }catch(e){ alert('Could not start the run: '+e.message); btn.disabled=false; btn.textContent='▶ Run now'; return; }
+  btn.textContent='Running…';
+  const t0=Date.now(); clearInterval(_tkPoll);
+  _tkPoll=setInterval(async()=>{
+    const run=await loadTkRunStatus();
+    if((run&&run.status==='completed'&&new Date(run.created_at).getTime()>t0-60000)||Date.now()-t0>300000){
+      clearInterval(_tkPoll); btn.disabled=false; btn.textContent='▶ Run now'; loadTickers();
+    }
+  },10000);
 }
 
 loadSavedToken();
