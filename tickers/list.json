@@ -1,29 +1,16 @@
 {
- "updated": "2026-10-31T00:25:37Z",
+ "updated": "2026-10-31T00:39:33Z",
  "trigger": "manual",
  "universe": 754,
  "candidates": 80,
  "counts": {
-  "New": 1,
+  "New": 0,
   "Review": 0,
   "Override": 1,
-  "Active": 18,
+  "Active": 19,
   "Dropped": 0
  },
  "rows": [
-  {
-   "symbol": "ZAL",
-   "status": "New",
-   "price": 35.99,
-   "yield": 2.22,
-   "profit": [
-    1379010.0,
-    671052.0,
-    292811.0
-   ],
-   "divYears": 2,
-   "reason": "New listing, paid every year since listing"
-  },
   {
    "symbol": "CPHL",
    "status": "Override",
@@ -265,6 +252,19 @@
    ],
    "divYears": 22,
    "reason": ""
+  },
+  {
+   "symbol": "ZAL",
+   "status": "Active",
+   "price": 35.99,
+   "yield": 2.22,
+   "profit": [
+    1379010.0,
+    671052.0,
+    292811.0
+   ],
+   "divYears": 2,
+   "reason": "New listing, paid every year since listing"
   }
  ]
 }
