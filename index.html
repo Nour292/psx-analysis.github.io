@@ -1361,7 +1361,7 @@ function computeSetupQuality(sym,s,verdict){
 /* ════════════════════════════════════════════
    TRADE PLAN — chat-system rules on the live sheet
 ════════════════════════════════════════════ */
-let _tpLdcp={},_tpNews=null,_tpList=null,_tpOnlyList=true;
+let _tpLdcp={},_tpNews=null,_tpList=null,_tpOnlyList=true,_tpHeld={},_tpJournal=null,_tpJErr='';
 const tpN=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
 const tpF=v=>v==null||isNaN(v)?'—':fmt(v);
 function tpPlan(s,ldcp){
@@ -1388,7 +1388,7 @@ function tpPlan(s,ldcp){
   }else{
     let entry,t1,t2;
     if(trend==='Uptrend'){entry=m50;t1=(h1!=null&&h1>entry*1.02)?h1:h3;t2=h3>t1*1.01?h3:((h52!=null&&h52>t1*1.01)?h52:t1*1.05);}
-    else{entry=l3;const mid=(l3+h3)/2;t1=(h1!=null&&h1>mid&&h1>entry*1.02)?h1:mid;t2=h3>t1*1.01?h3:t1*1.05;}
+    else{entry=l3;t1=(l3+h3)/2;t2=h3>t1*1.01?h3:t1*1.05;}
     let stop=entry*0.96;if(l1!=null&&l1<entry&&l1>=entry*0.95)stop=Math.min(stop,l1*0.99);stop=Math.max(entry*0.95,Math.min(stop,entry*0.97));
     const rr1=(t1-entry)/(entry-stop),rr2=(t2-entry)/(entry-stop);
     Object.assign(o,{zoneLo:entry,zoneHi:entry*1.01,entry,stop,t1,t2,rr1,rr2});
@@ -1396,6 +1396,7 @@ function tpPlan(s,ldcp){
     else if(p<=entry*1.03&&p>=stop){o.verdict='BUY';o.why='Price is at support. Risk '+((1-stop/p)*100).toFixed(1)+'% to the stop.';}
     else{o.verdict='WAIT';o.why=p>entry?'Wait for a pullback to '+tpF(entry)+'.':'Price is under the entry zone, wait for it to hold.';}
     o.watch=o.verdict==='BUY';
+    if(trend==='Sideways'&&h3/l3>1.4)o.why+=' Wide 3-month range, check the chart.';
   }
   return o;
 }
@@ -1436,10 +1437,98 @@ function tpRender(){
     g.forEach(x=>{const p=x.plan,ex=tpExDiv(x.s),nw=tpNewsText(x.sym);
       const entry=p.trend==='Downtrend'?tpF(p.zoneLo)+'–'+tpF(p.zoneHi):tpF(p.entry);
       const advice=[tkEsc(p.trend+'. '+p.why),ex?tkEsc(ex):'',nw?'<span style="color:var(--accent)">'+tkEsc(nw)+'</span>':''].filter(Boolean).join(' ');
-      html+=`<tr${p.watch?' style="background:var(--accent-dim)"':''}><td class="sym-cell">${tkEsc(x.sym)}</td><td class="price-cell">${tpF(p.p)}</td><td>${badge(p.verdict)}</td><td class="zone-cell">${entry}</td><td class="zone-cell">${tpF(p.stop)}</td><td class="zone-cell">${tpF(p.t1)} / ${tpF(p.t2)}</td><td style="font-family:var(--mono);font-size:12px">${p.rr1.toFixed(1)} / ${p.rr2.toFixed(1)}</td><td style="font-size:12px;line-height:1.5;max-width:420px">${advice}</td></tr>`;});
+      html+=`<tr${p.watch?' style="background:var(--accent-dim)"':''}><td class="sym-cell">${tkEsc(x.sym)}${_tpHeld[x.sym]?' <span title="You hold this stock" style="color:var(--accent)">●</span>':''}</td><td class="price-cell">${tpF(p.p)}</td><td>${badge(p.verdict)}</td><td class="zone-cell">${entry}</td><td class="zone-cell">${tpF(p.stop)}</td><td class="zone-cell">${tpF(p.t1)} / ${tpF(p.t2)}</td><td style="font-family:var(--mono);font-size:12px">${p.rr1.toFixed(1)} / ${p.rr2.toFixed(1)}</td><td style="font-size:12px;line-height:1.5;max-width:420px">${advice}</td></tr>`;});
   });
   tbl.innerHTML=html;
   info.innerHTML=`Data as of ${tkEsc(_dataAsOf||'—')} · ${rows.length} of ${total} stocks${_tpOnlyList&&onList?' (my list)':''} · prices from the sheet${_tpNews?' · news '+tkEsc(new Date(_tpNews.updated).toLocaleDateString('en-GB')):''}`;
+}
+
+/* ════════════════════════════════════════════
+   TRADE PLAN — my positions and journal (per logged-in user)
+════════════════════════════════════════════ */
+function tpUser(){try{return sessionStorage.getItem('psx_user')||localStorage.getItem('psx_user_r')||'';}catch(e){return '';}}
+const tpNum=v=>{const n=parseFloat(String(v==null?'':v).replace(/,/g,''));return isNaN(n)?null:n;};
+async function tpLoadHoldings(){
+  const u=tpUser();if(!u)return [];
+  try{
+    const r=await fetch(gsUrl(u+'-Portfolio'));if(!r.ok)return [];
+    const rows=(await r.json()).values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());
+    const ci=h.indexOf('stock'),ui=h.indexOf('units'),ai=h.indexOf('avg cost');if(ci<0||ui<0||ai<0)return [];
+    return rows.slice(1).map(r=>({sym:String(r[ci]||'').trim().toUpperCase(),units:tpNum(r[ui]),avg:tpNum(r[ai])})).filter(x=>x.sym&&x.units>0&&x.avg>0);
+  }catch(e){return [];}
+}
+async function tpLoadJournal(){
+  _tpJErr='';
+  try{
+    const r=await fetch(gsUrl('Journal'));
+    if(!r.ok){_tpJournal=null;_tpJErr='The Journal tab is not in the sheet yet.';return;}
+    const rows=(await r.json()).values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim());
+    _tpJournal=rows.slice(1).map(r=>{const o={};h.forEach((k,i)=>o[k]=String(r[i]==null?'':r[i]).trim());return o;}).filter(o=>o.User);
+  }catch(e){_tpJournal=null;_tpJErr='Could not read the Journal tab.';}
+}
+function tpJLevels(sym){
+  const u=tpUser(),lv={entry:null,stop:null,t1:null,t2:null,closed:false};
+  (_tpJournal||[]).filter(o=>o.User===u&&String(o.Stock).toUpperCase()===sym).forEach(o=>{
+    if(o.Action==='Entry'){lv.entry=tpNum(o.Price);lv.closed=false;}
+    if(o.Action==='Exit')lv.closed=true;
+    ['Stop','T1','T2'].forEach(k=>{const v=tpNum(o[k]);if(v!=null)lv[k.toLowerCase()]=v;});
+  });
+  return lv;
+}
+function tpAdvise(h,plan,s,lv){
+  const p=tpNum(s&&s.Price),rsi=plan?plan.rsi:null;
+  if(p==null)return {act:'HOLD',why:'No live price for this stock in the sheet.'};
+  const pl=(p-h.avg)/h.avg*100;
+  const defStop=lv.stop==null;
+  const stop=lv.stop!=null?lv.stop:h.avg*0.95,t1=lv.t1!=null?lv.t1:(plan?plan.t1:null),t2=lv.t2!=null?lv.t2:(plan?plan.t2:null);
+  const l1=tpN(s['Low-1M']);
+  let act='HOLD',why='Trend and levels intact. Keep the stop at '+tpF(stop)+(defStop?' (default: 5% under your cost).':'.');
+  if(p<=stop){act='EXIT';why='Stop hit: price is at or under '+tpF(stop)+'. Exit as planned.';}
+  else if(t2!=null&&p>=t2){act='TAKE PROFIT';why='At T2 ('+tpF(t2)+'): sell the rest, or trail a tight stop.';}
+  else if(t1!=null&&p>=t1){act='TAKE PROFIT';why='At T1 ('+tpF(t1)+'): sell about half and move the stop to your cost ('+tpF(h.avg)+').';}
+  else if(rsi!=null&&rsi>=75&&pl>3){act='TAKE PROFIT';why='RSI '+Math.round(rsi)+' is overbought with a gain: take some profit.';}
+  else if(pl>=5&&stop<h.avg){act='TIGHTEN STOP';why='Up '+pl.toFixed(1)+'%: move the stop up to your cost ('+tpF(h.avg)+') so the trade cannot lose.';}
+  else if(plan&&plan.trend==='Downtrend'&&l1!=null&&stop<l1*0.99&&p>l1*0.99){act='TIGHTEN STOP';why='Trend is down: raise the stop to just under the 1-month low ('+tpF(l1*0.99)+').';}
+  return {act,why,pl,stop,t1,t2,defStop};
+}
+async function tpPositions(){
+  const box=document.getElementById('tpPos');if(!box)return;
+  const u=tpUser();if(!u){box.innerHTML='';return;}
+  const [hold]=await Promise.all([tpLoadHoldings(),tpLoadJournal()]);
+  _tpHeld={};hold.forEach(h=>_tpHeld[h.sym]=true);tpRender();
+  const bySym={};(_rawData||[]).forEach(r=>bySym[String(r.Symbol).toUpperCase()]=r);
+  const badge=a=>{const m={'HOLD':'background:#38BDF8;color:#04202e','TIGHTEN STOP':'background:#F59E0B;color:#2a1a00','TAKE PROFIT':'background:#10B981;color:#04210f','EXIT':'background:#F43F5E;color:#2b0509'};return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;${m[a]||''}">${a}</span>`;};
+  let rows='';
+  hold.forEach(h=>{
+    const s=bySym[h.sym],plan=s?tpPlan(s,_tpLdcp[h.sym]):null,lv=tpJLevels(h.sym);
+    const a=tpAdvise(h,plan,s||{},lv),ex=s?tpExDiv(s):'';
+    rows+=`<tr><td class="sym-cell">${tkEsc(h.sym)}</td><td>${Math.round(h.units).toLocaleString()}</td><td>${tpF(h.avg)}</td><td class="price-cell">${s?tpF(tpN(s.Price)):'—'}</td><td style="color:${a.pl>=0?'#10B981':'#F43F5E'};font-family:var(--mono)">${a.pl==null?'—':(a.pl>=0?'+':'')+a.pl.toFixed(1)+'%'}</td><td>${tpF(a.stop)}${a.defStop?'*':''}</td><td>${tpF(a.t1)} / ${tpF(a.t2)}</td><td>${badge(a.act)}</td><td style="font-size:12px;line-height:1.5;max-width:380px">${tkEsc(a.why)}${ex?' '+tkEsc(ex):''}</td></tr>`;
+  });
+  const opts=hold.map(h=>h.sym).concat(Object.keys(bySym).filter(x=>!_tpHeld[x]).sort()).map(x=>`<option>${tkEsc(x)}</option>`).join('');
+  const mine=(_tpJournal||[]).filter(o=>o.User===u).slice(-12).reverse();
+  const jr=mine.map(o=>`<tr><td>${tkEsc(o.Date)}</td><td class="sym-cell">${tkEsc(o.Stock)}</td><td>${tkEsc(o.Action)}</td><td>${tkEsc(o.Price)}</td><td>${tkEsc(o.Stop)}</td><td>${tkEsc(o.T1)} / ${tkEsc(o.T2)}</td><td>${tkEsc(o.Qty)}</td><td style="font-size:12px">${tkEsc(o.Reason)}</td></tr>`).join('');
+  const inp='style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px;font-size:12px;font-family:var(--mono);width:84px"';
+  box.innerHTML=`<div class="section-label"><span></span> My positions <span style="font-weight:400;color:var(--text3);margin-left:8px;font-size:11px">${tkEsc(u)} · * = default stop (set yours in the journal)</span></div>`+
+    (hold.length?`<div class="tbl-wrap"><table class="dtbl"><tr><th>Stock</th><th>Units</th><th>Avg cost</th><th>Price</th><th>P/L</th><th>Stop</th><th>T1 / T2</th><th>Action</th><th>My advice</th></tr>${rows}</table></div>`:'<div style="font-size:12px;color:var(--text3);margin-bottom:10px">No open positions found for your account.</div>')+
+    `<details style="margin:12px 0 18px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)"><summary style="cursor:pointer;font-size:13px">Trade journal ${_tpJournal?'('+mine.length+' recent)':''}</summary>`+
+    (_tpJournal===null?`<div style="font-size:12px;color:var(--text3);margin-top:8px">${tkEsc(_tpJErr||'Journal not available.')}</div>`:
+    `<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center"><select id="tjStock" ${inp.replace('width:84px','width:110px')}>${opts}</select><select id="tjAct" ${inp.replace('width:84px','width:110px')}><option>Entry</option><option>Stop update</option><option>Exit</option></select><input id="tjPrice" placeholder="Price" ${inp}><input id="tjStop" placeholder="Stop" ${inp}><input id="tjT1" placeholder="T1" ${inp}><input id="tjT2" placeholder="T2" ${inp}><input id="tjQty" placeholder="Qty" ${inp}><input id="tjReason" placeholder="Reason" ${inp.replace('width:84px','width:200px')}><button class="btn btn-primary" onclick="tpAddJournal()">Save</button><span id="tjMsg" style="font-size:12px;color:var(--text3)"></span></div>`+
+    (jr?`<div class="tbl-wrap"><table class="dtbl"><tr><th>Date</th><th>Stock</th><th>Action</th><th>Price</th><th>Stop</th><th>T1 / T2</th><th>Qty</th><th>Reason</th></tr>${jr}</table></div>`:'<div style="font-size:12px;color:var(--text3)">No journal entries yet.</div>'))+
+    '</details>';
+}
+async function tpAddJournal(){
+  const u=tpUser();if(!u)return;
+  const g=id=>(document.getElementById(id)||{}).value||'',msg=document.getElementById('tjMsg');
+  const stock=g('tjStock'),act=g('tjAct'),price=g('tjPrice').trim(),stop=g('tjStop').trim(),t1=g('tjT1').trim(),t2=g('tjT2').trim(),qty=g('tjQty').trim(),reason=g('tjReason').trim();
+  const bad=[price,stop,t1,t2,qty].some(v=>v!==''&&tpNum(v)==null);
+  if(!stock||bad||(act==='Entry'&&(tpNum(price)==null||tpNum(stop)==null))||(act==='Exit'&&tpNum(price)==null)){msg.style.color='#F43F5E';msg.textContent=act==='Entry'?'Entry needs a price and a stop.':act==='Exit'?'Exit needs a price.':'Check the numbers.';return;}
+  const today=new Date().toISOString().slice(0,10);
+  msg.style.color='var(--text3)';msg.textContent='Saving…';
+  try{
+    const res=await fetch(GS_WRITE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'append',tab:'Journal',row:[u,today,stock,act,price,stop,t1,t2,qty,reason]})});
+    const j=await res.json();if(!j.ok)throw new Error(j.error||'save failed');
+    msg.style.color='#10B981';msg.textContent='Saved.';await tpPositions();
+  }catch(e){msg.style.color='#F43F5E';msg.textContent='Could not save: '+e.message;}
 }
 
 /* ════════════════════════════════════════════
