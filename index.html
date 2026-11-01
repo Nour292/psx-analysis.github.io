@@ -623,11 +623,10 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.27</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.28</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
-    <div class="signal-strip" id="signalSummary" style="margin-bottom:16px"></div>
     <div class="filter-bar" id="filterBar">
       <div class="filter-group">
         <span class="filter-label">Plan</span>
@@ -1059,11 +1058,6 @@ function runWeekly(){
   if(!_rawData.length){ document.getElementById('fullTable').innerHTML='<tr><td style="padding:20px;color:var(--text3)">No data loaded yet.</td></tr>'; return; }
   const rows=processAll();
   _allRows=rows;
-  const gp=v=>rows.filter(r=>r.Plan&&r.Plan.verdict===v).map(r=>r.Symbol).join(', ')||'—';
-  document.getElementById('signalSummary').innerHTML=`
-    <div class="sig-pill"><span class="s-label">BUY ZONE</span><span class="s-val" style="color:#10B981">${gp('BUY ZONE')}</span></div>
-    <div class="sig-pill"><span class="s-label">WAIT</span><span class="s-val" style="color:#F59E0B">${gp('WAIT')}</span></div>
-    <div class="sig-pill"><span class="s-label">SELL ZONE</span><span class="s-val" style="color:#38BDF8">${gp('SELL ZONE')}</span></div>`;
   applyFilters();
 
 }
