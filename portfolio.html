@@ -171,9 +171,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .pw-btn.green{background:var(--emerald);}
 .pw-err{font-size:12px;color:var(--rose);margin-top:8px;display:none;font-family:var(--mono);}
 .pw-ok{font-size:12px;color:var(--emerald);margin-top:6px;display:none;}
-#pgDividends,#pgCashFlow,#pgHistory,#pgQasimPortfolio,#pgQasimStock,#pgDataEntry{position:fixed;top:0;left:var(--sidebar-w);right:0;bottom:0;background:var(--bg);z-index:7777;display:none;flex-direction:column;overflow-y:auto;transition:left .22s cubic-bezier(.4,0,.2,1);}
-#pgDividends.open,#pgCashFlow.open,#pgHistory.open,#pgQasimPortfolio.open,#pgQasimStock.open,#pgDataEntry.open{display:flex;}
-:root.sb-collapsed #pgDividends,:root.sb-collapsed #pgCashFlow,:root.sb-collapsed #pgHistory,:root.sb-collapsed #pgQasimPortfolio,:root.sb-collapsed #pgQasimStock,:root.sb-collapsed #pgDataEntry{left:var(--sidebar-w-collapsed);}
+#pgDividends,#pgCashFlow,#pgHistory,#pgQasimPortfolio,#pgQasimStock,#pgDataEntry,#pgDivEps,#pgHeldNews{position:fixed;top:0;left:var(--sidebar-w);right:0;bottom:0;background:var(--bg);z-index:7777;display:none;flex-direction:column;overflow-y:auto;transition:left .22s cubic-bezier(.4,0,.2,1);}
+#pgDividends.open,#pgCashFlow.open,#pgHistory.open,#pgQasimPortfolio.open,#pgQasimStock.open,#pgDataEntry.open,#pgDivEps.open,#pgHeldNews.open{display:flex;}
+:root.sb-collapsed #pgDivEps,:root.sb-collapsed #pgHeldNews,:root.sb-collapsed #pgDividends,:root.sb-collapsed #pgCashFlow,:root.sb-collapsed #pgHistory,:root.sb-collapsed #pgQasimPortfolio,:root.sb-collapsed #pgQasimStock,:root.sb-collapsed #pgDataEntry{left:var(--sidebar-w-collapsed);}
 :root.sb-collapsed .main{margin-left:var(--sidebar-w-collapsed);}
 .overlay-nav{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .overlay-title{font-size:15px;font-weight:700;color:var(--text);flex:1;}
@@ -302,6 +302,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   .sr-cards, .hist-cards{ grid-template-columns:repeat(2,1fr); }
   .modal-grid{ grid-template-columns:1fr; }
 }
+.hd-note{font-size:11.5px;color:var(--text3);margin-bottom:12px;line-height:1.6;}
+.hd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;}
+.hd-sym{font-size:15px;font-weight:800;font-family:var(--mono);color:var(--text);margin-bottom:8px;}
+.hd-blocks{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.hd-ttl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
+.hd-yrs{display:flex;gap:6px;}
+.hd-y{flex:1;min-width:0;text-align:center;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 2px;}
+.hd-y b{display:block;font-size:10px;color:var(--text3);font-weight:600;}
+.hd-y span{display:block;font-size:13px;font-weight:700;font-family:var(--mono);color:var(--text);margin-top:2px;}
+.hd-y small{display:block;font-size:9.5px;color:var(--amber);font-family:var(--mono);margin-top:1px;line-height:1.2;}
+.hd-y.tvonly span{color:var(--text2);}
+.hn-det{margin:6px 0;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);}
+.hn-det summary{cursor:pointer;font-size:13px;font-weight:700;font-family:var(--mono);}
+.hn-it{font-size:12px;padding:4px 0;color:var(--text3);line-height:1.5;}
+.hn-it.fl{color:var(--text);}
+.hn-it i{font-style:normal;font-family:var(--mono);color:var(--text3);margin-right:6px;}
+.hn-chip{font-size:10px;padding:1px 6px;border-radius:3px;background:var(--accent-dim);color:var(--accent);margin-right:4px;}
+@media (max-width:760px){
+  .hd-blocks{ grid-template-columns:1fr; gap:10px; }
+  .hd-card{ padding:10px; }
+}
 </style>
 </head>
 <body>
@@ -365,6 +386,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </button>
       <div class="nav-sub open" id="navPortSub">
         <button class="nav-sub-btn" id="navQasimPortfolio" onclick="toggleOverlay('pgQasimPortfolio','navQasimPortfolio',loadQasimPortfolio)">📊 Dashboard</button>
+        <button class="nav-sub-btn" id="navDivEps" onclick="toggleOverlay('pgDivEps','navDivEps',loadDivEps)">💰 Divid &amp; EPS</button>
+        <button class="nav-sub-btn" id="navHeldNews" onclick="toggleOverlay('pgHeldNews','navHeldNews',loadHeldNews)">📰 News</button>
         <button class="nav-sub-btn" id="navHistory" onclick="toggleOverlay('pgHistory','navHistory',initHistory)">🔍 Trade History</button>
         <button class="nav-sub-btn" id="navQasimStock" onclick="toggleOverlay('pgQasimStock','navQasimStock',loadQasimStock)">📋 Trade Ledger</button>
         <button class="nav-sub-btn" id="navDataEntry" onclick="toggleOverlay('pgDataEntry','navDataEntry',initDataEntry)">📝 Data Entry</button>
@@ -440,6 +463,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="btn btn-primary" onclick="runSearch()">Search</button>
     </div>
     <div id="srchResult"></div>
+  </div>
+</div>
+
+<!-- DIVID & EPS PAGE -->
+<div id="pgDivEps">
+  <div class="overlay-nav"><span class="overlay-title">💰 Divid &amp; EPS</span></div>
+  <div class="overlay-content">
+    <div class="hd-note">Your holdings, last 5 fiscal years (oldest to newest). EPS is the PSX number. <span style="color:var(--amber)">⚑</span> = TradingView shows a different number (shown under it). Dividends per share come from TradingView.</div>
+    <div id="hdBody"></div>
+  </div>
+</div>
+
+<!-- NEWS PAGE -->
+<div id="pgHeldNews">
+  <div class="overlay-nav"><span class="overlay-title">📰 News</span></div>
+  <div class="overlay-content">
+    <div class="hd-note" id="hnNote">Announcements for your holdings, last 3 months.</div>
+    <div id="hnBody"></div>
   </div>
 </div>
 
@@ -527,7 +568,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.88</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.89</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -846,8 +887,8 @@ function doLogout(){sessionStorage.removeItem(AUTH_KEY);localStorage.removeItem(
 function showAuthMsg(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',3500);}
 function togglePw(inputId,btn){const inp=document.getElementById(inputId);if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁';}}
 
-const ALL_OVERLAYS=['pgHistory','pgDividends','pgCashFlow','pgQasimPortfolio','pgQasimStock','pgDataEntry'];
-const ALL_OVERLAY_NAVS=['navHistory','navDivPage','navCashFlow','navQasimPortfolio','navQasimStock','navDataEntry'];
+const ALL_OVERLAYS=['pgDivEps','pgHeldNews','pgHistory','pgDividends','pgCashFlow','pgQasimPortfolio','pgQasimStock','pgDataEntry'];
+const ALL_OVERLAY_NAVS=['navDivEps','navHeldNews','navHistory','navDivPage','navCashFlow','navQasimPortfolio','navQasimStock','navDataEntry'];
 function closeAllOverlays(){ALL_OVERLAYS.forEach(id=>{document.getElementById(id).classList.remove('open');});ALL_OVERLAY_NAVS.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});_activeOverlay=null;}
 let _ovActiveTab='portfolio';
 function switchOvTab(name,btn){
@@ -1628,6 +1669,59 @@ async function autoLoad(){
     buildAll();
     buildPortfolioFromLedger(rows,hdrs);
   }catch(e){console.log('holdings GS:',e.message);}
+}
+
+
+/* ── Divid & EPS and News tabs (data: tickers/held.json, pulled daily by GitHub Actions) ── */
+let _held=null;
+async function loadHeldData(){
+  if(_held)return _held;
+  try{const r=await fetch('https://raw.githubusercontent.com/Nour292/psx-analysis.github.io/main/tickers/held.json?'+Date.now());_held=r.ok?await r.json():null;}catch(e){_held=null;}
+  return _held;
+}
+function hEsc(x){return String(x==null?'':x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function heldSymbols(){return (_holdings||[]).map(h=>h.symbol).sort();}
+async function whenHoldings(box,fn,tries){
+  const syms=heldSymbols();
+  if(syms.length){fn(syms);return;}
+  if((tries||0)<8){box.innerHTML='<p style="padding:20px;color:var(--text3)">Loading your holdings…</p>';setTimeout(()=>whenHoldings(box,fn,(tries||0)+1),1200);return;}
+  box.innerHTML='<p style="padding:20px;color:var(--text3)">No holdings found.</p>';
+}
+function hdFmt(v){return v==null?'—':(Math.abs(v)>=100?Math.round(v*10)/10:Math.round(v*100)/100).toString();}
+async function loadDivEps(){
+  const box=document.getElementById('hdBody');
+  const d=await loadHeldData();
+  if(!d){box.innerHTML='<p style="padding:20px;color:var(--text3)">No data saved yet.</p>';return;}
+  whenHoldings(box,syms=>{
+    box.innerHTML=syms.map(s=>{
+      const r=d.rows[s];
+      if(!r)return `<div class="hd-card"><div class="hd-sym">${hEsc(s)}</div><div class="hd-note" style="margin:0">No data saved for this stock yet.</div></div>`;
+      const years=[...new Set([...Object.keys(r.eps),...Object.keys(r.dps)])].sort().slice(-5);
+      const eps=years.map(y=>{
+        const e=r.eps[y]||{};
+        if(e.psx==null&&e.tv==null)return `<div class="hd-y"><b>${y}</b><span>—</span></div>`;
+        if(e.psx==null)return `<div class="hd-y tvonly"><b>${y}</b><span>${hdFmt(e.tv)}</span><small>TV</small></div>`;
+        const diff=e.tv!=null&&Math.abs(e.psx-e.tv)>Math.abs(e.psx)*0.05;
+        return `<div class="hd-y"><b>${y}</b><span>${hdFmt(e.psx)}${diff?' <u style="text-decoration:none;color:var(--amber)">⚑</u>':''}</span>${diff?`<small>TV ${hdFmt(e.tv)}</small>`:''}</div>`;
+      }).join('');
+      const dps=years.map(y=>{const v=r.dps[y];return `<div class="hd-y"><b>${y}</b><span>${v?hdFmt(v.tv):'—'}</span></div>`;}).join('');
+      return `<div class="hd-card"><div class="hd-sym">${hEsc(s)}</div><div class="hd-blocks"><div><div class="hd-ttl">Dividends per share</div><div class="hd-yrs">${dps}</div></div><div><div class="hd-ttl">Earnings per share</div><div class="hd-yrs">${eps}</div></div></div></div>`;
+    }).join('');
+  });
+}
+async function loadHeldNews(){
+  const box=document.getElementById('hnBody');
+  const d=await loadHeldData();
+  if(!d){box.innerHTML='<p style="padding:20px;color:var(--text3)">No news saved yet.</p>';return;}
+  const note=document.getElementById('hnNote');
+  if(note)note.textContent='Announcements for your holdings, last 3 months · updated '+new Date(d.updated).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  const cutoff=new Date(Date.now()-92*864e5).toISOString().slice(0,10);
+  whenHoldings(box,syms=>{
+    const rows=syms.map(s=>{const items=((d.rows[s]||{}).news||[]).filter(i=>i.date>=cutoff);return{s,items,fl:items.filter(i=>i.flags.length).length};})
+      .sort((a,b)=>(b.fl-a.fl)||a.s.localeCompare(b.s));
+    box.innerHTML=rows.map(r=>`<details class="hn-det"${r.fl?' open':''}><summary>${hEsc(r.s)} <span style="font-weight:400;color:var(--text3);font-size:11px">${r.items.length} item${r.items.length===1?'':'s'}${r.fl?' · <span style="color:var(--accent)">⚑ '+r.fl+'</span>':''}</span></summary>`+
+      (r.items.length?r.items.map(i=>`<div class="hn-it${i.flags.length?' fl':''}"><i>${hEsc(i.date)}</i>${i.flags.map(f=>`<span class="hn-chip">${hEsc(f)}</span>`).join('')}${hEsc(i.title)}</div>`).join(''):'<div class="hn-it">No announcements in the last 3 months.</div>')+`</details>`).join('');
+  });
 }
 
 if(sessionStorage.getItem(AUTH_KEY)||localStorage.getItem(AUTH_KEY+'_r'))autoLoad();
