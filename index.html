@@ -615,7 +615,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.46</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.47</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1297,6 +1297,12 @@ function tpZones(sym){
   };
   return _tpZ[sym]={sup:clus(lo,4),res:clus(hi,5)};
 }
+// a single low (no zone yet) is shown as the band of daily lows around it over the last 12 months
+function tpBand(sym,v){
+  const h=_tpHist[sym];if(!h||h.length<30)return {lo:v,hi:v};
+  const lows=h.slice(-250).map(r=>r[2]).filter(x=>x>=v*0.995&&x<=v*1.03);
+  return lows.length?{lo:Math.min(v,...lows),hi:Math.max(v,...lows)}:{lo:v,hi:v};
+}
 function tpPlan(s){
   const p=tpN(s.Price);if(p==null)return null;
   const m50=tpN(s['MA50-D']),m200=tpN(s['MA200-D']),l1=tpN(s['Low-1M']),h1=tpN(s['High-1M']),l3=tpN(s['Low-3M']),h3=tpN(s['High-3M']),l52=tpN(s['52W-Low']),h52=tpN(s['52W-High']),l6=tpN(s['Low-6M']),ps1=tpN(s['Pivot-S1']),ps2=tpN(s['Pivot-S2']);
@@ -1320,8 +1326,8 @@ function tpPlan(s){
     if(lv.length<2){const old=real.filter(v=>v<lv[0]*0.98);if(old.length){lv.push(old[0]);hot.push(false);zv.push({lo:old[0],hi:old[0]});}}
   }
   if(lv.length>1&&lv[1]<lv[0]*0.80){lv.length=1;hot.length=1;zv.length=1;}
-  const zt=i=>{const z=zv[i];return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
-  const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>zv[i]||{lo:v,hi:v}),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
+  const zt=i=>{const z=(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:(lv[i]!=null?tpBand(String(s.Symbol||'').toUpperCase(),lv[i]):null);return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
+  const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v)),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
   let inRes=false;o.tz=[];
   if(Z){
     const up=Z.res.filter(z=>z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
