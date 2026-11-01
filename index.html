@@ -619,36 +619,20 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.22</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.23</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
     <div class="signal-strip" id="signalSummary" style="margin-bottom:16px"></div>
     <div class="filter-bar" id="filterBar">
       <div class="filter-group">
-        <span class="filter-label">Verdict</span>
-        <button class="fpill active" onclick="setFilter('verdict','')">All</button>
-        <button class="fpill fv-buy"     onclick="setFilter('verdict','BUY')">🟢 BUY</button>
-        <button class="fpill fv-watch"   onclick="setFilter('verdict','WATCH')">🟡 WATCH</button>
-        <button class="fpill fv-caution" onclick="setFilter('verdict','CAUTION')">⚠️ CAUTION</button>
-        <button class="fpill fv-wait"    onclick="setFilter('verdict','WAIT')">⚪ WAIT</button>
-        <button class="fpill fv-exit"    onclick="setFilter('verdict','EXIT')">🔴 EXIT</button>
+        <span class="filter-label">Plan</span>
+        <button class="fpill active" onclick="setFilter('plan','')">All</button>
+        <button class="fpill fv-buy"     onclick="setFilter('plan','BUY ZONE')">BUY ZONE</button>
+        <button class="fpill fv-wait"    onclick="setFilter('plan','WAIT')">WAIT</button>
+        <button class="fpill fv-watch"   onclick="setFilter('plan','SELL ZONE')">SELL ZONE</button>
       </div>
       <div class="filter-sep"></div>
-      <div class="filter-group">
-        <span class="filter-label">Momentum</span>
-        <button class="fpill active" onclick="setFilter('momentum','')">All</button>
-        <button class="fpill" onclick="setFilter('momentum','Strong ↑')">Strong ↑</button>
-        <button class="fpill" onclick="setFilter('momentum','Moderate ↑')">Moderate ↑</button>
-        <button class="fpill" onclick="setFilter('momentum','Forming ↑')">Forming ↑</button>
-        <button class="fpill" onclick="setFilter('momentum','Strong ↓')">Strong ↓</button>
-        <button class="fpill" onclick="setFilter('momentum','Moderate ↓')">Moderate ↓</button>
-        <button class="fpill" onclick="setFilter('momentum','Mild ↓')">Mild ↓</button>
-        <button class="fpill" onclick="setFilter('momentum','Building')">Building</button>
-        <button class="fpill" onclick="setFilter('momentum','Slowing')">Slowing</button>
-        <button class="fpill" onclick="setFilter('momentum','Weak')">Weak</button>
-      </div>
-      <div class="filter-row-break"></div>
       <div class="filter-group" style="flex-wrap:wrap">
         <span class="filter-label">Price</span>
         <button class="fpill active" id="pricePillAll" onclick="setPricePreset(0,0,this)">All</button>
@@ -1012,7 +996,7 @@ function renderHome(){
 }
 
 let _allRows=[];
-const _activeFilters={verdict:'',quality:'',momentum:'',priceMin:0,priceMax:0};
+const _activeFilters={verdict:'',quality:'',momentum:'',plan:'',priceMin:0,priceMax:0};
 function setFilter(type,val){
   _activeFilters[type]=val;
   document.querySelectorAll('#filterBar .filter-group').forEach(grp=>{
@@ -1050,6 +1034,7 @@ function applyCustomPrice(){
 }
 function applyFilters(){
   let rows=_allRows;
+  if(_activeFilters.plan) rows=rows.filter(r=>r.Plan&&r.Plan.verdict===_activeFilters.plan);
   if(_activeFilters.verdict) rows=rows.filter(r=>r.Verdict===_activeFilters.verdict);
   if(_activeFilters.quality) rows=rows.filter(r=>(r.SetupQuality?.grade||'')===_activeFilters.quality);
   if(_activeFilters.momentum) rows=rows.filter(r=>(r.MomentumText||'').includes(_activeFilters.momentum));
@@ -1072,13 +1057,11 @@ function runWeekly(){
   if(!_rawData.length){ document.getElementById('fullTable').innerHTML='<tr><td style="padding:20px;color:var(--text3)">No data loaded yet.</td></tr>'; return; }
   const rows=processAll();
   _allRows=rows;
-  const g=v=>rows.filter(r=>r.Verdict===v).map(r=>r.Symbol).join(', ')||'—';
+  const gp=v=>rows.filter(r=>r.Plan&&r.Plan.verdict===v).map(r=>r.Symbol).join(', ')||'—';
   document.getElementById('signalSummary').innerHTML=`
-    <div class="sig-pill"><span class="s-label">BUY</span><span class="s-val" style="color:#10B981">${g('BUY')}</span></div>
-    <div class="sig-pill"><span class="s-label">WATCH</span><span class="s-val" style="color:#F59E0B">${g('WATCH')}</span></div>
-    <div class="sig-pill"><span class="s-label">CAUTION</span><span class="s-val" style="color:#FB923C">${g('CAUTION')}</span></div>
-    <div class="sig-pill"><span class="s-label">WAIT</span><span class="s-val" style="color:#64748B">${g('WAIT')}</span></div>
-    <div class="sig-pill"><span class="s-label">EXIT</span><span class="s-val" style="color:#F43F5E">${g('EXIT')}</span></div>`;
+    <div class="sig-pill"><span class="s-label">BUY ZONE</span><span class="s-val" style="color:#10B981">${gp('BUY ZONE')}</span></div>
+    <div class="sig-pill"><span class="s-label">WAIT</span><span class="s-val" style="color:#F59E0B">${gp('WAIT')}</span></div>
+    <div class="sig-pill"><span class="s-label">SELL ZONE</span><span class="s-val" style="color:#38BDF8">${gp('SELL ZONE')}</span></div>`;
   applyFilters();
 
 }
