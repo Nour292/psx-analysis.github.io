@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.70</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.71</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1012,7 +1012,7 @@ function tableRow(r,i){
   return `<tr class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
     <td class="sym-cell" data-l="">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell" data-l="Price">${fmt(r.Price)}</td>
-    ${[0,1].map(i=>{const z=r.Plan&&r.Plan.zv&&r.Plan.zv[i],v=r.Plan&&r.Plan.buy[i];return `<td class="zone-cell${i?' gl':''}" data-l="${i+1}-Entry Zone">${v==null?'—':(z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v))+(r.Plan.hot&&r.Plan.hot[i]?' ★':'')+(i===1&&r.Plan.far?`<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">far −${r.Plan.far.pct}%</small>`:'')}</td>`;}).join('')}
+    ${[0,1].map(i=>{const z=r.Plan&&r.Plan.zv&&r.Plan.zv[i],v=r.Plan&&r.Plan.buy[i];return `<td class="zone-cell${i?' gl':''}" data-l="${i+1}-Entry Zone">${v==null?'—':(z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v))+(r.Plan.hot&&r.Plan.hot[i]?' ★':'')+(r.Plan.zv&&r.Plan.zv[i]&&r.Plan.zv[i].weak?'<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">weak</small>':'')+(i===1&&r.Plan.far?`<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">far −${r.Plan.far.pct}%</small>`:'')}</td>`;}).join('')}
     ${[0,1].map(i=>{const z=r.Plan&&r.Plan.tz&&r.Plan.tz[i];return `<td class="zone-cell${i?' gl':''}" data-l="${i+1}-Exit Zone" style="color:var(--accent);font-weight:600">${z?(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo))+(z.hot?' ★':''):(i||!r.Plan?'—':tpF(r.Plan.target))}</td>`;}).join('')}
     <td class="zone-cell" data-l="Stop" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
     <td data-l="">${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
@@ -1333,21 +1333,30 @@ const tpF=v=>v==null||isNaN(v)?'—':fmt(v);
 function tpZones(sym){
   if(_tpZ[sym]!==undefined)return _tpZ[sym];
   const h=_tpHist[sym];if(!h||h.length<80)return _tpZ[sym]=null;
-  const n=h.length,k=5,lo=[],hi=[];
+  const n=h.length,k=5,lo=[],hi=[],pk=[];
   for(let i=k;i<n-k;i++){
     let isL=true,isH=true;
     for(let j=i-k;j<=i+k;j++){if(h[j][2]<h[i][2])isL=false;if(h[j][1]>h[i][1])isH=false;}
     const w=i>=n-250?2:1;
-    if(isL)lo.push([h[i][2],w,i]);
-    if(isH)hi.push([h[i][1],w,i]);
+    if(isL)lo.push([h[i][2],w,i,'L']);
+    if(isH){
+      hi.push([h[i][1],w,i]);
+      // a ceiling that price later broke above (closed 3% over it and held) is also support evidence
+      const lvl=h[i][1];let brk=-1;for(let j=i+1;j<n;j++){if(h[j][3]>lvl*1.03){brk=j;break;}}
+      if(brk>0){let held=0;for(let j=brk;j<Math.min(n,brk+10);j++)if(h[j][3]>lvl)held++;if(held>=5||brk>=n-5)pk.push([lvl,w,i,'H']);}
+    }
   }
-  const clus=(pts,minW)=>{
-    pts.sort((a,b)=>a[0]-b[0]);const out=[];let c=null;
-    pts.forEach(x=>{if(c&&x[0]<=c.lo*1.04){c.hi=x[0];c.w+=x[1];c.n++;c.last=Math.max(c.last,x[2]);}else{if(c)out.push(c);c={lo:x[0],hi:x[0],w:x[1],n:1,last:x[2]};}});
+  // points within 4% of each other form a zone; recent touches count double; a zone with 3 points is "weak"
+  const clus=(pts,minW,mode)=>{
+    pts=pts.slice().sort((a,b)=>a[0]-b[0]);const out=[];let c=null;
+    pts.forEach(x=>{if(c&&x[0]<=c.lo*1.04){c.hi=x[0];c.w+=x[1];c.n++;c.nL+=(x[3]==='L'?1:0);c.last=Math.max(c.last,x[2]);}else{if(c)out.push(c);c={lo:x[0],hi:x[0],w:x[1],n:1,nL:(x[3]==='L'?1:0),last:x[2]};}});
     if(c)out.push(c);
-    return out.filter(z=>z.w>=minW).map(z=>(z.recent=z.last>=n-250,z));
+    return out.filter(z=>{if(mode!=='ext')return z.w>=minW;if(z.nL<1)return false;if(z.w>=minW)return true;if(z.w===minW-1&&z.n>=3){z.weak=true;return true;}return false;}).map(z=>(z.recent=z.last>=n-250,z));
   };
-  return _tpZ[sym]={sup:clus(lo,4),res:clus(hi,5)};
+  // zones from the lows stay as they were; zones that also need the broken ceilings (or are weak) are added only where no zone exists yet
+  const normal=clus(lo,4,'lows');
+  const extra=clus(lo.concat(pk),4,'ext').filter(e=>!normal.some(z=>e.lo<=z.hi*1.02&&e.hi>=z.lo*0.98));
+  return _tpZ[sym]={sup:normal.concat(extra),res:clus(hi,5,'res')};
 }
 // a single low (no zone yet) is shown as the band of daily lows around it over the last 12 months
 function tpBand(sym,v,cap){
@@ -1374,16 +1383,16 @@ function tpPlan(s){
     // a zone the price has fallen below is broken: skip it
     const sz=Z.sup.filter(z=>z.hi<=p*1.03&&z.lo<=p).sort((a,b)=>b.hi-a.hi);
     const rec=sz.find(z=>z.recent);
-    if(rec){zl.push(rec);const nx=sz.find(z=>z.hi<rec.lo*0.98&&z.hi>=rec.lo*0.70);if(nx)zl.push(nx);}
+    if(rec){zl.push(rec);const nx=sz.find(z=>z.hi<rec.lo&&z.hi>=rec.lo*0.70);if(nx)zl.push(nx);}
   }
   if(zl.length){
-    lv.length=0;zl.forEach(z=>{lv.push(z.hi);hot.push(near(z));zv.push({lo:z.lo,hi:z.hi});});zstop=zl[0].lo*0.99;
+    lv.length=0;zl.forEach(z=>{lv.push(z.hi);hot.push(near(z));zv.push({lo:z.lo,hi:z.hi,weak:z.weak});});zstop=zl[0].lo*0.99;
     if(lv.length<2){const old=real.filter(v=>v<zv[0].lo*0.98);if(old.length){lv.push(old[0]);hot.push(false);zv.push({lo:old[0],hi:old[0]});}}
   }
   if(Z&&lv.length===1){
     const base=zv[0]&&zv[0].lo<lv[0]?zv[0].lo:lv[0];
-    const nx=Z.sup.filter(z=>z.hi<base*0.98&&z.hi>=base*0.70).sort((a,b)=>b.hi-a.hi)[0];
-    if(nx){while(zv.length<1)zv.push({lo:lv[0],hi:lv[0]});while(hot.length<1)hot.push(false);lv.push(nx.hi);hot.push(near(nx));zv.push({lo:nx.lo,hi:nx.hi});}
+    const nx=Z.sup.filter(z=>z.hi<base&&z.hi>=base*0.70).sort((a,b)=>b.hi-a.hi)[0];
+    if(nx){while(zv.length<1)zv.push({lo:lv[0],hi:lv[0]});while(hot.length<1)hot.push(false);lv.push(nx.hi);hot.push(near(nx));zv.push({lo:nx.lo,hi:nx.hi,weak:nx.weak});}
   }
   if(lv.length>1&&lv[1]<lv[0]*0.70){lv.length=1;hot.length=1;zv.length=1;}
   const e1lo=i=>i?(zv[0]?zv[0].lo:lv[0])*0.98:null;
@@ -1393,11 +1402,11 @@ function tpPlan(s){
     const sym=String(s.Symbol||'').toUpperCase();
     const d1=(zv[0]&&zv[0].lo<zv[0].hi)?zv[0]:tpBand(sym,lv[0],null),d2=(zv[1]&&zv[1].lo<zv[1].hi)?zv[1]:tpBand(sym,lv[1],e1lo(1));
     if((d1.lo-d2.hi)/d1.lo<0.05&&d2.lo<d1.lo){
-      merged=true;const b={lo:d2.lo,hi:d1.lo};
+      merged=true;const b={lo:d2.lo,hi:d1.lo,weak:!!(d1.weak&&d2.weak)};
       lv.length=0;zv.length=0;hot.length=0;
       lv.push(b.hi);zv.push(b);hot.push(mas.some(m=>m>=b.lo*0.98&&m<=b.hi*1.02));
       const nx=Z?Z.sup.filter(z=>z.hi<b.lo*0.95&&z.hi>=b.lo*0.70).sort((x,y)=>y.hi-x.hi)[0]:null;
-      if(nx&&nx.hi>=b.hi*0.70){lv.push(nx.hi);zv.push({lo:nx.lo,hi:nx.hi});hot.push(near(nx));}
+      if(nx&&nx.hi>=b.hi*0.70){lv.push(nx.hi);zv.push({lo:nx.lo,hi:nx.hi,weak:nx.weak});hot.push(near(nx));}
       else{const old=real.filter(v=>v<b.lo*0.95&&v>=b.hi*0.70);if(old.length){lv.push(old[0]);zv.push({lo:old[0],hi:old[0]});hot.push(false);}}
       zl=[{lo:b.lo,hi:b.hi,recent:true}];zstop=b.lo*0.99;
     }
@@ -1412,10 +1421,11 @@ function tpPlan(s){
       const hh=_tpHist[String(s.Symbol||'').toUpperCase()]||[],lows=[];
       for(let i=5;i<hh.length-5;i++){let ok=true;for(let j=i-5;j<=i+5;j++)if(hh[j][2]<hh[i][2]){ok=false;break;}if(ok&&hh[i][2]>fz.hi*1.02&&hh[i][2]<base*0.95)lows.push(hh[i][2]);}
       const weak=[];lows.sort((a,b)=>b-a).forEach(v=>{if(weak.length<2&&(!weak.length||v<weak[weak.length-1]*0.98))weak.push(v);});
-      lv.push(fz.hi);zv.push({lo:fz.lo,hi:fz.hi});hot.push(near(fz));
+      lv.push(fz.hi);zv.push({lo:fz.lo,hi:fz.hi,weak:fz.weak});hot.push(near(fz));
       far={pct:Math.round((1-fz.hi/base)*100),lows:weak};
     }
   }
+  const zw=i=>(zv[i]&&zv[i].weak?' (weak zone)':'');
   const zt=i=>{const z=(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:(lv[i]!=null?tpBand(String(s.Symbol||'').toUpperCase(),lv[i],e1lo(i)):null);return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
   const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v,e1lo(i))),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
   if(far)o.far=far;
@@ -1453,8 +1463,8 @@ function tpPlan(s){
     if(joinedX)o.sellTxt='Price is in the exit zone '+(tpF(o.tz[0].lo)!==tpF(o.tz[0].hi)?tpF(o.tz[0].lo)+'–'+tpF(o.tz[0].hi):tpF(o.tz[0].lo))+' (two close zones joined).';
     o.verdict='SELL ZONE';o.target=joinedX?(o.tz[1]?o.tz[1].lo:o.tz[0].hi):(inRes?(o.target>p*1.03?o.target:(h1||p)):h1);o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.';return o;}
   if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
-  if(p<=Math.max(lv[0],(o.zv[0]&&o.zv[0].hi)||0)*1.01){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+(hot[0]?' (strong: a moving average is here too)':'')+(merged?'. Two close zones are joined here: buy a small lot near the top and a bigger lot near the bottom.':'. Buy a lot here.')+(far?' If it breaks, there is no support until '+zt(1)+' ('+far.pct+'% lower).'+(far.lows.length?' Weak single lows on the way: '+far.lows.map(tpF).join(', ')+'.':''):(lv[1]?' If it breaks, the next support is '+zt(1)+'.':' No lower support zone found.'));}
-  else{o.why='Wait for a pullback to '+zt(0)+', then buy.'+(far?' Next support is far: '+zt(1)+' ('+far.pct+'% lower).':(lv[1]?' Next support: '+zt(1)+'.':''));}
+  if(p<=Math.max(lv[0],(o.zv[0]&&o.zv[0].hi)||0)*1.01){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+zw(0)+(hot[0]?' (strong: a moving average is here too)':'')+(merged?'. Two close zones are joined here: buy a small lot near the top and a bigger lot near the bottom.':'. Buy a lot here.')+(far?' If it breaks, there is no support until '+zt(1)+zw(1)+' ('+far.pct+'% lower).'+(far.lows.length?' Weak single lows on the way: '+far.lows.map(tpF).join(', ')+'.':''):(lv[1]?' If it breaks, the next support is '+zt(1)+zw(1)+'.':' No lower support zone found.'));}
+  else{o.why='Wait for a pullback to '+zt(0)+zw(0)+', then buy.'+(far?' Next support is far: '+zt(1)+zw(1)+' ('+far.pct+'% lower).':(lv[1]?' Next support: '+zt(1)+zw(1)+'.':''));}
   return o;
 }
 function tpExDiv(s){
@@ -1542,12 +1552,12 @@ function tpAdvFmt(t){
   W(/Buy a lot here\./,'ad-buy');
   W(/Price is below your last buy: add a lot\./,'ad-buy');
   W(/Price is not below your last buy: add only a small lot\./,'ad-buy');
-  W(/Wait for a pullback to [\d.,–]+?, then buy\./,'ad-wait');
+  W(/Wait for a pullback to [\d.,–]+?(?: \(weak zone\))?, then buy\./,'ad-wait');
   W(/Price is under every known support level\. Wait for a new level to form\./,'ad-wait');
-  W(/If it breaks, the next support is [\d.,–]+?(?=\.(?:\s|$))\./,'ad-brk');
-  W(/Next support: [\d.,–]+?(?=\.(?:\s|$))\./,'ad-brk');
-  W(/If it breaks, there is no support until [\d.,–]+? \(\d+% lower\)\./,'ad-brk');
-  W(/Next support is far: [\d.,–]+? \(\d+% lower\)\./,'ad-brk');
+  W(/If it breaks, the next support is [\d.,–]+?(?: \(weak zone\))?(?=\.(?:\s|$))\./,'ad-brk');
+  W(/Next support: [\d.,–]+?(?: \(weak zone\))?(?=\.(?:\s|$))\./,'ad-brk');
+  W(/If it breaks, there is no support until [\d.,–]+?(?: \(weak zone\))? \(\d+% lower\)\./,'ad-brk');
+  W(/Next support is far: [\d.,–]+?(?: \(weak zone\))? \(\d+% lower\)\./,'ad-brk');
   W(/Weak single lows on the way: [\d.,\s]+?(?=\.(?:\s|$))\./,'ad-brk');
   W(/No lower support zone found\./,'ad-brk');
   W(/You hold [\d,]+ units \(average [\d.,]+, last buy [\d.,]+\)\./,'ad-hold');
