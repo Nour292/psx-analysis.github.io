@@ -261,6 +261,9 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 }
 .dtbl td{ border-bottom:1px solid var(--border); padding:9px 12px; color:var(--text2); }
 .wtbl{ font-size:11.5px; }
+.wtbl .sz{ white-space:nowrap; }
+.wtbl .sz2{ border-top:1px solid var(--text3); margin-top:3px; padding-top:3px; }
+.wtbl .sz b{ color:var(--text3); font-size:10px; margin-right:3px; }
 .wtbl th, .wtbl td{ padding:8px 5px; }
 .wtbl tr.hasadv>td{ border-bottom:none; }
 .wtbl tr.advrow>td{ padding:7px 12px 8px 12px; font-size:12px; line-height:1.55; color:#F5F3FF; background:#2B1D4F; }
@@ -607,7 +610,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.35</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.36</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -948,7 +951,7 @@ function tableRow(r,i){
   return `<tr class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
     <td class="sym-cell">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell">${fmt(r.Price)}</td>
-    <td class="zone-cell">${r.Plan&&r.Plan.buy.length?r.Plan.buy.map((v,i)=>tpF(v)+(r.Plan.hot&&r.Plan.hot[i]?' ★':'')).join(' / '):'—'}</td>
+    <td class="zone-cell">${r.Plan&&r.Plan.buy.length?r.Plan.buy.map((v,i)=>{const z=r.Plan.zv&&r.Plan.zv[i];return `<div class="sz${i?' sz2':''}"><b>S${i+1}</b> ${z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v)}${r.Plan.hot&&r.Plan.hot[i]?' ★':''}</div>`;}).join(''):'—'}</td>
     <td class="zone-cell" style="color:var(--accent);font-weight:600">${r.Plan?tpF(r.Plan.target)+(r.Plan.hotT?' ★':''):'—'}</td>
     <td class="zone-cell" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
@@ -1299,18 +1302,19 @@ function tpPlan(s){
   const highs=[h1,h3,h52].filter(v=>v!=null&&v>p*1.03);
   const Z=tpZones(String(s.Symbol||'').toUpperCase()),mas=[m50,m200].filter(v=>v!=null);
   const near=(z)=>mas.some(m=>m>=z.lo*0.98&&m<=z.hi*1.02);
-  let zl=[],hot=[],zstop=null;
+  let zl=[],hot=[],zstop=null;const zv=[];
   if(Z){
     const sz=Z.sup.filter(z=>z.hi<=p*1.03).sort((a,b)=>b.hi-a.hi);
     sz.forEach(z=>{if(!zl.length||z.hi<zl[zl.length-1].lo*0.98)zl.push(z);});
     zl=zl.slice(0,2);
   }
   if(zl.length){
-    lv.length=0;zl.forEach(z=>{lv.push(z.hi);hot.push(near(z));});zstop=zl[0].lo*0.99;
-    if(lv.length<2){const old=real.filter(v=>v<lv[0]*0.98);if(old.length){lv.push(old[0]);hot.push(false);}}
+    lv.length=0;zl.forEach(z=>{lv.push(z.hi);hot.push(near(z));zv.push({lo:z.lo,hi:z.hi});});zstop=zl[0].lo*0.99;
+    if(lv.length<2){const old=real.filter(v=>v<lv[0]*0.98);if(old.length){lv.push(old[0]);hot.push(false);zv.push({lo:old[0],hi:old[0]});}}
   }
-  if(lv.length>1&&lv[1]<lv[0]*0.80){lv.length=1;hot.length=1;}
-  const o={p,buy:lv.slice(0,2),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
+  if(lv.length>1&&lv[1]<lv[0]*0.80){lv.length=1;hot.length=1;zv.length=1;}
+  const zt=i=>{const z=zv[i];return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
+  const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>zv[i]||{lo:v,hi:v}),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
   let inRes=false;
   if(Z){
     const up=Z.res.filter(z=>z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
@@ -1319,8 +1323,8 @@ function tpPlan(s){
   }
   if(inRes||(h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05))){o.verdict='SELL ZONE';o.target=inRes?(o.target>p*1.03?o.target:(h1||p)):h1;o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.';return o;}
   if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
-  if(p<=lv[0]*1.03){o.verdict='BUY ZONE';o.why='Price is at support '+tpF(lv[0])+(hot[0]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(lv[1]?' If it breaks, the next level is '+tpF(lv[1])+'.':' No lower level is known.');}
-  else{o.why='Wait for a pullback to '+tpF(lv[0])+', then buy.'+(lv[1]?' Next level: '+tpF(lv[1])+'.':'');}
+  if(p<=lv[0]*1.03){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+(hot[0]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(lv[1]?' If it breaks, the next support is '+zt(1)+'.':' No lower level is known.');}
+  else{o.why='Wait for a pullback to '+zt(0)+', then buy.'+(lv[1]?' Next support: '+zt(1)+'.':'');}
   return o;
 }
 function tpExDiv(s){
