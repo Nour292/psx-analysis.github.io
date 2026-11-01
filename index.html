@@ -264,13 +264,14 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .wtbl td.zone-cell, .wtbl td{ font-size:14px; }
 .wtbl .gl{ border-left:1px solid var(--text3); }
 .wtbl tr:not(.advrow)>*:nth-child(n+3){ text-align:center; }
+.wtbl tr:not(.advrow)>*:nth-child(7){ text-align:right; }
 .wtbl .sz{ display:flex; flex-direction:column; align-items:center; white-space:nowrap; padding:0 7px; }
 .wtbl .sz:first-child{ padding-left:0; }
 .wtbl .sz2{ border-left:1px solid var(--text3); }
 .wtbl .sz b{ color:var(--text3); font-size:10px; }
 .wtbl th, .wtbl td{ padding:10px 6px; }
 .wtbl tr.hasadv>td{ border-bottom:none; }
-.wtbl tr.advrow>td{ padding:8px 12px 10px 12px; font-size:13.5px; line-height:1.55; color:#F5F3FF; background:#2B1D4F; }
+.wtbl tr.advrow>td{ padding:8px 6px 10px 6px; font-size:13.5px; line-height:1.55; color:#F5F3FF; background:#2B1D4F; }
 :root.light .wtbl tr.advrow>td{ background:#ede9fe; color:#2e1065; }
 .wtbl .listed{ display:inline-block; padding:2px 9px 2px 6px; border-radius:6px; background:#0B3B2C; color:#6EE7B7; font-weight:800; }
 .wtbl .listed .flag{ color:#FBBF24; margin-right:5px; }
@@ -614,7 +615,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.44</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.45</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
