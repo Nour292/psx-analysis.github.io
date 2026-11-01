@@ -607,7 +607,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.33</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.34</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -948,8 +948,8 @@ function tableRow(r,i){
   return `<tr class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
     <td class="sym-cell">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell">${fmt(r.Price)}</td>
-    <td class="zone-cell">${r.Plan&&r.Plan.buy.length?r.Plan.buy.map(tpF).join(' / '):'—'}</td>
-    <td class="zone-cell" style="color:var(--accent);font-weight:600">${r.Plan?tpF(r.Plan.target):'—'}</td>
+    <td class="zone-cell">${r.Plan&&r.Plan.buy.length?r.Plan.buy.map((v,i)=>tpF(v)+(r.Plan.hot&&r.Plan.hot[i]?' ★':'')).join(' / '):'—'}</td>
+    <td class="zone-cell" style="color:var(--accent);font-weight:600">${r.Plan?tpF(r.Plan.target)+(r.Plan.hotT?' ★':''):'—'}</td>
     <td class="zone-cell" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
   </tr>${advHtml?`<tr class="advrow"><td colspan="6">${advHtml}</td></tr>`:''}`;
@@ -1264,9 +1264,29 @@ function computeSetupQuality(sym,s,verdict){
 /* ════════════════════════════════════════════
    CHAT-SYSTEM RULES — stop, targets, R:R, reversal plan (used by the Weekly Analysis table)
 ════════════════════════════════════════════ */
-let _tpLdcp={},_tpNews=null,_tpList=null,_tpLots={};
+let _tpLdcp={},_tpNews=null,_tpList=null,_tpLots={},_tpHist={},_tpZ={};
 const tpN=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
 const tpF=v=>v==null||isNaN(v)?'—':fmt(v);
+// zones from the daily candles: swing lows / highs that price touched again and again (within 3% of each other); recent touches count double
+function tpZones(sym){
+  if(_tpZ[sym]!==undefined)return _tpZ[sym];
+  const h=_tpHist[sym];if(!h||h.length<80)return _tpZ[sym]=null;
+  const n=h.length,k=5,lo=[],hi=[];
+  for(let i=k;i<n-k;i++){
+    let isL=true,isH=true;
+    for(let j=i-k;j<=i+k;j++){if(h[j][2]<h[i][2])isL=false;if(h[j][1]>h[i][1])isH=false;}
+    const w=i>=n-250?2:1;
+    if(isL)lo.push([h[i][2],w]);
+    if(isH)hi.push([h[i][1],w]);
+  }
+  const clus=pts=>{
+    pts.sort((a,b)=>a[0]-b[0]);const out=[];let c=null;
+    pts.forEach(x=>{if(c&&x[0]<=c.lo*1.03){c.hi=x[0];c.w+=x[1];c.n++;}else{if(c)out.push(c);c={lo:x[0],hi:x[0],w:x[1],n:1};}});
+    if(c)out.push(c);
+    return out.filter(z=>z.n>=2&&z.w>=3);
+  };
+  return _tpZ[sym]={sup:clus(lo),res:clus(hi)};
+}
 function tpPlan(s){
   const p=tpN(s.Price);if(p==null)return null;
   const m50=tpN(s['MA50-D']),m200=tpN(s['MA200-D']),l1=tpN(s['Low-1M']),h1=tpN(s['High-1M']),l3=tpN(s['Low-3M']),h3=tpN(s['High-3M']),l52=tpN(s['52W-Low']),h52=tpN(s['52W-High']),l6=tpN(s['Low-6M']),ps1=tpN(s['Pivot-S1']),ps2=tpN(s['Pivot-S2']);
@@ -1277,11 +1297,29 @@ function tpPlan(s){
   // monthly pivots are only used as the second level (where to add if the first breaks)
   if(lv.length===1){const pv=[ps1,ps2].filter(v=>ok(v)&&v<lv[0]/1.02).sort((a,b)=>b-a);if(pv.length)lv.push(pv[0]);}
   const highs=[h1,h3,h52].filter(v=>v!=null&&v>p*1.03);
-  if(lv.length>1&&lv[1]<lv[0]*0.80)lv.length=1;
-  const o={p,buy:lv.slice(0,2),stop:lv.length?lv[0]*0.97:null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
-  if(h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05)){o.verdict='SELL ZONE';o.target=h1;o.why='Price is at the recent high ('+tpF(h1)+'). Sell the lots that are in profit.';return o;}
+  const Z=tpZones(String(s.Symbol||'').toUpperCase()),mas=[m50,m200].filter(v=>v!=null);
+  const near=(z)=>mas.some(m=>m>=z.lo*0.98&&m<=z.hi*1.02);
+  let zl=[],hot=[],zstop=null;
+  if(Z){
+    const sz=Z.sup.filter(z=>z.hi<=p*1.03).sort((a,b)=>b.hi-a.hi);
+    sz.forEach(z=>{if(!zl.length||z.hi<zl[zl.length-1].lo*0.98)zl.push(z);});
+    zl=zl.slice(0,2);
+  }
+  if(zl.length){
+    lv.length=0;zl.forEach(z=>{lv.push(z.hi);hot.push(near(z));});zstop=zl[0].lo*0.99;
+    if(lv.length<2){const old=real.filter(v=>v<lv[0]*0.98);if(old.length){lv.push(old[0]);hot.push(false);}}
+  }
+  if(lv.length>1&&lv[1]<lv[0]*0.80){lv.length=1;hot.length=1;}
+  const o={p,buy:lv.slice(0,2),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
+  let inRes=false;
+  if(Z){
+    const up=Z.res.filter(z=>z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
+    if(up.length){o.target=up[0].lo;o.hotT=near(up[0]);}
+    inRes=Z.res.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
+  }
+  if(inRes||(h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05))){o.verdict='SELL ZONE';o.target=inRes?p:h1;o.why='Price is at a resistance level ('+tpF(inRes?p:h1)+'), where it has turned down before. Sell the lots that are in profit.';return o;}
   if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
-  if(p<=lv[0]*1.03){o.verdict='BUY ZONE';o.why='Price is at support '+tpF(lv[0])+'. Buy a lot here.'+(lv[1]?' If it breaks, the next level is '+tpF(lv[1])+'.':' No lower level is known.');}
+  if(p<=lv[0]*1.03){o.verdict='BUY ZONE';o.why='Price is at support '+tpF(lv[0])+(hot[0]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(lv[1]?' If it breaks, the next level is '+tpF(lv[1])+'.':' No lower level is known.');}
   else{o.why='Wait for a pullback to '+tpF(lv[0])+', then buy.'+(lv[1]?' Next level: '+tpF(lv[1])+'.':'');}
   return o;
 }
@@ -1302,6 +1340,8 @@ async function tpLoadExtras(){
   try{const r=await fetch(gsUrl('Prices'));const j=await r.json();const rows=j.values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());const li=h.indexOf('ldcp');_tpLdcp={};if(li>=0)rows.slice(1).forEach(r=>{const sy=String(r[0]||'').trim().toUpperCase(),l=parseFloat(r[li]);if(sy&&l>0)_tpLdcp[sy]=l;});}catch(e){}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);_tpNews=r.ok?await r.json():null;}catch(e){_tpNews=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);_tpList=r.ok?await r.json():null;}catch(e){_tpList=null;}
+  try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/history.json?${Date.now()}`);const j=r.ok?await r.json():null;_tpHist=j&&j.data?j.data:{};}catch(e){_tpHist={};}
+  _tpZ={};
   await tpLoadLots();
 }
 function tpUserName(){try{return sessionStorage.getItem('psx_user')||localStorage.getItem('psx_user_r')||'';}catch(e){return '';}}
