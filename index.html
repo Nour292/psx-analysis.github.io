@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.74</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.75</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1432,15 +1432,15 @@ function tpPlan(s){
   let inRes=false,cz=null;o.tz=[];
   if(Z){
     const up=Z.res.filter(z=>z.recent&&z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
-    const tzs=[];up.forEach(z=>{if(!tzs.length||z.lo>tzs[tzs.length-1].hi*1.02)tzs.push(z);});
-    tzs.slice(0,2).forEach(z=>{o.tz.push({lo:z.lo,hi:z.hi,hot:near(z)});});
+    const tzs=up.slice(0,4);
+    tzs.forEach(z=>{o.tz.push({lo:z.lo,hi:z.hi,hot:near(z)});});
     if(tzs.length){o.target=tzs[0].lo;o.hotT=near(tzs[0]);}
     cz=Z.res.find(z=>z.recent&&p>=z.lo&&p<=z.hi);
     inRes=!!cz&&!zl.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
     if(inRes){
       o.sellTxt='Price is in the exit zone '+(tpF(cz.lo)!==tpF(cz.hi)?tpF(cz.lo)+'–'+tpF(cz.hi):tpF(cz.lo))+'.';
       // the zone price is in is the 1-Exit Zone; the next zone ahead is the 2nd
-      o.tz.unshift({lo:cz.lo,hi:cz.hi,hot:near(cz)});o.tz.length=Math.min(o.tz.length,2);
+      o.tz.unshift({lo:cz.lo,hi:cz.hi,hot:near(cz)});o.tz.length=Math.min(o.tz.length,5);
     }
   }
   // nearest resistance: moving averages and recent highs above the price and in front of the first history exit zone become Exit Zone 1
@@ -1450,7 +1450,7 @@ function tpPlan(s){
     if(lvls.length){
       const grp=[lvls[0]];lvls.slice(1).forEach(v=>{if(v<=grp[grp.length-1]*1.05)grp.push(v);});
       const hasMa=grp.some(v=>v===m50||v===m200),hasHigh=grp.some(v=>v===h1||v===h3);
-      o.tz.unshift({lo:grp[0],hi:grp[grp.length-1],hot:hasMa&&hasHigh});o.tz.length=Math.min(o.tz.length,2);
+      o.tz.unshift({lo:grp[0],hi:grp[grp.length-1],hot:hasMa&&hasHigh});o.tz.length=Math.min(o.tz.length,5);
     }
   }
   [h1,h3,h52].filter(v=>v!=null&&v>p*1.03).sort((a,b)=>a-b).forEach(v=>{
@@ -1458,16 +1458,24 @@ function tpPlan(s){
   });
   const inEntry=zl.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
   const h1on=!inRes&&!inEntry&&h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05);
-  if(h1on){o.sellTxt='Price is at the recent high ('+tpF(h1)+').';o.tz.unshift({lo:h1,hi:h1,hot:false});o.tz.length=Math.min(o.tz.length,2);}
-  // two exit zones less than 5% apart are one resistance area: the band runs from the high of the 1st zone to the high of the 2nd zone (you sell high)
-  let joinedX=false;
-  if(o.tz.length>1&&o.tz[1].hi>o.tz[0].hi&&(o.tz[1].lo-o.tz[0].hi)/o.tz[0].hi<0.05){
-    joinedX=true;const a=o.tz[0],b=o.tz[1],band={lo:a.hi,hi:b.hi};band.hot=mas.some(m=>m>=band.lo*0.98&&m<=band.hi*1.02);
-    const nz=Z?Z.res.filter(z=>z.recent&&z.lo>band.hi*1.05).sort((x,y)=>x.lo-y.lo)[0]:null;
-    const nh=[h1,h3,h52].filter(v=>v!=null&&v>band.hi*1.05).sort((x,y)=>x-y)[0];
-    const nxt=nz?{lo:nz.lo,hi:nz.hi,hot:near(nz)}:(nh!=null?{lo:nh,hi:nh,hot:false}:null);
-    o.tz=nxt?[band,nxt]:[band];
+  if(h1on){o.sellTxt='Price is at the recent high ('+tpF(h1)+').';o.tz.unshift({lo:h1,hi:h1,hot:false});o.tz.length=Math.min(o.tz.length,5);}
+  // exit zones less than 5% apart are one resistance area: the band runs from the high of the first zone to the high of the last (you sell high)
+  const gr=[];
+  o.tz.forEach(z=>{
+    const g=gr[gr.length-1];
+    if(g&&z.hi<=g.hi)return;
+    if(g&&(z.lo-g.hi)/g.hi<0.05){if(g.n===1)g.lo=g.hi;g.hi=z.hi;g.n++;g.hot=g.hot||z.hot;}
+    else gr.push({lo:z.lo,hi:z.hi,hot:z.hot,n:1});
+  });
+  gr.forEach(g=>{if(g.n>1)g.hot=g.hot||mas.some(m=>m>=g.lo*0.98&&m<=g.hi*1.02);});
+  const joinedX=gr.length>0&&gr[0].n>1;
+  if(gr.length===1){
+    const g0=gr[0];
+    const nz=Z?Z.res.filter(z=>z.recent&&z.lo>g0.hi*1.05).sort((x,y)=>x.lo-y.lo)[0]:null;
+    const nh=[h1,h3,h52].filter(v=>v!=null&&v>g0.hi*1.05).sort((x,y)=>x-y)[0];
+    if(nz)gr.push({lo:nz.lo,hi:nz.hi,hot:near(nz),n:1});else if(nh!=null)gr.push({lo:nh,hi:nh,hot:false,n:1});
   }
+  o.tz=gr.slice(0,2).map(g=>({lo:g.lo,hi:g.hi,hot:g.hot}));
   if(o.tz.length)o.target=o.tz[0].lo;
   if(joinedX?(p>=o.tz[0].lo&&p<=o.tz[0].hi&&!inEntry):(inRes||h1on)){
     if(joinedX)o.sellTxt='Price is in the exit zone '+(tpF(o.tz[0].lo)!==tpF(o.tz[0].hi)?tpF(o.tz[0].lo)+'–'+tpF(o.tz[0].hi):tpF(o.tz[0].lo))+' (two close zones joined).';
