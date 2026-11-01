@@ -644,7 +644,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.64</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.65</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1385,15 +1385,19 @@ function tpPlan(s){
   }
   const zt=i=>{const z=(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:(lv[i]!=null?tpBand(String(s.Symbol||'').toUpperCase(),lv[i],e1lo(i)):null);return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
   const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v,e1lo(i))),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
-  let inRes=false;o.tz=[];
+  let inRes=false,cz=null;o.tz=[];
   if(Z){
     const up=Z.res.filter(z=>z.recent&&z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
     const tzs=[];up.forEach(z=>{if(!tzs.length||z.lo>tzs[tzs.length-1].hi*1.02)tzs.push(z);});
     tzs.slice(0,2).forEach(z=>{o.tz.push({lo:z.lo,hi:z.hi,hot:near(z)});});
     if(tzs.length){o.target=tzs[0].lo;o.hotT=near(tzs[0]);}
-    const cz=Z.res.find(z=>z.recent&&p>=z.lo&&p<=z.hi*1.02);
+    cz=Z.res.find(z=>z.recent&&p>=z.lo&&p<=z.hi);
     inRes=!!cz&&!zl.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
-    if(inRes)o.sellTxt='Price is in the exit zone '+(tpF(cz.lo)!==tpF(cz.hi)?tpF(cz.lo)+'–'+tpF(cz.hi):tpF(cz.lo))+'.';
+    if(inRes){
+      o.sellTxt='Price is in the exit zone '+(tpF(cz.lo)!==tpF(cz.hi)?tpF(cz.lo)+'–'+tpF(cz.hi):tpF(cz.lo))+'.';
+      // the zone price is in is the 1-Exit Zone; the next zone ahead is the 2nd
+      o.tz.unshift({lo:cz.lo,hi:cz.hi,hot:near(cz)});o.tz.length=Math.min(o.tz.length,2);
+    }
   }
   [h1,h3,h52].filter(v=>v!=null&&v>p*1.03).sort((a,b)=>a-b).forEach(v=>{
     if(o.tz.length<2&&(!o.tz.length||v>o.tz[o.tz.length-1].hi*1.02))o.tz.push({lo:v,hi:v,hot:false});
