@@ -263,8 +263,8 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .wtbl{ font-size:11.5px; }
 .wtbl th, .wtbl td{ padding:8px 5px; }
 .wtbl tr.hasadv>td{ border-bottom:none; }
-.wtbl tr.advrow>td{ padding:6px 10px 7px 36px; font-size:11.5px; line-height:1.5; color:var(--text); background:#061E30; }
-:root.light .wtbl tr.advrow>td{ background:#cfe6f5; }
+.wtbl tr.advrow>td{ padding:7px 12px 8px 12px; font-size:12px; line-height:1.55; color:#F5F3FF; background:#2B1D4F; }
+:root.light .wtbl tr.advrow>td{ background:#ede9fe; color:#2e1065; }
 .wtbl .listed{ display:inline-block; padding:2px 9px 2px 6px; border-radius:6px; background:#0B3B2C; color:#6EE7B7; font-weight:800; }
 .wtbl .listed .flag{ color:#FBBF24; margin-right:5px; }
 :root.light .wtbl .listed{ background:#d1fae5; color:#065f46; }
@@ -619,7 +619,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.21</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.22</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -949,7 +949,6 @@ function verdictFnEnhanced(s,sc,z,scoreDelta,macdImproving,rsiImproving,priceChg
 function tableHeader(){
   const prevNote=_prevDate?`<span style="font-size:10px;color:var(--text3);margin-left:6px">vs ${_prevDate}</span>`:'';
   return `<tr>
-    <th style="width:32px">#</th>
     <th>Symbol</th>
     <th>Price</th>
     <th>Support</th>
@@ -977,7 +976,6 @@ function tableRow(r,i){
     :`<span style="color:var(--text3);font-size:12px">${r.Trend||'—'}</span>`;
   const advHtml=tpAdviceHtml(String(r.Symbol).toUpperCase(),r.SrcRow||{},r.Plan);
   return `<tr class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
-    <td style="color:var(--text3);font-size:11px;font-family:var(--mono)">${i+1}</td>
     <td class="sym-cell">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell">${fmt(r.Price)}</td>
     <td class="zone-cell">${r.Support}</td>
@@ -985,7 +983,7 @@ function tableRow(r,i){
     <td class="zone-cell" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
     <td class="score-cell">${r.Score}${deltaStr}${spark}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
-  </tr>${advHtml?`<tr class="advrow"><td colspan="8">${advHtml}</td></tr>`:''}`;
+  </tr>${advHtml?`<tr class="advrow"><td colspan="7">${advHtml}</td></tr>`:''}`;
 }
 
 function renderHome(){
@@ -1008,9 +1006,9 @@ function renderHome(){
   }
 
   const bt=document.getElementById('homeBuyTable');
-  bt.innerHTML=buys.length?tableHeader()+buys.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="8" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No BUY candidates this week</td></tr>';
+  bt.innerHTML=buys.length?tableHeader()+buys.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No BUY candidates this week</td></tr>';
   const et=document.getElementById('homeExitTable');
-  et.innerHTML=exits.length?tableHeader()+exits.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="8" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No EXIT signals this week</td></tr>';
+  et.innerHTML=exits.length?tableHeader()+exits.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No EXIT signals this week</td></tr>';
 }
 
 let _allRows=[];
@@ -1067,7 +1065,7 @@ function applyFilters(){
   if(fc)fc.textContent=shown===total?total+' symbols':shown+' / '+total+' symbols';
   document.getElementById('fullTable').innerHTML=rows.length
     ?tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('')
-    :'<tr><td colspan="8" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">No results match the selected filters.</td></tr>';
+    :'<tr><td colspan="7" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">No results match the selected filters.</td></tr>';
 }
 function runWeekly(){
   showPage('pgAnalysis');
