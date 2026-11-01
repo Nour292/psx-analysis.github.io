@@ -273,6 +273,32 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 @keyframes rowReveal{from{opacity:0;transform:translateX(-4px);}to{opacity:1;transform:translateX(0);}}
 .tbl tbody tr,.ov-tbl tbody tr{animation:rowReveal .2s ease both;}
+
+/* phone: tables become cards, grids stack */
+@media (max-width:760px){
+  table.mcard, table.mcard tbody, table.mcard thead{ display:block !important; width:100% !important; }
+  table.mcard tr:has(th){ display:none !important; }
+  table.mcard tr{ display:grid !important; grid-template-columns:1fr 1fr; gap:4px 10px; padding:10px 12px !important; margin:0 0 8px; background:var(--surface); border:1px solid var(--border); border-radius:8px; }
+  table.mcard td{ display:block !important; border:none !important; padding:0 !important; text-align:left !important; white-space:normal !important; min-width:0; background:none !important; overflow-wrap:anywhere; }
+  table.mcard td[data-l]::before{ content:attr(data-l); display:block; font-size:10px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; }
+  table.mcard td[data-l="#"]{ display:none !important; }
+  table.mcard td:not([data-l]){ grid-column:1/-1; }
+  table.mcard input{ max-width:100%; }
+  .tbl-wrap, .dt-wrap{ border:none !important; overflow:visible !important; }
+  [style*="columns:1fr 1fr;"]{ grid-template-columns:1fr !important; }
+  [style*="columns:1fr 1fr 1fr;"], [style*="columns:repeat(4,1fr)"]{ grid-template-columns:repeat(2,1fr) !important; }
+}
+@media (max-width:760px){
+  .topbar{ height:auto; min-height:var(--header-h); flex-wrap:wrap; padding:6px 12px; gap:8px; }
+  .kpi-bar{ flex-wrap:wrap; padding:12px 12px 0; }
+  .kpi{ flex:1 1 30%; }
+  .prog-wrap{ padding:12px 12px 0; }
+  .tab-bar{ padding:10px 12px 0; }
+  .tab-pane, .overlay-content{ padding:12px; }
+  .overlay-nav{ padding:8px 12px; flex-wrap:wrap; }
+  .sr-cards, .hist-cards{ grid-template-columns:repeat(2,1fr); }
+  .modal-grid{ grid-template-columns:1fr; }
+}
 </style>
 </head>
 <body>
@@ -498,7 +524,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.85</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.86</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -662,7 +688,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <script>
 (function(){
   const s=localStorage.getItem('psx_theme');if(s==='light')document.documentElement.classList.add('light');
-  if(localStorage.getItem('psx_sb_collapsed')==='1')document.documentElement.classList.add('sb-collapsed');
+  {const v=localStorage.getItem('psx_sb_collapsed');if(v==='1'||(v===null&&window.innerWidth<=760))document.documentElement.classList.add('sb-collapsed');}
 })();
 function applyLight(){document.documentElement.classList.add('light');const i=document.getElementById('themeIcon'),l=document.getElementById('themeLabel');if(i)i.textContent='🌙';if(l)l.textContent='Dark Mode';}
 function applyDark(){document.documentElement.classList.remove('light');const i=document.getElementById('themeIcon'),l=document.getElementById('themeLabel');if(i)i.textContent='☀️';if(l)l.textContent='Light Mode';}
@@ -678,7 +704,7 @@ function goBack(){document.getElementById('pgHistory').classList.remove('open');
 function closeDividends(){document.getElementById('pgDividends').classList.remove('open');const n=document.getElementById('navDivPage');if(n)n.classList.remove('active');}
 function closeCashFlow(){document.getElementById('pgCashFlow').classList.remove('open');const n=document.getElementById('navCashFlow');if(n)n.classList.remove('active');}
 function toggleSidebar(){const sb=document.getElementById('sidebar');const collapsed=sb.classList.toggle('collapsed');document.documentElement.classList.toggle('sb-collapsed',collapsed);localStorage.setItem('psx_sb_collapsed',collapsed?'1':'0');}
-document.addEventListener('DOMContentLoaded',function(){if(localStorage.getItem('psx_sb_collapsed')==='1'){const sb=document.getElementById('sidebar');if(sb)sb.classList.add('collapsed');document.documentElement.classList.add('sb-collapsed');}});
+document.addEventListener('DOMContentLoaded',function(){const _v=localStorage.getItem('psx_sb_collapsed');if(_v==='1'||(_v===null&&window.innerWidth<=760)){const sb=document.getElementById('sidebar');if(sb)sb.classList.add('collapsed');document.documentElement.classList.add('sb-collapsed');}});
 
 const GS_ID='1XTDO4sR5lFCUae8lHfsx96P8hLoXA7j2yeZMOiopuT8';
 const GS_KEY='AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI';
@@ -1602,6 +1628,24 @@ async function autoLoad(){
 }
 
 if(sessionStorage.getItem(AUTH_KEY)||localStorage.getItem(AUTH_KEY+'_r'))autoLoad();
+</script>
+<script>
+/* phone: label every table cell with its column name so the card layout can show it */
+(function(){
+  function label(){
+    if(window.innerWidth>760)return;
+    document.querySelectorAll('table').forEach(t=>{
+      if(t.classList.contains('mcard')&&t.dataset.n===String(t.rows.length))return;
+      const hr=[...t.rows].find(r=>r.querySelector('th'));if(!hr)return;
+      const heads=[];let c=0;[...hr.cells].forEach(h=>{for(let k=0;k<h.colSpan;k++)heads[c+k]=k?'':h.textContent.trim();c+=h.colSpan;});
+      [...t.rows].forEach(r=>{if(r===hr)return;let col=0;[...r.cells].forEach(td=>{if(td.colSpan===1&&heads[col]!=null&&heads[col]!=='')td.setAttribute('data-l',heads[col]);col+=td.colSpan;});});
+      t.classList.add('mcard');t.dataset.n=String(t.rows.length);
+    });
+  }
+  let tm=null;
+  new MutationObserver(()=>{clearTimeout(tm);tm=setTimeout(label,120);}).observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('load',label);
+})();
 </script>
 </body>
 </html>

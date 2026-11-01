@@ -160,6 +160,28 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
 /* Loading spinner */
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
 @keyframes spin{to{transform:rotate(360deg);}}
+
+/* phone: tables become cards, grids stack */
+@media (max-width:760px){
+  table.mcard, table.mcard tbody, table.mcard thead{ display:block !important; width:100% !important; }
+  table.mcard tr:has(th){ display:none !important; }
+  table.mcard tr{ display:grid !important; grid-template-columns:1fr 1fr; gap:4px 10px; padding:10px 12px !important; margin:0 0 8px; background:var(--surface); border:1px solid var(--border); border-radius:8px; }
+  table.mcard td{ display:block !important; border:none !important; padding:0 !important; text-align:left !important; white-space:normal !important; min-width:0; background:none !important; overflow-wrap:anywhere; }
+  table.mcard td[data-l]::before{ content:attr(data-l); display:block; font-size:10px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; }
+  table.mcard td[data-l="#"]{ display:none !important; }
+  table.mcard td:not([data-l]){ grid-column:1/-1; }
+  table.mcard input{ max-width:100%; }
+  .tbl-wrap, .dt-wrap{ border:none !important; overflow:visible !important; }
+  [style*="columns:1fr 1fr;"]{ grid-template-columns:1fr !important; }
+  [style*="columns:1fr 1fr 1fr;"], [style*="columns:repeat(4,1fr)"]{ grid-template-columns:repeat(2,1fr) !important; }
+}
+@media (max-width:760px){
+  .header{ height:auto; min-height:52px; flex-wrap:wrap; padding:6px 10px; gap:8px; }
+  .content{ padding:12px; }
+  .card-grid{ grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
+  .form-grid{ grid-template-columns:1fr; }
+  .srch{ width:100%; }
+}
 </style>
 </head>
 <body>
@@ -182,7 +204,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.8</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.9</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -1044,6 +1066,24 @@ function showMsg(html,color){
   el.innerHTML=html; el.style.color=color; el.style.display='block';
   el.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+</script>
+<script>
+/* phone: label every table cell with its column name so the card layout can show it */
+(function(){
+  function label(){
+    if(window.innerWidth>760)return;
+    document.querySelectorAll('table').forEach(t=>{
+      if(t.classList.contains('mcard')&&t.dataset.n===String(t.rows.length))return;
+      const hr=[...t.rows].find(r=>r.querySelector('th'));if(!hr)return;
+      const heads=[];let c=0;[...hr.cells].forEach(h=>{for(let k=0;k<h.colSpan;k++)heads[c+k]=k?'':h.textContent.trim();c+=h.colSpan;});
+      [...t.rows].forEach(r=>{if(r===hr)return;let col=0;[...r.cells].forEach(td=>{if(td.colSpan===1&&heads[col]!=null&&heads[col]!=='')td.setAttribute('data-l',heads[col]);col+=td.colSpan;});});
+      t.classList.add('mcard');t.dataset.n=String(t.rows.length);
+    });
+  }
+  let tm=null;
+  new MutationObserver(()=>{clearTimeout(tm);tm=setTimeout(label,120);}).observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('load',label);
+})();
 </script>
 </body>
 </html>
