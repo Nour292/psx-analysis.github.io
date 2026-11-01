@@ -260,6 +260,9 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
   border-bottom:1px solid var(--border); white-space:nowrap; position:sticky; top:0;
 }
 .dtbl td{ border-bottom:1px solid var(--border); padding:9px 12px; color:var(--text2); }
+.wtbl{ font-size:11.5px; }
+.wtbl th, .wtbl td{ padding:8px 5px; }
+.wtbl th{ font-size:10px; letter-spacing:.3px; }
 .dtbl tbody tr:last-child td{ border-bottom:none; }
 .dtbl tbody tr:hover td{ background:var(--surface2); }
 
@@ -592,10 +595,10 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
     <div class="signal-strip" id="homeSignalStrip" style="display:none"></div>
 
     <div class="section-label sl-buy"><span></span> BUY Candidates</div>
-    <div class="tbl-wrap"><table class="dtbl" id="homeBuyTable"><tbody></tbody></table></div>
+    <div class="tbl-wrap"><table class="dtbl wtbl" id="homeBuyTable"><tbody></tbody></table></div>
 
     <div class="section-label sl-exit" style="margin-top:6px"><span></span> EXIT Signals &amp; Caution</div>
-    <div class="tbl-wrap"><table class="dtbl" id="homeExitTable"><tbody></tbody></table></div>
+    <div class="tbl-wrap"><table class="dtbl wtbl" id="homeExitTable"><tbody></tbody></table></div>
   </div>
 
   <!-- ══════════ ANALYSIS PAGE ══════════ -->
@@ -610,7 +613,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.8</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.9</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -661,7 +664,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       </div>
       <span class="filter-count" id="filterCount"></span>
     </div>
-    <div class="tbl-wrap"><table class="dtbl" id="fullTable"><tbody></tbody></table></div>
+    <div class="tbl-wrap"><table class="dtbl wtbl" id="fullTable"><tbody></tbody></table></div>
     <div class="plans-grid" id="tradePlans" style="display:none"></div>
   </div>
 
@@ -987,7 +990,7 @@ function tableRow(r,i){
     <td class="${vcls}">${r.VLabel}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
     <td style="font-size:12px">${r.Momentum}</td>
-    <td style="font-size:11px;line-height:1.5;min-width:240px;max-width:340px">${tpAdviceHtml(String(r.Symbol).toUpperCase(),r.SrcRow||{},r.Plan)}</td>
+    <td style="font-size:11px;line-height:1.5;min-width:120px">${tpAdviceHtml(String(r.Symbol).toUpperCase(),r.SrcRow||{},r.Plan)}</td>
   </tr>`;
 }
 
