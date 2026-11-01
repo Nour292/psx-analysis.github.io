@@ -607,7 +607,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.30</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.31</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1020,7 +1020,8 @@ function runWeekly(){
   const rows=processAll();
   const order={'BUY ZONE':0,'SELL ZONE':1,'WAIT':2};
   const inL=r=>tpOnList(String(r.Symbol).toUpperCase())?0:1;
-  _allRows=rows.slice().sort((a,b)=>((order[a.Plan&&a.Plan.verdict]??3)-(order[b.Plan&&b.Plan.verdict]??3))||(inL(a)-inL(b))||String(a.Symbol).localeCompare(String(b.Symbol)));
+  const rk=new Map();rows.forEach(r=>rk.set(r,tpRank(r)));
+  _allRows=rows.slice().sort((a,b)=>{const x=rk.get(a),y=rk.get(b);return ((order[a.Plan&&a.Plan.verdict]??3)-(order[b.Plan&&b.Plan.verdict]??3))||(inL(a)-inL(b))||(x.w-y.w)||(x.m-y.m)||(y.y-x.y)||String(a.Symbol).localeCompare(String(b.Symbol));});
   applyFilters();
 
 }
@@ -1327,6 +1328,16 @@ function tpHoldInfo(sym,price){
   const odd=price&&(price/last.p<0.55||price/last.p>2.2);
   const prof=odd?[]:L.filter(l=>price>l.p);
   return {units,avg,lots:L.length,lastPrice:last.p,odd,profLots:prof.length,profUnits:prof.reduce((a,l)=>a+l.u,0)};
+}
+function tpRank(r){
+  const sym=String(r.Symbol).toUpperCase(),p=r.Plan;let m=0;
+  if(p){
+    if(p.verdict==='SELL ZONE'){const h=tpHoldInfo(sym,p.p);m=h?-h.profUnits*p.p:1e12;}
+    else m=p.buy&&p.buy.length?(p.p-p.buy[0])/p.buy[0]:9;
+  }
+  const w=(tpNewsText(sym)||'').indexOf('Warning')===0?1:0;
+  const lr=_tpList&&_tpList.rows?_tpList.rows.find(x=>x.symbol===sym):null;
+  return {m,w,y:lr&&lr.yield?lr.yield:0};
 }
 function tpOnList(sym){if(!_tpList||!_tpList.rows)return false;return _tpList.rows.some(r=>r.symbol===sym&&['New','Active','Override'].includes(r.status));}
 function tpAdviceHtml(sym,s,plan){
