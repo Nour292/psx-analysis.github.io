@@ -356,6 +356,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <button class="nav-item" data-tip="Finance" onclick="openFinance()">
       <span class="nav-icon">💰</span><span class="nav-label"> Finance</span>
     </button>
+    <button class="nav-item" id="navTickers" data-tip="Tickers" style="display:none" onclick="window.location.href='index.html#tickers'">
+      <span class="nav-icon">🧾</span><span class="nav-label"> Tickers</span>
+    </button>
   </nav>
   <div class="sidebar-footer">
     <button class="footer-btn" onclick="toggleTheme()" id="themeBtn" style="margin-bottom:4px"><span id="themeIcon" style="font-size:15px">☀️</span><span class="footer-label" id="themeLabel"> Light Mode</span></button>
@@ -495,7 +498,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.84</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.85</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -706,6 +709,7 @@ function isAdmin(){return _currentUser===ADMIN_USER;}
 function applyRoleUI(){
   const admin=isAdmin();
   if(admin){Object.assign(CAPITAL,CAPITAL_ADMIN);}else{Object.assign(CAPITAL,CAPITAL_USER);}
+  const nt=document.getElementById('navTickers');if(nt)nt.style.display=admin?'':'none';
   const tp=document.getElementById('tab-portfolio');if(tp)tp.classList.add('active');
   const tbp=document.getElementById('tabBtnPortfolio');if(tbp)tbp.classList.add('active');
 }
