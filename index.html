@@ -615,7 +615,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.50</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.51</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1310,7 +1310,8 @@ function tpPlan(s){
   const near=(z)=>mas.some(m=>m>=z.lo*0.98&&m<=z.hi*1.02);
   let zl=[],hot=[],zstop=null;const zv=[];
   if(Z){
-    const sz=Z.sup.filter(z=>z.hi<=p*1.03).sort((a,b)=>b.hi-a.hi);
+    // a zone the price has fallen below is broken: skip it
+    const sz=Z.sup.filter(z=>z.hi<=p*1.03&&z.lo<=p).sort((a,b)=>b.hi-a.hi);
     const rec=sz.find(z=>z.recent);
     if(rec){zl.push(rec);const nx=sz.find(z=>z.hi<rec.lo*0.98&&z.hi>=rec.lo*0.70);if(nx)zl.push(nx);}
   }
