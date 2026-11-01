@@ -261,7 +261,8 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 }
 .dtbl td{ border-bottom:1px solid var(--border); padding:9px 12px; color:var(--text2); }
 .wtbl{ font-size:11.5px; }
-.wtbl .szw{ display:flex; }
+.wtbl .szw{ display:flex; justify-content:center; }
+.wtbl tr:not(.advrow)>*:nth-child(n+3){ text-align:center; }
 .wtbl .sz{ display:flex; flex-direction:column; align-items:center; white-space:nowrap; padding:0 7px; }
 .wtbl .sz:first-child{ padding-left:0; }
 .wtbl .sz2{ border-left:1px solid var(--text3); }
@@ -612,7 +613,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.38</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.39</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -957,7 +958,7 @@ function tableRow(r,i){
     <td class="zone-cell" style="color:var(--accent);font-weight:600">${r.Plan&&r.Plan.tz&&r.Plan.tz.length?'<div class="szw">'+r.Plan.tz.map((z,i)=>`<div class="sz${i?' sz2':''}"><b>T${i+1}</b><span>${tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo)}${z.hot?' ★':''}</span></div>`).join('')+'</div>':(r.Plan?tpF(r.Plan.target):'—')}</td>
     <td class="zone-cell" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
-  </tr>${advHtml?`<tr class="advrow"><td colspan="6">${advHtml}</td></tr>`:''}`;
+  </tr>${advHtml?`<tr class="advrow"><td></td><td colspan="5">${advHtml}</td></tr>`:''}`;
 }
 
 function renderHome(){ if(_rawData.length&&document.getElementById('pgAnalysis').classList.contains('active')) runWeekly(); }
