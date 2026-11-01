@@ -509,7 +509,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         <span class="nav-grp-chevron">▼</span>
       </button>
       <div class="nav-sub open" id="navTASub">
-        <button class="nav-sub-btn active" id="navAnalysis" onclick="goAnalysis()">▶ Weekly Analysis</button>
+        <button class="nav-sub-btn active" id="navAnalysis" onclick="goAnalysis()">▶ Entry & Exit Zones</button>
       </div>
     </div>
 
@@ -571,7 +571,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 
   <!-- TOP BAR -->
   <div class="topbar">
-    <div class="topbar-title" id="topbarTitle">Weekly Analysis</div>
+    <div class="topbar-title" id="topbarTitle">Entry & Exit Zones</div>
     <div id="analysisDataDate" style="display:none;font-size:11px;color:var(--text3);font-family:var(--mono)">
       as of <span id="analysisDataDateVal" style="color:var(--accent)"></span>
       <span id="analysisPrevDate" style="color:var(--text3);margin-left:8px"></span>
@@ -607,7 +607,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
   <div id="pgAnalysis" class="page active content">
     <div class="analysis-header">
       <div class="page-header" style="margin:0;flex:1">
-        <h1>Weekly Analysis</h1>
+        <h1>Entry & Exit Zones</h1>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <select id="weekPicker" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;font-size:12px;font-family:var(--mono);cursor:pointer;outline:none" onchange="loadWeekFromPicker(this.value)">
@@ -615,7 +615,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.52</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.53</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -751,7 +751,7 @@ function showPage(id){
   window.scrollTo(0,0);
 }
 function goHome()    { goAnalysis(); }
-function goAnalysis(){ showPage('pgAnalysis'); setNav('navAnalysis','Weekly Analysis'); runWeekly(); }
+function goAnalysis(){ showPage('pgAnalysis'); setNav('navAnalysis','Entry & Exit Zones'); runWeekly(); }
 function goImport()  { showImportPage();       setNav('navImport','Add / Update Data'); setTimeout(loadArchiveList,500); }
 
 /* ════════════════════════════════════════════
