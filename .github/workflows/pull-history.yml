@@ -3,6 +3,10 @@ on:
   schedule:
     - cron: '30 13 * * 1-5'   # Mon-Fri, 18:30 Pakistan time (after the close)
   workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/pull_history.py'
+      - '.github/workflows/pull-history.yml'
 permissions:
   contents: write
 concurrency:
