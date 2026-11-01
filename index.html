@@ -261,9 +261,11 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 }
 .dtbl td{ border-bottom:1px solid var(--border); padding:9px 12px; color:var(--text2); }
 .wtbl{ font-size:11.5px; }
-.wtbl .sz{ white-space:nowrap; }
-.wtbl .sz2{ border-top:1px solid var(--text3); margin-top:3px; padding-top:3px; }
-.wtbl .sz b{ color:var(--text3); font-size:10px; margin-right:3px; }
+.wtbl .szw{ display:flex; }
+.wtbl .sz{ display:flex; flex-direction:column; align-items:center; white-space:nowrap; padding:0 7px; }
+.wtbl .sz:first-child{ padding-left:0; }
+.wtbl .sz2{ border-left:1px solid var(--text3); }
+.wtbl .sz b{ color:var(--text3); font-size:10px; }
 .wtbl th, .wtbl td{ padding:8px 5px; }
 .wtbl tr.hasadv>td{ border-bottom:none; }
 .wtbl tr.advrow>td{ padding:7px 12px 8px 12px; font-size:12px; line-height:1.55; color:#F5F3FF; background:#2B1D4F; }
@@ -610,7 +612,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.36</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.37</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -951,7 +953,7 @@ function tableRow(r,i){
   return `<tr class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
     <td class="sym-cell">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell">${fmt(r.Price)}</td>
-    <td class="zone-cell">${r.Plan&&r.Plan.buy.length?r.Plan.buy.map((v,i)=>{const z=r.Plan.zv&&r.Plan.zv[i];return `<div class="sz${i?' sz2':''}"><b>S${i+1}</b> ${z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v)}${r.Plan.hot&&r.Plan.hot[i]?' ★':''}</div>`;}).join(''):'—'}</td>
+    <td class="zone-cell">${r.Plan&&r.Plan.buy.length?'<div class="szw">'+r.Plan.buy.map((v,i)=>{const z=r.Plan.zv&&r.Plan.zv[i];return `<div class="sz${i?' sz2':''}"><b>S${i+1}</b><span>${z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v)}${r.Plan.hot&&r.Plan.hot[i]?' ★':''}</span></div>`;}).join('')+'</div>':'—'}</td>
     <td class="zone-cell" style="color:var(--accent);font-weight:600">${r.Plan?tpF(r.Plan.target)+(r.Plan.hotT?' ★':''):'—'}</td>
     <td class="zone-cell" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
