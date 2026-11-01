@@ -135,6 +135,38 @@ def psx_partial(page, done_years):
     return {"year": y, "n": n, "eps": round(sum(q[y][k] for k in range(1, n + 1)), 2)}
 
 
+SCS_URL = "https://scstrade.com/stockscreening/SS_CompanySnapShot.aspx?symbol="
+
+
+def scs_current(sym):
+    """scstrade snapshot: latest EPS and latest dividend of the fiscal year in progress.
+
+    Returns {"year": "2026", "n": 3, "eps": 41.25, "div": 23.5} (n = quarters reported), or None."""
+    try:
+        page = pn.fetch(SCS_URL + sym)
+    except Exception:
+        return None
+    t = re.sub(r"<script.*?</script>|<style.*?</style>", "", page, flags=re.S | re.I)
+    t = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", t))
+
+    def block(a, b):
+        i = t.find(a)
+        j = t.find(b, i) if i >= 0 else -1
+        return t[i:j] if i >= 0 and j > i else ""
+
+    def first(seg):
+        per = re.search(r"Upto (\d{4}) (\d)Q", seg)
+        val = re.search(r"Rs\. ?(-?[\d,]+\.?\d*)", seg)
+        return (per.group(1), int(per.group(2))) if per else None, float(val.group(1).replace(",", "")) if val else None
+
+    pe, eps = first(block("Earnings Latest EPS", "Important Ratios"))
+    pd, div = first(block("Dividends Latest Dividend", "Cash Cash Flow"))
+    per = pe or pd
+    if not per:
+        return None
+    return {"year": per[0], "n": per[1], "eps": eps, "div": div if (pd is None or pd == per) else None}
+
+
 def tv_history(syms):
     """TradingView scanner: {symbol: {"eps": {year: v}, "dps": {year: v}}} for the latest fiscal years."""
     body = json.dumps({"symbols": {"tickers": ["PSX:" + s for s in syms]},
@@ -193,6 +225,15 @@ def main():
         dps = {y: {"tv": v} for y, v in t["dps"].items()}
         news = pn.parse_announcements(page)[:MAX_NEWS] if page else []
         part = psx_partial(page, set(eps) | set(dps)) if page else None
+        scs = scs_current(s)
+        time.sleep(0.4)
+        if scs and scs["n"] < 4 and (part is None or (scs["year"] == part["year"])):
+            if part is None and scs["eps"] is not None and scs["year"] not in set(eps) | set(dps):
+                part = {"year": scs["year"], "n": scs["n"], "eps": scs["eps"]}
+            elif part is not None:
+                part["alt"] = scs["eps"]
+            if part is not None and scs["div"] is not None:
+                part["div"] = scs["div"]
         rows[s] = {"eps": eps, "dps": dps, "news": news}
         if part:
             rows[s]["part"] = part

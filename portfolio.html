@@ -493,7 +493,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div id="pgDivEps">
   <div class="overlay-nav"><span class="overlay-title">💰 Divid &amp; EPS</span></div>
   <div class="overlay-content">
-    <div class="hd-note">Your holdings, from 2022 (oldest to newest). EPS is the PSX number. A year not finished yet shows the total of the quarters declared so far (<span style="color:var(--accent)">3M, 6M, 9M</span>); dividends show — until the year is complete. <span style="color:var(--amber)">⚑</span> = TradingView shows a different number (shown under it). Dividends per share come from TradingView.</div>
+    <div class="hd-note">Your holdings, from 2022 (oldest to newest). EPS is the PSX number. A year not finished yet shows the total declared so far (<span style="color:var(--accent)">3M, 6M, 9M</span>), for EPS and dividends. Unfinished-year dividends and the second EPS number (SCS) come from scstrade. <span style="color:var(--amber)">⚑</span> = TradingView shows a different number (shown under it). Dividends per share come from TradingView.</div>
     <div id="hdBody"></div>
   </div>
 </div>
@@ -591,7 +591,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.93</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.94</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1727,20 +1727,20 @@ async function loadDivEps(){
   whenHoldings(box,syms=>{
     const data=syms.map(s=>{const r=d.rows[s];return{s,r,years:r?[...new Set([...Object.keys(r.eps),...Object.keys(r.dps),...(r.part?[r.part.year]:[])])].filter(y=>y>='2022').sort():[]};});
     const epsIn=(e,part,y)=>{
-      if((!e||(e.psx==null&&e.tv==null))&&part&&part.year===y)return {cls:'',h:`${hdFmt(part.eps)}<small class="pt">${part.n*3}M</small>`};
+      if((!e||(e.psx==null&&e.tv==null))&&part&&part.year===y){const df=part.alt!=null&&Math.abs(part.eps-part.alt)>Math.abs(part.eps)*0.05;return {cls:'',h:`${hdFmt(part.eps)}${df?' <u style="text-decoration:none;color:var(--amber)">⚑</u>':''}<small class="pt">${part.n*3}M</small>${df?`<small>SCS ${hdFmt(part.alt)}</small>`:''}`};}
       if(!e||(e.psx==null&&e.tv==null))return {cls:'',h:'—'};
       if(e.psx==null)return {cls:' tvonly',h:`${hdFmt(e.tv)}<small>TV</small>`};
       const diff=e.tv!=null&&Math.abs(e.psx-e.tv)>Math.abs(e.psx)*0.05;
       return {cls:'',h:`${hdFmt(e.psx)}${diff?' <u style="text-decoration:none;color:var(--amber)">⚑</u>':''}${diff?`<small>TV ${hdFmt(e.tv)}</small>`:''}`};
     };
-    const dpsIn=v=>v?hdFmt(v.tv):'—';
+    const dpsIn=(r,y)=>r.dps[y]?hdFmt(r.dps[y].tv):(r.part&&r.part.year===y&&r.part.div!=null?`${hdFmt(r.part.div)}<small class="pt">${r.part.n*3}M</small>`:'—');
     // table (desktop): one column per calendar year
     const lastY=Math.max(new Date().getFullYear(),...data.flatMap(x=>x.years.map(Number)));
     const cols=[];for(let y=2022;y<=lastY;y++)cols.push(String(y));
     const yh=cols.map(y=>`<th>${y}</th>`).join('');
     const body=data.map(x=>{
       if(!x.r)return `<tr><td class="hd-s">${hEsc(x.s)}</td><td colspan="${cols.length*2}" style="text-align:left;color:var(--text3)">No data saved for this stock yet.</td></tr>`;
-      const dp=cols.map((y,i)=>{const on=x.years.includes(y);return `<td${i===0?' class="gl"':''}>${on?dpsIn(x.r.dps[y]):''}</td>`;}).join('');
+      const dp=cols.map((y,i)=>{const on=x.years.includes(y);return `<td${i===0?' class="gl"':''}>${on?dpsIn(x.r,y):''}</td>`;}).join('');
       const ep=cols.map((y,i)=>{const on=x.years.includes(y);const c=on?epsIn(x.r.eps[y],x.r.part,y):{cls:'',h:''};return `<td class="${i===0?'gl':''}${c.cls}">${c.h}</td>`;}).join('');
       return `<tr><td class="hd-s">${hEsc(x.s)}</td>${dp}${ep}</tr>`;
     }).join('');
@@ -1749,7 +1749,7 @@ async function loadDivEps(){
     const cards=data.map(x=>{
       if(!x.r)return `<div class="hd-card"><div class="hd-sym">${hEsc(x.s)}</div><div class="hd-note" style="margin:0">No data saved for this stock yet.</div></div>`;
       const eps=x.years.map(y=>{const c=epsIn(x.r.eps[y],x.r.part,y);return `<div class="hd-y${c.cls}"><b>${y}</b><span>${c.h.replace(/<small[^>]*>.*$/,'')}</span>${(c.h.match(/<small[^>]*>.*$/)||[''])[0]}</div>`;}).join('');
-      const dps=x.years.map(y=>`<div class="hd-y"><b>${y}</b><span>${dpsIn(x.r.dps[y])}</span></div>`).join('');
+      const dps=x.years.map(y=>{const h=dpsIn(x.r,y);return `<div class="hd-y"><b>${y}</b><span>${h.replace(/<small[^>]*>.*$/,'')}</span>${(h.match(/<small[^>]*>.*$/)||[''])[0]}</div>`;}).join('');
       return `<div class="hd-card"><div class="hd-sym">${hEsc(x.s)}</div><div class="hd-blocks"><div><div class="hd-ttl">Dividends per share</div><div class="hd-yrs">${dps}</div></div><div><div class="hd-ttl">Earnings per share</div><div class="hd-yrs">${eps}</div></div></div></div>`;
     }).join('');
     box.innerHTML=table+`<div class="hd-cards">${cards}</div>`;
