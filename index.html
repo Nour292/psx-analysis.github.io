@@ -597,14 +597,14 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
   <div id="pgHome" class="page active content">
     <div class="page-header">
       <h1>Market Dashboard</h1>
-      <p>BUY candidates & EXIT signals — updated weekly</p>
+      <p>Stocks in the BUY ZONE and SELL ZONE — updated weekly</p>
     </div>
     <div class="signal-strip" id="homeSignalStrip" style="display:none"></div>
 
-    <div class="section-label sl-buy"><span></span> BUY Candidates</div>
+    <div class="section-label sl-buy"><span></span> BUY ZONE — price is at support, buy a lot</div>
     <div class="tbl-wrap"><table class="dtbl wtbl" id="homeBuyTable"><tbody></tbody></table></div>
 
-    <div class="section-label sl-exit" style="margin-top:6px"><span></span> EXIT Signals &amp; Caution</div>
+    <div class="section-label sl-exit" style="margin-top:6px"><span></span> SELL ZONE — price is at the recent high, sell the lots in profit</div>
     <div class="tbl-wrap"><table class="dtbl wtbl" id="homeExitTable"><tbody></tbody></table></div>
   </div>
 
@@ -620,7 +620,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.24</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.25</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -974,26 +974,24 @@ function tableRow(r,i){
 function renderHome(){
   if(!_rawData.length) return;
   const rows=processAll();
-  const buys=rows.filter(r=>r.Verdict==='BUY');
-  const exits=rows.filter(r=>r.Verdict==='EXIT'||r.Verdict==='CAUTION');
+  const buys=rows.filter(r=>r.Plan&&r.Plan.verdict==='BUY ZONE');
+  const sells=rows.filter(r=>r.Plan&&r.Plan.verdict==='SELL ZONE');
 
   // Home signal strip
-  const g=v=>rows.filter(r=>r.Verdict===v).length;
+  const g=v=>rows.filter(r=>r.Plan&&r.Plan.verdict===v).length;
   const strip=document.getElementById('homeSignalStrip');
   if(strip){
     strip.style.display='flex';
     strip.innerHTML=`
-      <div class="sig-card buy"><div class="sv">${g('BUY')}</div><div class="sl">Buy</div></div>
-      <div class="sig-card watch"><div class="sv">${g('WATCH')}</div><div class="sl">Watch</div></div>
-      <div class="sig-card caution"><div class="sv">${g('CAUTION')}</div><div class="sl">Caution</div></div>
-      <div class="sig-card exit"><div class="sv">${g('EXIT')}</div><div class="sl">Exit</div></div>
-      <div class="sig-card wait"><div class="sv">${g('WAIT')+g('AVOID')}</div><div class="sl">Wait/Avoid</div></div>`;
+      <div class="sig-card buy"><div class="sv">${g('BUY ZONE')}</div><div class="sl">Buy zone</div></div>
+      <div class="sig-card wait"><div class="sv">${g('WAIT')}</div><div class="sl">Wait</div></div>
+      <div class="sig-card watch"><div class="sv">${g('SELL ZONE')}</div><div class="sl">Sell zone</div></div>`;
   }
 
   const bt=document.getElementById('homeBuyTable');
-  bt.innerHTML=buys.length?tableHeader()+buys.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No BUY candidates this week</td></tr>';
+  bt.innerHTML=buys.length?tableHeader()+buys.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No stocks in the BUY ZONE</td></tr>';
   const et=document.getElementById('homeExitTable');
-  et.innerHTML=exits.length?tableHeader()+exits.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No EXIT signals this week</td></tr>';
+  et.innerHTML=sells.length?tableHeader()+sells.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No stocks in the SELL ZONE</td></tr>';
 }
 
 let _allRows=[];
