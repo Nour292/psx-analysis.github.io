@@ -615,7 +615,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.51</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.52</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1328,11 +1328,11 @@ function tpPlan(s){
   const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v)),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
   let inRes=false;o.tz=[];
   if(Z){
-    const up=Z.res.filter(z=>z.recent&&z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
+    const up=Z.res.filter(z=>z.recent&&z.lo>p).sort((a,b)=>a.lo-b.lo);
     const tzs=[];up.forEach(z=>{if(!tzs.length||z.lo>tzs[tzs.length-1].hi*1.02)tzs.push(z);});
     tzs.slice(0,2).forEach(z=>{o.tz.push({lo:z.lo,hi:z.hi,hot:near(z)});});
     if(tzs.length){o.target=tzs[0].lo;o.hotT=near(tzs[0]);}
-    const cz=Z.res.find(z=>z.recent&&p>=z.lo*0.98&&p<=z.hi*1.02);
+    const cz=Z.res.find(z=>z.recent&&p>=z.lo&&p<=z.hi*1.02);
     inRes=!!cz&&!zl.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
     if(inRes)o.sellTxt='Price is in the exit zone '+(tpF(cz.lo)!==tpF(cz.hi)?tpF(cz.lo)+'–'+tpF(cz.hi):tpF(cz.lo))+'.';
   }
