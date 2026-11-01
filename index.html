@@ -615,7 +615,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.55</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.56</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1291,10 +1291,12 @@ function tpZones(sym){
   return _tpZ[sym]={sup:clus(lo,4),res:clus(hi,5)};
 }
 // a single low (no zone yet) is shown as the band of daily lows around it over the last 12 months
-function tpBand(sym,v){
+function tpBand(sym,v,cap){
   const h=_tpHist[sym];if(!h||h.length<30)return {lo:v,hi:v};
   const lows=h.slice(-250).map(r=>r[2]).filter(x=>x>=v*0.995&&x<=v*1.03);
-  return lows.length?{lo:Math.min(v,...lows),hi:Math.max(v,...lows)}:{lo:v,hi:v};
+  const b=lows.length?{lo:Math.min(v,...lows),hi:Math.max(v,...lows)}:{lo:v,hi:v};
+  if(cap!=null&&b.hi>cap)b.hi=Math.max(b.lo,Math.min(b.hi,cap));
+  return b;
 }
 function tpPlan(s){
   const p=tpN(s.Price);if(p==null)return null;
@@ -1317,15 +1319,17 @@ function tpPlan(s){
   }
   if(zl.length){
     lv.length=0;zl.forEach(z=>{lv.push(z.hi);hot.push(near(z));zv.push({lo:z.lo,hi:z.hi});});zstop=zl[0].lo*0.99;
-    if(lv.length<2){const old=real.filter(v=>v<lv[0]*0.98);if(old.length){lv.push(old[0]);hot.push(false);zv.push({lo:old[0],hi:old[0]});}}
+    if(lv.length<2){const old=real.filter(v=>v<zv[0].lo*0.98);if(old.length){lv.push(old[0]);hot.push(false);zv.push({lo:old[0],hi:old[0]});}}
   }
   if(Z&&lv.length===1){
-    const nx=Z.sup.filter(z=>z.hi<lv[0]*0.98&&z.hi>=lv[0]*0.70).sort((a,b)=>b.hi-a.hi)[0];
+    const base=zv[0]&&zv[0].lo<lv[0]?zv[0].lo:lv[0];
+    const nx=Z.sup.filter(z=>z.hi<base*0.98&&z.hi>=base*0.70).sort((a,b)=>b.hi-a.hi)[0];
     if(nx){while(zv.length<1)zv.push({lo:lv[0],hi:lv[0]});while(hot.length<1)hot.push(false);lv.push(nx.hi);hot.push(near(nx));zv.push({lo:nx.lo,hi:nx.hi});}
   }
   if(lv.length>1&&lv[1]<lv[0]*0.70){lv.length=1;hot.length=1;zv.length=1;}
-  const zt=i=>{const z=(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:(lv[i]!=null?tpBand(String(s.Symbol||'').toUpperCase(),lv[i]):null);return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
-  const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v)),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
+  const e1lo=i=>i?(zv[0]?zv[0].lo:lv[0])*0.98:null;
+  const zt=i=>{const z=(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:(lv[i]!=null?tpBand(String(s.Symbol||'').toUpperCase(),lv[i],e1lo(i)):null);return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
+  const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v,e1lo(i))),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
   let inRes=false;o.tz=[];
   if(Z){
     const up=Z.res.filter(z=>z.recent&&z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
