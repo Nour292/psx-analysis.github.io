@@ -340,6 +340,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   .hd-blocks{ grid-template-columns:1fr; gap:10px; }
   .hd-card{ padding:10px; }
 }
+@media (max-width:760px){
+  .sidebar{ z-index:8000; }
+  .sb-toggle-tab{ z-index:8001; }
+  .main, :root.sb-collapsed .main{ margin-left:var(--sidebar-w-collapsed) !important; }
+}
+#pgDividends,#pgCashFlow,#pgHistory,#pgQasimPortfolio,#pgQasimStock,#pgDataEntry,#pgDivEps,#pgHeldNews{}
 </style>
 </head>
 <body>
@@ -585,7 +591,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.92</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.93</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -757,7 +763,16 @@ function toggleTheme(){const isLight=document.documentElement.classList.contains
 function hardRefresh(){window.location.reload(true);}
 function openFinance(){window.location.href='finance.html';}
 function goPortDash(){ALL_OVERLAYS.forEach(id=>{document.getElementById(id).classList.remove('open');});document.querySelectorAll('.nav-sub-btn').forEach(n=>n.classList.remove('active'));const d=document.getElementById('navPortDash');if(d)d.classList.add('active');_activeOverlay=null;}
-function toggleGrp(grp){if(grp==='port'){const btn=document.getElementById('navPortBtn'),sub=document.getElementById('navPortSub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');}}else{const btn=document.getElementById('navTABtn'),sub=document.getElementById('navTASub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');window.location.href='index.html';}}}
+/* phone: the sidebar starts as a thin strip; tapping a group opens it over the page, picking an item or tapping the page closes it */
+function phoneSb(collapse){const sb=document.getElementById('sidebar');if(!sb)return;sb.classList.toggle('collapsed',collapse);document.documentElement.classList.toggle('sb-collapsed',collapse);}
+document.addEventListener('click',function(e){
+  if(window.innerWidth>760)return;
+  const sb=document.getElementById('sidebar');if(!sb||sb.classList.contains('collapsed'))return;
+  if(e.target.closest('.sb-toggle-tab'))return;
+  if(e.target.closest('#sidebar')&&!e.target.closest('.nav-sub-btn,.nav-item'))return;
+  phoneSb(true);
+});
+function toggleGrp(grp){if(window.innerWidth<=760&&document.getElementById('sidebar').classList.contains('collapsed')){phoneSb(false);document.getElementById(grp==='port'?'navPortSub':'navTASub').classList.add('open');document.getElementById(grp==='port'?'navPortBtn':'navTABtn').classList.add('open');return;}if(grp==='port'){const btn=document.getElementById('navPortBtn'),sub=document.getElementById('navPortSub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');}}else{const btn=document.getElementById('navTABtn'),sub=document.getElementById('navTASub'),open=sub.classList.contains('open');if(open){sub.classList.remove('open');btn.classList.remove('open');}else{sub.classList.add('open');btn.classList.add('open');window.location.href='index.html';}}}
 let _activeOverlay=null;
 function toggleOverlay(overlayId,navId,onOpenFn){const overlay=document.getElementById(overlayId);const isOpen=overlay.classList.contains('open');ALL_OVERLAYS.forEach(id=>{document.getElementById(id).classList.remove('open');});ALL_OVERLAY_NAVS.forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});if(!isOpen){overlay.classList.add('open');const nav=document.getElementById(navId);if(nav)nav.classList.add('active');_activeOverlay=overlayId;if(onOpenFn)onOpenFn();}else{_activeOverlay=null;}}
 function initHistory(){populateSymbolDropdown();document.getElementById('srchSym').value='';document.getElementById('srchResult').innerHTML='';}
