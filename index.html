@@ -607,7 +607,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.32</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.33</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1271,8 +1271,11 @@ function tpPlan(s){
   const p=tpN(s.Price);if(p==null)return null;
   const m50=tpN(s['MA50-D']),m200=tpN(s['MA200-D']),l1=tpN(s['Low-1M']),h1=tpN(s['High-1M']),l3=tpN(s['Low-3M']),h3=tpN(s['High-3M']),l52=tpN(s['52W-Low']),h52=tpN(s['52W-High']),l6=tpN(s['Low-6M']),ps1=tpN(s['Pivot-S1']),ps2=tpN(s['Pivot-S2']);
   // support levels: moving averages and recent lows that are at or just above/below the price; levels within 2% of each other count as one
-  const cand=[m50,m200,l1,l3,l6,ps1,ps2,l52].filter(v=>v!=null&&v>0&&v<=p*1.03).sort((a,b)=>b-a);
-  const lv=[];cand.forEach(v=>{if(!lv.length||lv[lv.length-1]/v>1.02)lv.push(v);});
+  const ok=v=>v!=null&&v>0&&v<=p*1.03;
+  const real=[m50,m200,l1,l3,l6,l52].filter(ok).sort((a,b)=>b-a);
+  const lv=[];real.forEach(v=>{if(!lv.length||lv[lv.length-1]/v>1.02)lv.push(v);});
+  // monthly pivots are only used as the second level (where to add if the first breaks)
+  if(lv.length===1){const pv=[ps1,ps2].filter(v=>ok(v)&&v<lv[0]/1.02).sort((a,b)=>b-a);if(pv.length)lv.push(pv[0]);}
   const highs=[h1,h3,h52].filter(v=>v!=null&&v>p*1.03);
   if(lv.length>1&&lv[1]<lv[0]*0.80)lv.length=1;
   const o={p,buy:lv.slice(0,2),stop:lv.length?lv[0]*0.97:null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
