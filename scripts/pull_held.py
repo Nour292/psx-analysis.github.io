@@ -7,6 +7,7 @@ Writes tickers/held.json. Standard library only. Run: python scripts/pull_held.p
 """
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -24,7 +25,7 @@ KEY = "AIzaSyBfjtlvDvGxmS1OcqFVGNMMadqza1ofCrI"
 REFERER = {"Referer": "https://nour292.github.io/psx-analysis.github.io/"}
 NEWS_DAYS = 92
 MAX_NEWS = 60
-KEEP_YEARS = 6
+KEEP_YEARS = 12
 
 
 def sheets(path):
@@ -97,6 +98,43 @@ def psx_eps(page):
     return {y: v for y, v in zip(years, vals)}
 
 
+def psx_partial(page, done_years):
+    """EPS of the newest fiscal year that has only quarterly results so far.
+
+    Returns {"year": "2026", "n": 3, "eps": 35.23} (sum of Q1..Qn), or None when that year is already complete."""
+    t = pn.norm(page)
+    i = t.find("All numbers in thousands")
+    if i < 0:
+        return None
+    seg = t[i:i + 7000]
+    m = re.search(r"\|((?:Q\d \d{4}\|){2,6})", seg)
+    if not m:
+        return None
+    labels = [x for x in m.group(1).split("|") if x]
+    rest = seg[m.end():].split("|")
+    if "EPS" not in rest:
+        return None
+    vals = []
+    for x in rest[rest.index("EPS") + 1:rest.index("EPS") + 1 + len(labels)]:
+        v = pn.parse_num(x)
+        if v is None:
+            break
+        vals.append(v)
+    if len(vals) < len(labels):
+        return None
+    q = {}
+    for lab, v in zip(labels, vals):
+        n, y = lab.split(" ")
+        q.setdefault(y, {})[int(n[1:])] = v
+    y = max(q)
+    if y in done_years:
+        return None
+    n = max(q[y])
+    if any(k not in q[y] for k in range(1, n + 1)):
+        return None
+    return {"year": y, "n": n, "eps": round(sum(q[y][k] for k in range(1, n + 1)), 2)}
+
+
 def tv_history(syms):
     """TradingView scanner: {symbol: {"eps": {year: v}, "dps": {year: v}}} for the latest fiscal years."""
     body = json.dumps({"symbols": {"tickers": ["PSX:" + s for s in syms]},
@@ -154,7 +192,10 @@ def main():
             eps[y] = e
         dps = {y: {"tv": v} for y, v in t["dps"].items()}
         news = pn.parse_announcements(page)[:MAX_NEWS] if page else []
+        part = psx_partial(page, set(eps) | set(dps)) if page else None
         rows[s] = {"eps": eps, "dps": dps, "news": news}
+        if part:
+            rows[s]["part"] = part
     out = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "news_days": NEWS_DAYS, "rows": rows}
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(out, fh, separators=(",", ":"))
