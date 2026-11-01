@@ -637,7 +637,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.58</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.59</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -694,8 +694,9 @@ function toggleSidebar(){
   document.documentElement.classList.toggle('sb-collapsed',collapsed);
   localStorage.setItem('psx_sb_collapsed',collapsed?'1':'0');
 }
+function sbStartsCollapsed(){const v=localStorage.getItem('psx_sb_collapsed');return v==='1'||(v===null&&window.innerWidth<=760);}
 document.addEventListener('DOMContentLoaded',function(){
-  if(localStorage.getItem('psx_sb_collapsed')==='1'){
+  if(sbStartsCollapsed()){
     const sb=document.getElementById('sidebar');
     if(sb)sb.classList.add('collapsed');
     document.documentElement.classList.add('sb-collapsed');
@@ -709,7 +710,7 @@ document.addEventListener('DOMContentLoaded',function(){
   const saved = localStorage.getItem('psx_theme');
   if(saved === 'light') applyLight();
   // apply sidebar state immediately to prevent layout flash
-  if(localStorage.getItem('psx_sb_collapsed')==='1') document.documentElement.classList.add('sb-collapsed');
+  if(sbStartsCollapsed()) document.documentElement.classList.add('sb-collapsed');
 })();
 
 function applyLight(){
