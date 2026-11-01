@@ -613,14 +613,14 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.9</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.10</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
     <div class="signal-strip" id="signalSummary" style="margin-bottom:16px"></div>
     <div style="margin-bottom:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);line-height:1.8">
-      <b>Verdict</b> = trend score from MA, MACD and RSI. <b>Plan</b> = the chat-system rules: <b>BUY</b> price is at support, enter now · <b>WAIT</b> wait for a lower price · <b>REV-WATCH</b> price is falling to support, buy only after a green close · <b>SKIP</b> reward is too small for the risk.<br>
-      <b>Stop</b> = sell if price falls to this · <b>T1 / T2</b> = target prices to sell.
+      <b>Verdict</b> = trend score from MA, MACD and RSI. <b>Plan</b> = your buying style: <b>BUY ZONE</b> price is at a support level, buy a lot · <b>WAIT</b> wait for a pullback to the buy level · <b>SELL ZONE</b> price is at the recent high, sell the lots in profit.<br>
+      <b>Buy at</b> = support levels (the second one is where to add if the first breaks) · <b>Stop</b> = where support breaks, shown for information only · <b>Target</b> = the last high.
     </div>
     <div class="filter-bar" id="filterBar">
       <div class="filter-group">
@@ -953,8 +953,9 @@ function tableHeader(){
     <th>Price</th>
     <th>Support</th>
     <th>Resistance</th>
+    <th>Buy at</th>
     <th>Stop</th>
-    <th>T1 / T2</th>
+    <th>Target</th>
     <th>Score${prevNote}</th>
     <th>Verdict</th>
     <th>Plan</th>
@@ -984,8 +985,9 @@ function tableRow(r,i){
     <td class="price-cell">${fmt(r.Price)}${pchg}</td>
     <td class="zone-cell">${r.Support}</td>
     <td class="zone-cell">${r.Resistance}</td>
+    <td class="zone-cell">${r.Plan&&r.Plan.buy.length?r.Plan.buy.map(tpF).join(' / '):'—'}</td>
     <td class="zone-cell">${r.Plan?tpF(r.Plan.stop):'—'}</td>
-    <td class="zone-cell" style="color:var(--accent)">${r.Plan?tpF(r.Plan.t1)+' / '+tpF(r.Plan.t2):'—'}</td>
+    <td class="zone-cell" style="color:var(--accent)">${r.Plan?tpF(r.Plan.target):'—'}</td>
     <td class="score-cell">${r.Score}${deltaStr}${spark}</td>
     <td class="${vcls}">${r.VLabel}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
@@ -1014,9 +1016,9 @@ function renderHome(){
   }
 
   const bt=document.getElementById('homeBuyTable');
-  bt.innerHTML=buys.length?tableHeader()+buys.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="12" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No BUY candidates this week</td></tr>';
+  bt.innerHTML=buys.length?tableHeader()+buys.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="13" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No BUY candidates this week</td></tr>';
   const et=document.getElementById('homeExitTable');
-  et.innerHTML=exits.length?tableHeader()+exits.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="12" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No EXIT signals this week</td></tr>';
+  et.innerHTML=exits.length?tableHeader()+exits.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="13" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No EXIT signals this week</td></tr>';
 }
 
 let _allRows=[];
@@ -1073,7 +1075,7 @@ function applyFilters(){
   if(fc)fc.textContent=shown===total?total+' symbols':shown+' / '+total+' symbols';
   document.getElementById('fullTable').innerHTML=rows.length
     ?tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('')
-    :'<tr><td colspan="12" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">No results match the selected filters.</td></tr>';
+    :'<tr><td colspan="13" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">No results match the selected filters.</td></tr>';
 }
 function runWeekly(){
   showPage('pgAnalysis');
@@ -1348,40 +1350,18 @@ function computeSetupQuality(sym,s,verdict){
 let _tpLdcp={},_tpNews=null,_tpList=null;
 const tpN=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
 const tpF=v=>v==null||isNaN(v)?'—':fmt(v);
-function tpPlan(s,ldcp){
-  const p=tpN(s.Price),m50=tpN(s['MA50-D']),m200=tpN(s['MA200-D']),rsi=tpN(s['RSI-D']);
-  const l1=tpN(s['Low-1M']),h1=tpN(s['High-1M']),l3=tpN(s['Low-3M']),h3=tpN(s['High-3M']),h52=tpN(s['52W-High']);
-  const vol=tpN(s['Volume-D']),avg=tpN(s['Vol-Avg30D']);
-  if(p==null||m50==null||l3==null||h3==null) return null;
-  const volRatio=(vol!=null&&avg)?vol/avg:null,green=ldcp!=null&&p>ldcp;
-  let trend='Sideways';
-  if(m200!=null&&p>m50&&m50>m200) trend='Uptrend';
-  else if(p<m50&&(m200==null||p<m200)&&rsi!=null&&rsi<45&&l1!=null&&l1<=l3*1.02) trend='Downtrend';
-  const o={trend,p,rsi,volRatio,green,watch:false,low:false};
-  if(trend==='Downtrend'){
-    const zone=l3,top=zone*1.03,entry=zone*1.015,stop=zone*0.97;
-    const t1=m50>entry*1.03?m50:(h1!=null&&h1>entry*1.03?h1:m50);
-    const t2=(m200!=null&&m200>t1*1.01)?m200:(h3>t1*1.01?h3:t1*1.1);
-    const rr1=(t1-entry)/(entry-stop),rr2=(t2-entry)/(entry-stop);
-    Object.assign(o,{zoneLo:zone,zoneHi:top,entry,stop,t1,t2,rr1,rr2});
-    if(p<zone*0.995){o.verdict='SKIP';o.why='Zone broken: price is under the 3-month low.';}
-    else if(rr1<2){o.verdict='SKIP';o.why='Reward to T1 is under 1:2.';}
-    else if(green&&p<=top*1.03&&(volRatio==null||volRatio>=1)){o.verdict='REV-BUY';o.why='Green day up from the zone'+(volRatio!=null?', volume '+volRatio.toFixed(1)+'x average':'')+'. Small size, confirm on the close.';}
-    else{o.verdict='REV-WATCH';o.why='Buy only after a green daily close up from the zone (volume rising, RSI turning up).';}
-    o.watch=(p-top)/p<=0.03||o.verdict==='REV-BUY';
-  }else{
-    let entry,t1,t2;
-    if(trend==='Uptrend'){entry=m50;t1=(h1!=null&&h1>entry*1.02)?h1:h3;t2=h3>t1*1.01?h3:((h52!=null&&h52>t1*1.01)?h52:t1*1.05);}
-    else{entry=l3;t1=(l3+h3)/2;t2=h3>t1*1.01?h3:t1*1.05;}
-    let stop=entry*0.96;if(l1!=null&&l1<entry&&l1>=entry*0.95)stop=Math.min(stop,l1*0.99);stop=Math.max(entry*0.95,Math.min(stop,entry*0.97));
-    const rr1=(t1-entry)/(entry-stop),rr2=(t2-entry)/(entry-stop);
-    Object.assign(o,{zoneLo:entry,zoneHi:entry*1.01,entry,stop,t1,t2,rr1,rr2});
-    if(rr1<1.5){o.verdict='WAIT';o.low=true;o.why='Reward to T1 is under 1:1.5, low priority.';}
-    else if(p<=entry*1.03&&p>=stop){o.verdict='BUY';o.why='Price is at support. Risk '+((1-stop/p)*100).toFixed(1)+'% to the stop.';}
-    else{o.verdict='WAIT';o.why=p>entry?'Wait for a pullback to '+tpF(entry)+'.':'Price is under the entry zone, wait for it to hold.';}
-    o.watch=o.verdict==='BUY';
-    if(trend==='Sideways'&&h3/l3>1.4)o.why+=' Wide 3-month range, check the chart.';
-  }
+function tpPlan(s){
+  const p=tpN(s.Price);if(p==null)return null;
+  const m50=tpN(s['MA50-D']),m200=tpN(s['MA200-D']),l1=tpN(s['Low-1M']),h1=tpN(s['High-1M']),l3=tpN(s['Low-3M']),h3=tpN(s['High-3M']),l52=tpN(s['52W-Low']),h52=tpN(s['52W-High']);
+  // support levels: moving averages and recent lows that are at or just above/below the price; levels within 2% of each other count as one
+  const cand=[m50,m200,l1,l3,l52].filter(v=>v!=null&&v>0&&v<=p*1.03).sort((a,b)=>b-a);
+  const lv=[];cand.forEach(v=>{if(!lv.length||lv[lv.length-1]/v>1.02)lv.push(v);});
+  const highs=[h1,h3,h52].filter(v=>v!=null&&v>p*1.03);
+  const o={p,buy:lv.slice(0,2),stop:lv.length?lv[0]*0.97:null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
+  if(h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05)){o.verdict='SELL ZONE';o.target=h1;o.why='Price is at the recent high ('+tpF(h1)+'). Sell the lots that are in profit.';return o;}
+  if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
+  if(p<=lv[0]*1.03){o.verdict='BUY ZONE';o.why='Price is at support '+tpF(lv[0])+'. Buy a lot here.'+(lv[1]?' If it breaks, the next level is '+tpF(lv[1])+'.':' No lower level is known.');}
+  else{o.why='Wait for a pullback to '+tpF(lv[0])+', then buy.'+(lv[1]?' Next level: '+tpF(lv[1])+'.':'');}
   return o;
 }
 function tpExDiv(s){
@@ -1395,7 +1375,7 @@ function tpNewsText(sym){
   const fl=[];(n.items||[]).forEach(i=>i.flags.forEach(f=>{if(f!=='Insider'&&!fl.includes(f))fl.push(f);}));
   const q=n.quarter&&n.quarter.change!=null&&Math.abs(n.quarter.change)>=5?n.quarter.label+' profit '+(n.quarter.change>0?'+':'')+Math.round(n.quarter.change)+'%':'';
   const parts=[];if(fl.length)parts.push(fl.slice(0,3).join(', '));if(q)parts.push(q);
-  return parts.length?'News: '+parts.join('; ')+'.':'';
+  return parts.length?((n.quarter&&n.quarter.change!=null&&n.quarter.change<=-10?'Warning: ':'News: ')+parts.join('; ')+'.'):'';
 }
 async function tpLoadExtras(){
   try{const r=await fetch(gsUrl('Prices'));const j=await r.json();const rows=j.values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());const li=h.indexOf('ldcp');_tpLdcp={};if(li>=0)rows.slice(1).forEach(r=>{const sy=String(r[0]||'').trim().toUpperCase(),l=parseFloat(r[li]);if(sy&&l>0)_tpLdcp[sy]=l;});}catch(e){}
@@ -1405,9 +1385,9 @@ async function tpLoadExtras(){
 function tpAdviceHtml(sym,s,plan){
   if(!plan)return '';
   const ex=tpExDiv(s),nw=tpNewsText(sym);
-  return [tkEsc(plan.trend+'. '+plan.why),ex?tkEsc(ex):'',nw?'<span style="color:var(--accent)">'+tkEsc(nw)+'</span>':''].filter(Boolean).join(' ');
+  return [tkEsc(plan.why),ex?tkEsc(ex):'',nw?'<span style="color:'+(nw.indexOf('Warning')===0?'#F59E0B':'var(--accent)')+'">'+tkEsc(nw)+'</span>':''].filter(Boolean).join(' ');
 }
-function tpBadge(v){const m={'BUY':'background:#10B981;color:#04210f','REV-BUY':'background:#10B981;color:#04210f','WAIT':'background:#F59E0B;color:#2a1a00','REV-WATCH':'border:1px solid #38BDF8;color:#38BDF8','SKIP':'background:#F43F5E;color:#2b0509'};return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;${m[v]||''}">${v}</span>`;}
+function tpBadge(v){const m={'BUY ZONE':'background:#10B981;color:#04210f','WAIT':'background:#F59E0B;color:#2a1a00','SELL ZONE':'background:#38BDF8;color:#04202e'};return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;${m[v]||''}">${v}</span>`;}
 
 /* ════════════════════════════════════════════
    TICKERS TAB — admin ("qasim") only
