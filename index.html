@@ -644,7 +644,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.63</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.64</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1350,32 +1350,39 @@ function tpPlan(s){
   const highs=[h1,h3,h52].filter(v=>v!=null&&v>p*1.03);
   const Z=tpZones(String(s.Symbol||'').toUpperCase()),mas=[m50,m200].filter(v=>v!=null);
   const near=(z)=>mas.some(m=>m>=z.lo*0.98&&m<=z.hi*1.02);
-  let zl=[],hot=[],zstop=null,merged=false;const zv=[];
+  let zl=[],hot=[],zstop=null;const zv=[];
   if(Z){
     // a zone the price has fallen below is broken: skip it
     const sz=Z.sup.filter(z=>z.hi<=p*1.03&&z.lo<=p).sort((a,b)=>b.hi-a.hi);
     const rec=sz.find(z=>z.recent);
-    if(rec){
-      // zones less than 5% apart are one support area: join them into one band, the second zone is looked for below the band
-      const parts=[rec];let bLo=rec.lo;
-      for(let again=true;again;){again=false;sz.forEach(z=>{if(!parts.includes(z)&&z.hi>=bLo*0.95){parts.push(z);bLo=Math.min(bLo,z.lo);again=true;}});}
-      const band=parts.length>1?{lo:bLo,hi:rec.hi,recent:true,parts}:rec;
-      if(parts.length>1)merged=true;
-      zl.push(band);
-      const nx=sz.find(z=>z.hi<band.lo*0.95&&z.hi>=band.lo*0.70);if(nx)zl.push(nx);
-    }
+    if(rec){zl.push(rec);const nx=sz.find(z=>z.hi<rec.lo*0.98&&z.hi>=rec.lo*0.70);if(nx)zl.push(nx);}
   }
   if(zl.length){
-    lv.length=0;zl.forEach(z=>{lv.push(z.hi);hot.push(z.parts?z.parts.some(near):near(z));zv.push({lo:z.lo,hi:z.hi});});zstop=zl[0].lo*0.99;
+    lv.length=0;zl.forEach(z=>{lv.push(z.hi);hot.push(near(z));zv.push({lo:z.lo,hi:z.hi});});zstop=zl[0].lo*0.99;
     if(lv.length<2){const old=real.filter(v=>v<zv[0].lo*0.98);if(old.length){lv.push(old[0]);hot.push(false);zv.push({lo:old[0],hi:old[0]});}}
   }
   if(Z&&lv.length===1){
     const base=zv[0]&&zv[0].lo<lv[0]?zv[0].lo:lv[0];
-    const nx=Z.sup.filter(z=>z.hi<base*0.95&&z.hi>=base*0.70).sort((a,b)=>b.hi-a.hi)[0];
+    const nx=Z.sup.filter(z=>z.hi<base*0.98&&z.hi>=base*0.70).sort((a,b)=>b.hi-a.hi)[0];
     if(nx){while(zv.length<1)zv.push({lo:lv[0],hi:lv[0]});while(hot.length<1)hot.push(false);lv.push(nx.hi);hot.push(near(nx));zv.push({lo:nx.lo,hi:nx.hi});}
   }
   if(lv.length>1&&lv[1]<lv[0]*0.70){lv.length=1;hot.length=1;zv.length=1;}
   const e1lo=i=>i?(zv[0]?zv[0].lo:lv[0])*0.98:null;
+  // two entry zones less than 5% apart are one support area: the band runs from the low of the 2nd zone to the low of the 1st zone
+  let merged=false;
+  if(lv.length>1){
+    const sym=String(s.Symbol||'').toUpperCase();
+    const d1=(zv[0]&&zv[0].lo<zv[0].hi)?zv[0]:tpBand(sym,lv[0],null),d2=(zv[1]&&zv[1].lo<zv[1].hi)?zv[1]:tpBand(sym,lv[1],e1lo(1));
+    if((d1.lo-d2.hi)/d1.lo<0.05&&d2.lo<d1.lo){
+      merged=true;const b={lo:d2.lo,hi:d1.lo};
+      lv.length=0;zv.length=0;hot.length=0;
+      lv.push(b.hi);zv.push(b);hot.push(mas.some(m=>m>=b.lo*0.98&&m<=b.hi*1.02));
+      const nx=Z?Z.sup.filter(z=>z.hi<b.lo*0.95&&z.hi>=b.lo*0.70).sort((x,y)=>y.hi-x.hi)[0]:null;
+      if(nx&&nx.hi>=b.hi*0.70){lv.push(nx.hi);zv.push({lo:nx.lo,hi:nx.hi});hot.push(near(nx));}
+      else{const old=real.filter(v=>v<b.lo*0.95&&v>=b.hi*0.70);if(old.length){lv.push(old[0]);zv.push({lo:old[0],hi:old[0]});hot.push(false);}}
+      zl=[{lo:b.lo,hi:b.hi,recent:true}];zstop=b.lo*0.99;
+    }
+  }
   const zt=i=>{const z=(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:(lv[i]!=null?tpBand(String(s.Symbol||'').toUpperCase(),lv[i],e1lo(i)):null);return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
   const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v,e1lo(i))),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
   let inRes=false;o.tz=[];
@@ -1397,7 +1404,7 @@ function tpPlan(s){
     if(!inRes)o.sellTxt='Price is at the recent high ('+tpF(h1)+').';
     o.verdict='SELL ZONE';o.target=inRes?(o.target>p*1.03?o.target:(h1||p)):h1;o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.';return o;}
   if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
-  if(p<=Math.max(lv[0],(o.zv[0]&&o.zv[0].hi)||0)*1.01){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+(hot[0]?' (strong: a moving average is here too)':'')+(merged?'. Two close zones are joined here: buy a small lot in the upper part and a bigger lot near the bottom.':'. Buy a lot here.')+(lv[1]?' If it breaks, the next support is '+zt(1)+'.':' No lower support zone found.');}
+  if(p<=Math.max(lv[0],(o.zv[0]&&o.zv[0].hi)||0)*1.01){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+(hot[0]?' (strong: a moving average is here too)':'')+(merged?'. Two close zones are joined here: buy a small lot near the top and a bigger lot near the bottom.':'. Buy a lot here.')+(lv[1]?' If it breaks, the next support is '+zt(1)+'.':' No lower support zone found.');}
   else{o.why='Wait for a pullback to '+zt(0)+', then buy.'+(lv[1]?' Next support: '+zt(1)+'.':'');}
   return o;
 }
