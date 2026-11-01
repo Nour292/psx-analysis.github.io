@@ -271,7 +271,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 
 .sym-cell{ font-weight:700; color:var(--text); font-size:13px; }
 .price-cell{ font-family:var(--mono); color:var(--text); font-weight:500; }
-.zone-cell{ font-family:var(--mono); font-size:11.5px; color:var(--text3); }
+.zone-cell{ font-family:var(--mono); font-size:11.5px; color:var(--text3); white-space:nowrap; }
 .score-cell{ font-family:var(--mono); font-weight:700; color:var(--text); }
 .trend-cell{ text-align:center; font-size:14px; }
 
@@ -610,7 +610,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.6</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.7</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -984,7 +984,7 @@ function tableRow(r,i){
     <td class="zone-cell">${r.Resistance}</td>
     <td class="zone-cell">${r.Plan?tpF(r.Plan.stop):'—'}</td>
     <td class="zone-cell" style="color:var(--accent)">${r.Plan?tpF(r.Plan.t1)+' / '+tpF(r.Plan.t2):'—'}</td>
-    <td style="font-family:var(--mono);font-size:12px">${r.Plan?r.Plan.rr1.toFixed(1)+' / '+r.Plan.rr2.toFixed(1):'—'}</td>
+    <td style="font-family:var(--mono);font-size:12px;white-space:nowrap">${r.Plan?r.Plan.rr1.toFixed(1)+' / '+r.Plan.rr2.toFixed(1):'—'}</td>
     <td class="score-cell">${r.Score}${deltaStr}${spark}</td>
     <td class="${vcls}">${r.VLabel}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
