@@ -305,6 +305,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .hd-note{font-size:11.5px;color:var(--text3);margin-bottom:12px;line-height:1.6;}
 .hd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;}
 .hd-sym{font-size:15px;font-weight:800;font-family:var(--mono);color:var(--text);margin-bottom:8px;}
+.hd-cards{display:none;}
+.hd-tblwrap{border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;background:var(--surface);}
+.hd-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.hd-tbl th{background:var(--surface2);color:var(--text3);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:8px 6px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;}
+.hd-tbl td{padding:8px 6px;text-align:center;font-family:var(--mono);font-weight:700;border-bottom:1px solid var(--border);vertical-align:top;}
+.hd-tbl tbody tr:last-child td{border-bottom:none;}
+.hd-tbl tbody tr:hover td{background:var(--surface2);}
+.hd-tbl .gl{border-left:1px solid var(--border2);}
+.hd-tbl td.hd-s{text-align:left;padding-left:12px;color:var(--text);font-size:14px;}
+.hd-tbl td small{display:block;font-size:9.5px;color:var(--amber);font-weight:500;line-height:1.2;margin-top:1px;}
+.hd-tbl td.tvonly{color:var(--text2);}
+.hn-a{color:inherit;text-decoration:none;}
+.hn-a:hover{text-decoration:underline;}
+.hn-pdf{font-size:10px;font-family:var(--mono);color:var(--accent);border:1px solid var(--border);border-radius:3px;padding:0 4px;margin-left:4px;white-space:nowrap;}
 .hd-blocks{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .hd-ttl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
 .hd-yrs{display:flex;gap:6px;}
@@ -320,6 +334,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .hn-it i{font-style:normal;font-family:var(--mono);color:var(--text3);margin-right:6px;}
 .hn-chip{font-size:10px;padding:1px 6px;border-radius:3px;background:var(--accent-dim);color:var(--accent);margin-right:4px;}
 @media (max-width:760px){
+  .hd-tblwrap{ display:none; }
+  .hd-cards{ display:block; }
   .hd-blocks{ grid-template-columns:1fr; gap:10px; }
   .hd-card{ padding:10px; }
 }
@@ -568,7 +584,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.89</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.90</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1693,20 +1709,32 @@ async function loadDivEps(){
   const d=await loadHeldData();
   if(!d){box.innerHTML='<p style="padding:20px;color:var(--text3)">No data saved yet.</p>';return;}
   whenHoldings(box,syms=>{
-    box.innerHTML=syms.map(s=>{
-      const r=d.rows[s];
-      if(!r)return `<div class="hd-card"><div class="hd-sym">${hEsc(s)}</div><div class="hd-note" style="margin:0">No data saved for this stock yet.</div></div>`;
-      const years=[...new Set([...Object.keys(r.eps),...Object.keys(r.dps)])].sort().slice(-5);
-      const eps=years.map(y=>{
-        const e=r.eps[y]||{};
-        if(e.psx==null&&e.tv==null)return `<div class="hd-y"><b>${y}</b><span>—</span></div>`;
-        if(e.psx==null)return `<div class="hd-y tvonly"><b>${y}</b><span>${hdFmt(e.tv)}</span><small>TV</small></div>`;
-        const diff=e.tv!=null&&Math.abs(e.psx-e.tv)>Math.abs(e.psx)*0.05;
-        return `<div class="hd-y"><b>${y}</b><span>${hdFmt(e.psx)}${diff?' <u style="text-decoration:none;color:var(--amber)">⚑</u>':''}</span>${diff?`<small>TV ${hdFmt(e.tv)}</small>`:''}</div>`;
-      }).join('');
-      const dps=years.map(y=>{const v=r.dps[y];return `<div class="hd-y"><b>${y}</b><span>${v?hdFmt(v.tv):'—'}</span></div>`;}).join('');
-      return `<div class="hd-card"><div class="hd-sym">${hEsc(s)}</div><div class="hd-blocks"><div><div class="hd-ttl">Dividends per share</div><div class="hd-yrs">${dps}</div></div><div><div class="hd-ttl">Earnings per share</div><div class="hd-yrs">${eps}</div></div></div></div>`;
+    const data=syms.map(s=>{const r=d.rows[s];return{s,r,years:r?[...new Set([...Object.keys(r.eps),...Object.keys(r.dps)])].sort().slice(-5):[]};});
+    const epsIn=e=>{
+      if(!e||(e.psx==null&&e.tv==null))return {cls:'',h:'—'};
+      if(e.psx==null)return {cls:' tvonly',h:`${hdFmt(e.tv)}<small>TV</small>`};
+      const diff=e.tv!=null&&Math.abs(e.psx-e.tv)>Math.abs(e.psx)*0.05;
+      return {cls:'',h:`${hdFmt(e.psx)}${diff?' <u style="text-decoration:none;color:var(--amber)">⚑</u>':''}${diff?`<small>TV ${hdFmt(e.tv)}</small>`:''}`};
+    };
+    const dpsIn=v=>v?hdFmt(v.tv):'—';
+    // table (desktop): one column per calendar year
+    const cols=[...new Set(data.flatMap(x=>x.years))].sort();
+    const yh=cols.map(y=>`<th>${y}</th>`).join('');
+    const body=data.map(x=>{
+      if(!x.r)return `<tr><td class="hd-s">${hEsc(x.s)}</td><td colspan="${cols.length*2}" style="text-align:left;color:var(--text3)">No data saved for this stock yet.</td></tr>`;
+      const dp=cols.map((y,i)=>{const on=x.years.includes(y);return `<td${i===0?' class="gl"':''}>${on?dpsIn(x.r.dps[y]):''}</td>`;}).join('');
+      const ep=cols.map((y,i)=>{const on=x.years.includes(y);const c=on?epsIn(x.r.eps[y]):{cls:'',h:''};return `<td class="${i===0?'gl':''}${c.cls}">${c.h}</td>`;}).join('');
+      return `<tr><td class="hd-s">${hEsc(x.s)}</td>${dp}${ep}</tr>`;
     }).join('');
+    const table=`<div class="hd-tblwrap"><table class="hd-tbl" data-nomc><thead><tr><th rowspan="2" style="text-align:left">Stock</th><th colspan="${cols.length}" class="gl">Dividends per share</th><th colspan="${cols.length}" class="gl">Earnings per share</th></tr><tr>${yh}${yh}</tr></thead><tbody>${body}</tbody></table></div>`;
+    // cards (phone): each stock shows its own five years
+    const cards=data.map(x=>{
+      if(!x.r)return `<div class="hd-card"><div class="hd-sym">${hEsc(x.s)}</div><div class="hd-note" style="margin:0">No data saved for this stock yet.</div></div>`;
+      const eps=x.years.map(y=>{const c=epsIn(x.r.eps[y]);return `<div class="hd-y${c.cls}"><b>${y}</b><span>${c.h.replace(/<small>.*$/,'')}</span>${(c.h.match(/<small>.*$/)||[''])[0]}</div>`;}).join('');
+      const dps=x.years.map(y=>`<div class="hd-y"><b>${y}</b><span>${dpsIn(x.r.dps[y])}</span></div>`).join('');
+      return `<div class="hd-card"><div class="hd-sym">${hEsc(x.s)}</div><div class="hd-blocks"><div><div class="hd-ttl">Dividends per share</div><div class="hd-yrs">${dps}</div></div><div><div class="hd-ttl">Earnings per share</div><div class="hd-yrs">${eps}</div></div></div></div>`;
+    }).join('');
+    box.innerHTML=table+`<div class="hd-cards">${cards}</div>`;
   });
 }
 async function loadHeldNews(){
@@ -1720,7 +1748,7 @@ async function loadHeldNews(){
     const rows=syms.map(s=>{const items=((d.rows[s]||{}).news||[]).filter(i=>i.date>=cutoff);return{s,items,fl:items.filter(i=>i.flags.length).length};})
       .sort((a,b)=>(b.fl-a.fl)||a.s.localeCompare(b.s));
     box.innerHTML=rows.map(r=>`<details class="hn-det"${r.fl?' open':''}><summary>${hEsc(r.s)} <span style="font-weight:400;color:var(--text3);font-size:11px">${r.items.length} item${r.items.length===1?'':'s'}${r.fl?' · <span style="color:var(--accent)">⚑ '+r.fl+'</span>':''}</span></summary>`+
-      (r.items.length?r.items.map(i=>`<div class="hn-it${i.flags.length?' fl':''}"><i>${hEsc(i.date)}</i>${i.flags.map(f=>`<span class="hn-chip">${hEsc(f)}</span>`).join('')}${hEsc(i.title)}</div>`).join(''):'<div class="hn-it">No announcements in the last 3 months.</div>')+`</details>`).join('');
+      (r.items.length?r.items.map(i=>`<div class="hn-it${i.flags.length?' fl':''}"><i>${hEsc(i.date)}</i>${i.flags.map(f=>`<span class="hn-chip">${hEsc(f)}</span>`).join('')}${i.doc?`<a class="hn-a" href="https://dps.psx.com.pk/download/document/${hEsc(i.doc)}.pdf" target="_blank" rel="noopener">${hEsc(i.title)} <span class="hn-pdf">PDF ↗</span></a>`:hEsc(i.title)}</div>`).join(''):'<div class="hn-it">No announcements in the last 3 months.</div>')+`</details>`).join('');
   });
 }
 
@@ -1732,7 +1760,7 @@ if(sessionStorage.getItem(AUTH_KEY)||localStorage.getItem(AUTH_KEY+'_r'))autoLoa
   function label(){
     if(window.innerWidth>760)return;
     document.querySelectorAll('table').forEach(t=>{
-      if(t.classList.contains('mcard')&&t.dataset.n===String(t.rows.length))return;
+      if(t.hasAttribute('data-nomc')||(t.classList.contains('mcard')&&t.dataset.n===String(t.rows.length)))return;
       const hr=[...t.rows].find(r=>r.querySelector('th'));if(!hr)return;
       const heads=[];let c=0;[...hr.cells].forEach(h=>{for(let k=0;k<h.colSpan;k++)heads[c+k]=k?'':h.textContent.trim();c+=h.colSpan;});
       [...t.rows].forEach(r=>{if(r===hr)return;let col=0;[...r.cells].forEach(td=>{if(td.colSpan===1&&heads[col]!=null&&heads[col]!=='')td.setAttribute('data-l',heads[col]);col+=td.colSpan;});});
