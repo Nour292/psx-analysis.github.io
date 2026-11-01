@@ -294,6 +294,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   .kpi{ flex:1 1 30%; }
   .prog-wrap{ padding:12px 12px 0; }
   .tab-bar{ padding:10px 12px 0; }
+  .tab-bar{ flex-wrap:wrap; overflow-x:visible; }
+  .tab-btn{ flex:1 1 45%; padding:9px 6px; font-size:12px; text-align:center; }
   .tab-pane, .overlay-content{ padding:12px; }
   .overlay-nav{ padding:8px 12px; flex-wrap:wrap; }
   .sr-cards, .hist-cards{ grid-template-columns:repeat(2,1fr); }
@@ -524,7 +526,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.86</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.87</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
