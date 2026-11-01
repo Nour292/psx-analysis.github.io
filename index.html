@@ -615,7 +615,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.14</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.15</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -667,7 +667,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       <span class="filter-count" id="filterCount"></span>
     </div>
     <div class="tbl-wrap"><table class="dtbl wtbl" id="fullTable"><tbody></tbody></table></div>
-    <div class="plans-grid" id="tradePlans" style="display:none"></div>
   </div>
 
   <!-- ══════════ SINGLE TICKER ══════════ -->
@@ -1088,22 +1087,6 @@ function runWeekly(){
     <div class="sig-pill"><span class="s-label">EXIT</span><span class="s-val" style="color:#F43F5E">${g('EXIT')}</span></div>`;
   applyFilters();
 
-  const planRows=rows.filter(r=>['BUY','EXIT','CAUTION'].includes(r.Verdict));
-  const tp=document.getElementById('tradePlans');
-  if(!planRows.length){ tp.style.display='none'; return; }
-  tp.style.display='grid';
-  function buildPlanHtml(rows){ return rows.map(r=>{ const p=parseFloat(r.Price); if(r.Verdict==='BUY'){ const action=p<=(r.S1Level||p)*1.03?'BUY NOW — price is at support zone':'WAIT — watch for pullback to '+r.Support; return `<div class="plan-card buy"><h4>🟢 ${r.Symbol} · Score ${r.Score}</h4><code>Entry: ${r.Support} | Target: ₨${fmt(r.Target)} | R:R ≈ ${r.RR}</code><p>At ₨${p}: ${action}</p></div>`; } else if(r.Verdict==='CAUTION'){ return `<div class="plan-card caution"><h4>⚠️ ${r.Symbol} · Score ${r.Score}</h4><code>Current: ₨${fmt(r.Price)} | Watch: ₨${fmt(r.Target)}</code><p>Price broke below MA50. If MA200 breaks, exit.</p></div>`; } else { return `<div class="plan-card exit"><h4>🔴 ${r.Symbol} · Score ${r.Score}</h4><code>Current: ₨${fmt(r.Price)} | Downside: ₨${fmt(r.Target)}</code><p>MA50 broken. Consider closing position.</p></div>`; } }).join('')||'<p style="color:var(--text3);font-size:13px">None</p>'; }
-  const buys=planRows.filter(r=>r.Verdict==='BUY');
-  const others=planRows.filter(r=>r.Verdict!=='BUY');
-  tp.innerHTML=`
-    <div>
-      <div class="plans-col-label exit-lbl">🔴 EXIT / CAUTION</div>
-      ${buildPlanHtml(others)}
-    </div>
-    <div>
-      <div class="plans-col-label buy-lbl">🟢 BUY SIGNALS</div>
-      ${buildPlanHtml(buys)}
-    </div>`;
 }
 
 /* ── Import / Save ── */
