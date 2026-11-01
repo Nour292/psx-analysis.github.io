@@ -612,7 +612,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.37</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.38</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -954,7 +954,7 @@ function tableRow(r,i){
     <td class="sym-cell">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell">${fmt(r.Price)}</td>
     <td class="zone-cell">${r.Plan&&r.Plan.buy.length?'<div class="szw">'+r.Plan.buy.map((v,i)=>{const z=r.Plan.zv&&r.Plan.zv[i];return `<div class="sz${i?' sz2':''}"><b>S${i+1}</b><span>${z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v)}${r.Plan.hot&&r.Plan.hot[i]?' ★':''}</span></div>`;}).join('')+'</div>':'—'}</td>
-    <td class="zone-cell" style="color:var(--accent);font-weight:600">${r.Plan?tpF(r.Plan.target)+(r.Plan.hotT?' ★':''):'—'}</td>
+    <td class="zone-cell" style="color:var(--accent);font-weight:600">${r.Plan&&r.Plan.tz&&r.Plan.tz.length?'<div class="szw">'+r.Plan.tz.map((z,i)=>`<div class="sz${i?' sz2':''}"><b>T${i+1}</b><span>${tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo)}${z.hot?' ★':''}</span></div>`).join('')+'</div>':(r.Plan?tpF(r.Plan.target):'—')}</td>
     <td class="zone-cell" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
   </tr>${advHtml?`<tr class="advrow"><td colspan="6">${advHtml}</td></tr>`:''}`;
@@ -1317,12 +1317,18 @@ function tpPlan(s){
   if(lv.length>1&&lv[1]<lv[0]*0.80){lv.length=1;hot.length=1;zv.length=1;}
   const zt=i=>{const z=zv[i];return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
   const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>zv[i]||{lo:v,hi:v}),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
-  let inRes=false;
+  let inRes=false;o.tz=[];
   if(Z){
     const up=Z.res.filter(z=>z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
-    if(up.length){o.target=up[0].lo;o.hotT=near(up[0]);}
+    const tzs=[];up.forEach(z=>{if(!tzs.length||z.lo>tzs[tzs.length-1].hi*1.02)tzs.push(z);});
+    tzs.slice(0,2).forEach(z=>{o.tz.push({lo:z.lo,hi:z.hi,hot:near(z)});});
+    if(tzs.length){o.target=tzs[0].lo;o.hotT=near(tzs[0]);}
     inRes=Z.res.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
   }
+  [h1,h3,h52].filter(v=>v!=null&&v>p*1.03).sort((a,b)=>a-b).forEach(v=>{
+    if(o.tz.length<2&&(!o.tz.length||v>o.tz[o.tz.length-1].hi*1.02))o.tz.push({lo:v,hi:v,hot:false});
+  });
+  if(o.tz.length)o.target=o.tz[0].lo;
   if(inRes||(h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05))){o.verdict='SELL ZONE';o.target=inRes?(o.target>p*1.03?o.target:(h1||p)):h1;o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.';return o;}
   if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
   if(p<=lv[0]*1.03){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+(hot[0]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(lv[1]?' If it breaks, the next support is '+zt(1)+'.':' No lower level is known.');}
