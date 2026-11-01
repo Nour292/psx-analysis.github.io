@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.75</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.76</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1464,7 +1464,7 @@ function tpPlan(s){
   o.tz.forEach(z=>{
     const g=gr[gr.length-1];
     if(g&&z.hi<=g.hi)return;
-    if(g&&(z.lo-g.hi)/g.hi<0.05){if(g.n===1)g.lo=g.hi;g.hi=z.hi;g.n++;g.hot=g.hot||z.hot;}
+    if(g&&(z.lo-g.hi)/g.hi<0.05&&z.hi<=(g.n===1?g.hi:g.lo)*1.10){if(g.n===1)g.lo=g.hi;g.hi=z.hi;g.n++;g.hot=g.hot||z.hot;}
     else gr.push({lo:z.lo,hi:z.hi,hot:z.hot,n:1});
   });
   gr.forEach(g=>{if(g.n>1)g.hot=g.hot||mas.some(m=>m>=g.lo*0.98&&m<=g.hi*1.02);});
