@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.76</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.77</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1433,14 +1433,14 @@ function tpPlan(s){
   if(Z){
     const up=Z.res.filter(z=>z.recent&&z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
     const tzs=up.slice(0,4);
-    tzs.forEach(z=>{o.tz.push({lo:z.lo,hi:z.hi,hot:near(z)});});
+    tzs.forEach(z=>{o.tz.push({lo:z.lo,hi:z.hi,hot:near(z),w:z.w});});
     if(tzs.length){o.target=tzs[0].lo;o.hotT=near(tzs[0]);}
     cz=Z.res.find(z=>z.recent&&p>=z.lo&&p<=z.hi);
     inRes=!!cz&&!zl.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
     if(inRes){
       o.sellTxt='Price is in the exit zone '+(tpF(cz.lo)!==tpF(cz.hi)?tpF(cz.lo)+'–'+tpF(cz.hi):tpF(cz.lo))+'.';
       // the zone price is in is the 1-Exit Zone; the next zone ahead is the 2nd
-      o.tz.unshift({lo:cz.lo,hi:cz.hi,hot:near(cz)});o.tz.length=Math.min(o.tz.length,5);
+      o.tz.unshift({lo:cz.lo,hi:cz.hi,hot:near(cz),w:cz.w});o.tz.length=Math.min(o.tz.length,5);
     }
   }
   // nearest resistance: moving averages and recent highs above the price and in front of the first history exit zone become Exit Zone 1
@@ -1459,13 +1459,16 @@ function tpPlan(s){
   const inEntry=zl.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
   const h1on=!inRes&&!inEntry&&h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05);
   if(h1on){o.sellTxt='Price is at the recent high ('+tpF(h1)+').';o.tz.unshift({lo:h1,hi:h1,hot:false});o.tz.length=Math.min(o.tz.length,5);}
-  // exit zones less than 5% apart are one resistance area: the band runs from the high of the first zone to the high of the last (you sell high)
+  // exit zones less than 5% apart: joined into one band (high of the first zone to the high of the next, at most 7% wide); a wider cluster keeps only its strongest zone
   const gr=[];
   o.tz.forEach(z=>{
     const g=gr[gr.length-1];
     if(g&&z.hi<=g.hi)return;
-    if(g&&(z.lo-g.hi)/g.hi<0.05&&z.hi<=(g.n===1?g.hi:g.lo)*1.10){if(g.n===1)g.lo=g.hi;g.hi=z.hi;g.n++;g.hot=g.hot||z.hot;}
-    else gr.push({lo:z.lo,hi:z.hi,hot:z.hot,n:1});
+    if(g&&(z.lo-g.hi)/g.hi<0.05){
+      const lo=g.n===1?g.hi:g.lo;
+      if(z.hi<=lo*1.07){g.lo=lo;g.hi=z.hi;g.n++;g.hot=g.hot||z.hot;g.w=Math.max(g.w,z.w||0);}
+      else if((z.w||0)>g.w)gr[gr.length-1]={lo:z.lo,hi:z.hi,hot:z.hot,w:z.w||0,n:1};
+    }else gr.push({lo:z.lo,hi:z.hi,hot:z.hot,w:z.w||0,n:1});
   });
   gr.forEach(g=>{if(g.n>1)g.hot=g.hot||mas.some(m=>m>=g.lo*0.98&&m<=g.hi*1.02);});
   const joinedX=gr.length>0&&gr[0].n>1;
