@@ -1,6 +1,6 @@
 {
- "updated": "2026-10-31T00:39:33Z",
- "trigger": "manual",
+ "updated": "2026-11-01T10:02:25Z",
+ "trigger": "schedule",
  "universe": 754,
  "candidates": 80,
  "counts": {
