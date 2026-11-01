@@ -615,7 +615,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.48</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.49</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1293,7 +1293,7 @@ function tpZones(sym){
     pts.sort((a,b)=>a[0]-b[0]);const out=[];let c=null;
     pts.forEach(x=>{if(c&&x[0]<=c.lo*1.04){c.hi=x[0];c.w+=x[1];c.n++;c.last=Math.max(c.last,x[2]);}else{if(c)out.push(c);c={lo:x[0],hi:x[0],w:x[1],n:1,last:x[2]};}});
     if(c)out.push(c);
-    return out.filter(z=>z.w>=minW&&z.last>=n-250);
+    return out.filter(z=>z.w>=minW).map(z=>(z.recent=z.last>=n-250,z));
   };
   return _tpZ[sym]={sup:clus(lo,4),res:clus(hi,5)};
 }
@@ -1318,23 +1318,27 @@ function tpPlan(s){
   let zl=[],hot=[],zstop=null;const zv=[];
   if(Z){
     const sz=Z.sup.filter(z=>z.hi<=p*1.03).sort((a,b)=>b.hi-a.hi);
-    sz.forEach(z=>{if(!zl.length||z.hi<zl[zl.length-1].lo*0.98)zl.push(z);});
-    zl=zl.slice(0,2);
+    const rec=sz.find(z=>z.recent);
+    if(rec){zl.push(rec);const nx=sz.find(z=>z.hi<rec.lo*0.98&&z.hi>=rec.lo*0.70);if(nx)zl.push(nx);}
   }
   if(zl.length){
     lv.length=0;zl.forEach(z=>{lv.push(z.hi);hot.push(near(z));zv.push({lo:z.lo,hi:z.hi});});zstop=zl[0].lo*0.99;
     if(lv.length<2){const old=real.filter(v=>v<lv[0]*0.98);if(old.length){lv.push(old[0]);hot.push(false);zv.push({lo:old[0],hi:old[0]});}}
   }
-  if(lv.length>1&&lv[1]<lv[0]*0.80){lv.length=1;hot.length=1;zv.length=1;}
+  if(Z&&lv.length===1){
+    const nx=Z.sup.filter(z=>z.hi<lv[0]*0.98&&z.hi>=lv[0]*0.70).sort((a,b)=>b.hi-a.hi)[0];
+    if(nx){while(zv.length<1)zv.push({lo:lv[0],hi:lv[0]});while(hot.length<1)hot.push(false);lv.push(nx.hi);hot.push(near(nx));zv.push({lo:nx.lo,hi:nx.hi});}
+  }
+  if(lv.length>1&&lv[1]<lv[0]*0.70){lv.length=1;hot.length=1;zv.length=1;}
   const zt=i=>{const z=(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:(lv[i]!=null?tpBand(String(s.Symbol||'').toUpperCase(),lv[i]):null);return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
   const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v)),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
   let inRes=false;o.tz=[];
   if(Z){
-    const up=Z.res.filter(z=>z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
+    const up=Z.res.filter(z=>z.recent&&z.lo>p*1.03).sort((a,b)=>a.lo-b.lo);
     const tzs=[];up.forEach(z=>{if(!tzs.length||z.lo>tzs[tzs.length-1].hi*1.02)tzs.push(z);});
     tzs.slice(0,2).forEach(z=>{o.tz.push({lo:z.lo,hi:z.hi,hot:near(z)});});
     if(tzs.length){o.target=tzs[0].lo;o.hotT=near(tzs[0]);}
-    const cz=Z.res.find(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
+    const cz=Z.res.find(z=>z.recent&&p>=z.lo*0.98&&p<=z.hi*1.02);
     inRes=!!cz&&!zl.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
     if(inRes)o.sellTxt='Price is in the exit zone '+(tpF(cz.lo)!==tpF(cz.hi)?tpF(cz.lo)+'–'+tpF(cz.hi):tpF(cz.lo))+'.';
   }
@@ -1347,7 +1351,7 @@ function tpPlan(s){
     if(!inRes)o.sellTxt='Price is at the recent high ('+tpF(h1)+').';
     o.verdict='SELL ZONE';o.target=inRes?(o.target>p*1.03?o.target:(h1||p)):h1;o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.';return o;}
   if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
-  if(p<=lv[0]*1.03){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+(hot[0]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(lv[1]?' If it breaks, the next support is '+zt(1)+'.':' No lower level is known.');}
+  if(p<=lv[0]*1.03){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+(hot[0]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(lv[1]?' If it breaks, the next support is '+zt(1)+'.':' No lower support zone found.');}
   else{o.why='Wait for a pullback to '+zt(0)+', then buy.'+(lv[1]?' Next support: '+zt(1)+'.':'');}
   return o;
 }
