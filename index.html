@@ -615,11 +615,11 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.49</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.50</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
-    <div class="filter-bar" id="filterBar">
+    <div class="filter-bar" id="filterBar" style="flex-wrap:nowrap;gap:14px">
       <div class="filter-group">
         <span class="filter-label">Plan</span>
         <button class="fpill active" onclick="setFilter('plan','')">All</button>
@@ -628,7 +628,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         <button class="fpill fv-watch"   onclick="setFilter('plan','SELL ZONE')">SELL ZONE</button>
       </div>
       <div class="filter-sep"></div>
-      <div class="filter-group" style="flex-wrap:wrap">
+      <div class="filter-group" style="flex-wrap:nowrap">
         <span class="filter-label">Price</span>
         <button class="fpill active" id="pricePillAll" onclick="setPricePreset(0,0,this)">All</button>
         <button class="fpill" onclick="setPricePreset(0,50,this)">&lt; 50</button>
@@ -636,11 +636,6 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         <button class="fpill" onclick="setPricePreset(200,500,this)">200–500</button>
         <button class="fpill" onclick="setPricePreset(500,1000,this)">500–1000</button>
         <button class="fpill" onclick="setPricePreset(1000,0,this)">1000+</button>
-        <span style="color:var(--text3);font-size:11px;margin:0 4px">|</span>
-        <input class="price-input" id="priceMin" type="number" placeholder="Min" min="0">
-        <span style="color:var(--text3);font-size:12px;margin:0 2px">–</span>
-        <input class="price-input" id="priceMax" type="number" placeholder="Max" min="0">
-        <button class="price-go" onclick="applyCustomPrice()">Go</button>
         <button class="fpill" id="priceClearBtn" style="display:none;border-color:var(--rose);color:var(--rose)" onclick="setPricePreset(0,0,document.getElementById('pricePillAll'))">✕ Clear</button>
       </div>
       <span class="filter-count" id="filterCount"></span>
@@ -991,8 +986,6 @@ function setPricePreset(mn,mx,btn){
   if(btn)btn.classList.add('active');
   const ci=document.getElementById('priceClearBtn');
   if(ci)ci.style.display=(mn===0&&mx===0)?'none':'inline-block';
-  document.getElementById('priceMin').value='';
-  document.getElementById('priceMax').value='';
   applyFilters();
 }
 function applyCustomPrice(){
