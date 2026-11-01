@@ -261,7 +261,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 }
 .dtbl td{ border-bottom:1px solid var(--border); padding:9px 12px; color:var(--text2); }
 .wtbl{ font-size:11.5px; }
-.wtbl .szw{ display:flex; justify-content:center; }
+.wtbl .gl{ border-left:1px solid var(--text3); }
 .wtbl tr:not(.advrow)>*:nth-child(n+3){ text-align:center; }
 .wtbl .sz{ display:flex; flex-direction:column; align-items:center; white-space:nowrap; padding:0 7px; }
 .wtbl .sz:first-child{ padding-left:0; }
@@ -613,7 +613,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.39</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.40</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -928,8 +928,10 @@ function tableHeader(){
   return `<tr>
     <th>Symbol</th>
     <th>Price</th>
-    <th>Support</th>
-    <th>Target</th>
+    <th>S1</th>
+    <th class="gl">S2</th>
+    <th>T1</th>
+    <th class="gl">T2</th>
     <th>Stop</th>
     <th>Plan</th>
   </tr>`;
@@ -954,11 +956,11 @@ function tableRow(r,i){
   return `<tr class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
     <td class="sym-cell">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell">${fmt(r.Price)}</td>
-    <td class="zone-cell">${r.Plan&&r.Plan.buy.length?'<div class="szw">'+r.Plan.buy.map((v,i)=>{const z=r.Plan.zv&&r.Plan.zv[i];return `<div class="sz${i?' sz2':''}"><b>S${i+1}</b><span>${z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v)}${r.Plan.hot&&r.Plan.hot[i]?' ★':''}</span></div>`;}).join('')+'</div>':'—'}</td>
-    <td class="zone-cell" style="color:var(--accent);font-weight:600">${r.Plan&&r.Plan.tz&&r.Plan.tz.length?'<div class="szw">'+r.Plan.tz.map((z,i)=>`<div class="sz${i?' sz2':''}"><b>T${i+1}</b><span>${tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo)}${z.hot?' ★':''}</span></div>`).join('')+'</div>':(r.Plan?tpF(r.Plan.target):'—')}</td>
+    ${[0,1].map(i=>{const z=r.Plan&&r.Plan.zv&&r.Plan.zv[i],v=r.Plan&&r.Plan.buy[i];return `<td class="zone-cell${i?' gl':''}">${v==null?'—':(z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v))+(r.Plan.hot&&r.Plan.hot[i]?' ★':'')}</td>`;}).join('')}
+    ${[0,1].map(i=>{const z=r.Plan&&r.Plan.tz&&r.Plan.tz[i];return `<td class="zone-cell${i?' gl':''}" style="color:var(--accent);font-weight:600">${z?(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo))+(z.hot?' ★':''):(i||!r.Plan?'—':tpF(r.Plan.target))}</td>`;}).join('')}
     <td class="zone-cell" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
-  </tr>${advHtml?`<tr class="advrow"><td></td><td colspan="5">${advHtml}</td></tr>`:''}`;
+  </tr>${advHtml?`<tr class="advrow"><td></td><td colspan="7">${advHtml}</td></tr>`:''}`;
 }
 
 function renderHome(){ if(_rawData.length&&document.getElementById('pgAnalysis').classList.contains('active')) runWeekly(); }
@@ -1018,7 +1020,7 @@ function applyFilters(){
   if(fc)fc.textContent=shown===total?total+' symbols':shown+' / '+total+' symbols';
   document.getElementById('fullTable').innerHTML=rows.length
     ?tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('')
-    :'<tr><td colspan="6" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">No results match the selected filters.</td></tr>';
+    :'<tr><td colspan="8" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">No results match the selected filters.</td></tr>';
 }
 function runWeekly(){
   showPage('pgAnalysis');
