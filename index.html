@@ -274,6 +274,25 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .wtbl tr.hasadv>td{ border-bottom:none; }
 .wtbl tr.advrow>td{ text-align:justify; padding:8px 6px 10px 6px; font-size:13.5px; line-height:1.55; color:#F5F3FF; background:#2B1D4F; }
 :root.light .wtbl tr.advrow>td{ background:#ede9fe; color:#2e1065; }
+/* advice text: different notes in different colours */
+.wtbl tr.advrow b{ font-weight:800; color:#fff; }
+.wtbl .ad-buy{ color:#4ADE80; font-weight:800; }
+.wtbl .ad-wait{ color:#FCD34D; font-weight:800; }
+.wtbl .ad-sell{ color:#38BDF8; font-weight:800; }
+.wtbl .ad-star{ color:#FBBF24; font-weight:700; }
+.wtbl .ad-brk{ color:#FDA4AF; font-weight:600; }
+.wtbl .ad-hold{ color:#7DD3FC; }
+.wtbl .ad-room{ background:rgba(245,158,11,.25); color:#FCD34D; padding:1px 6px; border-radius:4px; font-weight:700; }
+.wtbl .ad-ex{ background:rgba(251,146,60,.28); color:#FDBA74; padding:1px 6px; border-radius:4px; font-weight:700; }
+:root.light .wtbl tr.advrow b{ color:#1e1b4b; }
+:root.light .wtbl .ad-buy{ color:#047857; }
+:root.light .wtbl .ad-wait{ color:#B45309; }
+:root.light .wtbl .ad-sell{ color:#0369A1; }
+:root.light .wtbl .ad-star{ color:#B45309; }
+:root.light .wtbl .ad-brk{ color:#BE123C; }
+:root.light .wtbl .ad-hold{ color:#075985; }
+:root.light .wtbl .ad-room{ background:#FEF3C7; color:#92400E; }
+:root.light .wtbl .ad-ex{ background:#FFEDD5; color:#9A3412; }
 .wtbl .listed{ display:inline-block; padding:2px 9px 2px 6px; border-radius:6px; background:#0B3B2C; color:#6EE7B7; font-weight:800; }
 .wtbl .listed .flag{ color:#FBBF24; margin-right:5px; }
 :root.light .wtbl .listed{ background:#d1fae5; color:#065f46; }
@@ -644,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.68</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.69</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1497,7 +1516,30 @@ function tpAdviceHtml(sym,s,plan){
     if(room>=0&&room<4)why+=' Room to the exit zone is only '+room.toFixed(1)+'%.';
   }
   const ex=tpExDiv(s),nw=tpNewsText(sym);
-  return [tkEsc(why),ex?tkEsc(ex):'',nw?'<span style="color:'+(nw.indexOf('Warning')===0?'#F59E0B':'var(--accent)')+'">'+tkEsc(nw)+'</span>':''].filter(Boolean).join(' ');
+  return [tpAdvFmt(why),ex?'<span class="ad-ex">⚠ '+tkEsc(ex)+'</span>':'',nw?'<span style="color:'+(nw.indexOf('Warning')===0?'#F59E0B':'var(--accent)')+'">'+tkEsc(nw).replace(/^(Warning:|News:)/,'<b style="color:inherit">$1</b>')+'</span>':''].filter(Boolean).join(' ');
+}
+// colours the notes of the advice text and bolds the numbers
+function tpAdvFmt(t){
+  let h=tkEsc(t);
+  const W=(re,c)=>{h=h.replace(re,m=>'<span class="'+c+'">'+m+'</span>');};
+  W(/\(strong: a moving average is here too\)/,'ad-star');
+  W(/Two close zones are joined here: buy a small lot near the top and a bigger lot near the bottom\./,'ad-buy');
+  W(/Buy a lot here\./,'ad-buy');
+  W(/Price is below your last buy: add a lot\./,'ad-buy');
+  W(/Price is not below your last buy: add only a small lot\./,'ad-buy');
+  W(/Wait for a pullback to [\d.,–]+?, then buy\./,'ad-wait');
+  W(/Price is under every known support level\. Wait for a new level to form\./,'ad-wait');
+  W(/If it breaks, the next support is [\d.,–]+?(?=\.(?:\s|$))\./,'ad-brk');
+  W(/Next support: [\d.,–]+?(?=\.(?:\s|$))\./,'ad-brk');
+  W(/No lower support zone found\./,'ad-brk');
+  W(/You hold [\d,]+ units \(average [\d.,]+, last buy [\d.,]+\)\./,'ad-hold');
+  W(/You hold [\d,]+ units; .*?sell those lots\./,'ad-hold');
+  W(/You hold [\d,]+ units but none of your lots is in profit yet\./,'ad-hold');
+  W(/You hold [\d,]+ units\. Check your lot prices \(split or bonus\?\)\./,'ad-hold');
+  W(/You do not hold it( yet)?\./,'ad-hold');
+  W(/Price is in the exit zone [\d.,–]+? \(two close zones joined\)\.|Price is in the exit zone [\d.,–]+?(?=\.(?:\s|$))\.|Price is at the recent high \([\d.,]+\)\./,'ad-sell');
+  W(/Room to the exit zone is only [\d.]+%\./,'ad-room');
+  return h.split(/(<[^>]+>)/).map(x=>x.charAt(0)==='<'?x:x.replace(/(?<![#\w])\d[\d,]*\.?\d*(?:–\d[\d,]*\.?\d*)?/g,'<b>$&</b>')).join('');
 }
 function tpBadge(v){const m={'BUY ZONE':'background:#10B981;color:#04210f','WAIT':'background:#F59E0B;color:#2a1a00','SELL ZONE':'background:#38BDF8;color:#04202e'};return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;${m[v]||''}">${v}</span>`;}
 
