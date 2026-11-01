@@ -262,7 +262,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .dtbl td{ border-bottom:1px solid var(--border); padding:9px 12px; color:var(--text2); }
 .wtbl{ font-size:11.5px; }
 .wtbl th, .wtbl td{ padding:8px 5px; }
-.wtbl th{ font-size:10px; letter-spacing:.3px; }
+.wtbl th{ font-size:10px; letter-spacing:.3px; white-space:normal; line-height:1.3; }
 .dtbl tbody tr:last-child td{ border-bottom:none; }
 .dtbl tbody tr:hover td{ background:var(--surface2); }
 
@@ -613,7 +613,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.10</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.11</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -992,7 +992,7 @@ function tableRow(r,i){
     <td class="${vcls}">${r.VLabel}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
     <td style="font-size:12px">${r.Momentum}</td>
-    <td style="font-size:11px;line-height:1.5;min-width:120px">${tpAdviceHtml(String(r.Symbol).toUpperCase(),r.SrcRow||{},r.Plan)}</td>
+    <td style="font-size:11px;line-height:1.5;min-width:100px">${tpAdviceHtml(String(r.Symbol).toUpperCase(),r.SrcRow||{},r.Plan)}</td>
   </tr>`;
 }
 
@@ -1357,6 +1357,7 @@ function tpPlan(s){
   const cand=[m50,m200,l1,l3,l52].filter(v=>v!=null&&v>0&&v<=p*1.03).sort((a,b)=>b-a);
   const lv=[];cand.forEach(v=>{if(!lv.length||lv[lv.length-1]/v>1.02)lv.push(v);});
   const highs=[h1,h3,h52].filter(v=>v!=null&&v>p*1.03);
+  if(lv.length>1&&lv[1]<lv[0]*0.85)lv.length=1;
   const o={p,buy:lv.slice(0,2),stop:lv.length?lv[0]*0.97:null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
   if(h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05)){o.verdict='SELL ZONE';o.target=h1;o.why='Price is at the recent high ('+tpF(h1)+'). Sell the lots that are in profit.';return o;}
   if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
