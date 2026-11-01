@@ -501,8 +501,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         <span class="nav-grp-chevron">▼</span>
       </button>
       <div class="nav-sub open" id="navTASub">
-        <button class="nav-sub-btn active" id="navHome"     onclick="goHome()">⌂ Dashboard</button>
-        <button class="nav-sub-btn"        id="navAnalysis" onclick="goAnalysis()">▶ Weekly Analysis</button>
+        <button class="nav-sub-btn active" id="navAnalysis" onclick="goAnalysis()">▶ Weekly Analysis</button>
       </div>
     </div>
 
@@ -564,7 +563,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 
   <!-- TOP BAR -->
   <div class="topbar">
-    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div class="topbar-title" id="topbarTitle">Weekly Analysis</div>
     <div id="analysisDataDate" style="display:none;font-size:11px;color:var(--text3);font-family:var(--mono)">
       as of <span id="analysisDataDateVal" style="color:var(--accent)"></span>
       <span id="analysisPrevDate" style="color:var(--text3);margin-left:8px"></span>
@@ -596,23 +595,8 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
     <div id="tkNews" style="margin-top:20px"></div>
   </div>
 
-  <!-- ══════════ HOME PAGE ══════════ -->
-  <div id="pgHome" class="page active content">
-    <div class="page-header">
-      <h1>Market Dashboard</h1>
-      <p>Stocks in the BUY ZONE and SELL ZONE — updated weekly</p>
-    </div>
-    <div class="signal-strip" id="homeSignalStrip" style="display:none"></div>
-
-    <div class="section-label sl-buy"><span></span> BUY ZONE — price is at support, buy a lot</div>
-    <div class="tbl-wrap nobar"><table class="dtbl wtbl" id="homeBuyTable"><tbody></tbody></table></div>
-
-    <div class="section-label sl-exit" style="margin-top:6px"><span></span> SELL ZONE — price is at the recent high, sell the lots in profit</div>
-    <div class="tbl-wrap nobar"><table class="dtbl wtbl" id="homeExitTable"><tbody></tbody></table></div>
-  </div>
-
   <!-- ══════════ ANALYSIS PAGE ══════════ -->
-  <div id="pgAnalysis" class="page content">
+  <div id="pgAnalysis" class="page active content">
     <div class="analysis-header">
       <div class="page-header" style="margin:0;flex:1">
         <h1>Weekly Analysis</h1>
@@ -623,7 +607,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.28</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.29</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -763,7 +747,7 @@ function showPage(id){
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
 }
-function goHome()    { showPage('pgHome');     setNav('navHome','Dashboard');      renderHome(); }
+function goHome()    { goAnalysis(); }
 function goAnalysis(){ showPage('pgAnalysis'); setNav('navAnalysis','Weekly Analysis'); runWeekly(); }
 function goImport()  { showImportPage();       setNav('navImport','Add / Update Data'); setTimeout(loadArchiveList,500); }
 
@@ -941,7 +925,6 @@ function tableHeader(){
     <th>Support</th>
     <th>Target</th>
     <th>Stop</th>
-    <th>Score</th>
     <th>Plan</th>
   </tr>`;
 }
@@ -968,33 +951,11 @@ function tableRow(r,i){
     <td class="zone-cell">${r.Support}</td>
     <td class="zone-cell" style="color:var(--accent);font-weight:600">${r.Plan?tpF(r.Plan.target):'—'}</td>
     <td class="zone-cell" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
-    <td class="score-cell">${r.Score}${deltaStr}${spark}</td>
     <td>${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
-  </tr>${advHtml?`<tr class="advrow"><td colspan="7">${advHtml}</td></tr>`:''}`;
+  </tr>${advHtml?`<tr class="advrow"><td colspan="6">${advHtml}</td></tr>`:''}`;
 }
 
-function renderHome(){
-  if(!_rawData.length) return;
-  const rows=processAll();
-  const buys=rows.filter(r=>r.Plan&&r.Plan.verdict==='BUY ZONE');
-  const sells=rows.filter(r=>r.Plan&&r.Plan.verdict==='SELL ZONE');
-
-  // Home signal strip
-  const g=v=>rows.filter(r=>r.Plan&&r.Plan.verdict===v).length;
-  const strip=document.getElementById('homeSignalStrip');
-  if(strip){
-    strip.style.display='flex';
-    strip.innerHTML=`
-      <div class="sig-card buy"><div class="sv">${g('BUY ZONE')}</div><div class="sl">Buy zone</div></div>
-      <div class="sig-card wait"><div class="sv">${g('WAIT')}</div><div class="sl">Wait</div></div>
-      <div class="sig-card watch"><div class="sv">${g('SELL ZONE')}</div><div class="sl">Sell zone</div></div>`;
-  }
-
-  const bt=document.getElementById('homeBuyTable');
-  bt.innerHTML=buys.length?tableHeader()+buys.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No stocks in the BUY ZONE</td></tr>';
-  const et=document.getElementById('homeExitTable');
-  et.innerHTML=sells.length?tableHeader()+sells.map((r,i)=>tableRow(r,i)).join(''):'<tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center;font-size:13px">No stocks in the SELL ZONE</td></tr>';
-}
+function renderHome(){ if(_rawData.length&&document.getElementById('pgAnalysis').classList.contains('active')) runWeekly(); }
 
 let _allRows=[];
 const _activeFilters={verdict:'',quality:'',momentum:'',plan:'',priceMin:0,priceMax:0};
@@ -1051,13 +1012,15 @@ function applyFilters(){
   if(fc)fc.textContent=shown===total?total+' symbols':shown+' / '+total+' symbols';
   document.getElementById('fullTable').innerHTML=rows.length
     ?tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('')
-    :'<tr><td colspan="7" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">No results match the selected filters.</td></tr>';
+    :'<tr><td colspan="6" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">No results match the selected filters.</td></tr>';
 }
 function runWeekly(){
   showPage('pgAnalysis');
   if(!_rawData.length){ document.getElementById('fullTable').innerHTML='<tr><td style="padding:20px;color:var(--text3)">No data loaded yet.</td></tr>'; return; }
   const rows=processAll();
-  _allRows=rows;
+  const listed=rows.filter(r=>tpOnList(String(r.Symbol).toUpperCase()));
+  const order={'BUY ZONE':0,'SELL ZONE':1,'WAIT':2};
+  _allRows=(_tpList&&listed.length?listed:rows).slice().sort((a,b)=>((order[a.Plan&&a.Plan.verdict]??3)-(order[b.Plan&&b.Plan.verdict]??3))||String(a.Symbol).localeCompare(String(b.Symbol)));
   applyFilters();
 
 }
@@ -1300,7 +1263,7 @@ function computeSetupQuality(sym,s,verdict){
 /* ════════════════════════════════════════════
    CHAT-SYSTEM RULES — stop, targets, R:R, reversal plan (used by the Weekly Analysis table)
 ════════════════════════════════════════════ */
-let _tpLdcp={},_tpNews=null,_tpList=null;
+let _tpLdcp={},_tpNews=null,_tpList=null,_tpLots={};
 const tpN=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
 const tpF=v=>v==null||isNaN(v)?'—':fmt(v);
 function tpPlan(s){
@@ -1335,12 +1298,48 @@ async function tpLoadExtras(){
   try{const r=await fetch(gsUrl('Prices'));const j=await r.json();const rows=j.values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());const li=h.indexOf('ldcp');_tpLdcp={};if(li>=0)rows.slice(1).forEach(r=>{const sy=String(r[0]||'').trim().toUpperCase(),l=parseFloat(r[li]);if(sy&&l>0)_tpLdcp[sy]=l;});}catch(e){}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);_tpNews=r.ok?await r.json():null;}catch(e){_tpNews=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);_tpList=r.ok?await r.json():null;}catch(e){_tpList=null;}
+  await tpLoadLots();
+}
+function tpUserName(){try{return sessionStorage.getItem('psx_user')||localStorage.getItem('psx_user_r')||'';}catch(e){return '';}}
+async function tpLoadLots(){
+  _tpLots={};const u=tpUserName();if(!u)return;
+  try{
+    const r=await fetch(gsUrl(u+'-stock'));if(!r.ok)return;
+    const rows=(await r.json()).values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());
+    const ci={d:h.indexOf('date'),t:h.indexOf('type'),s:h.indexOf('stock'),u:h.indexOf('units'),p:h.indexOf('price / share')};
+    if(Object.values(ci).some(v=>v<0))return;
+    const num=v=>{const n=parseFloat(String(v==null?'':v).replace(/,/g,''));return isNaN(n)?0:n;};
+    const mon={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+    const pd=x=>{const m=String(x||'').trim().match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);if(!m)return 0;let y=+m[3];if(y<100)y+=2000;return new Date(y,mon[m[2].toLowerCase()],+m[1]).getTime();};
+    const tr=rows.slice(1).map(r=>({d:pd(r[ci.d]),t:String(r[ci.t]||'').trim(),s:String(r[ci.s]||'').trim().toUpperCase(),u:num(r[ci.u]),p:num(r[ci.p])})).filter(x=>(x.t==='Buy'||x.t==='Sell')&&x.s&&x.u>0&&x.p>0).sort((a,b)=>a.d-b.d);
+    const lots={};
+    tr.forEach(x=>{
+      const L=lots[x.s]=lots[x.s]||[];
+      if(x.t==='Buy')L.push({d:x.d,p:x.p,u:x.u});
+      else{let need=x.u;while(need>0.5&&L.length){const f=L[0],take=Math.min(need,f.u);f.u-=take;need-=take;if(f.u<=0.5)L.shift();}}
+    });
+    Object.keys(lots).forEach(k=>{const L=lots[k].filter(l=>l.u>0.5);if(L.length)_tpLots[k]=L;});
+  }catch(e){_tpLots={};}
+}
+function tpHoldInfo(sym,price){
+  const L=_tpLots[sym];if(!L)return null;
+  const units=L.reduce((a,l)=>a+l.u,0),cost=L.reduce((a,l)=>a+l.u*l.p,0),avg=cost/units,last=L[L.length-1];
+  const odd=price&&(price/last.p<0.55||price/last.p>2.2);
+  const prof=odd?[]:L.filter(l=>price>l.p);
+  return {units,avg,lots:L.length,lastPrice:last.p,odd,profLots:prof.length,profUnits:prof.reduce((a,l)=>a+l.u,0)};
 }
 function tpOnList(sym){if(!_tpList||!_tpList.rows)return false;return _tpList.rows.some(r=>r.symbol===sym&&['New','Active','Override'].includes(r.status));}
 function tpAdviceHtml(sym,s,plan){
   if(!plan)return '';
+  const n0=v=>Math.round(v).toLocaleString();
+  const hold=tpHoldInfo(sym,plan.p);let why=plan.why;
+  if(plan.verdict==='SELL ZONE'){
+    why='Price is at the recent high ('+tpF(plan.target)+'). '+(hold?(hold.odd?'You hold '+n0(hold.units)+' units. Check your lot prices (split or bonus?).':(hold.profLots?'You hold '+n0(hold.units)+' units; '+hold.profLots+' of '+hold.lots+' lots ('+n0(hold.profUnits)+' units) are in profit: sell those lots.':'You hold '+n0(hold.units)+' units but none of your lots is in profit yet.')):'You do not hold it.');
+  }else if(hold){
+    why+=' You hold '+n0(hold.units)+' units (average '+tpF(hold.avg)+', last buy '+tpF(hold.lastPrice)+').'+(plan.verdict==='BUY ZONE'&&!hold.odd?(plan.p<hold.lastPrice*0.99?' Price is below your last buy: add a lot.':' Price is not below your last buy: add only a small lot.'):'');
+  }else if(plan.verdict==='BUY ZONE'){why+=' You do not hold it yet.';}
   const ex=tpExDiv(s),nw=tpNewsText(sym);
-  return [tkEsc(plan.why),ex?tkEsc(ex):'',nw?'<span style="color:'+(nw.indexOf('Warning')===0?'#F59E0B':'var(--accent)')+'">'+tkEsc(nw)+'</span>':''].filter(Boolean).join(' ');
+  return [tkEsc(why),ex?tkEsc(ex):'',nw?'<span style="color:'+(nw.indexOf('Warning')===0?'#F59E0B':'var(--accent)')+'">'+tkEsc(nw)+'</span>':''].filter(Boolean).join(' ');
 }
 function tpBadge(v){const m={'BUY ZONE':'background:#10B981;color:#04210f','WAIT':'background:#F59E0B;color:#2a1a00','SELL ZONE':'background:#38BDF8;color:#04202e'};return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;${m[v]||''}">${v}</span>`;}
 
