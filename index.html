@@ -265,6 +265,9 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .wtbl tr.hasadv>td{ border-bottom:none; }
 .wtbl tr.advrow>td{ padding:6px 10px 7px 36px; font-size:11.5px; line-height:1.5; color:var(--text); background:#061E30; }
 :root.light .wtbl tr.advrow>td{ background:#cfe6f5; }
+.wtbl .listed{ display:inline-block; padding:2px 9px 2px 6px; border-radius:6px; background:#0B3B2C; color:#6EE7B7; font-weight:800; }
+.wtbl .listed .flag{ color:#FBBF24; margin-right:5px; }
+:root.light .wtbl .listed{ background:#d1fae5; color:#065f46; }
 .wtbl th{ font-size:12.5px; font-weight:800; letter-spacing:.2px; white-space:normal; line-height:1.3; color:var(--accent); }
 .dtbl tbody tr:last-child td{ border-bottom:none; }
 .dtbl tbody tr:hover td{ background:var(--surface2); }
@@ -616,14 +619,14 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.17</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.18</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
     <div class="signal-strip" id="signalSummary" style="margin-bottom:16px"></div>
     <div style="margin-bottom:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);line-height:1.8">
       <b>Verdict</b> = trend score from MA, MACD and RSI. <b>Plan</b> = your buying style: <b>BUY ZONE</b> price is at a support level, buy a lot · <b>WAIT</b> wait for a pullback to the buy level · <b>SELL ZONE</b> price is at the recent high, sell the lots in profit.<br>
-      <b>Buy at</b> = support levels (the second one is where to add if the first breaks) · <b>Stop</b> = where support breaks, shown for information only · <b>Target</b> = the last high.
+      <b>Stop</b> = where support breaks, shown for information only · <b>Target</b> = the last high · <b>⚑ dark green name</b> = a stock on your list (it passed all your filters).
     </div>
     <div class="filter-bar" id="filterBar">
       <div class="filter-group">
@@ -981,7 +984,7 @@ function tableRow(r,i){
   const advHtml=tpAdviceHtml(String(r.Symbol).toUpperCase(),r.SrcRow||{},r.Plan);
   return `<tr class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
     <td style="color:var(--text3);font-size:11px;font-family:var(--mono)">${i+1}</td>
-    <td class="sym-cell">${r.Symbol}</td>
+    <td class="sym-cell">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell">${fmt(r.Price)}</td>
     <td class="zone-cell">${r.Support}</td>
     <td class="zone-cell">${r.Resistance}</td>
@@ -1364,6 +1367,7 @@ async function tpLoadExtras(){
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);_tpNews=r.ok?await r.json():null;}catch(e){_tpNews=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);_tpList=r.ok?await r.json():null;}catch(e){_tpList=null;}
 }
+function tpOnList(sym){if(!_tpList||!_tpList.rows)return false;return _tpList.rows.some(r=>r.symbol===sym&&['New','Active','Override'].includes(r.status));}
 function tpAdviceHtml(sym,s,plan){
   if(!plan)return '';
   const ex=tpExDiv(s),nw=tpNewsText(sym);
