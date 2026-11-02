@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.85</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.86</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1479,15 +1479,16 @@ function tpPlan(s){
   const inEntry=zl.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
   const h1on=!inRes&&!inEntry&&h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05);
   if(h1on){o.sellTxt='Price is at the recent high ('+tpF(h1)+').';o.tz.unshift({lo:h1,hi:h1,hot:false});o.tz.length=Math.min(o.tz.length,5);}
-  // exit zones less than 5% apart: joined into one band (high of the first zone to the high of the next, at most 7% wide); a zone that would make it wider stays a separate zone
+  // exit zones 1.5–3% apart: joined into one band that runs from the high of the first zone to the low of the next (the target); the real resistance (rs to rt) is kept for the advice text
   const gr=[];
   o.tz.forEach(z=>{
     const g=gr[gr.length-1];
-    if(g&&z.hi<=g.hi)return;
-    if(g&&(z.lo-g.hi)/g.hi<0.015)return;
-    if(g&&(z.lo-g.hi)/g.hi<0.03){
+    const gh=g?(g.rt||g.hi):0;
+    if(g&&z.hi<=gh)return;
+    if(g&&(z.lo-gh)/gh<0.015)return;
+    if(g&&(z.lo-gh)/gh<0.03){
       const lo=g.n===1?g.hi:g.lo;
-      if(z.hi<=lo*1.07){g.lo=lo;g.hi=z.hi;g.n++;g.hot=g.hot||z.hot;g.w=Math.max(g.w,z.w||0);}
+      if(z.hi<=lo*1.07){if(g.n===1)g.rs=g.lo;g.lo=lo;g.hi=z.lo;g.rt=z.hi;g.n++;g.hot=g.hot||z.hot;g.w=Math.max(g.w,z.w||0);}
       else gr.push({lo:z.lo,hi:z.hi,hot:z.hot,w:z.w||0,n:1});
     }else gr.push({lo:z.lo,hi:z.hi,hot:z.hot,w:z.w||0,n:1});
   });
@@ -1496,27 +1497,29 @@ function tpPlan(s){
   // Exit Zone 2 is the next separate resistance: at least 3% above the top of Exit Zone 1
   if(gr.length){
     const g1=gr[0];
-    let g2=gr.find((g,i)=>i>0&&(g.lo-g1.hi)/g1.hi>=0.03);
+    const g1t=g1.rt||g1.hi;
+    let g2=gr.find((g,i)=>i>0&&(g.lo-g1t)/g1t>=0.03);
     if(!g2){
-      const nz=Z?Z.res.filter(z=>z.recent&&z.lo>=g1.hi*1.03).sort((x,y)=>x.lo-y.lo)[0]:null;
-      const nh=[h1,h3,h52].filter(v=>v!=null&&v>=g1.hi*1.03).sort((x,y)=>x-y)[0];
+      const nz=Z?Z.res.filter(z=>z.recent&&z.lo>=g1t*1.03).sort((x,y)=>x.lo-y.lo)[0]:null;
+      const nh=[h1,h3,h52].filter(v=>v!=null&&v>=g1t*1.03).sort((x,y)=>x-y)[0];
       if(nz)g2={lo:nz.lo,hi:nz.hi,hot:near(nz)};else if(nh!=null)g2={lo:nh,hi:nh,hot:false};
     }
-    o.tz=[g1,g2].filter(Boolean).map((g,i)=>g.hi/g.lo<1.015?{lo:+Math.min(g.hi,Math.max(g.hi*0.985,i?g1.hi*1.015:0)).toFixed(2),hi:g.hi,hot:g.hot}:({lo:g.lo,hi:g.hi,hot:g.hot}));
+    o.tz=[g1,g2].filter(Boolean).map((g,i)=>g.hi/g.lo<1.015?{lo:+Math.min(g.hi,Math.max(g.hi*0.985,i?g1.hi*1.015:0)).toFixed(2),hi:g.hi,hot:g.hot}:({lo:g.lo,hi:g.hi,hot:g.hot,rs:g.rs,rt:g.rt}));
   }
   if(o.tz.length)o.target=o.tz[0].lo;
   {const sy=String(s.Symbol||'').toUpperCase();o.eq=(o.zv||[]).map(z=>tpZoneTag(sy,z,'S'));o.xq=o.tz.map(z=>tpZoneTag(sy,z,'R'));}
+  const readyTxt=()=>{const w=[];o.tz.forEach((z,i)=>{if(z.rs)w.push('Real resistance starts at '+tpF(z.rs)+' and runs to '+tpF(z.rt)+': be ready to sell from '+tpF(z.rs)+'. Exit '+(i+1)+' target is '+tpF(z.lo)+'–'+tpF(z.hi)+'; above '+tpF(z.hi)+' is a bonus.');});return w.length?' '+w.join(' '):'';};
   const wideTxt=()=>{const w=[];const chk=(n,z)=>{if(z&&z.hi/z.lo>1.05)w.push(n+' '+tpF(z.lo)+'–'+tpF(z.hi)+' ('+((z.hi/z.lo-1)*100).toFixed(1)+'%)');};chk('Exit 1',o.tz[0]);chk('Exit 2',o.tz[1]);chk('Buy 1',o.zv[0]);chk('Buy 2',o.zv[1]);
     return w.length?' Wide zone: '+w.join(', ')+' '+(w.length>1?'are':'is')+' wide because close levels were joined into one area, not one thin line. Sell or buy across the area, not at one price.':'';};
   const selZ=joinedX?o.tz[0]:(inRes?cz:null),fell=!!selZ&&tpFellInto(String(s.Symbol||'').toUpperCase(),selZ);
-  if(joinedX?(p>=o.tz[0].lo&&p<=o.tz[0].hi&&!inEntry&&!fell):((inRes&&!fell)||h1on)){
+  if(joinedX?(p>=o.tz[0].lo&&p<=(o.tz[0].rt||o.tz[0].hi)&&!inEntry&&!fell):((inRes&&!fell)||h1on)){
     if(joinedX)o.sellTxt='Price is in the exit zone '+(tpF(o.tz[0].lo)!==tpF(o.tz[0].hi)?tpF(o.tz[0].lo)+'–'+tpF(o.tz[0].hi):tpF(o.tz[0].lo))+' (two close zones joined).';
-    o.verdict='SELL ZONE';o.target=joinedX?(o.tz[1]?o.tz[1].lo:o.tz[0].hi):(inRes?(o.target>p*1.03?o.target:(h1||p)):h1);o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+wideTxt();return o;}
+    o.verdict='SELL ZONE';o.target=joinedX?(o.tz[1]?o.tz[1].lo:o.tz[0].hi):(inRes?(o.target>p*1.03?o.target:(h1||p)):h1);o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+readyTxt()+wideTxt();return o;}
   if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
   if(p<=Math.max(lv[0],(o.zv[0]&&o.zv[0].hi)||0)*1.01){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+zw(0)+(hot[0]?' (strong: a moving average is here too)':'')+(merged?'. Two close zones are joined here: buy a small lot near the top and a bigger lot near the bottom.':'. Buy a lot here.')+(far?' If it breaks, there is no support until '+zt(1)+zw(1)+' ('+far.pct+'% lower).'+(far.lows.length?' Weak single lows on the way: '+far.lows.map(tpF).join(', ')+'.':''):(lv[1]?' If it breaks, the next support is '+zt(1)+zw(1)+'.':' No lower support zone found.'));}
   else{o.why='Wait for a pullback to '+zt(0)+zw(0)+', then buy.'+(far?' Next support is far: '+zt(1)+zw(1)+' ('+far.pct+'% lower).':(lv[1]?' Next support: '+zt(1)+zw(1)+'.':''));}
   if(fell&&selZ)o.why+=' Price fell into the exit zone '+(tpF(selZ.lo)!==tpF(selZ.hi)?tpF(selZ.lo)+'–'+tpF(selZ.hi):tpF(selZ.lo))+' (for example after an ex-dividend drop), it did not rise into it: this is not a sell signal.';
-  o.why+=wideTxt();
+  o.why+=readyTxt()+wideTxt();
   return o;
 }
 function tpExDiv(s){
@@ -1619,6 +1622,7 @@ function tpAdvFmt(t){
   W(/You do not hold it( yet)?\./,'ad-hold');
   W(/Price is in the exit zone [\d.,–]+? \(two close zones joined\)\.|Price is in the exit zone [\d.,–]+?(?=\.(?:\s|$))\.|Price is at the recent high \([\d.,]+\)\./,'ad-sell');
   W(/Price fell into the exit zone [\d.,–]+? \(for example after an ex-dividend drop\), it did not rise into it: this is not a sell signal\./,'ad-wait');
+  W(/Real resistance starts.*?is a bonus\./,'ad-sell');
   W(/Wide zone:.*?\.(?=\s|$)/,'ad-room');
   W(/Room to the exit zone is only [\d.]+%\./,'ad-room');
   return h.split(/(<[^>]+>)/).map(x=>x.charAt(0)==='<'?x:x.replace(/(?<![#\w])\d[\d,]*\.?\d*(?:–\d[\d,]*\.?\d*)?/g,'<b>$&</b>')).join('');
