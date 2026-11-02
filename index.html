@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.82</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.83</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1012,8 +1012,8 @@ function tableRow(r,i){
   return `<tr class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
     <td class="sym-cell" data-l="">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell" data-l="Price">${fmt(r.Price)}</td>
-    ${[0,1].map(i=>{const z=r.Plan&&r.Plan.zv&&r.Plan.zv[i],v=r.Plan&&r.Plan.buy[i];return `<td class="zone-cell${i?' gl':''}" data-l="${i+1}-Entry Zone">${v==null?'—':(z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v))+(r.Plan.hot&&r.Plan.hot[i]?' ★':'')+(r.Plan.zv&&r.Plan.zv[i]&&r.Plan.zv[i].weak?'<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">weak</small>':'')+(i===1&&r.Plan.far?`<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">far −${r.Plan.far.pct}%</small>`:'')}</td>`;}).join('')}
-    ${[0,1].map(i=>{const z=r.Plan&&r.Plan.tz&&r.Plan.tz[i];return `<td class="zone-cell${i?' gl':''}" data-l="${i+1}-Exit Zone" style="color:var(--accent);font-weight:600">${z?(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo))+(z.hot?' ★':''):(i||!r.Plan?'—':tpF(r.Plan.target))}</td>`;}).join('')}
+    ${[0,1].map(i=>{const z=r.Plan&&r.Plan.zv&&r.Plan.zv[i],v=r.Plan&&r.Plan.buy[i];return `<td class="zone-cell${i?' gl':''}" data-l="${i+1}-Entry Zone">${v==null?'—':(z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v))+(r.Plan.hot&&r.Plan.hot[i]?' ★':'')+(r.Plan.zv&&r.Plan.zv[i]&&r.Plan.zv[i].weak?'<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">weak</small>':'')+tpTagHtml(r.Plan.eq&&r.Plan.eq[i])+(i===1&&r.Plan.far?`<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">far −${r.Plan.far.pct}%</small>`:'')}</td>`;}).join('')}
+    ${[0,1].map(i=>{const z=r.Plan&&r.Plan.tz&&r.Plan.tz[i];return `<td class="zone-cell${i?' gl':''}" data-l="${i+1}-Exit Zone" style="color:var(--accent);font-weight:600">${z?(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo))+(z.hot?' ★':'')+tpTagHtml(r.Plan.xq&&r.Plan.xq[i]):(i||!r.Plan?'—':tpF(r.Plan.target))}</td>`;}).join('')}
     <td class="zone-cell" data-l="Stop" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
     <td data-l="">${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
   </tr>${advHtml?`<tr class="advrow"><td></td><td colspan="6">${advHtml}</td><td></td></tr>`:''}`;
@@ -1366,6 +1366,18 @@ function tpBand(sym,v,cap){
   if(cap!=null&&b.hi>cap)b.hi=Math.max(b.lo,Math.min(b.hi,cap));
   return b;
 }
+// reliability tag of a zone from the daily history: "old" = not tested for 12+ months, "soft" = held fewer than 35% of at least 3 tests,
+// "high" / "new" = only one visit (a single peak / a fresh level)
+function tpZoneTag(sym,z,type){
+  const h=_tpHist[sym];if(!h||h.length<60||!z)return '';
+  const n=h.length,visits=[];let last=-99;
+  for(let i=0;i<n;i++){const b=h[i];if(b[2]<=z.hi&&b[1]>=z.lo){if(i-last>5)visits.push(i);last=i;}}
+  if(visits.length<=1)return type==='R'?'high':'new';
+  if(visits[visits.length-1]<n-250)return 'old';
+  let tested=0,held=0;
+  visits.forEach(i=>{if(i>n-12)return;tested++;for(let j=i+1;j<=Math.min(n-1,i+10);j++){if(type==='S'&&h[j][3]>=z.hi*1.03){held++;break;}if(type==='R'&&h[j][3]<=z.lo*0.97){held++;break;}}});
+  return tested>=3&&held/tested<0.35?'soft':'';
+}
 function tpPlan(s){
   const p=tpN(s.Price);if(p==null)return null;
   const m50=tpN(s['MA50-D']),m200=tpN(s['MA200-D']),l1=tpN(s['Low-1M']),h1=tpN(s['High-1M']),l3=tpN(s['Low-3M']),h3=tpN(s['High-3M']),l52=tpN(s['52W-Low']),h52=tpN(s['52W-High']),l6=tpN(s['Low-6M']),ps1=tpN(s['Pivot-S1']),ps2=tpN(s['Pivot-S2']);
@@ -1487,6 +1499,7 @@ function tpPlan(s){
     o.tz=[g1,g2].filter(Boolean).map((g,i)=>g.hi/g.lo<1.012?{lo:+Math.min(g.hi,Math.max(g.hi*0.985,i?g1.hi*1.03:0)).toFixed(2),hi:g.hi,hot:g.hot}:({lo:g.lo,hi:g.hi,hot:g.hot}));
   }
   if(o.tz.length)o.target=o.tz[0].lo;
+  {const sy=String(s.Symbol||'').toUpperCase();o.eq=(o.zv||[]).map(z=>tpZoneTag(sy,z,'S'));o.xq=o.tz.map(z=>tpZoneTag(sy,z,'R'));}
   if(joinedX?(p>=o.tz[0].lo&&p<=o.tz[0].hi&&!inEntry):(inRes||h1on)){
     if(joinedX)o.sellTxt='Price is in the exit zone '+(tpF(o.tz[0].lo)!==tpF(o.tz[0].hi)?tpF(o.tz[0].lo)+'–'+tpF(o.tz[0].hi):tpF(o.tz[0].lo))+' (two close zones joined).';
     o.verdict='SELL ZONE';o.target=joinedX?(o.tz[1]?o.tz[1].lo:o.tz[0].hi):(inRes?(o.target>p*1.03?o.target:(h1||p)):h1);o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.';return o;}
@@ -1596,6 +1609,10 @@ function tpAdvFmt(t){
   W(/Price is in the exit zone [\d.,–]+? \(two close zones joined\)\.|Price is in the exit zone [\d.,–]+?(?=\.(?:\s|$))\.|Price is at the recent high \([\d.,]+\)\./,'ad-sell');
   W(/Room to the exit zone is only [\d.]+%\./,'ad-room');
   return h.split(/(<[^>]+>)/).map(x=>x.charAt(0)==='<'?x:x.replace(/(?<![#\w])\d[\d,]*\.?\d*(?:–\d[\d,]*\.?\d*)?/g,'<b>$&</b>')).join('');
+}
+function tpTagHtml(t){
+  const tip={old:'not tested for more than 12 months',soft:'held fewer than 35% of its past tests',high:'only one visit: the last peak',new:'only one visit: a fresh level'};
+  return t?'<small title="'+tip[t]+'" style="display:block;font-size:10px;font-weight:600;color:var(--text3)">'+t+'</small>':'';
 }
 function tpBadge(v){const m={'BUY ZONE':'background:#10B981;color:#04210f','WAIT':'background:#F59E0B;color:#2a1a00','SELL ZONE':'background:#38BDF8;color:#04202e'};return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;${m[v]||''}">${v}</span>`;}
 
