@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.96</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.95</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1326,7 +1326,7 @@ function computeSetupQuality(sym,s,verdict){
 /* ════════════════════════════════════════════
    CHAT-SYSTEM RULES — stop, targets, R:R, reversal plan (used by the Weekly Analysis table)
 ════════════════════════════════════════════ */
-let _tpPins=null,_tpLdcp={},_tpNews=null,_tpList=null,_tpLots={},_tpHist={},_tpZ={};
+let _tpLdcp={},_tpNews=null,_tpList=null,_tpLots={},_tpHist={},_tpZ={};
 const tpN=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
 const tpF=v=>v==null||isNaN(v)?'—':fmt(v);
 // zones from the daily candles: swing lows / highs that price touched again and again (within 4% of each other); recent touches count double
@@ -1384,33 +1384,8 @@ function tpFellInto(sym,z){
   let mx=0;for(let i=h.length-16;i<h.length-1;i++)if(h[i][3]>mx)mx=h[i][3];
   return mx>z.hi*1.02;
 }
-// the zones of the user's TradingView chart (tickers/zones.json): the app shows them as they are and decides BUY / SELL / WAIT by the live price
-function tpPinPlan(s,p,pin,sym){
-  const mas=[tpN(s['MA50-D']),tpN(s['MA200-D'])].filter(v=>v!=null);
-  const near=z=>mas.some(m=>m>=z.lo*0.98&&m<=z.hi*1.02);
-  const mk=a=>a?{lo:a[0],hi:a[1]}:null;
-  const zv=[mk(pin.b1),mk(pin.b2)].filter(Boolean),tz=[mk(pin.x1),mk(pin.x2)].filter(Boolean).map(z=>({lo:z.lo,hi:z.hi,hot:near(z)}));
-  const o={p,buy:zv.map(z=>z.hi),zv,hot:zv.map(near),hotT:tz.length?tz[0].hot:false,stop:pin.stop,target:tz.length?tz[0].lo:null,verdict:'WAIT',why:'',tz};
-  o.eq=zv.map(z=>tpZoneTag(sym,z,'S'));o.xq=tz.map(z=>tpZoneTag(sym,z,'R'));
-  const rg=z=>tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo);
-  const inz=z=>p>=z.lo&&p<=z.hi;
-  const bi=zv.findIndex(inz),xi=tz.findIndex(inz),fell=xi>=0&&tpFellInto(sym,tz[xi]);
-  if(xi>=0&&!fell){o.verdict='SELL ZONE';o.sellTxt='Price is in the exit zone '+rg(tz[xi])+'.';o.target=tz[xi].lo;return o;}
-  if(bi>=0){
-    o.verdict='BUY ZONE';
-    o.why='Price is at support '+rg(zv[bi])+(o.hot[bi]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(zv[bi+1]?' If it breaks, the next support is '+rg(zv[bi+1])+'.':' No lower support zone found.');
-  }else{
-    const below=zv.filter(z=>z.hi<p);
-    if(!below.length)o.why='Price is under every known support level. Wait for a new level to form.';
-    else{const i=zv.indexOf(below[0]);o.why='Wait for a pullback to '+rg(below[0])+', then buy.'+(zv[i+1]?' Next support: '+rg(zv[i+1])+'.':'');}
-    if(fell)o.why+=' Price fell into the exit zone '+rg(tz[xi])+' (for example after an ex-dividend drop), it did not rise into it: this is not a sell signal.';
-    else if(tz.length&&p>tz[tz.length-1].hi)o.why+=' Price is above the last exit zone.';
-  }
-  return o;
-}
 function tpPlan(s){
   const p=tpN(s.Price);if(p==null)return null;
-  {const sy=String(s.Symbol||'').toUpperCase();if(_tpPins&&_tpPins[sy])return tpPinPlan(s,p,_tpPins[sy],sy);}
   const m50=tpN(s['MA50-D']),m200=tpN(s['MA200-D']),l1=tpN(s['Low-1M']),h1=tpN(s['High-1M']),l3=tpN(s['Low-3M']),h3=tpN(s['High-3M']),l52=tpN(s['52W-Low']),h52=tpN(s['52W-High']),l6=tpN(s['Low-6M']),ps1=tpN(s['Pivot-S1']),ps2=tpN(s['Pivot-S2']);
   // support levels: moving averages and recent lows that are at or just above/below the price; levels within 2% of each other count as one
   const ok=v=>v!=null&&v>0&&v<=p*1.03;
@@ -1424,7 +1399,8 @@ function tpPlan(s){
   let zl=[],hot=[],zstop=null;const zv=[];
   if(Z){
     // a zone the price has fallen below is broken: skip it
-    const sz=Z.sup.filter(z=>(z.hi<=p*1.03||p<=z.hi)&&z.lo<=p).sort((a,b)=>b.hi-a.hi);
+    // a zone the price is inside counts only when it is strong (weight 8 or more); a weak zone under the price's feet is not a buy zone
+    const sz=Z.sup.filter(z=>(z.hi<=p*1.03||p<=z.hi)&&z.lo<=p&&!(z.hi>p&&z.w<8)).sort((a,b)=>b.hi-a.hi);
     const rec=sz.find(z=>z.recent);
     if(rec){
       // the first zone is only a thin line and a much stronger zone touches it from below (less than 2% apart): they are one support area
@@ -1574,7 +1550,6 @@ function tpNewsText(sym){
 async function tpLoadExtras(){
   try{const r=await fetch(gsUrl('Prices'));const j=await r.json();const rows=j.values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());const li=h.indexOf('ldcp');_tpLdcp={};if(li>=0)rows.slice(1).forEach(r=>{const sy=String(r[0]||'').trim().toUpperCase(),l=parseFloat(r[li]);if(sy&&l>0)_tpLdcp[sy]=l;});}catch(e){}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);_tpNews=r.ok?await r.json():null;}catch(e){_tpNews=null;}
-  try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/zones.json?${Date.now()}`);const j=r.ok?await r.json():null;_tpPins=j&&j.zones?j.zones:null;}catch(e){_tpPins=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);_tpList=r.ok?await r.json():null;}catch(e){_tpList=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/history.json?${Date.now()}`);const j=r.ok?await r.json():null;_tpHist=j&&j.data?j.data:{};}catch(e){_tpHist={};}
   _tpZ={};
