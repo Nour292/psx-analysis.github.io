@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.79</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.80</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1446,7 +1446,7 @@ function tpPlan(s){
   // nearest resistance: moving averages and recent highs above the price and in front of the first history exit zone become Exit Zone 1
   if(!inRes){
     const firstLo=o.tz.length?o.tz[0].lo:Infinity;
-    const lvls=[m50,m200,h1,h3].filter(v=>v!=null&&v>p*1.03&&v<firstLo).sort((a,b)=>a-b);
+    const lvls=[m50,m200,h1,h3].filter(v=>v!=null&&v>p*1.03&&v<=firstLo/1.05).sort((a,b)=>a-b);
     if(lvls.length){
       const grp=[lvls[0]];lvls.slice(1).forEach(v=>{if(v<=grp[grp.length-1]*1.05)grp.push(v);});
       const hasMa=grp.some(v=>v===m50||v===m200),hasHigh=grp.some(v=>v===h1||v===h3);
@@ -1464,6 +1464,7 @@ function tpPlan(s){
   o.tz.forEach(z=>{
     const g=gr[gr.length-1];
     if(g&&z.hi<=g.hi)return;
+    if(g&&(z.lo-g.hi)/g.hi<0.015)return;
     if(g&&(z.lo-g.hi)/g.hi<0.05){
       const lo=g.n===1?g.hi:g.lo;
       if(z.hi<=lo*1.07){g.lo=lo;g.hi=z.hi;g.n++;g.hot=g.hot||z.hot;g.w=Math.max(g.w,z.w||0);}
