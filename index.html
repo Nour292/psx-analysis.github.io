@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.91</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.92</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1401,7 +1401,12 @@ function tpPlan(s){
     // a zone the price has fallen below is broken: skip it
     const sz=Z.sup.filter(z=>z.hi<=p*1.03&&z.lo<=p).sort((a,b)=>b.hi-a.hi);
     const rec=sz.find(z=>z.recent);
-    if(rec){zl.push(rec);const nx=sz.find(z=>z.hi<rec.lo*0.98&&z.hi>=rec.lo*0.70),nlow=real.filter(v=>v<rec.lo*0.98);if(nx&&!(nx.extra&&nlow.length&&nlow[0]>nx.hi))zl.push(nx);}
+    if(rec){
+      // a stronger zone touching the one below (less than 2% apart) is part of the same support area
+      const tch=sz.find(z=>z!==rec&&z.hi<rec.lo&&z.hi>=rec.lo*0.98&&z.w>rec.w),bz=tch||rec;
+      zl.push(rec);if(tch)zl.push(tch);
+      const nx=sz.find(z=>z!==tch&&z.hi<bz.lo*0.98&&z.hi>=bz.lo*0.70),nlow=real.filter(v=>v<bz.lo*0.98);if(nx&&!(nx.extra&&nlow.length&&nlow[0]>nx.hi))zl.push(nx);
+    }
   }
   if(zl.length){
     lv.length=0;zl.forEach(z=>{lv.push(z.hi);hot.push(near(z));zv.push({lo:z.lo,hi:z.hi,weak:z.weak});});zstop=zl[0].lo*0.99;
@@ -1509,7 +1514,11 @@ function tpPlan(s){
     o.tz=[g1,g2].filter(Boolean).map((g,i)=>g.hi/g.lo<1.015?{lo:+Math.min(g.hi,Math.max(g.hi*0.985,i?g1.hi*1.015:0)).toFixed(2),hi:g.hi,hot:g.hot}:({lo:g.lo,hi:g.hi,hot:g.hot,rs:g.rs,rt:g.rt}));
   }
   if(o.tz.length)o.target=o.tz[0].lo;
-  {const sy=String(s.Symbol||'').toUpperCase();o.eq=(o.zv||[]).map(z=>tpZoneTag(sy,z,'S'));o.xq=o.tz.map(z=>tpZoneTag(sy,z,'R'));}
+  {const sy=String(s.Symbol||'').toUpperCase();
+    // a zone that is not a history zone says where it comes from: moving average, recent low or a high
+    const srcTag=(z,list,lvls)=>{const rs=z.rs||z.lo,rt=z.rt||z.hi,wd=Math.max(rt-rs,z.hi-z.lo,1e-4);let best=0;(list||[]).forEach(q=>{best=Math.max(best,Math.max(0,Math.min(rt,q.hi)-Math.max(rs,q.lo))/wd);});if(best>=0.5)return '';const f=lvls.find(a=>a[1]!=null&&a[1]>=z.lo*0.985&&a[1]<=z.hi*1.015);return f?f[0]:'';};
+    o.eq=(o.zv||[]).map(z=>srcTag(z,Z&&Z.sup,[['MA50',m50],['MA200',m200],['recent low',l1],['recent low',l3],['recent low',l6],['recent low',l52]])||tpZoneTag(sy,z,'S'));
+    o.xq=o.tz.map(z=>srcTag(z,Z&&Z.res,[['MA50',m50],['MA200',m200],['high',h1],['high',h3],['high',h52]])||tpZoneTag(sy,z,'R'));}
   const readyTxt=()=>{const w=[];o.tz.forEach((z,i)=>{if(z.rs)w.push('Real resistance starts at '+tpF(z.rs)+' and runs to '+tpF(z.rt)+': be ready to sell from '+tpF(z.rs)+'. Exit '+(i+1)+' target is '+tpF(z.lo)+'–'+tpF(z.hi)+'; above '+tpF(z.hi)+' is a bonus.');});return w.length?' '+w.join(' '):'';};
   const wideTxt=()=>{const w=[];const chk=(n,z)=>{if(z&&z.hi/z.lo>1.05)w.push(n+' '+tpF(z.lo)+'–'+tpF(z.hi)+' ('+((z.hi/z.lo-1)*100).toFixed(1)+'%)');};chk('Exit 1',o.tz[0]);chk('Exit 2',o.tz[1]);chk('Buy 1',o.zv[0]);chk('Buy 2',o.zv[1]);
     return w.length?' Wide zone: '+w.join(', ')+' '+(w.length>1?'are':'is')+' wide because close levels were joined into one area, not one thin line. Sell or buy across the area, not at one price.':'';};
@@ -1630,7 +1639,7 @@ function tpAdvFmt(t){
   return h.split(/(<[^>]+>)/).map(x=>x.charAt(0)==='<'?x:x.replace(/(?<![#\w])\d[\d,]*\.?\d*(?:–\d[\d,]*\.?\d*)?/g,'<b>$&</b>')).join('');
 }
 function tpTagHtml(t){
-  const tip={old:'not tested for more than 12 months',soft:'held fewer than 35% of its past tests',high:'only one visit: the last peak',new:'only one visit: a fresh level'};
+  const tip={old:'not tested for more than 12 months',soft:'held fewer than 35% of its past tests',high:'only one visit: the last peak',MA50:'level taken from the 50-day moving average, not a history zone',MA200:'level taken from the 200-day moving average, not a history zone','recent low':'taken from a recent low, no history zone here yet',new:'only one visit: a fresh level'};
   return t?'<small title="'+tip[t]+'" style="display:block;font-size:10px;font-weight:600;color:var(--text3)">'+t+'</small>':'';
 }
 function tpBadge(v){const m={'BUY ZONE':'background:#10B981;color:#04210f','WAIT':'background:#F59E0B;color:#2a1a00','SELL ZONE':'background:#38BDF8;color:#04202e'};return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;${m[v]||''}">${v}</span>`;}
