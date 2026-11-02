@@ -21,6 +21,7 @@ LIST = os.path.join(ROOT, "tickers", "list.json")
 OUT = os.path.join(ROOT, "tickers", "history.json")
 HOST = "data.tradingview.com"
 BARS = 2000
+ADJUSTMENT = "splits"   # "dividends" with --adj: prices before an ex-dividend date are scaled so the drop is no gap
 
 
 def rid(p):
@@ -104,7 +105,7 @@ def candles(ws, sym):
     cs, ss = rid("cs_"), "s1"
     ws.send(pack({"m": "set_auth_token", "p": ["unauthorized_user_token"]}))
     ws.send(pack({"m": "chart_create_session", "p": [cs, ""]}))
-    ws.send(pack({"m": "resolve_symbol", "p": [cs, "sds_sym_1", '={"symbol":"PSX:%s","adjustment":"splits"}' % sym]}))
+    ws.send(pack({"m": "resolve_symbol", "p": [cs, "sds_sym_1", '={"symbol":"PSX:%s","adjustment":"%s"}' % (sym, ADJUSTMENT)]}))
     ws.send(pack({"m": "create_series", "p": [cs, ss, "s1", "sds_sym_1", "1D", BARS, ""]}))
     bars, t0 = None, time.time()
     while time.time() - t0 < 25:
@@ -138,8 +139,13 @@ def sheet_symbols():
 
 
 def main():
+    global ADJUSTMENT, OUT
+    args = [a for a in sys.argv[1:] if a != "--adj"]
+    if "--adj" in sys.argv[1:]:
+        ADJUSTMENT = "dividends"
+        OUT = os.path.join(ROOT, "tickers", "history_adj.json")
     syms = sheet_symbols()
-    only = sys.argv[1:]
+    only = args
     if only:
         syms = only
     res, bad = {}, []
