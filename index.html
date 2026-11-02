@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.89</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.90</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1463,10 +1463,10 @@ function tpPlan(s){
       o.tz.unshift({lo:cz.lo,hi:cz.hi,hot:near(cz),w:cz.w});o.tz.length=Math.min(o.tz.length,5);
     }
   }
-  // no real resistance zone above: the recent highs (1 and 3 months) stand in as Exit Zone 1; moving averages are never an exit zone
-  if(!inRes&&!o.tz.length){
+  // nearest resistance: moving averages and recent highs above the price and in front of the first history exit zone become Exit Zone 1
+  if(!inRes){
     const firstLo=o.tz.length?o.tz[0].lo:Infinity;
-    const lvls=[h1,h3].filter(v=>v!=null&&v>p*1.03&&v<=firstLo/1.05).sort((a,b)=>a-b);
+    const lvls=[m50,m200,h1,h3].filter(v=>v!=null&&v>p*1.03&&v<=firstLo/1.05).sort((a,b)=>a-b);
     if(lvls.length){
       const grp=[lvls[0]];lvls.slice(1).forEach(v=>{if(v<=grp[grp.length-1]*1.05)grp.push(v);});
       const hasMa=grp.some(v=>v===m50||v===m200),hasHigh=grp.some(v=>v===h1||v===h3);
@@ -1479,8 +1479,6 @@ function tpPlan(s){
   const inEntry=zl.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
   const h1on=!inRes&&!inEntry&&h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05);
   if(h1on){o.sellTxt='Price is at the recent high ('+tpF(h1)+').';o.tz.unshift({lo:h1,hi:h1,hot:false});o.tz.length=Math.min(o.tz.length,5);}
-  // an exit zone must leave at least 4% room above the top of Buy Zone 1, otherwise the next one is used
-  if(o.zv[0]&&!inRes&&!h1on)o.tz=o.tz.filter(z=>z.lo>=o.zv[0].hi*1.04);
   // an exit zone must leave at least 4% room above the top of Buy Zone 1, otherwise the next one is used
   if(o.zv[0]&&!inRes&&!h1on)o.tz=o.tz.filter(z=>z.lo>=o.zv[0].hi*1.04);
   // exit zones 1.5–3% apart: joined into one band that runs from the high of the first zone to the low of the next (the target); the real resistance (rs to rt) is kept for the advice text
