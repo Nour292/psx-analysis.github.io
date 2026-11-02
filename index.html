@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.81</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.82</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1429,6 +1429,7 @@ function tpPlan(s){
   const zt=i=>{const z=(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:(lv[i]!=null?tpBand(String(s.Symbol||'').toUpperCase(),lv[i],e1lo(i)):null);return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
   const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v,e1lo(i))),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
   o.zv=o.zv.map(z=>z.hi/z.lo<1.012?{lo:+(z.hi*0.985).toFixed(2),hi:z.hi,weak:z.weak}:z);
+  if(o.stop!=null&&o.zv[0]&&o.stop>o.zv[0].lo*0.995)o.stop=o.zv[0].lo*0.99;
   if(far)o.far=far;
   let inRes=false,cz=null;o.tz=[];
   if(Z){
@@ -1483,7 +1484,7 @@ function tpPlan(s){
       const nh=[h1,h3,h52].filter(v=>v!=null&&v>=g1.hi*1.03).sort((x,y)=>x-y)[0];
       if(nz)g2={lo:nz.lo,hi:nz.hi,hot:near(nz)};else if(nh!=null)g2={lo:nh,hi:nh,hot:false};
     }
-    o.tz=[g1,g2].filter(Boolean).map(g=>g.hi/g.lo<1.012?{lo:+(g.hi*0.985).toFixed(2),hi:g.hi,hot:g.hot}:({lo:g.lo,hi:g.hi,hot:g.hot}));
+    o.tz=[g1,g2].filter(Boolean).map((g,i)=>g.hi/g.lo<1.012?{lo:+Math.min(g.hi,Math.max(g.hi*0.985,i?g1.hi*1.03:0)).toFixed(2),hi:g.hi,hot:g.hot}:({lo:g.lo,hi:g.hi,hot:g.hot}));
   }
   if(o.tz.length)o.target=o.tz[0].lo;
   if(joinedX?(p>=o.tz[0].lo&&p<=o.tz[0].hi&&!inEntry):(inRes||h1on)){
