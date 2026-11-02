@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.88</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.89</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1479,6 +1479,8 @@ function tpPlan(s){
   const inEntry=zl.some(z=>p>=z.lo*0.98&&p<=z.hi*1.02);
   const h1on=!inRes&&!inEntry&&h1!=null&&p>=h1*0.98&&h1>p*0.9&&(h3==null||h1>=l3*1.05);
   if(h1on){o.sellTxt='Price is at the recent high ('+tpF(h1)+').';o.tz.unshift({lo:h1,hi:h1,hot:false});o.tz.length=Math.min(o.tz.length,5);}
+  // an exit zone must leave at least 4% room above the top of Buy Zone 1, otherwise the next one is used
+  if(o.zv[0]&&!inRes&&!h1on)o.tz=o.tz.filter(z=>z.lo>=o.zv[0].hi*1.04);
   // an exit zone must leave at least 4% room above the top of Buy Zone 1, otherwise the next one is used
   if(o.zv[0]&&!inRes&&!h1on)o.tz=o.tz.filter(z=>z.lo>=o.zv[0].hi*1.04);
   // exit zones 1.5–3% apart: joined into one band that runs from the high of the first zone to the low of the next (the target); the real resistance (rs to rt) is kept for the advice text
