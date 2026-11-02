@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.99</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.00</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1426,8 +1426,8 @@ function tpPlan(s){
     const sym=String(s.Symbol||'').toUpperCase();
     const d1=(zv[0]&&zv[0].lo<zv[0].hi)?zv[0]:tpBand(sym,lv[0],null),d2=(zv[1]&&zv[1].lo<zv[1].hi)?zv[1]:tpBand(sym,lv[1],e1lo(1));
     if((d1.lo-d2.hi)/d1.lo<0.03&&d2.lo<d1.lo&&d1.lo/d2.lo<=1.07){
-      // the band is the gap between the two zones (high of the lower zone to low of the upper zone); the real support (rs to rt) stays in the advice. Zones less than 1.5% apart keep the old band (low of the lower zone to low of the upper zone)
-      merged=true;const gapB=(d1.lo-d2.hi)/d1.lo>=0.015;
+      // when both are real history zones the band is the gap between them (high of the lower zone to low of the upper zone); the real support (rs to rt) stays in the advice. Zones less than 1.5% apart keep the old band (low of the lower zone to low of the upper zone)
+      merged=true;const gapB=(d1.lo-d2.hi)/d1.lo>=0.015&&!!(zv[0]&&zv[0].lo<zv[0].hi&&zv[1]&&zv[1].lo<zv[1].hi);
       const b=gapB?{lo:d2.hi,hi:d1.lo,rs:d2.lo,rt:d1.hi,weak:!!(d1.weak&&d2.weak)}:{lo:d2.lo,hi:d1.lo,weak:!!(d1.weak&&d2.weak)};
       const bs=b.rs||b.lo,bt=b.rt||b.hi;
       lv.length=0;zv.length=0;hot.length=0;
