@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.80</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v3.81</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1396,18 +1396,18 @@ function tpPlan(s){
   }
   if(lv.length>1&&lv[1]<lv[0]*0.70){lv.length=1;hot.length=1;zv.length=1;}
   const e1lo=i=>i?(zv[0]?zv[0].lo:lv[0])*0.98:null;
-  // two entry zones less than 5% apart are one support area: the band runs from the low of the 2nd zone to the low of the 1st zone
+  // two entry zones less than 3% apart are one support area: the band runs from the low of the 2nd zone to the low of the 1st zone
   let merged=false;
   if(lv.length>1){
     const sym=String(s.Symbol||'').toUpperCase();
     const d1=(zv[0]&&zv[0].lo<zv[0].hi)?zv[0]:tpBand(sym,lv[0],null),d2=(zv[1]&&zv[1].lo<zv[1].hi)?zv[1]:tpBand(sym,lv[1],e1lo(1));
-    if((d1.lo-d2.hi)/d1.lo<0.05&&d2.lo<d1.lo){
+    if((d1.lo-d2.hi)/d1.lo<0.03&&d2.lo<d1.lo&&d1.lo/d2.lo<=1.07){
       merged=true;const b={lo:d2.lo,hi:d1.lo,weak:!!(d1.weak&&d2.weak)};
       lv.length=0;zv.length=0;hot.length=0;
       lv.push(b.hi);zv.push(b);hot.push(mas.some(m=>m>=b.lo*0.98&&m<=b.hi*1.02));
-      const nx=Z?Z.sup.filter(z=>z.hi<b.lo*0.95&&z.hi>=b.lo*0.70).sort((x,y)=>y.hi-x.hi)[0]:null;
+      const nx=Z?Z.sup.filter(z=>z.hi<b.lo*0.97&&z.hi>=b.lo*0.70).sort((x,y)=>y.hi-x.hi)[0]:null;
       if(nx&&nx.hi>=b.hi*0.70){lv.push(nx.hi);zv.push({lo:nx.lo,hi:nx.hi,weak:nx.weak});hot.push(near(nx));}
-      else{const old=real.filter(v=>v<b.lo*0.95&&v>=b.hi*0.70);if(old.length){lv.push(old[0]);zv.push({lo:old[0],hi:old[0]});hot.push(false);}}
+      else{const old=real.filter(v=>v<b.lo*0.97&&v>=b.hi*0.70);if(old.length){lv.push(old[0]);zv.push({lo:old[0],hi:old[0]});hot.push(false);}}
       zl=[{lo:b.lo,hi:b.hi,recent:true}];zstop=b.lo*0.99;
     }
   }
@@ -1428,6 +1428,7 @@ function tpPlan(s){
   const zw=i=>(zv[i]&&zv[i].weak?' (weak zone)':'');
   const zt=i=>{const z=(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:(lv[i]!=null?tpBand(String(s.Symbol||'').toUpperCase(),lv[i],e1lo(i)):null);return z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(lv[i]);};
   const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v,e1lo(i))),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
+  o.zv=o.zv.map(z=>z.hi/z.lo<1.012?{lo:+(z.hi*0.985).toFixed(2),hi:z.hi,weak:z.weak}:z);
   if(far)o.far=far;
   let inRes=false,cz=null;o.tz=[];
   if(Z){
@@ -1465,7 +1466,7 @@ function tpPlan(s){
     const g=gr[gr.length-1];
     if(g&&z.hi<=g.hi)return;
     if(g&&(z.lo-g.hi)/g.hi<0.015)return;
-    if(g&&(z.lo-g.hi)/g.hi<0.05){
+    if(g&&(z.lo-g.hi)/g.hi<0.03){
       const lo=g.n===1?g.hi:g.lo;
       if(z.hi<=lo*1.07){g.lo=lo;g.hi=z.hi;g.n++;g.hot=g.hot||z.hot;g.w=Math.max(g.w,z.w||0);}
       else gr.push({lo:z.lo,hi:z.hi,hot:z.hot,w:z.w||0,n:1});
@@ -1473,16 +1474,16 @@ function tpPlan(s){
   });
   gr.forEach(g=>{if(g.n>1)g.hot=g.hot||mas.some(m=>m>=g.lo*0.98&&m<=g.hi*1.02);});
   const joinedX=gr.length>0&&gr[0].n>1;
-  // Exit Zone 2 is the next separate resistance: at least 5% above the top of Exit Zone 1
+  // Exit Zone 2 is the next separate resistance: at least 3% above the top of Exit Zone 1
   if(gr.length){
     const g1=gr[0];
-    let g2=gr.find((g,i)=>i>0&&(g.lo-g1.hi)/g1.hi>=0.05);
+    let g2=gr.find((g,i)=>i>0&&(g.lo-g1.hi)/g1.hi>=0.03);
     if(!g2){
-      const nz=Z?Z.res.filter(z=>z.recent&&z.lo>=g1.hi*1.05).sort((x,y)=>x.lo-y.lo)[0]:null;
-      const nh=[h1,h3,h52].filter(v=>v!=null&&v>=g1.hi*1.05).sort((x,y)=>x-y)[0];
+      const nz=Z?Z.res.filter(z=>z.recent&&z.lo>=g1.hi*1.03).sort((x,y)=>x.lo-y.lo)[0]:null;
+      const nh=[h1,h3,h52].filter(v=>v!=null&&v>=g1.hi*1.03).sort((x,y)=>x-y)[0];
       if(nz)g2={lo:nz.lo,hi:nz.hi,hot:near(nz)};else if(nh!=null)g2={lo:nh,hi:nh,hot:false};
     }
-    o.tz=[g1,g2].filter(Boolean).map(g=>({lo:g.lo,hi:g.hi,hot:g.hot}));
+    o.tz=[g1,g2].filter(Boolean).map(g=>g.hi/g.lo<1.012?{lo:+(g.hi*0.985).toFixed(2),hi:g.hi,hot:g.hot}:({lo:g.lo,hi:g.hi,hot:g.hot}));
   }
   if(o.tz.length)o.target=o.tz[0].lo;
   if(joinedX?(p>=o.tz[0].lo&&p<=o.tz[0].hi&&!inEntry):(inRes||h1on)){
