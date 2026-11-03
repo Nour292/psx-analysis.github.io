@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PSX Zones
 // @namespace    https://nour292.github.io/psx-analysis.github.io/
-// @version      1.3
+// @version      1.4
 // @description  Copies the app's Buy/Exit zones and draws them on the TradingView chart
 // @match        https://nour292.github.io/psx-analysis.github.io/index.html*
 // @match        https://www.tradingview.com/chart/*
@@ -63,6 +63,7 @@
     const key = sym + '|' + saved.at;
     if (key === lastKey) return;
     busy = true;
+    const same = () => String(chart.symbol() || '').split(':').pop().toUpperCase() === sym;
     try {
       // remove only our own old shapes
       for (const sh of chart.getAllShapes()) {
@@ -72,6 +73,7 @@
       }
       if (z) {
         const box = async (name, a, color) => {
+          if (!same()) throw new Error('symbol changed');
           const text = name + '  ' + f2(a.lo) + '–' + f2(a.hi);
           const id = await chart.createMultipointShape(
             [{ time: T1, price: a.lo }, { time: T2, price: a.hi }],
@@ -84,7 +86,7 @@
         };
         for (let i = 0; i < z.buy.length && i < 2; i++) await box('Buy ' + (i + 1), z.buy[i], GREEN);
         for (let i = 0; i < z.exit.length && i < 2; i++) await box('Exit ' + (i + 1), z.exit[i], PURPLE);
-        if (z.stop != null) {
+        if (z.stop != null && same()) {
           const id = await chart.createShape({ time: T1, price: z.stop }, { shape: 'horizontal_line', text: 'Stop ' + f2(z.stop) });
           chart.getShapeById(id).setProperties({ linecolor: RED, color: RED, linewidth: 1, showLabel: true, text: 'Stop ' + f2(z.stop), textColor: '#ffffff' });
         }
@@ -95,7 +97,7 @@
         if (MINE.test(String(e.getProperties().text || ''))) e.setProperties({ textColor: '#ffffff' });
       }
       document.documentElement.setAttribute('data-psx-ver', '1.3');
-      lastKey = key;
+      lastKey = same() ? key : '';
     } catch (e) { console.warn('[PSX Zones]', e); }
     busy = false;
   }
