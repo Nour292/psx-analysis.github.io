@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-02T22:16:57Z",
+ "updated": "2026-11-04T20:23:17Z",
  "days": 30,
  "rows": [
   {
@@ -236,8 +236,16 @@
     "prev": 503516.0,
     "change": 32.3
    },
-   "flagged": 6,
+   "flagged": 7,
    "items": [
+    {
+     "date": "2026-11-03",
+     "title": "Disclosure of Material Information In accordance to the section 96 and 131 of the Securities Act 2015 and Clause 5.6.1(a) of the Rule Book of the Pakistan Stock Exchange Limited, we hereby convey the following information: he Company (NICL) has received",
+     "flags": [
+      "Material"
+     ],
+     "doc": "288511"
+    },
     {
      "date": "2026-11-02",
      "title": "Disclosure of Material Information",
@@ -302,8 +310,16 @@
     "prev": 19184539.0,
     "change": 16.3
    },
-   "flagged": 5,
+   "flagged": 6,
    "items": [
+    {
+     "date": "2026-11-03",
+     "title": "General Meetings / Briefing Sessions",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "288487"
+    },
     {
      "date": "2026-11-02",
      "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
@@ -349,6 +365,202 @@
       "Management"
      ],
      "doc": "285815"
+    }
+   ]
+  },
+  {
+   "symbol": "SAZEW",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 4035691.0,
+    "prev": 4417012.0,
+    "change": -8.6
+   },
+   "flagged": 6,
+   "items": [
+    {
+     "date": "2026-11-03",
+     "title": "Clarification regarding News published in Electronic Media",
+     "flags": [
+      "Material"
+     ],
+     "doc": "288466"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "SAZEW | Sazgar Engineering Works Limited - Financial Results for the quarter ended 2026-09-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-26",
+     "title": "Board Meeting In Progress",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-19",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-08",
+     "title": "Credit of final cash dividend for the year ended June 30, 2026",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Production and Sales data regarding Four Wheelers and Three Wheelers for the months of August & September 2026",
+     "flags": [],
+     "doc": "284743"
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "284740"
+    }
+   ]
+  },
+  {
+   "symbol": "ZAL",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 551273.0,
+    "prev": 558177.0,
+    "change": -1.2
+   },
+   "flagged": 6,
+   "items": [
+    {
+     "date": "2026-11-04",
+     "title": "Credit of Final Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "288569"
+    },
+    {
+     "date": "2026-11-02",
+     "title": "Right Issue Draft Offer Document",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288459"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Declaration of Right Shares",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288278"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Financial Results for the Quarter Ended 30 September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "288274"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Video Recording of the Corporate Briefing Session of Zarea Limited",
+     "flags": [],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Notice of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285223"
+    }
+   ]
+  },
+  {
+   "symbol": "BERG",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 67366.0,
+    "prev": 69299.0,
+    "change": -2.8
+   },
+   "flagged": 5,
+   "items": [
+    {
+     "date": "2026-11-04",
+     "title": "Credit Of Final Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "288564"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "APPOINTMENT OF CHAIRMAN AND CHIEF EXECUTIVE OFFICER OF THE COMPANY",
+     "flags": [
+      "Management"
+     ],
+     "doc": "288241"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Financial Result for the Quarter Ended 30 September 2026",
+     "flags": [],
+     "doc": "288021"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Board Meetings",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286686"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Extracts of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "286683"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "WITHDRAWAL OF CANDIDATE FROM ELECTION OF DIRECTORS",
+     "flags": [],
+     "doc": "286080"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Notice under section 159 (4) and postal ballot paper for the annual general meeting (AGM) scheduled to be held on october 23, 2026.",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285843"
     }
    ]
   },
@@ -463,64 +675,6 @@
    ]
   },
   {
-   "symbol": "SAZEW",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 4035691.0,
-    "prev": 4417012.0,
-    "change": -8.6
-   },
-   "flagged": 5,
-   "items": [
-    {
-     "date": "2026-10-27",
-     "title": "SAZEW | Sazgar Engineering Works Limited - Financial Results for the quarter ended 2026-09-30",
-     "flags": [
-      "Results"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-26",
-     "title": "Board Meeting In Progress",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-19",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-08",
-     "title": "Credit of final cash dividend for the year ended June 30, 2026",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-06",
-     "title": "Production and Sales data regarding Four Wheelers and Three Wheelers for the months of August & September 2026",
-     "flags": [],
-     "doc": "284743"
-    },
-    {
-     "date": "2026-10-06",
-     "title": "Material Information",
-     "flags": [
-      "Material"
-     ],
-     "doc": "284740"
-    }
-   ]
-  },
-  {
    "symbol": "UBL",
    "quarter": {
     "label": "Q3 2026",
@@ -573,122 +727,46 @@
    ]
   },
   {
-   "symbol": "ZAL",
+   "symbol": "AHCL",
    "quarter": {
     "label": "Q1 2027",
-    "pat": 551273.0,
-    "prev": 558177.0,
-    "change": -1.2
-   },
-   "flagged": 5,
-   "items": [
-    {
-     "date": "2026-11-02",
-     "title": "Right Issue Draft Offer Document",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "288459"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Declaration of Right Shares",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "288278"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Financial Results for the Quarter Ended 30 September 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "288274"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Video Recording of the Corporate Briefing Session of Zarea Limited",
-     "flags": [],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-23",
-     "title": "Notice of Corporate Briefing Session",
-     "flags": [],
-     "doc": "286755"
-    },
-    {
-     "date": "2026-10-23",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-07",
-     "title": "Notice of Annual General Meeting",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "285223"
-    }
-   ]
-  },
-  {
-   "symbol": "BERG",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 67366.0,
-    "prev": 69299.0,
-    "change": -2.8
+    "pat": -2881303.0,
+    "prev": 17737174.0,
+    "change": -116.2
    },
    "flagged": 4,
    "items": [
     {
-     "date": "2026-10-30",
-     "title": "APPOINTMENT OF CHAIRMAN AND CHIEF EXECUTIVE OFFICER OF THE COMPANY",
+     "date": "2026-11-04",
+     "title": "Credit of Final Cash Dividend",
      "flags": [
-      "Management"
+      "Dividend"
      ],
-     "doc": "288241"
+     "doc": "288576"
     },
     {
      "date": "2026-10-30",
-     "title": "Financial Result for the Quarter Ended 30 September 2026",
-     "flags": [],
-     "doc": "288021"
+     "title": "Announcement - Financial Results for the Quarter Ended 30th September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287947"
     },
     {
-     "date": "2026-10-23",
-     "title": "Board Meetings",
+     "date": "2026-10-21",
+     "title": "BOARD MEETING / CLOSED PERIOD",
      "flags": [
       "Board meeting"
      ],
-     "doc": "286686"
+     "doc": "286303"
     },
     {
-     "date": "2026-10-23",
-     "title": "Extracts of Annual General Meeting",
+     "date": "2026-10-06",
+     "title": "Notice of Annual General Meeting",
      "flags": [
       "Meeting"
      ],
-     "doc": "286683"
-    },
-    {
-     "date": "2026-10-20",
-     "title": "WITHDRAWAL OF CANDIDATE FROM ELECTION OF DIRECTORS",
-     "flags": [],
-     "doc": "286080"
-    },
-    {
-     "date": "2026-10-16",
-     "title": "Notice under section 159 (4) and postal ballot paper for the annual general meeting (AGM) scheduled to be held on october 23, 2026.",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "285843"
+     "doc": "284868"
     }
    ]
   },
@@ -739,42 +817,6 @@
       "Dividend"
      ],
      "doc": "285656"
-    }
-   ]
-  },
-  {
-   "symbol": "AHCL",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": -2881303.0,
-    "prev": 17737174.0,
-    "change": -116.2
-   },
-   "flagged": 3,
-   "items": [
-    {
-     "date": "2026-10-30",
-     "title": "Announcement - Financial Results for the Quarter Ended 30th September 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "287947"
-    },
-    {
-     "date": "2026-10-21",
-     "title": "BOARD MEETING / CLOSED PERIOD",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "286303"
-    },
-    {
-     "date": "2026-10-06",
-     "title": "Notice of Annual General Meeting",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "284868"
     }
    ]
   },
