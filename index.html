@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.09</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.10</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1012,39 +1012,6 @@ let _allRows=[];
 let _topTickerSyms=[];
 async function loadTopTickers(){try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);if(!r.ok)return;const d=await r.json();_topTickerSyms=(d.rows||[]).filter(r=>['New','Active','Override'].includes(r.status)).map(r=>String(r.symbol||'').toUpperCase());}catch(e){}}
 const _activeFilters={verdict:'',quality:'',momentum:'',plan:'',priceMin:0,priceMax:0,symFilter:'all'};
-function setFilter(type,val){
-  _activeFilters[type]=val;
-  document.querySelectorAll('#filterBar .filter-group').forEach(grp=>{
-    const label=grp.querySelector('.filter-label');
-    if(!label)return;
-    const t=label.textContent.trim().toLowerCase();
-    if(t!==type)return;
-    grp.querySelectorAll('.fpill').forEach(btn=>{
-      const bval=btn.textContent.trim();
-      const isAll=(bval==='All'&&val==='');
-      const isMatch=!isAll&&btn.onclick&&btn.getAttribute('onclick')&&btn.getAttribute('onclick').includes("'"+val+"'");
-      btn.classList.toggle('active',isAll||(val!==''&&isMatch));
-    });
-  });
-  applyFilters();
-}
-function setPricePreset(mn,mx,btn){
-  _activeFilters.priceMin=mn; _activeFilters.priceMax=mx;
-  document.querySelectorAll('#filterBar .fpill[onclick*="setPricePreset"]').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  const ci=document.getElementById('priceClearBtn');
-  if(ci)ci.style.display=(mn===0&&mx===0)?'none':'inline-block';
-  applyFilters();
-}
-function applyCustomPrice(){
-  const mn=parseFloat(document.getElementById('priceMin').value)||0;
-  const mx=parseFloat(document.getElementById('priceMax').value)||0;
-  _activeFilters.priceMin=mn; _activeFilters.priceMax=mx;
-  document.querySelectorAll('#filterBar .fpill[onclick*="setPricePreset"]').forEach(b=>b.classList.remove('active'));
-  const ci=document.getElementById('priceClearBtn');
-  if(ci)ci.style.display=(mn===0&&mx===0)?'none':'inline-block';
-  applyFilters();
-}
 function setSymFilter(val,btn){
   _activeFilters.symFilter=val;
   document.querySelectorAll('#filterBar .fpill').forEach(b=>b.classList.remove('active'));
