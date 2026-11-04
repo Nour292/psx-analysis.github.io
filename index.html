@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.05</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.06</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1009,7 +1009,8 @@ function tableRow(r,i){
 function renderHome(){ if(_rawData.length&&document.getElementById('pgAnalysis').classList.contains('active')) runWeekly(); }
 
 let _allRows=[];
-const TOP_TICKERS=['OGDC','PPL','POL','PSO','UBL','HBL','MCB','BAFL','FFC','EFERT','HUBC','LUCK','SYS','ENGRO','MARI','TRG','MEBL','NBP','FCCL','ISL','KAPCO','MLCF','PIOC','DCL','FATIMA','SEARL','PKGS','COLG','SHEL'];
+let _topTickerSyms=[];
+async function loadTopTickers(){try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);if(!r.ok)return;const d=await r.json();_topTickerSyms=(d.rows||[]).filter(r=>['New','Active','Override'].includes(r.status)).map(r=>String(r.symbol||'').toUpperCase());}catch(e){}}
 const _activeFilters={verdict:'',quality:'',momentum:'',plan:'',priceMin:0,priceMax:0,symFilter:'all'};
 function setFilter(type,val){
   _activeFilters[type]=val;
@@ -1057,7 +1058,7 @@ function applyFilters(){
     let held=[];try{held=JSON.parse(localStorage.getItem('psx_my_holdings')||'[]');}catch(e){}
     if(held.length)rows=rows.filter(r=>held.includes((r.Symbol||'').toUpperCase()));
   }else if(sf==='top'){
-    rows=rows.filter(r=>TOP_TICKERS.includes((r.Symbol||'').toUpperCase()));
+    if(_topTickerSyms.length)rows=rows.filter(r=>_topTickerSyms.includes((r.Symbol||'').toUpperCase()));
   }
   if(_activeFilters.plan) rows=rows.filter(r=>r.Plan&&r.Plan.verdict===_activeFilters.plan);
   if(_activeFilters.verdict) rows=rows.filter(r=>r.Verdict===_activeFilters.verdict);
@@ -1774,6 +1775,7 @@ async function runTickersNow(){
 loadSavedToken();
 updateArchiveStatus();
 loadCSV();
+loadTopTickers();
 /* Deep-link from portfolio sub-items */
 (function(){
   const h=window.location.hash;
