@@ -663,28 +663,15 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.04</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.05</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
     <div class="filter-bar" id="filterBar" style="flex-wrap:nowrap;gap:14px">
       <div class="filter-group">
-        <span class="filter-label">Plan</span>
-        <button class="fpill active" onclick="setFilter('plan','')">All</button>
-        <button class="fpill fv-buy"     onclick="setFilter('plan','BUY ZONE')">BUY ZONE</button>
-        <button class="fpill fv-wait"    onclick="setFilter('plan','WAIT')">WAIT</button>
-        <button class="fpill fv-watch"   onclick="setFilter('plan','SELL ZONE')">SELL ZONE</button>
-      </div>
-      <div class="filter-sep"></div>
-      <div class="filter-group" style="flex-wrap:nowrap">
-        <span class="filter-label">Price</span>
-        <button class="fpill active" id="pricePillAll" onclick="setPricePreset(0,0,this)">All</button>
-        <button class="fpill" onclick="setPricePreset(0,50,this)">&lt; 50</button>
-        <button class="fpill" onclick="setPricePreset(50,200,this)">50–200</button>
-        <button class="fpill" onclick="setPricePreset(200,500,this)">200–500</button>
-        <button class="fpill" onclick="setPricePreset(500,1000,this)">500–1000</button>
-        <button class="fpill" onclick="setPricePreset(1000,0,this)">1000+</button>
-        <button class="fpill" id="priceClearBtn" style="display:none;border-color:var(--rose);color:var(--rose)" onclick="setPricePreset(0,0,document.getElementById('pricePillAll'))">✕ Clear</button>
+        <button class="fpill active" id="symPillAll"      onclick="setSymFilter('all',this)">All</button>
+        <button class="fpill"        id="symPillHoldings" onclick="setSymFilter('holdings',this)">My Holdings</button>
+        <button class="fpill"        id="symPillTop"      onclick="setSymFilter('top',this)">Top Tickers</button>
       </div>
       <span class="filter-count" id="filterCount"></span>
     </div>
@@ -1022,7 +1009,8 @@ function tableRow(r,i){
 function renderHome(){ if(_rawData.length&&document.getElementById('pgAnalysis').classList.contains('active')) runWeekly(); }
 
 let _allRows=[];
-const _activeFilters={verdict:'',quality:'',momentum:'',plan:'',priceMin:0,priceMax:0};
+const TOP_TICKERS=['OGDC','PPL','POL','PSO','UBL','HBL','MCB','BAFL','FFC','EFERT','HUBC','LUCK','SYS','ENGRO','MARI','TRG','MEBL','NBP','FCCL','ISL','KAPCO','MLCF','PIOC','DCL','FATIMA','SEARL','PKGS','COLG','SHEL'];
+const _activeFilters={verdict:'',quality:'',momentum:'',plan:'',priceMin:0,priceMax:0,symFilter:'all'};
 function setFilter(type,val){
   _activeFilters[type]=val;
   document.querySelectorAll('#filterBar .filter-group').forEach(grp=>{
@@ -1056,8 +1044,21 @@ function applyCustomPrice(){
   if(ci)ci.style.display=(mn===0&&mx===0)?'none':'inline-block';
   applyFilters();
 }
+function setSymFilter(val,btn){
+  _activeFilters.symFilter=val;
+  document.querySelectorAll('#filterBar .fpill').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  applyFilters();
+}
 function applyFilters(){
   let rows=_allRows;
+  const sf=_activeFilters.symFilter||'all';
+  if(sf==='holdings'){
+    let held=[];try{held=JSON.parse(localStorage.getItem('psx_my_holdings')||'[]');}catch(e){}
+    if(held.length)rows=rows.filter(r=>held.includes((r.Symbol||'').toUpperCase()));
+  }else if(sf==='top'){
+    rows=rows.filter(r=>TOP_TICKERS.includes((r.Symbol||'').toUpperCase()));
+  }
   if(_activeFilters.plan) rows=rows.filter(r=>r.Plan&&r.Plan.verdict===_activeFilters.plan);
   if(_activeFilters.verdict) rows=rows.filter(r=>r.Verdict===_activeFilters.verdict);
   if(_activeFilters.quality) rows=rows.filter(r=>(r.SetupQuality?.grade||'')===_activeFilters.quality);
