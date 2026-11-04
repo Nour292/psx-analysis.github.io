@@ -663,15 +663,16 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.10</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.11</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
     <div class="filter-bar" id="filterBar" style="flex-wrap:nowrap;gap:14px">
       <div class="filter-group">
-        <button class="fpill active" id="symPillAll"      onclick="setSymFilter('all',this)">All</button>
-        <button class="fpill"        id="symPillHoldings" onclick="setSymFilter('holdings',this)">My Holdings</button>
-        <button class="fpill"        id="symPillTop"      onclick="setSymFilter('top',this)">Top Tickers</button>
+        <button class="fpill active" id="symPillAll"       onclick="setSymFilter('all',this)">All</button>
+        <button class="fpill"        id="symPillHoldings"  onclick="setSymFilter('holdings',this)">Portfolio</button>
+        <button class="fpill"        id="symPillWatchlist" onclick="setSymFilter('watchlist',this)">Watch List</button>
+        <button class="fpill"        id="symPillTop"       onclick="setSymFilter('top',this)">Screened</button>
       </div>
       <span class="filter-count" id="filterCount"></span>
     </div>
@@ -1024,6 +1025,9 @@ function applyFilters(){
   if(sf==='holdings'){
     let held=[];try{held=JSON.parse(localStorage.getItem('psx_my_holdings')||'[]');}catch(e){}
     rows=rows.filter(r=>held.includes((r.Symbol||'').toUpperCase()));
+  }else if(sf==='watchlist'){
+    let held=[];try{held=JSON.parse(localStorage.getItem('psx_my_holdings')||'[]');}catch(e){}
+    rows=rows.filter(r=>!held.includes((r.Symbol||'').toUpperCase()));
   }else if(sf==='top'){
     if(_topTickerSyms.length)rows=rows.filter(r=>_topTickerSyms.includes((r.Symbol||'').toUpperCase()));
   }
@@ -1042,9 +1046,9 @@ function applyFilters(){
   const fc=document.getElementById('filterCount');
   if(fc)fc.textContent=shown===total?total+' symbols':shown+' / '+total+' symbols';
   let emptyMsg='No results match the selected filters.';
-  if(!rows.length&&sf==='holdings'){
+  if(!rows.length&&(sf==='holdings'||sf==='watchlist')){
     let held=[];try{held=JSON.parse(localStorage.getItem('psx_my_holdings')||'[]');}catch(e){}
-    if(!held.length)emptyMsg='No holdings found. Open Portfolio first to sync your holdings here.';
+    if(!held.length)emptyMsg='No portfolio data found. Open Portfolio first to sync your holdings here.';
   }
   document.getElementById('fullTable').innerHTML=rows.length
     ?tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('')
