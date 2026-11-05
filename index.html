@@ -282,6 +282,8 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .wtbl .ad-star{ color:#FBBF24; font-weight:700; }
 .wtbl .ad-brk{ color:#FDA4AF; font-weight:600; }
 .wtbl .ad-hold{ color:#7DD3FC; }
+.wtbl .ad-exit{ color:#FB923C; font-weight:700; }
+.wtbl .ad-news{ color:var(--text2); font-style:italic; }
 .wtbl .ad-room{ background:rgba(245,158,11,.25); color:#FCD34D; padding:1px 6px; border-radius:4px; font-weight:700; }
 .wtbl .ad-ex{ background:rgba(251,146,60,.28); color:#FDBA74; padding:1px 6px; border-radius:4px; font-weight:700; }
 :root.light .wtbl tr.advrow b{ color:#1e1b4b; }
@@ -291,6 +293,8 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 :root.light .wtbl .ad-star{ color:#B45309; }
 :root.light .wtbl .ad-brk{ color:#BE123C; }
 :root.light .wtbl .ad-hold{ color:#075985; }
+:root.light .wtbl .ad-exit{ color:#C2410C; }
+:root.light .wtbl .ad-news{ color:var(--text2); }
 :root.light .wtbl .ad-room{ background:#FEF3C7; color:#92400E; }
 :root.light .wtbl .ad-ex{ background:#FFEDD5; color:#9A3412; }
 .wtbl .listed{ display:inline-block; padding:2px 9px 2px 6px; border-radius:6px; background:#0B3B2C; color:#6EE7B7; font-weight:800; }
@@ -663,7 +667,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.12</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.13</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1582,25 +1586,43 @@ function tpOnList(sym){if(!_tpList||!_tpList.rows)return false;return _tpList.ro
 function tpAdviceHtml(sym,s,plan){
   if(!plan)return '';
   const n0=v=>Math.round(v).toLocaleString();
-  const hold=tpHoldInfo(sym,plan.p);let why=plan.why;
+  const hold=tpHoldInfo(sym,plan.p);
+  const fmt=z=>(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo));
+  const boldNums=t=>t.replace(/(?<![#\w])\d[\d,]*\.?\d*(?:–\d[\d,]*\.?\d*)?/g,'<b>$&</b>');
+
+  // 1 — zone/verdict text
+  let zoneWhy=plan.why;
   if(plan.verdict==='SELL ZONE'){
-    why=(plan.sellTxt||'Price is at the recent high.')+' '+(hold?(hold.odd?'You hold '+n0(hold.units)+' units. Check your lot prices (split or bonus?).':(hold.profLots?'You hold '+n0(hold.units)+' units; '+hold.profLots+' of '+hold.lots+' lots ('+n0(hold.profUnits)+' units) are in profit: sell those lots.':'You hold '+n0(hold.units)+' units but none of your lots is in profit yet.')):'You do not hold it.');
-  }else if(hold){
-    if(hold.odd){why+=' You hold '+n0(hold.units)+' units. Check your lot prices (split or bonus?).';}
-    else{why+=' You hold '+n0(hold.units)+' units (average '+tpF(hold.avg)+', last buy '+tpF(hold.lastPrice)+').'+(plan.verdict==='BUY ZONE'?(plan.p<hold.lastPrice*0.99?' Price is below your last buy: add a lot.':' Price is not below your last buy: add only a small lot.'):'');}
-  }else if(plan.verdict==='BUY ZONE'){why+=' You do not hold it yet.';}
-  if(plan.verdict!=='SELL ZONE'&&plan.tz&&plan.tz[0]){
-    const fmt=z=>(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo));
+    zoneWhy=(plan.sellTxt||'Price is at the recent high.')+' '+(hold?(hold.odd?'You hold '+n0(hold.units)+' units. Check your lot prices (split or bonus?).':(hold.profLots?'You hold '+n0(hold.units)+' units; '+hold.profLots+' of '+hold.lots+' lots ('+n0(hold.profUnits)+' units) are in profit: sell those lots.':'You hold '+n0(hold.units)+' units but none of your lots is in profit yet.')):'You do not hold it.');
+  }
+
+  // 2 — hold info (separate line, non-SELL ZONE)
+  let holdTxt='';
+  if(plan.verdict!=='SELL ZONE'){
+    if(hold){
+      if(hold.odd){holdTxt='You hold '+n0(hold.units)+' units. Check your lot prices (split or bonus?).';}
+      else{holdTxt='You hold '+n0(hold.units)+' units (average '+tpF(hold.avg)+', last buy '+tpF(hold.lastPrice)+').'+(plan.verdict==='BUY ZONE'?(plan.p<hold.lastPrice*0.99?' Price is below your last buy: add a lot.':' Price is not below your last buy: add only a small lot.'):'');}
+    }else if(plan.verdict==='BUY ZONE'){holdTxt='You do not hold it yet.';}
+  }
+
+  // 3 — exit target (only when approaching exit; never in BUY ZONE or SELL ZONE)
+  let exitHtml='';
+  if(plan.verdict!=='SELL ZONE'&&plan.verdict!=='BUY ZONE'&&plan.tz&&plan.tz[0]){
     const proom=(plan.tz[0].lo-plan.p)/plan.p*100;
     if(hold&&proom>=0&&proom<8){
-      why+=' Ready to sell: target exit '+fmt(plan.tz[0])+(plan.tz[1]?' (1st), '+fmt(plan.tz[1])+' (2nd)':'')+'.';
+      exitHtml='<span class="ad-exit">Target exit: '+boldNums(tkEsc(fmt(plan.tz[0])+(plan.tz[1]?' <span style="opacity:.6">(1st)</span> &nbsp; '+fmt(plan.tz[1])+' <span style="opacity:.6">(2nd)</span>':'')))+'</span>';
     }else if(plan.zv&&plan.zv[0]){
       const room=(plan.tz[0].lo-plan.zv[0].hi)/plan.zv[0].hi*100;
-      if(room>=0&&room<4)why+=' Room to the exit zone is only '+room.toFixed(1)+'%.';
+      if(room>=0&&room<4)zoneWhy+=' Room to the exit zone is only '+room.toFixed(1)+'%.';
     }
   }
+
+  // 4 — dividend, 5 — news
   const ex=tpExDiv(s),nw=tpNewsText(sym);
-  return [tpAdvFmt(why),ex?'<span class="ad-ex">⚠ '+tkEsc(ex)+'</span>':'',nw?'<span style="color:'+(nw.indexOf('Warning')===0?'#F59E0B':'var(--accent)')+'">'+tkEsc(nw).replace(/^(Warning:|News:)/,'<b style="color:inherit">$1</b>')+'</span>':''].filter(Boolean).join(' ');
+  const exHtml=ex?'<span class="ad-ex">⚠ '+tkEsc(ex)+'</span>':'';
+  const nwHtml=nw?'<span class="ad-news'+(nw.indexOf('Warning')===0?' ad-wait':'')+'">'+tkEsc(nw).replace(/^(Warning:|News:)/,'<b style="color:inherit">$1</b>')+'</span>':'';
+
+  return [tpAdvFmt(zoneWhy),holdTxt?tpAdvFmt(holdTxt):'',exitHtml,exHtml,nwHtml].filter(Boolean).join('<br>');
 }
 // colours the notes of the advice text and bolds the numbers
 function tpAdvFmt(t){
