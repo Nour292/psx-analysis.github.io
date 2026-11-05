@@ -663,7 +663,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.11</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.12</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1586,7 +1586,8 @@ function tpAdviceHtml(sym,s,plan){
   if(plan.verdict==='SELL ZONE'){
     why=(plan.sellTxt||'Price is at the recent high.')+' '+(hold?(hold.odd?'You hold '+n0(hold.units)+' units. Check your lot prices (split or bonus?).':(hold.profLots?'You hold '+n0(hold.units)+' units; '+hold.profLots+' of '+hold.lots+' lots ('+n0(hold.profUnits)+' units) are in profit: sell those lots.':'You hold '+n0(hold.units)+' units but none of your lots is in profit yet.')):'You do not hold it.');
   }else if(hold){
-    why+=' You hold '+n0(hold.units)+' units (average '+tpF(hold.avg)+', last buy '+tpF(hold.lastPrice)+').'+(plan.verdict==='BUY ZONE'&&!hold.odd?(plan.p<hold.lastPrice*0.99?' Price is below your last buy: add a lot.':' Price is not below your last buy: add only a small lot.'):'');
+    if(hold.odd){why+=' You hold '+n0(hold.units)+' units. Check your lot prices (split or bonus?).';}
+    else{why+=' You hold '+n0(hold.units)+' units (average '+tpF(hold.avg)+', last buy '+tpF(hold.lastPrice)+').'+(plan.verdict==='BUY ZONE'?(plan.p<hold.lastPrice*0.99?' Price is below your last buy: add a lot.':' Price is not below your last buy: add only a small lot.'):'');}
   }else if(plan.verdict==='BUY ZONE'){why+=' You do not hold it yet.';}
   if(plan.verdict!=='SELL ZONE'&&plan.tz&&plan.tz[0]){
     const fmt=z=>(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo));
