@@ -608,7 +608,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.96</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.97</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1413,7 +1413,7 @@ function renderQasimPortfolio(){
     const chgStr=chg!==null?(chg>=0?'+':'')+chg.toFixed(2):'—';
     const chgCls=chg===null?'c-gray':chg>0?'c-green':chg<0?'c-red':'c-gray';
     html+=`<tr>
-      <td class="sym">${r['Stock']||'—'}</td>
+      <td class="sym" onclick="showTaCard('${sym}',this)" title="Click for TA zones">${r['Stock']||'—'} <span style="font-size:9px;opacity:.4">▼</span></td>
       <td class="mono">${r['Units']||'—'}</td><td class="c-gold mono">${r['Avg Cost']||'—'}</td>
       <td class="mono">${r['Cost of Holdings']||'—'}</td><td class="c-blue mono">${r['Current Price']||'—'}</td>
       <td class="mono ${chgCls}" style="font-size:12px">${chgStr}</td>
