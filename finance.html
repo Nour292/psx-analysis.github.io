@@ -206,7 +206,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:brightness(0) inver
     <a href="portfolio.html" class="back-btn">← Portfolio</a>
     <span style="font-size:18px">💰</span>
     <span class="header-title">Finance</span>
-    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.10</span>
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:4px">v4.11</span>
     <span class="header-status" id="loadStatus"><span class="spinner"></span>Loading…</span>
     <button class="refresh-btn" onclick="loadAll()">↺ Refresh</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
@@ -561,7 +561,7 @@ const TABLE_CFG={
 };
 
 // Filter state per tab
-const FSTATE={allAcc:{bank:'',dir:'',dateFrom:'',dateTo:''},credit:{name:'',cur:'',dateFrom:'',dateTo:''},remit:{year:'',month:'',to:'',dateFrom:'',dateTo:''}};
+const FSTATE={allAcc:{bank:'',dir:'',type:'',dateFrom:'',dateTo:''},credit:{name:'',cur:'',dateFrom:'',dateTo:''},remit:{year:'',month:'',to:'',dateFrom:'',dateTo:''}};
 
 function yrFromDate(d){
   const p=(d||'').split('/');
@@ -584,6 +584,11 @@ function renderTable(key){
       <span class="filter-lbl" style="margin-left:6px">Direction</span>
       <select onchange="FSTATE.allAcc.dir=this.value;applyFilters('${key}')">
         <option value="">All</option><option value="in">Money In</option><option value="out">Money Out</option>
+      </select>`;
+    const types=uniq(rows,'Type');
+    fbar+=`<span class="filter-lbl" style="margin-left:6px">Type</span>
+      <select onchange="FSTATE.allAcc.type=this.value;applyFilters('${key}')">
+        <option value="">All</option>${types.map(t=>`<option>${t}</option>`).join('')}
       </select>`;
   } else if(key==='credit'){
     const names=uniq(rows,'Name');
@@ -682,10 +687,11 @@ function getFilteredRows(key){
   const {rows}=DATA[key];
   let out=[...rows].reverse();
   if(key==='allAcc'){
-    const {bank,dir}=FSTATE.allAcc;
+    const {bank,dir,type}=FSTATE.allAcc;
     if(bank) out=out.filter(r=>r['Bank']===bank);
     if(dir==='in') out=out.filter(r=>n(r['Debit'])>0);
     if(dir==='out') out=out.filter(r=>n(r['Credit'])>0);
+    if(type) out=out.filter(r=>r['Type']===type);
   } else if(key==='credit'){
     const {name,cur}=FSTATE.credit;
     if(name) out=out.filter(r=>(r['Name']||'').trim()===name);
