@@ -667,7 +667,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.24</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.25</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1524,6 +1524,7 @@ function tpPlan(s){
   else{o.why='Wait for a pullback to '+zt(0)+zw(0)+', then buy.'+(far?' Next support is far: '+zt(1)+zw(1)+' ('+far.pct+'% lower).':(lv[1]?' Next support: '+zt(1)+zw(1)+'.':''));}
   if(fell&&selZ&&p>=selZ.lo&&p<=(selZ.rt||selZ.hi))o.why+=' Price fell into the exit zone '+(tpF(selZ.lo)!==tpF(selZ.hi)?tpF(selZ.lo)+'–'+tpF(selZ.hi):tpF(selZ.lo))+' (for example after an ex-dividend drop), it did not rise into it: this is not a sell signal.';
   o.why+=buyRealTxt()+readyTxt()+wideTxt();
+  if(o.stop!=null)o.why+=lv[1]?' Stop '+tpF(o.stop)+': if broken, hold and add at '+zt(1)+'.':' Stop '+tpF(o.stop)+': if broken, close position.';
   return o;
 }
 // ── WEEKLY ZONES ────────────────────────
@@ -1576,6 +1577,7 @@ function tpFreeze(pb,live,sym,after){
     else{o.why='Wait for a pullback to '+T.zt(0)+T.zw(0)+', then buy.'+(far?' Next support is far: '+T.zt(1)+T.zw(1)+' ('+far.pct+'% lower).':(lv[1]?' Next support: '+T.zt(1)+T.zw(1)+'.':''));}
     if(fell)o.why+=' Price fell into the exit zone '+T.rng(tz[inEx])+' (for example after an ex-dividend drop), it did not rise into it: this is not a sell signal.';
     o.why+=T.buyRealTxt()+T.readyTxt()+T.wideTxt();
+    if(pb.stop!=null)o.why+=lv[1]?' Stop '+tpF(pb.stop)+': if broken, hold and add at '+T.zt(1)+'.':' Stop '+tpF(pb.stop)+': if broken, close position.';
   }else{
     if(p<=(b2.rt||b2.hi)*1.01){o.verdict='BUY ZONE';o.why='Buy 1 '+T.zt(0)+' is broken. Price is at the next support '+T.zt(1)+T.zw(1)+'. Buy a lot here. If it breaks too, the plan is recalculated.';}
     else o.why='Buy 1 '+T.zt(0)+' is broken. Wait for the next support '+T.zt(1)+T.zw(1)+', then buy.';
