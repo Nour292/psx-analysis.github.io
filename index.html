@@ -667,7 +667,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.19</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.20</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -942,7 +942,7 @@ function processAll(){
     const momText=mom.replace(/<[^>]+>/g,'').trim();
     const row={Symbol:sym,Price:s.Price,Support:z.supportZone,S2:z.s2Zone,Resistance:z.resistanceZone,Target:vr.target,S1Level:z.s1Level,Score:sc,ScoreDelta:scoreDelta,Trend:trend,TrendClass:trendClass,SheetTrend:(s['Trend']||'').trim(),Sparkline:sparkScores,VLabel:vr.v,Verdict:vr.verdict,Momentum:mom,MomentumText:momText,MomentumOrder:momOrd,RR:'0',PriceChg:priceChg,SetupQuality:sq};
     row.RR=((Math.abs(vr.target-p))/(Math.abs(p-z.s1Level)||1)).toFixed(2);
-    row.Plan=tpPlan(s,_tpLdcp[String(sym).toUpperCase()]);
+    row.Plan=tpWeekPlan(s);
     row.SrcRow=s;
     return row;
   }).sort((a,b)=>{
@@ -1068,7 +1068,7 @@ function runWeekly(){
   _allRows=rows.slice().sort((a,b)=>{const x=rk.get(a),y=rk.get(b);const sd=a.Plan&&a.Plan.verdict==='SELL ZONE'?1:-1;return ((order[a.Plan&&a.Plan.verdict]??3)-(order[b.Plan&&b.Plan.verdict]??3))||(sd*((a.Score||0)-(b.Score||0)))||(inL(a)-inL(b))||(x.w-y.w)||(x.m-y.m)||(y.y-x.y)||String(a.Symbol).localeCompare(String(b.Symbol));});
   applyFilters();
   try{const fz=z=>z?(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo)):'—';const zm={};_allRows.forEach(r=>{const pl=r.Plan;if(!pl)return;zm[(r.Symbol||'').toUpperCase()]={p:pl.p,verdict:pl.verdict||'',buy1:pl.zv&&pl.zv[0]?fz(pl.zv[0]):'—',buy2:pl.zv&&pl.zv[1]?fz(pl.zv[1]):'—',exit1:pl.tz&&pl.tz[0]?fz(pl.tz[0]):'—',exit2:pl.tz&&pl.tz[1]?fz(pl.tz[1]):'—',stop:pl.stop?tpF(pl.stop):'—'};});localStorage.setItem('psx_ta_zones',JSON.stringify(zm));}catch(e){}
-
+  tpSaveWeek();
 }
 
 /* ── Import / Save ── */
@@ -1524,6 +1524,99 @@ function tpPlan(s){
   o.why+=buyRealTxt()+readyTxt()+wideTxt();
   return o;
 }
+// ── WEEKLY ZONES ────────────────────────
+// The zones of the week are saved once a week (tickers/weekly_plan.json, refreshed on the first visit of a new week, Friday) and stay the same until the next one.
+// Only the verdict and the advice follow the live price. A close under Buy 2 (or the price now under it), or a close above the last exit zone, recalculates that stock from live data.
+let _tpWeek=null,_tpWeekTried=false;
+const TPW_FILE='tickers/weekly_plan.json';
+function tpWeekValid(){
+  if(!_tpWeek||!_tpWeek.week||!_tpWeek.plans)return false;
+  const age=(new Date(new Date().toDateString())-new Date(_tpWeek.week+'T00:00:00'))/86400000;
+  return !isNaN(age)&&age<=7;
+}
+// the helpers that word the advice, rebuilt from a saved plan
+function tpTexts(pb){
+  const zv=pb.zv||[],tz=pb.tz||[],lv=pb.buy||[],far=pb.far||null;
+  const rng=z=>z?(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo)):'';
+  const zt=i=>{const z=zv[i];return z&&z.lo<z.hi?rng(z):(lv[i]!=null?tpF(lv[i]):'');};
+  const zw=i=>zv[i]&&zv[i].weak?' (weak zone)':'';
+  const readyTxt=()=>{const w=[];tz.forEach((z,i)=>{if(z.rs)w.push('Real resistance starts at '+tpF(z.rs)+' and runs to '+tpF(z.rt)+': be ready to sell from '+tpF(z.rs)+'. Exit '+(i+1)+' target is '+tpF(z.lo)+'–'+tpF(z.hi)+'; above '+tpF(z.hi)+' is a bonus.');});return w.length?' '+w.join(' '):'';};
+  const buyRealTxt=()=>{const z=zv[0];return z&&z.rs?' Real support runs from '+tpF(z.rs)+' to '+tpF(z.rt)+': be ready to buy from '+tpF(z.rt)+'. Buy zone is '+tpF(z.lo)+'–'+tpF(z.hi)+'; below '+tpF(z.lo)+' is a bonus (cheaper).':'';};
+  const wideTxt=()=>{const w=[];const chk=(n,z)=>{if(z&&z.hi/z.lo>1.05)w.push(n+' '+tpF(z.lo)+'–'+tpF(z.hi)+' ('+((z.hi/z.lo-1)*100).toFixed(1)+'%)');};chk('Exit 1',tz[0]);chk('Exit 2',tz[1]);chk('Buy 1',zv[0]);chk('Buy 2',zv[1]);
+    return w.length?' Wide zone: '+w.join(', ')+' '+(w.length>1?'are':'is')+' wide because close levels were joined into one area, not one thin line. Sell or buy across the area, not at one price.':'';};
+  return {rng,zt,zw,readyTxt,buyRealTxt,wideTxt};
+}
+// the saved zones with today's price: only the verdict and the advice change. Returns null when the stock must be recalculated.
+function tpFreeze(pb,live,sym,after){
+  if(!pb||!pb.zv||!pb.zv[0]||!pb.buy||!pb.buy.length)return null;
+  const T=tpTexts(pb),zv=pb.zv,tz=pb.tz||[],b1=zv[0],b2=zv[1],p=live.p;
+  const mn=after.length?Math.min(...after):null,mx=after.length?Math.max(...after):null;
+  const s1=b1.rs||b1.lo,broke1=(mn!=null&&mn<s1)||p<s1;
+  // Buy 2 broken (a close under it, or the price now under it), or no second zone and Buy 1 clearly broken: recalculated from live data
+  if(b2){if((mn!=null&&mn<(b2.rs||b2.lo))||p<(b2.rs||b2.lo))return null;}
+  else if(broke1||p<s1*0.97)return null;
+  const lastX=tz[tz.length-1];if(lastX&&((mx!=null&&mx>(lastX.rt||lastX.hi))||p>(lastX.rt||lastX.hi)))return null;
+  const o=Object.assign({},pb);o.p=p;o.verdict='WAIT';delete o.sellTxt;delete o.cut;
+  const inEx=tz.findIndex(z=>p>=z.lo&&p<=z.hi);
+  const e=broke1?b2:b1,inEntry=p>=(e.rs||e.lo)*0.98&&p<=(e.rt||e.hi)*1.02;
+  const fell=inEx>=0&&tpFellInto(sym,tz[inEx]);
+  if(inEx>=0&&!inEntry&&!fell){
+    o.verdict='SELL ZONE';o.sellTxt='Price is in the exit zone '+T.rng(tz[inEx])+(tz[inEx].rs?' (two close zones joined).':'.');
+    o.target=tz[inEx+1]?tz[inEx+1].lo:tz[inEx].hi;
+    o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+T.readyTxt()+T.wideTxt();
+    return o;
+  }
+  const lv=pb.buy,far=pb.far;
+  if(!broke1){
+    if(p<=Math.max(lv[0],b1.hi)*1.01){o.verdict='BUY ZONE';o.why='Price is at support '+T.zt(0)+T.zw(0)+(pb.hot&&pb.hot[0]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(far?' If it breaks, there is no support until '+T.zt(1)+T.zw(1)+' ('+far.pct+'% lower).'+(far.lows&&far.lows.length?' Weak single lows on the way: '+far.lows.map(tpF).join(', ')+'.':''):(lv[1]?' If it breaks, the next support is '+T.zt(1)+T.zw(1)+'.':' No lower support zone found.'));}
+    else{o.why='Wait for a pullback to '+T.zt(0)+T.zw(0)+', then buy.'+(far?' Next support is far: '+T.zt(1)+T.zw(1)+' ('+far.pct+'% lower).':(lv[1]?' Next support: '+T.zt(1)+T.zw(1)+'.':''));}
+    if(fell)o.why+=' Price fell into the exit zone '+T.rng(tz[inEx])+' (for example after an ex-dividend drop), it did not rise into it: this is not a sell signal.';
+    o.why+=T.buyRealTxt()+T.readyTxt()+T.wideTxt();
+  }else{
+    if(p<=(b2.rt||b2.hi)*1.01){o.verdict='BUY ZONE';o.why='Buy 1 '+T.zt(0)+' is broken. Price is at the next support '+T.zt(1)+T.zw(1)+'. Buy a lot here. If it breaks too, the plan is recalculated.';}
+    else o.why='Buy 1 '+T.zt(0)+' is broken. Wait for the next support '+T.zt(1)+T.zw(1)+', then buy.';
+    o.why+=T.readyTxt()+T.wideTxt();
+  }
+  return o;
+}
+function tpWeekPlan(s){
+  const live=tpPlan(s);
+  try{
+    if(!live||_viewingWeek||!tpWeekValid())return live;
+    const sym=String(s.Symbol||'').toUpperCase(),sn=_tpWeek.plans[sym];
+    if(!sn)return live;
+    const h=_tpHist[sym]||[],cut=String(sn.cut||'');
+    const fr=tpFreeze(sn,live,sym,cut?h.filter(c=>String(c[0])>cut).map(c=>c[3]):[]);
+    if(fr){Object.defineProperty(fr,'_live',{value:live,enumerable:false});return fr;}
+  }catch(e){}
+  return live;
+}
+// the first visit of a new week (with the token) saves the zones as they are now
+async function tpSaveWeek(){
+  try{
+    if(_tpWeekTried||!_idxToken||_viewingWeek||!_allRows.length)return;
+    const wk=getLastFriday();
+    if(_tpWeek&&_tpWeek.week===wk)return;
+    if(_allRows.length<30||Object.keys(_tpHist).length<30)return;
+    _tpWeekTried=true;
+    const plans={};
+    _allRows.forEach(r=>{
+      const sym=String(r.Symbol||'').toUpperCase(),pl=r.Plan&&(r.Plan._live||r.Plan);
+      if(!pl||!pl.zv||!pl.zv.length)return;
+      const h=_tpHist[sym]||[];
+      plans[sym]={zv:pl.zv,tz:pl.tz,stop:pl.stop,hot:pl.hot,hotT:pl.hotT,eq:pl.eq,xq:pl.xq,far:pl.far||null,buy:pl.buy,target:pl.target,cut:h.length?String(h[h.length-1][0]):''};
+    });
+    const data={week:wk,saved:new Date().toISOString(),plans};
+    const url=`https://api.github.com/repos/${REPO}/contents/${TPW_FILE}`,hd={Authorization:`token ${_idxToken}`,Accept:'application/vnd.github.v3+json'};
+    let sha='';
+    try{const chk=await fetch(url,{headers:hd});if(chk.ok){const j=await chk.json();sha=j.sha||'';}}catch(e){}
+    const body={message:`Weekly zones: week ending ${wk}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(data))))};
+    if(sha)body.sha=sha;
+    const res=await fetch(url,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},hd),body:JSON.stringify(body)});
+    if(res.ok){_tpWeek=data;showArchiveToast('✅ Zones of the week saved: '+wk,true);runWeekly();}
+    else{const err=await res.json().catch(()=>({message:res.status}));showArchiveToast('❌ Weekly zones not saved: '+(err.message||res.status),false);}
+  }catch(e){showArchiveToast('❌ Weekly zones error: '+e.message,false);}
+}
 function tpExDiv(s){
   const d=(s['ExDiv-Date']||'').trim();if(!d)return '';
   const dt=new Date(d+'T00:00:00'),days=Math.round((dt-new Date(new Date().toDateString()))/86400000);
@@ -1542,6 +1635,7 @@ async function tpLoadExtras(){
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);_tpNews=r.ok?await r.json():null;}catch(e){_tpNews=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);_tpList=r.ok?await r.json():null;}catch(e){_tpList=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/history.json?${Date.now()}`);const j=r.ok?await r.json():null;_tpHist=j&&j.data?j.data:{};}catch(e){_tpHist={};}
+  try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/${TPW_FILE}?${Date.now()}`);_tpWeek=r.ok?await r.json():null;}catch(e){_tpWeek=null;}
   _tpZ={};
   await tpLoadLots();
 }
