@@ -361,7 +361,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 #taCard .tac-stop  td:last-child{color:var(--rose)}
 #taCard .tac-close{cursor:pointer;font-size:16px;color:var(--text3);line-height:1;padding:0 2px}
 #taCard .tac-close:hover{color:var(--text)}
-.sym.ta-active{color:var(--accent)!important;cursor:pointer}
+.sym.ta-active{color:var(--accent)!important;cursor:pointer;border-bottom:2px solid var(--accent)}
 .sym{cursor:pointer}
 </style>
 </head>
@@ -608,7 +608,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.97</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.98</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1851,9 +1851,13 @@ function showTaCard(sym,el){
   const card=document.getElementById('taCard');
   card.style.display='block';
   const rect=el.getBoundingClientRect();
-  const top=Math.min(rect.bottom+6,window.innerHeight-280);
+  const cardH=card.offsetHeight;
+  const spaceBelow=window.innerHeight-(rect.bottom+6);
+  const top=spaceBelow>=cardH?rect.bottom+6:Math.max(10,rect.top-cardH-6);
+  const leftByRight=rect.right+10;
+  const left=leftByRight+290<=window.innerWidth?leftByRight:Math.max(10,rect.left-300);
   card.style.top=top+'px';
-  card.style.left=Math.min(rect.left,window.innerWidth-290)+'px';
+  card.style.left=left+'px';
 }
 function closeTaCard(){
   document.getElementById('taCard').style.display='none';
