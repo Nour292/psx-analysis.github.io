@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PSX Zones
 // @namespace    https://nour292.github.io/psx-analysis.github.io/
-// @version      1.7
+// @version      1.8
 // @description  Copies the app's Buy/Exit zones and draws them on the TradingView chart
 // @match        https://nour292.github.io/psx-analysis.github.io/index.html*
 // @match        https://www.tradingview.com/chart/*
@@ -27,7 +27,7 @@
           _allRows.forEach(function(r){
             const p=r.Plan;if(!p||!r.Symbol)return;
             const f=function(z){return {lo:z.lo,hi:z.hi};};
-            d[String(r.Symbol).toUpperCase()]={buy:(p.zv||[]).filter(Boolean).map(f),exit:(p.tz||[]).filter(Boolean).map(f),stop:p.stop};
+            d[String(r.Symbol).toUpperCase()]={buy:(p.zv||[]).filter(Boolean).map(f),exit:(p.tz||[]).filter(Boolean).map(f),stop:p.stop,trailingStop:p.trailingStop||null,stopBuy2:p.stopBuy2||null,price:r.Price};
           });
           document.documentElement.setAttribute('data-psx-zones',JSON.stringify(d));
         }catch(e){}
@@ -44,7 +44,7 @@
   // ---------- chart page: draw the saved zones ----------
   const T1 = 1759104000, T2 = 1794268800;
   const f2 = v => (Math.round(v * 100) / 100).toString();
-  const MINE = /^(Buy [12]|Exit [12]|Stop )/;
+  const MINE = /^(Buy [12]|Exit [12]|Stop |Trailing Stop )/;
   const GREEN = '#10b981', PURPLE = '#a78bfa', RED = '#ef4444';
   let busy = false, lastKey = '';
 
@@ -60,7 +60,10 @@
     try { saved = JSON.parse(GM_getValue(KEY, 'null')); } catch (e) { saved = null; }
     if (!saved || !saved.zones) return;
     const z = saved.zones[sym];
-    const key = sym + '|' + JSON.stringify(z || null);
+    const price = z && z.price ? parseFloat(z.price) : null;
+    const inExit = z && price ? z.exit.findIndex(e=>price>=e.lo&&price<=e.hi) : -1;
+    const priceZone = inExit>=0?'exit'+inExit:(price&&z.stop!=null&&price<=z.stop?'below':'normal');
+    const key = sym + '|' + JSON.stringify(z || null) + '|' + priceZone;
     const want = z ? Math.min(z.buy.length, 2) + Math.min(z.exit.length, 2) + (z.stop != null ? 1 : 0) : 0;
     let have = 0;
     try {
@@ -94,9 +97,12 @@
         };
         for (let i = 0; i < z.buy.length && i < 2; i++) await box('Buy ' + (i + 1), z.buy[i], GREEN);
         for (let i = 0; i < z.exit.length && i < 2; i++) await box('Exit ' + (i + 1), z.exit[i], PURPLE);
-        if (z.stop != null && same()) {
-          const id = await chart.createShape({ time: T1, price: z.stop }, { shape: 'horizontal_line', text: 'Stop ' + f2(z.stop) });
-          chart.getShapeById(id).setProperties({ linecolor: RED, color: RED, linewidth: 1, showLabel: true, text: 'Stop ' + f2(z.stop), textColor: '#ffffff' });
+        {
+          let sv=null,sl='';
+          if(inExit>=0&&z.trailingStop&&z.trailingStop[inExit]!=null){sv=z.trailingStop[inExit];sl='Trailing Stop '+f2(sv);}
+          else if(priceZone==='below'&&z.stopBuy2!=null){sv=z.stopBuy2;sl='Stop (B2) '+f2(sv);}
+          else if(z.stop!=null){sv=z.stop;sl='Stop '+f2(sv);}
+          if(sv!=null&&same()){const id=await chart.createShape({time:T1,price:sv},{shape:'horizontal_line',text:sl});chart.getShapeById(id).setProperties({linecolor:RED,color:RED,linewidth:1,showLabel:true,text:sl,textColor:'#ffffff'});}
         }
       }
       // label text white (set again after the shapes exist)
@@ -104,7 +110,7 @@
         const e = chart.getShapeById(sh.id);
         if (MINE.test(String(e.getProperties().text || ''))) e.setProperties({ textColor: '#ffffff' });
       }
-      document.documentElement.setAttribute('data-psx-ver', '1.7');
+      document.documentElement.setAttribute('data-psx-ver', '1.8');
       lastKey = same() ? key : '';
     } catch (e) { console.warn('[PSX Zones]', e); }
     busy = false;

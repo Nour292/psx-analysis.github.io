@@ -667,7 +667,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.21</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.22</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1443,6 +1443,7 @@ function tpPlan(s){
   const o={p,buy:lv.slice(0,2),zv:lv.slice(0,2).map((v,i)=>(zv[i]&&zv[i].lo<zv[i].hi)?zv[i]:tpBand(String(s.Symbol||'').toUpperCase(),v,e1lo(i))),hot:hot.slice(0,2),hotT:false,stop:lv.length?(zstop!=null?zstop:lv[0]*0.97):null,target:highs.length?highs[0]:(h1||null),verdict:'WAIT',why:''};
   o.zv=o.zv.map(z=>z.hi/z.lo<1.015?{lo:+(z.hi*0.985).toFixed(2),hi:z.hi,weak:z.weak,rs:z.rs,rt:z.rt}:z);
   if(o.stop!=null&&o.zv[0]&&o.stop>o.zv[0].lo*0.995)o.stop=o.zv[0].lo*0.99;
+  {const hh=_tpHist[String(s.Symbol||'').toUpperCase()]||[];if(hh.length>=15){const n=14;let aS=0;for(let i=hh.length-n;i<hh.length;i++){const hi=hh[i][1],lo=hh[i][2],pc=i>0?hh[i-1][3]:lo;aS+=Math.max(hi-lo,Math.abs(hi-pc),Math.abs(lo-pc));}o.atr=+(aS/n).toFixed(2);}if(o.zv[1])o.stopBuy2=+(o.zv[1].lo*0.99).toFixed(2);}
   if(far)o.far=far;
   let inRes=false,cz=null;o.tz=[];
   if(Z){
@@ -1509,6 +1510,7 @@ function tpPlan(s){
     const srcTag=(z,list,lvls)=>{const rs=z.rs||z.lo,rt=z.rt||z.hi,wd=Math.max(rt-rs,z.hi-z.lo,1e-4);let best=0;(list||[]).forEach(q=>{best=Math.max(best,Math.max(0,Math.min(rt,q.hi)-Math.max(rs,q.lo))/wd);});if(best>=0.5)return '';const f=lvls.find(a=>a[1]!=null&&a[1]>=z.lo*0.985&&a[1]<=z.hi*1.015);return f?f[0]:'';};
     o.eq=(o.zv||[]).map(z=>srcTag(z,Z&&Z.sup,[['MA50',m50],['MA200',m200],['recent low',l1],['recent low',l3],['recent low',l6],['recent low',l52]])||tpZoneTag(sy,z,'S'));
     o.xq=o.tz.map(z=>srcTag(z,Z&&Z.res,[['MA50',m50],['MA200',m200],['high',h1],['high',h3],['high',h52]])||tpZoneTag(sy,z,'R'));}
+  if(o.atr){const ts=[];if(o.tz[0])ts.push(+(o.tz[0].lo-o.atr*1.5).toFixed(2));if(o.tz[1])ts.push(+(o.tz[1].lo-o.atr*1.5).toFixed(2));if(ts.length)o.trailingStop=ts;}
   const readyTxt=()=>{const w=[];o.tz.forEach((z,i)=>{if(z.rs)w.push('Real resistance starts at '+tpF(z.rs)+' and runs to '+tpF(z.rt)+': be ready to sell from '+tpF(z.rs)+'. Exit '+(i+1)+' target is '+tpF(z.lo)+'–'+tpF(z.hi)+'; above '+tpF(z.hi)+' is a bonus.');});return w.length?' '+w.join(' '):'';};
   const buyRealTxt=()=>{const z=o.zv[0];return z&&z.rs?' Real support runs from '+tpF(z.rs)+' to '+tpF(z.rt)+': be ready to buy from '+tpF(z.rt)+'. Buy zone is '+tpF(z.lo)+'–'+tpF(z.hi)+'; below '+tpF(z.lo)+' is a bonus (cheaper).':'';};
   const wideTxt=()=>{const w=[];const chk=(n,z)=>{if(z&&z.hi/z.lo>1.05)w.push(n+' '+tpF(z.lo)+'–'+tpF(z.hi)+' ('+((z.hi/z.lo-1)*100).toFixed(1)+'%)');};chk('Exit 1',o.tz[0]);chk('Exit 2',o.tz[1]);chk('Buy 1',o.zv[0]);chk('Buy 2',o.zv[1]);
@@ -1516,7 +1518,7 @@ function tpPlan(s){
   const selZ=joinedX?o.tz[0]:(inRes?cz:null),fell=!!selZ&&tpFellInto(String(s.Symbol||'').toUpperCase(),selZ);
   if(joinedX?(p>=o.tz[0].lo&&p<=o.tz[0].hi&&!inEntry&&!fell):((inRes&&!fell)||h1on)){
     if(joinedX)o.sellTxt='Price is in the exit zone '+(tpF(o.tz[0].lo)!==tpF(o.tz[0].hi)?tpF(o.tz[0].lo)+'–'+tpF(o.tz[0].hi):tpF(o.tz[0].lo))+' (two close zones joined).';
-    o.verdict='SELL ZONE';o.target=joinedX?(o.tz[1]?o.tz[1].lo:o.tz[0].hi):(inRes?(o.target>p*1.03?o.target:(h1||p)):h1);o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+readyTxt()+wideTxt();return o;}
+    o.verdict='SELL ZONE';o.target=joinedX?(o.tz[1]?o.tz[1].lo:o.tz[0].hi):(inRes?(o.target>p*1.03?o.target:(h1||p)):h1);o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+(o.trailingStop&&o.trailingStop.length?' If holding, raise stop to '+tpF(o.trailingStop[0])+' (ATR trailing stop).':'')+readyTxt()+wideTxt();return o;}
   if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
   if(p<=Math.max(lv[0],(o.zv[0]&&o.zv[0].hi)||0)*1.01){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+zw(0)+(hot[0]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(far?' If it breaks, there is no support until '+zt(1)+zw(1)+' ('+far.pct+'% lower).'+(far.lows.length?' Weak single lows on the way: '+far.lows.map(tpF).join(', ')+'.':''):(lv[1]?' If it breaks, the next support is '+zt(1)+zw(1)+'.':' No lower support zone found.'));}
   else{o.why='Wait for a pullback to '+zt(0)+zw(0)+', then buy.'+(far?' Next support is far: '+zt(1)+zw(1)+' ('+far.pct+'% lower).':(lv[1]?' Next support: '+zt(1)+zw(1)+'.':''));}
@@ -1563,7 +1565,7 @@ function tpFreeze(pb,live,sym,after){
   if(inEx>=0&&!inEntry&&!fell){
     o.verdict='SELL ZONE';o.sellTxt='Price is in the exit zone '+T.rng(tz[inEx])+(tz[inEx].rs?' (two close zones joined).':'.');
     o.target=tz[inEx+1]?tz[inEx+1].lo:tz[inEx].hi;
-    o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+T.readyTxt()+T.wideTxt();
+    o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+(o.trailingStop&&o.trailingStop[inEx]!=null?' If holding, raise stop to '+tpF(o.trailingStop[inEx])+' (ATR trailing stop).':'')+T.readyTxt()+T.wideTxt();
     return o;
   }
   const lv=pb.buy,far=pb.far;
@@ -1604,7 +1606,7 @@ async function tpSaveWeek(){
       const sym=String(r.Symbol||'').toUpperCase(),pl=r.Plan&&(r.Plan._live||r.Plan);
       if(!pl||!pl.zv||!pl.zv.length)return;
       const h=_tpHist[sym]||[];
-      plans[sym]={zv:pl.zv,tz:pl.tz,stop:pl.stop,hot:pl.hot,hotT:pl.hotT,eq:pl.eq,xq:pl.xq,far:pl.far||null,buy:pl.buy,target:pl.target,cut:h.length?String(h[h.length-1][0]):''};
+      plans[sym]={zv:pl.zv,tz:pl.tz,stop:pl.stop,trailingStop:pl.trailingStop||null,stopBuy2:pl.stopBuy2||null,hot:pl.hot,hotT:pl.hotT,eq:pl.eq,xq:pl.xq,far:pl.far||null,buy:pl.buy,target:pl.target,cut:h.length?String(h[h.length-1][0]):''};
     });
     const data={week:wk,saved:new Date().toISOString(),plans};
     const url=`https://api.github.com/repos/${REPO}/contents/${TPW_FILE}`,hd={Authorization:`token ${_idxToken}`,Accept:'application/vnd.github.v3+json'};
