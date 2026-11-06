@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PSX Zones
 // @namespace    https://nour292.github.io/psx-analysis.github.io/
-// @version      1.6
+// @version      1.7
 // @description  Copies the app's Buy/Exit zones and draws them on the TradingView chart
 // @match        https://nour292.github.io/psx-analysis.github.io/index.html*
 // @match        https://www.tradingview.com/chart/*
@@ -73,11 +73,11 @@
     busy = true;
     const same = () => String(chart.symbol() || '').split(':').pop().toUpperCase() === sym;
     try {
-      // remove only our own old shapes
+      // remove all shapes that have any text note; leave text-free shapes untouched
       for (const sh of chart.getAllShapes()) {
         const e = chart.getShapeById(sh.id);
         const txt = e && e.getProperties ? String(e.getProperties().text || '') : '';
-        if (MINE.test(txt)) chart.removeEntity(sh.id);
+        if (txt.trim()) chart.removeEntity(sh.id);
       }
       if (z) {
         const box = async (name, a, color) => {
@@ -104,7 +104,7 @@
         const e = chart.getShapeById(sh.id);
         if (MINE.test(String(e.getProperties().text || ''))) e.setProperties({ textColor: '#ffffff' });
       }
-      document.documentElement.setAttribute('data-psx-ver', '1.6');
+      document.documentElement.setAttribute('data-psx-ver', '1.7');
       lastKey = same() ? key : '';
     } catch (e) { console.warn('[PSX Zones]', e); }
     busy = false;
