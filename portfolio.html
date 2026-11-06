@@ -346,6 +346,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   .main, :root.sb-collapsed .main{ margin-left:var(--sidebar-w-collapsed) !important; }
 }
 #pgDividends,#pgCashFlow,#pgHistory,#pgQasimPortfolio,#pgQasimStock,#pgDataEntry,#pgDivEps,#pgHeldNews{}
+/* TA hover card */
+#taCard{position:fixed;z-index:9999;width:270px;background:var(--surface);border:1px solid var(--border2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.55);padding:14px 16px;font-size:13px;display:none}
+#taCard .tac-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+#taCard .tac-sym{font-size:15px;font-weight:800;color:var(--text);font-family:var(--mono)}
+#taCard .tac-badge{padding:3px 9px;border-radius:8px;font-size:11px;font-weight:700}
+#taCard .tac-price{font-size:12px;color:var(--text3);margin-bottom:10px}
+#taCard table{width:100%;border-collapse:collapse}
+#taCard td{padding:4px 2px;font-size:12px;border-bottom:1px solid var(--border)}
+#taCard td:first-child{color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.4px;width:60px}
+#taCard td:last-child{font-family:var(--mono);font-weight:700;text-align:right}
+#taCard .tac-entry td:last-child{color:var(--emerald)}
+#taCard .tac-exit  td:last-child{color:#FB923C}
+#taCard .tac-stop  td:last-child{color:var(--rose)}
+#taCard .tac-close{cursor:pointer;font-size:16px;color:var(--text3);line-height:1;padding:0 2px}
+#taCard .tac-close:hover{color:var(--text)}
+.sym.ta-active{color:var(--accent)!important;cursor:pointer}
+.sym{cursor:pointer}
 </style>
 </head>
 <body>
@@ -591,7 +608,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.95</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.96</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1058,7 +1075,7 @@ function buildPortfolio(){
     const unreal=nv(qp['Unrealized P/L']),real=nv(qp['Realized P/L']),div=nv(qp['Net Dividends']),tot=nv(qp['Total Return']);
     const hasQp=!!qpMap[h.symbol];
     const cost=hasQp?nv(qp['Cost of Holdings']):inv;
-    html+=`<tr><td class="sym">${h.symbol}</td><td class="mono">${h.qty.toLocaleString()}</td><td class="c-blue mono">${price!==null?fmtD(price):'—'}</td><td class="mono">${fmtD(h.avg)}</td><td class="mono">${fmtN(cost)}</td><td class="mono">${worth!==null?fmtN(worth):'—'}</td><td class="mono ${hasQp?plClr(unreal):''}">${hasQp?plFmt(unreal):'—'}</td><td class="mono ${hasQp?plClr(real):''}">${hasQp?plFmt(real):'—'}</td><td class="c-gold mono">${hasQp&&div!==0?fmtN(Math.abs(div)):'—'}</td><td class="mono ${hasQp?plClr(tot):''}">${hasQp?plFmt(tot):'—'}</td></tr>`;
+    html+=`<tr><td class="sym" onclick="showTaCard('${h.symbol}',this)" title="Click for TA zones">${h.symbol} <span style="font-size:9px;opacity:.4">▼</span></td><td class="mono">${h.qty.toLocaleString()}</td><td class="c-blue mono">${price!==null?fmtD(price):'—'}</td><td class="mono">${fmtD(h.avg)}</td><td class="mono">${fmtN(cost)}</td><td class="mono">${worth!==null?fmtN(worth):'—'}</td><td class="mono ${hasQp?plClr(unreal):''}">${hasQp?plFmt(unreal):'—'}</td><td class="mono ${hasQp?plClr(real):''}">${hasQp?plFmt(real):'—'}</td><td class="c-gold mono">${hasQp&&div!==0?fmtN(Math.abs(div)):'—'}</td><td class="mono ${hasQp?plClr(tot):''}">${hasQp?plFmt(tot):'—'}</td></tr>`;
   });
   let tQpCost=0,tUnreal=0,tReal=0,tDiv=0,tTot=0;
   _qasimPortfolio.forEach(r=>{tQpCost+=nv(r['Cost of Holdings']);tUnreal+=nv(r['Unrealized P/L']);tReal+=nv(r['Realized P/L']);tDiv+=nv(r['Net Dividends']);tTot+=nv(r['Total Return']);});
@@ -1790,6 +1807,62 @@ if(sessionStorage.getItem(AUTH_KEY)||localStorage.getItem(AUTH_KEY+'_r'))autoLoa
   new MutationObserver(()=>{clearTimeout(tm);tm=setTimeout(label,120);}).observe(document.documentElement,{childList:true,subtree:true});
   window.addEventListener('load',label);
 })();
+</script>
+
+<!-- TA Zone Card -->
+<div id="taCard">
+  <div class="tac-head">
+    <span class="tac-sym" id="tacSym">—</span>
+    <span class="tac-badge" id="tacBadge">—</span>
+    <span class="tac-close" onclick="closeTaCard()">✕</span>
+  </div>
+  <div class="tac-price" id="tacPrice">Price: —</div>
+  <table>
+    <tr class="tac-entry"><td>Entry 1</td><td id="tacBuy1">—</td></tr>
+    <tr class="tac-entry"><td>Entry 2</td><td id="tacBuy2">—</td></tr>
+    <tr class="tac-exit" ><td>Exit 1</td><td id="tacExit1">—</td></tr>
+    <tr class="tac-exit" ><td>Exit 2</td><td id="tacExit2">—</td></tr>
+    <tr class="tac-stop" ><td>Stop</td><td id="tacStop">—</td></tr>
+  </table>
+</div>
+
+<script>
+let _taZones={};
+try{_taZones=JSON.parse(localStorage.getItem('psx_ta_zones')||'{}');}catch(e){}
+let _tacActive=null;
+
+function showTaCard(sym,el){
+  if(_tacActive===sym){closeTaCard();return;}
+  document.querySelectorAll('.sym').forEach(s=>s.classList.remove('ta-active'));
+  el.classList.add('ta-active');
+  _tacActive=sym;
+  const d=_taZones[sym]||{};
+  const vc={'BUY ZONE':['#10B981','#04210f'],'SELL ZONE':['#38BDF8','#04202e'],'WAIT':['#F59E0B','#2a1a00']};
+  const [bg,fg]=(d.verdict&&vc[d.verdict])||['#64748B','#fff'];
+  document.getElementById('tacSym').textContent=sym;
+  document.getElementById('tacBadge').textContent=d.verdict||'No data';
+  document.getElementById('tacBadge').style.cssText=`background:${bg};color:${fg}`;
+  document.getElementById('tacPrice').textContent=d.p?'Price: '+parseFloat(d.p).toFixed(2):'Open TA page first to load zone data';
+  document.getElementById('tacBuy1').textContent=d.buy1||'—';
+  document.getElementById('tacBuy2').textContent=d.buy2||'—';
+  document.getElementById('tacExit1').textContent=d.exit1||'—';
+  document.getElementById('tacExit2').textContent=d.exit2||'—';
+  document.getElementById('tacStop').textContent=d.stop||'—';
+  const card=document.getElementById('taCard');
+  card.style.display='block';
+  const rect=el.getBoundingClientRect();
+  const top=Math.min(rect.bottom+6,window.innerHeight-280);
+  card.style.top=top+'px';
+  card.style.left=Math.min(rect.left,window.innerWidth-290)+'px';
+}
+function closeTaCard(){
+  document.getElementById('taCard').style.display='none';
+  document.querySelectorAll('.sym').forEach(s=>s.classList.remove('ta-active'));
+  _tacActive=null;
+}
+document.addEventListener('click',function(e){
+  if(!document.getElementById('taCard').contains(e.target)&&!e.target.classList.contains('sym'))closeTaCard();
+});
 </script>
 </body>
 </html>

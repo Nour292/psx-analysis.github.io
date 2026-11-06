@@ -667,7 +667,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.18</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.19</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1067,6 +1067,7 @@ function runWeekly(){
   const rk=new Map();rows.forEach(r=>rk.set(r,tpRank(r)));
   _allRows=rows.slice().sort((a,b)=>{const x=rk.get(a),y=rk.get(b);const sd=a.Plan&&a.Plan.verdict==='SELL ZONE'?1:-1;return ((order[a.Plan&&a.Plan.verdict]??3)-(order[b.Plan&&b.Plan.verdict]??3))||(sd*((a.Score||0)-(b.Score||0)))||(inL(a)-inL(b))||(x.w-y.w)||(x.m-y.m)||(y.y-x.y)||String(a.Symbol).localeCompare(String(b.Symbol));});
   applyFilters();
+  try{const fz=z=>z?(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo)):'—';const zm={};_allRows.forEach(r=>{const pl=r.Plan;if(!pl)return;zm[(r.Symbol||'').toUpperCase()]={p:pl.p,verdict:pl.verdict||'',buy1:pl.zv&&pl.zv[0]?fz(pl.zv[0]):'—',buy2:pl.zv&&pl.zv[1]?fz(pl.zv[1]):'—',exit1:pl.tz&&pl.tz[0]?fz(pl.tz[0]):'—',exit2:pl.tz&&pl.tz[1]?fz(pl.tz[1]):'—',stop:pl.stop?tpF(pl.stop):'—'};});localStorage.setItem('psx_ta_zones',JSON.stringify(zm));}catch(e){}
 
 }
 
