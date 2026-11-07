@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PSX Zones
 // @namespace    https://nour292.github.io/psx-analysis.github.io/
-// @version      1.9
+// @version      1.10
 // @description  Copies the app's Buy/Exit zones and draws them on the TradingView chart
 // @match        https://nour292.github.io/psx-analysis.github.io/index.html*
 // @match        https://www.tradingview.com/chart/*
@@ -27,7 +27,8 @@
           _allRows.forEach(function(r){
             const p=r.Plan;if(!p||!r.Symbol)return;
             const f=function(z){return {lo:z.lo,hi:z.hi};};
-            d[String(r.Symbol).toUpperCase()]={buy:(p.zv||[]).filter(Boolean).map(f),exit:(p.tz||[]).filter(Boolean).map(f),stop:p.stop,trailingStop:p.trailingStop||null,stopBuy2:p.stopBuy2||null,price:r.Price};
+            var ex=(p.tz||[]).filter(Boolean).map(f);if(!ex.length&&p.target&&p.target>p.p)ex=[{lo:p.target,hi:p.target}];
+            d[String(r.Symbol).toUpperCase()]={buy:(p.zv||[]).filter(Boolean).map(f),exit:ex,stop:p.stop,trailingStop:p.trailingStop||null,stopBuy2:p.stopBuy2||null,price:r.Price};
           });
           document.documentElement.setAttribute('data-psx-zones',JSON.stringify(d));
         }catch(e){}
