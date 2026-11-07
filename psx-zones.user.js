@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PSX Zones
 // @namespace    https://nour292.github.io/psx-analysis.github.io/
-// @version      1.10
+// @version      1.11
 // @description  Copies the app's Buy/Exit zones and draws them on the TradingView chart
 // @match        https://nour292.github.io/psx-analysis.github.io/index.html*
 // @match        https://www.tradingview.com/chart/*
@@ -103,7 +103,7 @@
             if (!same()) throw new Error('symbol changed');
             const sl = 'Exit ' + (i + 1) + '  ' + f2(ex.hi);
             const id = await chart.createShape({time: T1, price: ex.hi}, {shape: 'horizontal_line', text: sl});
-            chart.getShapeById(id).setProperties({linecolor: PURPLE, color: PURPLE, linewidth: 1, linestyle: 1, showLabel: true, text: sl, textColor: '#ffffff'});
+            chart.getShapeById(id).setProperties({linecolor: '#ffffff', color: '#ffffff', linewidth: 1, linestyle: 0, showLabel: true, text: sl, textColor: '#ffffff'});
           } else {
             await box('Exit ' + (i + 1), ex, PURPLE);
           }
