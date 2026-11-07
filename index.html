@@ -667,7 +667,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.29</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.30</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1573,14 +1573,15 @@ function tpFreeze(pb,live,sym,after){
   else if(broke1||p<s1*0.97)return null;
   const lastX=tz[tz.length-1];if(lastX&&((mx!=null&&mx>(lastX.rt||lastX.hi))||p>(lastX.rt||lastX.hi)))return null;
   const o=Object.assign({},pb);o.p=p;o.verdict='WAIT';delete o.sellTxt;delete o.cut;
-  if(live.atr&&tz.length&&pb.zv&&pb.zv[0]){const b1hi=pb.zv[0].hi;const ts=tz.slice(0,2).map(z=>{const gap=z.lo-b1hi;if(gap/p<=0.03)return null;const sv=+(Math.max(z.lo-live.atr*1.5,b1hi*1.005)).toFixed(2);return(sv-b1hi)/p>0.03?sv:null;});o.trailingStop=ts;o.atr=live.atr;}
+  if(o.tz&&o.tz.length){o.tz=o.tz.map((z,i,arr)=>{if(z.hi/z.lo>=1.015)return z;const prev=arr[i-1];const lo=+(Math.min(z.hi,Math.max(z.hi*0.985,prev?prev.hi*1.015:0))).toFixed(2);return{lo,hi:z.hi,hot:z.hot,rs:z.rs,rt:z.rt};});}
+  if(live.atr&&o.tz&&o.tz.length&&pb.zv&&pb.zv[0]){const b1hi=pb.zv[0].hi;const ts=o.tz.slice(0,2).map(z=>{const gap=z.lo-b1hi;if(gap/p<=0.03)return null;const sv=+(Math.max(z.lo-live.atr*1.5,b1hi*1.005)).toFixed(2);return(sv-b1hi)/p>0.03?sv:null;});o.trailingStop=ts;o.atr=live.atr;}
   if(live.stopBuy2!=null)o.stopBuy2=live.stopBuy2;
-  const inEx=tz.findIndex(z=>p>=z.lo&&p<=z.hi);
+  const inEx=o.tz.findIndex(z=>p>=z.lo&&p<=z.hi);
   const e=broke1?b2:b1,inEntry=p>=(e.rs||e.lo)*0.98&&p<=(e.rt||e.hi)*1.02;
-  const fell=inEx>=0&&tpFellInto(sym,tz[inEx]);
+  const fell=inEx>=0&&tpFellInto(sym,o.tz[inEx]);
   if(inEx>=0&&!inEntry&&!fell){
-    o.verdict='SELL ZONE';o.sellTxt='Price is in the exit zone '+T.rng(tz[inEx])+(tz[inEx].rs?' (two close zones joined).':'.');
-    o.target=tz[inEx+1]?tz[inEx+1].lo:tz[inEx].hi;
+    o.verdict='SELL ZONE';o.sellTxt='Price is in the exit zone '+T.rng(o.tz[inEx])+(o.tz[inEx].rs?' (two close zones joined).':'.');
+    o.target=o.tz[inEx+1]?o.tz[inEx+1].lo:o.tz[inEx].hi;
     o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+(o.trailingStop&&o.trailingStop[inEx]!=null?' If holding, raise stop to '+tpF(o.trailingStop[inEx])+' (ATR trailing stop).':'')+T.readyTxt()+T.wideTxt();
     return o;
   }
@@ -1588,7 +1589,7 @@ function tpFreeze(pb,live,sym,after){
   if(!broke1){
     if(p<=Math.max(lv[0],b1.hi)*1.01){o.verdict='BUY ZONE';o.why='Price is at support '+T.zt(0)+T.zw(0)+(pb.hot&&pb.hot[0]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(far?' If it breaks, there is no support until '+T.zt(1)+T.zw(1)+' ('+far.pct+'% lower).'+(far.lows&&far.lows.length?' Weak single lows on the way: '+far.lows.map(tpF).join(', ')+'.':''):(lv[1]?' If it breaks, the next support is '+T.zt(1)+T.zw(1)+'.':' No lower support zone found.'));}
     else{o.why='Wait for a pullback to '+T.zt(0)+T.zw(0)+', then buy.'+(far?' Next support is far: '+T.zt(1)+T.zw(1)+' ('+far.pct+'% lower).':(lv[1]?' Next support: '+T.zt(1)+T.zw(1)+'.':''));}
-    if(fell)o.why+=' Price fell into the exit zone '+T.rng(tz[inEx])+' (for example after an ex-dividend drop), it did not rise into it: this is not a sell signal.';
+    if(fell)o.why+=' Price fell into the exit zone '+T.rng(o.tz[inEx])+' (for example after an ex-dividend drop), it did not rise into it: this is not a sell signal.';
     o.why+=T.buyRealTxt()+T.readyTxt()+T.wideTxt();
     if(pb.stop!=null)o.why+=lv[1]?' Stop '+tpF(pb.stop)+': if broken, hold and add at '+T.zt(1)+'.':' Stop '+tpF(pb.stop)+': if broken, close position.';
   }else{
