@@ -667,7 +667,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.33</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.34</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1502,6 +1502,11 @@ function tpPlan(s){
     }
     o.tz=[g1,g2].filter(Boolean).map((g,i)=>g.hi/g.lo<1.015?{lo:+Math.min(g.hi,Math.max(g.hi*0.985,i?g1.hi*1.015:0)).toFixed(2),hi:g.hi,hot:g.hot}:({lo:g.lo,hi:g.hi,hot:g.hot,rs:g.rs,rt:g.rt}));
   }
+  // if Exit 1 and Exit 2 gap < 5% of Exit 1 top: drop Exit 1, promote Exit 2 to Exit 1, find new Exit 2
+  if(o.tz.length>1&&(o.tz[1].lo-o.tz[0].hi)/o.tz[0].hi<0.05){
+    o.tz.shift();
+    if(Z){const base=o.tz[0].hi;const nx=Z.res.filter(z=>z.recent&&z.lo>=base*1.05).sort((a,b)=>a.lo-b.lo)[0];if(nx)o.tz.push({lo:nx.lo,hi:nx.hi,hot:near(nx)});}
+  }
   if(o.tz.length)o.target=o.tz[0].lo;
   // Buy 1 suppression: if gap between Exit 1 and Buy 1 < 3%, promote Buy 2 → Buy 1
   if(o.tz.length&&o.zv.length>=2){const gap=(o.tz[0].lo-o.zv[0].hi)/p;if(gap<0.03){zv.shift();lv.shift();hot.shift();o.zv.shift();o.hot.shift();o.buy.shift();if(zv[1]){const sym2=String(s.Symbol||'').toUpperCase();let nz=(zv[1].lo<zv[1].hi)?zv[1]:tpBand(sym2,lv[1],e1lo(1));if(nz.hi/nz.lo<1.015)nz={lo:+(nz.hi*0.985).toFixed(2),hi:nz.hi,weak:nz.weak,rs:nz.rs,rt:nz.rt};o.zv.push(nz);o.hot.push(hot[1]||false);o.buy.push(lv[1]);}o.stop=o.zv[0]?+(o.zv[0].lo*0.99).toFixed(2):null;o.stopBuy2=o.zv[1]?+(o.zv[1].lo*0.99).toFixed(2):null;}}
@@ -1552,8 +1557,9 @@ function tpTexts(pb){
 // the saved zones with today's price: only the verdict and the advice change. Returns null when the stock must be recalculated.
 function tpFreeze(pb,live,sym,after){
   if(!pb||!pb.zv||!pb.zv[0]||!pb.buy||!pb.buy.length)return null;
-  // saved Buy 1 and Buy 2 too close: use live zones instead
+  // saved Buy 1/Buy 2 or Exit 1/Exit 2 too close: use live zones instead
   if(pb.zv&&pb.zv.length>=2&&(pb.zv[0].lo-pb.zv[1].hi)/pb.zv[0].lo<0.05)return null;
+  if(pb.tz&&pb.tz.length>=2&&(pb.tz[1].lo-pb.tz[0].hi)/pb.tz[0].hi<0.05)return null;
   if(pb.zv&&pb.zv.length>=2&&pb.tz&&pb.tz.length){const _p=live.p;if((pb.tz[0].lo-pb.zv[0].hi)/_p<0.03){const nzv=pb.zv.slice(1);pb=Object.assign({},pb,{zv:nzv,buy:pb.buy?pb.buy.slice(1):pb.buy,hot:pb.hot?pb.hot.slice(1):pb.hot,stop:nzv[0]?+(nzv[0].lo*0.99).toFixed(2):pb.stop,stopBuy2:nzv[1]?+(nzv[1].lo*0.99).toFixed(2):null});}}
   const T=tpTexts(pb),zv=pb.zv,tz=pb.tz||[],b1=zv[0],b2=zv[1],p=live.p;
   const mn=after.length?Math.min(...after):null,mx=after.length?Math.max(...after):null;
