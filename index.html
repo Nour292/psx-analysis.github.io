@@ -1436,6 +1436,12 @@ function tpPlan(s){
   o.zv=o.zv.map(z=>z.hi/z.lo<1.015?{lo:+(z.hi*0.985).toFixed(2),hi:z.hi,weak:z.weak,rs:z.rs,rt:z.rt}:z);
   if(o.stop!=null&&o.zv[0]&&o.stop>o.zv[0].lo*0.995)o.stop=o.zv[0].lo*0.99;
   {const hh=_tpHist[String(s.Symbol||'').toUpperCase()]||[];if(hh.length>=15){const n=14;let aS=0;for(let i=hh.length-n;i<hh.length;i++){const hi=hh[i][1],lo=hh[i][2],pc=i>0?hh[i-1][3]:lo;aS+=Math.max(hi-lo,Math.abs(hi-pc),Math.abs(lo-pc));}o.atr=+(aS/n).toFixed(2);}if(o.zv[1])o.stopBuy2=+(o.zv[1].lo*0.99).toFixed(2);}
+  // if Buy 1 and Buy 2 gap < 5% of Buy 1 bottom: drop Buy 1, promote Buy 2 to Buy 1, find new Buy 2
+  if(o.zv.length>1&&(o.zv[0].lo-o.zv[1].hi)/o.zv[0].lo<0.05){
+    o.zv.shift();o.buy.shift();
+    o.stop=+(o.zv[0].lo*0.99).toFixed(2);o.stopBuy2=null;
+    if(Z){const base=o.zv[0].lo;const nx=Z.sup.filter(z=>z.hi<base*0.95&&z.hi>=base*0.70).sort((a,b)=>b.hi-a.hi)[0];if(nx){o.zv.push({lo:nx.lo,hi:nx.hi,weak:nx.weak});o.buy.push(nx.hi);o.stopBuy2=+(nx.lo*0.99).toFixed(2);}else{const old=real.filter(v=>v<base*0.95&&v>=base*0.70);if(old.length){o.zv.push({lo:old[0],hi:old[0]});o.buy.push(old[0]);o.stopBuy2=+(old[0]*0.99).toFixed(2);}}}
+  }
   if(far)o.far=far;
   let inRes=false,cz=null;o.tz=[];
   if(Z){
