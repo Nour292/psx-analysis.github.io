@@ -667,7 +667,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.36</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.37</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1330,7 +1330,7 @@ function tpZones(sym){
   for(let i=k;i<n-k;i++){
     let isL=true,isH=true;
     for(let j=i-k;j<=i+k;j++){if(h[j][2]<h[i][2])isL=false;if(h[j][1]>h[i][1])isH=false;}
-    const w=i>=n-250?2:1;
+    const w=i>=n-350?2:1;
     if(isL)lo.push([h[i][2],w,i,'L']);
     if(isH){
       hi.push([h[i][1],w,i]);
@@ -1344,7 +1344,7 @@ function tpZones(sym){
     pts=pts.slice().sort((a,b)=>a[0]-b[0]);const out=[];let c=null;
     pts.forEach(x=>{if(c&&x[0]<=c.lo*1.04){c.hi=x[0];c.w+=x[1];c.n++;c.nL+=(x[3]==='L'?1:0);c.last=Math.max(c.last,x[2]);}else{if(c)out.push(c);c={lo:x[0],hi:x[0],w:x[1],n:1,nL:(x[3]==='L'?1:0),last:x[2]};}});
     if(c)out.push(c);
-    return out.filter(z=>{if(mode!=='ext')return z.w>=minW;if(z.nL<1)return false;if(z.w>=minW)return true;if(z.w===minW-1&&z.n>=3){z.weak=true;return true;}return false;}).map(z=>(z.recent=z.last>=n-250,z));
+    return out.filter(z=>{if(mode!=='ext')return z.w>=minW;if(z.nL<1)return false;if(z.w>=minW)return true;if(z.w===minW-1&&z.n>=3){z.weak=true;return true;}return false;}).map(z=>(z.recent=z.last>=n-350,z));
   };
   // zones from the lows stay as they were; zones that also need the broken ceilings (or are weak) are added only where no zone exists yet
   const normal=clus(lo,4,'lows');
@@ -1369,7 +1369,7 @@ function tpZoneTag(sym,z,type){
   const n=h.length,visits=[];let last=-99;
   for(let i=0;i<n;i++){const b=h[i];if(b[2]<=z.hi&&b[1]>=z.lo){if(i-last>5)visits.push(i);last=i;}}
   if(visits.length<=1)return type==='R'?'high':'new';
-  if(visits[visits.length-1]<n-250)return 'old';
+  if(visits[visits.length-1]<n-350)return 'old';
   let tested=0,held=0;
   visits.forEach(i=>{if(i>n-12)return;tested++;for(let j=i+1;j<=Math.min(n-1,i+10);j++){if(type==='S'&&h[j][3]>=z.hi*1.03){held++;break;}if(type==='R'&&h[j][3]<=z.lo*0.97){held++;break;}}});
   return tested>=3&&held/tested<0.35?'soft':'';
