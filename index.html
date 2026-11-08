@@ -1416,24 +1416,6 @@ function tpPlan(s){
   }
   if(lv.length>1&&lv[1]<lv[0]*0.70){lv.length=1;hot.length=1;zv.length=1;}
   const e1lo=i=>i?(zv[0]?zv[0].lo:lv[0])*0.98:null;
-  // two entry zones less than 3% apart are one support area: the band runs from the low of the 2nd zone to the low of the 1st zone
-  let merged=false;
-  if(lv.length>1){
-    const sym=String(s.Symbol||'').toUpperCase();
-    const d1=(zv[0]&&zv[0].lo<zv[0].hi)?zv[0]:tpBand(sym,lv[0],null),d2=(zv[1]&&zv[1].lo<zv[1].hi)?zv[1]:tpBand(sym,lv[1],e1lo(1));
-    if((d1.lo-d2.hi)/d1.lo<0.03&&d2.lo<d1.lo&&d1.lo/d2.lo<=1.07){
-      // when both are real history zones the band is the gap between them (high of the lower zone to low of the upper zone); the real support (rs to rt) stays in the advice. Zones less than 1.5% apart keep the old band (low of the lower zone to low of the upper zone)
-      merged=true;const gapB=(d1.lo-d2.hi)/d1.lo>=0.015&&!!(zv[0]&&zv[0].lo<zv[0].hi&&zv[1]&&zv[1].lo<zv[1].hi);
-      const b=gapB?{lo:d2.hi,hi:d1.lo,rs:d2.lo,rt:d1.hi,weak:!!(d1.weak&&d2.weak)}:{lo:d2.lo,hi:d1.lo,weak:!!(d1.weak&&d2.weak)};
-      const bs=b.rs||b.lo,bt=b.rt||b.hi;
-      lv.length=0;zv.length=0;hot.length=0;
-      lv.push(b.hi);zv.push(b);hot.push(mas.some(m=>m>=bs*0.98&&m<=bt*1.02));
-      const nx=Z?Z.sup.filter(z=>z.hi<bs*0.97&&z.hi>=bs*0.70).sort((x,y)=>y.hi-x.hi)[0]:null;
-      if(nx&&nx.hi>=b.hi*0.70){lv.push(nx.hi);zv.push({lo:nx.lo,hi:nx.hi,weak:nx.weak});hot.push(near(nx));}
-      else{const old=real.filter(v=>v<bs*0.97&&v>=b.hi*0.70);if(old.length){lv.push(old[0]);zv.push({lo:old[0],hi:old[0]});hot.push(false);}}
-      zl=[{lo:bs,hi:bt,recent:true}];zstop=bs*0.99;
-    }
-  }
   // no second zone within reach: show the nearest zone below at any distance (marked "far") and the weak single lows on the way
   let far=null;
   if(Z&&lv.length===1){
