@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-06T19:55:31Z",
+ "updated": "2026-11-09T22:56:52Z",
  "days": 30,
  "rows": [
   {
@@ -153,74 +153,6 @@
    ]
   },
   {
-   "symbol": "CPHL",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 233227.0,
-    "prev": 203691.0,
-    "change": 14.5
-   },
-   "flagged": 7,
-   "items": [
-    {
-     "date": "2026-11-02",
-     "title": "Financial Results for the Quarter Ended 30 September 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "288321"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Material Information",
-     "flags": [
-      "Material"
-     ],
-     "doc": "287790"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Board Meeting In Progress",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-26",
-     "title": "Change of Chief Financial Officer",
-     "flags": [
-      "Management"
-     ],
-     "doc": "286828"
-    },
-    {
-     "date": "2026-10-23",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "286629"
-    },
-    {
-     "date": "2026-10-19",
-     "title": "Material Information",
-     "flags": [
-      "Material"
-     ],
-     "doc": "285929"
-    },
-    {
-     "date": "2026-10-07",
-     "title": "Notice of Annual General Meeting - Post Publication",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "285088"
-    }
-   ]
-  },
-  {
    "symbol": "FFC",
    "quarter": {
     "label": "Q3 2026",
@@ -367,52 +299,46 @@
    ]
   },
   {
-   "symbol": "ZAL",
+   "symbol": "CPHL",
    "quarter": {
     "label": "Q1 2027",
-    "pat": 551273.0,
-    "prev": 558177.0,
-    "change": -1.2
+    "pat": 233227.0,
+    "prev": 203691.0,
+    "change": 14.5
    },
    "flagged": 6,
    "items": [
     {
-     "date": "2026-11-04",
-     "title": "Credit of Final Cash Dividend",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "288569"
-    },
-    {
      "date": "2026-11-02",
-     "title": "Right Issue Draft Offer Document",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "288459"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Declaration of Right Shares",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "288278"
-    },
-    {
-     "date": "2026-10-30",
      "title": "Financial Results for the Quarter Ended 30 September 2026",
      "flags": [
       "Results"
      ],
-     "doc": "288274"
+     "doc": "288321"
     },
     {
      "date": "2026-10-30",
-     "title": "Video Recording of the Corporate Briefing Session of Zarea Limited",
-     "flags": [],
+     "title": "Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "287790"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Board Meeting In Progress",
+     "flags": [
+      "Board meeting"
+     ],
      "doc": ""
+    },
+    {
+     "date": "2026-10-26",
+     "title": "Change of Chief Financial Officer",
+     "flags": [
+      "Management"
+     ],
+     "doc": "286828"
     },
     {
      "date": "2026-10-23",
@@ -420,15 +346,15 @@
      "flags": [
       "Board meeting"
      ],
-     "doc": ""
+     "doc": "286629"
     },
     {
-     "date": "2026-10-07",
-     "title": "Notice of Annual General Meeting",
+     "date": "2026-10-19",
+     "title": "Material Information",
      "flags": [
-      "Meeting"
+      "Material"
      ],
-     "doc": "285223"
+     "doc": "285929"
     }
    ]
   },
@@ -607,106 +533,60 @@
    ]
   },
   {
-   "symbol": "SAZEW",
+   "symbol": "ZAL",
    "quarter": {
     "label": "Q1 2027",
-    "pat": 4035691.0,
-    "prev": 4417012.0,
-    "change": -8.6
+    "pat": 551273.0,
+    "prev": 558177.0,
+    "change": -1.2
    },
    "flagged": 5,
    "items": [
     {
-     "date": "2026-11-03",
-     "title": "Clarification regarding News published in Electronic Media",
+     "date": "2026-11-04",
+     "title": "Credit of Final Cash Dividend",
      "flags": [
-      "Material"
+      "Dividend"
      ],
-     "doc": "288466"
+     "doc": "288569"
     },
     {
-     "date": "2026-10-27",
-     "title": "SAZEW | Sazgar Engineering Works Limited - Financial Results for the quarter ended 2026-09-30",
+     "date": "2026-11-02",
+     "title": "Right Issue Draft Offer Document",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288459"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Declaration of Right Shares",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288278"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Financial Results for the Quarter Ended 30 September 2026",
      "flags": [
       "Results"
      ],
+     "doc": "288274"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Video Recording of the Corporate Briefing Session of Zarea Limited",
+     "flags": [],
      "doc": ""
     },
     {
-     "date": "2026-10-26",
-     "title": "Board Meeting In Progress",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-19",
+     "date": "2026-10-23",
      "title": "Board Meeting",
      "flags": [
       "Board meeting"
      ],
      "doc": ""
-    },
-    {
-     "date": "2026-10-08",
-     "title": "Credit of final cash dividend for the year ended June 30, 2026",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": ""
-    }
-   ]
-  },
-  {
-   "symbol": "UBL",
-   "quarter": {
-    "label": "Q3 2026",
-    "pat": 30218818.0,
-    "prev": 34702768.0,
-    "change": -12.9
-   },
-   "flagged": 5,
-   "items": [
-    {
-     "date": "2026-11-06",
-     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
-     "flags": [
-      "Insider"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-27",
-     "title": "Credit of Third Interim Cash Dividend (D-67)",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "287112"
-    },
-    {
-     "date": "2026-10-21",
-     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
-     "flags": [
-      "Insider"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-16",
-     "title": "Financial Results for the Quarter ended 30 September 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "285852"
-    },
-    {
-     "date": "2026-10-07",
-     "title": "Board Meeting of United Bank Limited (UBL)",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "285150"
     }
    ]
   },
@@ -757,6 +637,94 @@
       "Dividend"
      ],
      "doc": "285656"
+    }
+   ]
+  },
+  {
+   "symbol": "SAZEW",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 4035691.0,
+    "prev": 4417012.0,
+    "change": -8.6
+   },
+   "flagged": 4,
+   "items": [
+    {
+     "date": "2026-11-03",
+     "title": "Clarification regarding News published in Electronic Media",
+     "flags": [
+      "Material"
+     ],
+     "doc": "288466"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "SAZEW | Sazgar Engineering Works Limited - Financial Results for the quarter ended 2026-09-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-26",
+     "title": "Board Meeting In Progress",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-19",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    }
+   ]
+  },
+  {
+   "symbol": "UBL",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 30218818.0,
+    "prev": 34702768.0,
+    "change": -12.9
+   },
+   "flagged": 4,
+   "items": [
+    {
+     "date": "2026-11-06",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-27",
+     "title": "Credit of Third Interim Cash Dividend (D-67)",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "287112"
+    },
+    {
+     "date": "2026-10-21",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Financial Results for the Quarter ended 30 September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "285852"
     }
    ]
   },
@@ -911,46 +879,6 @@
    ]
   },
   {
-   "symbol": "AHL",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 272796.0,
-    "prev": 246394.0,
-    "change": 10.7
-   },
-   "flagged": 2,
-   "items": [
-    {
-     "date": "2026-10-23",
-     "title": "Publication of Public Announcement of Intention to acquire at least 76.55% shareholding and control of Unilever Pakistan Foods Limited by McCormick & Company, Inc., through one or more affiliates",
-     "flags": [],
-     "doc": "286639"
-    },
-    {
-     "date": "2026-10-21",
-     "title": "Publication of Public Announcement of Intention by McCormick & Company, Inc., to acquire significant shareholding of Unilever Pakistan Foods Limited",
-     "flags": [],
-     "doc": "286230"
-    },
-    {
-     "date": "2026-10-19",
-     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED SEPTEMBER 30, 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "285924"
-    },
-    {
-     "date": "2026-10-09",
-     "title": "BOARD MEETING",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "285433"
-    }
-   ]
-  },
-  {
    "symbol": "AICL",
    "quarter": {
     "label": "Q3 2026",
@@ -979,6 +907,38 @@
    ]
   },
   {
+   "symbol": "AHL",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 272796.0,
+    "prev": 246394.0,
+    "change": 10.7
+   },
+   "flagged": 1,
+   "items": [
+    {
+     "date": "2026-10-23",
+     "title": "Publication of Public Announcement of Intention to acquire at least 76.55% shareholding and control of Unilever Pakistan Foods Limited by McCormick & Company, Inc., through one or more affiliates",
+     "flags": [],
+     "doc": "286639"
+    },
+    {
+     "date": "2026-10-21",
+     "title": "Publication of Public Announcement of Intention by McCormick & Company, Inc., to acquire significant shareholding of Unilever Pakistan Foods Limited",
+     "flags": [],
+     "doc": "286230"
+    },
+    {
+     "date": "2026-10-19",
+     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED SEPTEMBER 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "285924"
+    }
+   ]
+  },
+  {
    "symbol": "FCCL",
    "quarter": {
     "label": "Q1 2027",
@@ -986,7 +946,7 @@
     "prev": 3286437.0,
     "change": 50.9
    },
-   "flagged": 2,
+   "flagged": 1,
    "items": [
     {
      "date": "2026-10-27",
@@ -995,14 +955,6 @@
       "Results"
      ],
      "doc": "287026"
-    },
-    {
-     "date": "2026-10-07",
-     "title": "Credit of Final Cash Dividend",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "285013"
     }
    ]
   },
