@@ -1616,7 +1616,17 @@ async function tpSaveWeek(){
   try{
     if(_tpWeekTried||!_idxToken||_viewingWeek||!_allRows.length)return;
     const wk=getLastFriday();
-    if(_tpWeek&&_tpWeek.week===wk)return;
+    // Friday 17:00 → Sunday: update if not yet saved after this Friday 17:00
+    const now=new Date();
+    const day=now.getDay(); // 0=Sun,5=Fri,6=Sat
+    const inWindow=day===5?now.getHours()>=17:(day===6||day===0);
+    if(inWindow){
+      const thisFri=new Date(wk+'T17:00:00');
+      const alreadyDone=_tpWeek&&_tpWeek.saved&&new Date(_tpWeek.saved)>=thisFri;
+      if(alreadyDone)return;
+    } else {
+      if(_tpWeek&&_tpWeek.week===wk)return;
+    }
     if(_allRows.length<30||Object.keys(_tpHist).length<30)return;
     _tpWeekTried=true;
     const plans={};
