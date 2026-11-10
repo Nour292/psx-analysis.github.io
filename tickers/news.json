@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-09T22:56:52Z",
+ "updated": "2026-11-10T20:24:48Z",
  "days": 30,
  "rows": [
   {
@@ -227,78 +227,6 @@
    ]
   },
   {
-   "symbol": "NICL",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 666268.0,
-    "prev": 503516.0,
-    "change": 32.3
-   },
-   "flagged": 7,
-   "items": [
-    {
-     "date": "2026-11-05",
-     "title": "Notice of Corporate Briefing Session - Revised Schedule",
-     "flags": [],
-     "doc": "288646"
-    },
-    {
-     "date": "2026-11-03",
-     "title": "Disclosure of Material Information In accordance to the section 96 and 131 of the Securities Act 2015 and Clause 5.6.1(a) of the Rule Book of the Pakistan Stock Exchange Limited, we hereby convey the following information: he Company (NICL) has received",
-     "flags": [
-      "Material"
-     ],
-     "doc": "288511"
-    },
-    {
-     "date": "2026-11-02",
-     "title": "Disclosure of Material Information",
-     "flags": [
-      "Material"
-     ],
-     "doc": "288377"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Notice of Corporate Briefing Session - NICL - November 06, 2026 REVOKED",
-     "flags": [],
-     "doc": "287850"
-    },
-    {
-     "date": "2026-10-27",
-     "title": "Transfer of Full and Final Cash Dividend (D - 26) for the FY 2026",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "287002"
-    },
-    {
-     "date": "2026-10-20",
-     "title": "Un-audited Financial Results For The First Quarter Ended September 30, 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "286161"
-    },
-    {
-     "date": "2026-10-14",
-     "title": "Resolutions Passed in the NICL Annual General Meeting held on October 14, 2026",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "285673"
-    },
-    {
-     "date": "2026-10-13",
-     "title": "Board Meeting and Closed Period",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "285538"
-    }
-   ]
-  },
-  {
    "symbol": "CPHL",
    "quarter": {
     "label": "Q1 2027",
@@ -355,6 +283,78 @@
       "Material"
      ],
      "doc": "285929"
+    }
+   ]
+  },
+  {
+   "symbol": "NICL",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 666268.0,
+    "prev": 503516.0,
+    "change": 32.3
+   },
+   "flagged": 6,
+   "items": [
+    {
+     "date": "2026-11-05",
+     "title": "Notice of Corporate Briefing Session - Revised Schedule",
+     "flags": [],
+     "doc": "288646"
+    },
+    {
+     "date": "2026-11-03",
+     "title": "Disclosure of Material Information In accordance to the section 96 and 131 of the Securities Act 2015 and Clause 5.6.1(a) of the Rule Book of the Pakistan Stock Exchange Limited, we hereby convey the following information: he Company (NICL) has received",
+     "flags": [
+      "Material"
+     ],
+     "doc": "288511"
+    },
+    {
+     "date": "2026-11-02",
+     "title": "Disclosure of Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "288377"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Notice of Corporate Briefing Session - NICL - November 06, 2026 REVOKED",
+     "flags": [],
+     "doc": "287850"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "Un-audited Financial Results For The First Quarter Ended September 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "286161"
+    },
+    {
+     "date": "2026-10-14",
+     "title": "Resolutions Passed in the NICL Annual General Meeting held on October 14, 2026",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285673"
+    },
+    {
+     "date": "2026-10-13",
+     "title": "Board Meeting and Closed Period",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285538"
+    },
+    {
+     "date": "2026-10-13",
+     "title": "Board Meeting and Closed Period REVOKED",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285537"
     }
    ]
   },
@@ -907,6 +907,34 @@
    ]
   },
   {
+   "symbol": "FCCL",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 4958143.0,
+    "prev": 3286437.0,
+    "change": 50.9
+   },
+   "flagged": 2,
+   "items": [
+    {
+     "date": "2026-11-10",
+     "title": "MATERIAL INFORMATION - EARLY REPAYMENT OF LONG-TERM LOAN",
+     "flags": [
+      "Material"
+     ],
+     "doc": "288897"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "Financial Results for the 1st Quarter Ended 30th September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287026"
+    }
+   ]
+  },
+  {
    "symbol": "AHL",
    "quarter": {
     "label": "Q1 2027",
@@ -917,16 +945,16 @@
    "flagged": 1,
    "items": [
     {
+     "date": "2026-11-10",
+     "title": "Book Building Results of the IPO of ABHI Microfinance Bank Limited",
+     "flags": [],
+     "doc": "288883"
+    },
+    {
      "date": "2026-10-23",
      "title": "Publication of Public Announcement of Intention to acquire at least 76.55% shareholding and control of Unilever Pakistan Foods Limited by McCormick & Company, Inc., through one or more affiliates",
      "flags": [],
      "doc": "286639"
-    },
-    {
-     "date": "2026-10-21",
-     "title": "Publication of Public Announcement of Intention by McCormick & Company, Inc., to acquire significant shareholding of Unilever Pakistan Foods Limited",
-     "flags": [],
-     "doc": "286230"
     },
     {
      "date": "2026-10-19",
@@ -935,26 +963,6 @@
       "Results"
      ],
      "doc": "285924"
-    }
-   ]
-  },
-  {
-   "symbol": "FCCL",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 4958143.0,
-    "prev": 3286437.0,
-    "change": 50.9
-   },
-   "flagged": 1,
-   "items": [
-    {
-     "date": "2026-10-27",
-     "title": "Financial Results for the 1st Quarter Ended 30th September 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "287026"
     }
    ]
   },
