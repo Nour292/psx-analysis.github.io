@@ -624,10 +624,14 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
   <!-- TOP BAR -->
   <div class="topbar">
     <div class="topbar-title" id="topbarTitle">Entry & Exit Zones</div>
-    <div id="analysisDataDate" style="display:none;font-size:11px;font-family:var(--mono);display:flex;gap:12px;align-items:center">
-      <span style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:4px;padding:2px 8px"><span style="color:var(--text3)">Zones: </span><strong id="analysisZonesDateVal" style="color:var(--accent)">—</strong></span>
-      <span style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px"><span style="color:var(--text3)">Prices: </span><strong id="analysisDataDateVal" style="color:var(--text)">—</strong></span>
-      <span id="analysisPrevDate" style="color:var(--text3);margin-left:4px"></span>
+    <div id="analysisDataDate" style="display:none;font-size:11px;font-family:var(--mono);display:flex;gap:10px;align-items:center">
+      <span style="background:linear-gradient(135deg,#1a3a2a,#0d2b1f);border:1px solid #22c55e;border-radius:6px;padding:3px 10px;box-shadow:0 0 6px rgba(34,197,94,0.3)">
+        <span style="color:#86efac;font-size:10px;text-transform:uppercase;letter-spacing:.5px">📊 Zones </span><strong id="analysisZonesDateVal" style="color:#22c55e">—</strong>
+      </span>
+      <span style="background:linear-gradient(135deg,#1a2a3a,#0d1f2b);border:1px solid #38bdf8;border-radius:6px;padding:3px 10px;box-shadow:0 0 6px rgba(56,189,248,0.3)">
+        <span style="color:#7dd3fc;font-size:10px;text-transform:uppercase;letter-spacing:.5px">💰 Prices </span><strong id="analysisDataDateVal" style="color:#38bdf8">—</strong>
+      </span>
+      <span id="analysisPrevDate" style="color:var(--text3);margin-left:2px"></span>
     </div>
     <div class="topbar-date" id="topbarDate" style="display:none"></div>
     <span id="topbarBadge" class="topbar-badge"></span>
