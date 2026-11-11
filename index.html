@@ -629,7 +629,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         <span style="color:#86efac;font-size:10px;text-transform:uppercase;letter-spacing:.5px">📊 Zones </span><strong id="analysisZonesDateVal" style="color:#22c55e">—</strong>
       </span>
       <span style="background:linear-gradient(135deg,#1a2a3a,#0d1f2b);border:1px solid #38bdf8;border-radius:6px;padding:3px 10px;box-shadow:0 0 6px rgba(56,189,248,0.3)">
-        <span style="color:#7dd3fc;font-size:10px;text-transform:uppercase;letter-spacing:.5px">💰 Prices </span><strong id="analysisDataDateVal" style="color:#38bdf8">—</strong>
+        <span style="color:#7dd3fc;font-size:10px;text-transform:uppercase;letter-spacing:.5px">💰 Prices update </span><strong id="analysisDataDateVal" style="color:#38bdf8">—</strong>
       </span>
       <span id="analysisPrevDate" style="color:var(--text3);margin-left:2px"></span>
     </div>
@@ -1238,7 +1238,7 @@ function setDataDate(d){ _dataAsOf=d; try{ localStorage.setItem('psx_dataAsOf',d
 function showDataDate(){
   if(!_dataAsOf) return;
   const dt=new Date(_dataAsOf+'T00:00:00');
-  const nice=dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'});
+  const nice=dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   const hd=document.getElementById('homeDataDate'); if(hd) hd.style.display='block';
   const hv=document.getElementById('homeDataDateVal'); if(hv) hv.textContent=nice;
   const ad=document.getElementById('analysisDataDate'); if(ad) ad.style.display='flex';
