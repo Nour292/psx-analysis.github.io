@@ -673,7 +673,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.49</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.50</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1680,6 +1680,19 @@ async function tpSaveWeek(){
     }
     if(_allRows.length<30||Object.keys(_tpHist).length<30)return;
     _tpWeekTried=true;
+    // before overwriting: ensure current week's archive exists
+    if(_tpWeek&&_tpWeek.week&&_tpWeek.week!==wk){
+      try{
+        const oldWk=_tpWeek.week;
+        const oldArchUrl=`https://api.github.com/repos/${REPO}/contents/archive/zones-${oldWk}.json`;
+        const hd0={Authorization:`token ${_idxToken}`,Accept:'application/vnd.github.v3+json'};
+        const chk=await fetch(oldArchUrl,{headers:hd0});
+        if(!chk.ok){
+          const archBody={message:`Zone archive backfill: week ${oldWk}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(_tpWeek))))};
+          await fetch(oldArchUrl,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},hd0),body:JSON.stringify(archBody)});
+        }
+      }catch(e){}
+    }
     const plans={};
     _allRows.forEach(r=>{
       const sym=String(r.Symbol||'').toUpperCase(),pl=r.Plan&&(r.Plan._live||r.Plan);
