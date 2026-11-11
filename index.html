@@ -1673,6 +1673,7 @@ async function tpLoadExtras(){
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);_tpList=r.ok?await r.json():null;}catch(e){_tpList=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/history.json?${Date.now()}`);const j=r.ok?await r.json():null;_tpHist=j&&j.data?j.data:{};}catch(e){_tpHist={};}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/${TPW_FILE}?${Date.now()}`);_tpWeek=r.ok?await r.json():null;}catch(e){_tpWeek=null;}
+  if(_tpWeek&&_tpWeek.saved){const zd=new Date(_tpWeek.saved);const znice=zd.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+' '+zd.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});const zv=document.getElementById('analysisZonesDateVal');if(zv)zv.textContent=znice;}
   _tpZ={};
   await tpLoadLots();
 }
