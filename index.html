@@ -683,7 +683,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.59</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.60</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1751,7 +1751,7 @@ function tpNewsText(sym){
 }
 async function tpLoadExtras(){
   try{const r=await fetch(gsUrl('Prices'));const j=await r.json();const rows=j.values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());const li=h.indexOf('ldcp'),ui=h.indexOf('updated');_tpLdcp={};if(li>=0)rows.slice(1).forEach(r=>{const sy=String(r[0]||'').trim().toUpperCase(),l=parseFloat(r[li]);if(sy&&l>0)_tpLdcp[sy]=l;});if(ui>=0&&rows[1]&&rows[1][ui]){_pricesUpdatedAt=String(rows[1][ui]).trim();showDataDate();}}catch(e){}
-  try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);_tpNews=r.ok?await r.json():null;}catch(e){_tpNews=null;}
+  try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);_tpNews=r.ok?await r.json():null;_tkNews=_tpNews;}catch(e){_tpNews=null;_tkNews=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);_tpList=r.ok?await r.json():null;}catch(e){_tpList=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/history.json?${Date.now()}`);const j=r.ok?await r.json():null;_tpHist=j&&j.data?j.data:{};}catch(e){_tpHist={};}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/${TPW_FILE}?${Date.now()}`);_tpWeek=r.ok?await r.json():null;}catch(e){_tpWeek=null;}
