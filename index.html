@@ -1218,7 +1218,7 @@ async function loadWeekPicker(){
     const res=await fetch(`https://api.github.com/repos/${REPO}/contents/archive`,{headers});
     if(!res.ok){ return; }
     const files=await res.json();
-    _archiveDates=files.filter(f=>f.name.endsWith('.csv')).map(f=>f.name.replace('.csv','')).sort().reverse();
+    _archiveDates=files.filter(f=>f.name.startsWith('zones-')&&f.name.endsWith('.json')).map(f=>f.name.replace('zones-','').replace('.json','')).sort().reverse();
     const sel=document.getElementById('weekPicker');
     if(!sel) return;
     sel.innerHTML='<option value="">📅 Current week</option>'+_archiveDates.map(d=>`<option value="${d}">📆 ${d}</option>`).join('');
@@ -1238,17 +1238,11 @@ async function loadWeekFromPicker(dateStr){
   }
   _viewingWeek=dateStr;
   try{
-    const res=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/${dateStr}.csv?${Date.now()}`);
-    if(!res.ok) throw new Error('Archive not found for '+dateStr);
-    const text=(await res.text()).replace(/^\uFEFF/,'');
-    const lines=text.trim().split(/\r?\n/);
-    const headers=lines[0].split(',').map(h=>h.trim());
-    _rawData=lines.slice(1).filter(l=>l.trim()).map(line=>{
-      const cols=line.split(',');const obj={};
-      headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim());
-      return obj;
-    }).filter(r=>r.Symbol);
-    if(banner){ banner.style.display='block'; banner.textContent=`📆 Viewing archive: ${dateStr} — click ↩ Current to return`; }
+    const res=await fetch(`https://raw.githubusercontent.com/${REPO}/main/archive/zones-${dateStr}.json?${Date.now()}`);
+    if(!res.ok) throw new Error('Zone archive not found for '+dateStr);
+    const data=await res.json();
+    _tpWeek=data;
+    if(banner){ banner.style.display='block'; banner.textContent=`📆 Viewing zones: ${dateStr} — click ↩ Current to return`; }
     runWeekly();
   }catch(e){ console.log('loadWeek error:',e.message); }
 }
@@ -1689,7 +1683,21 @@ async function tpSaveWeek(){
     const body={message:`Weekly zones: week ending ${wk}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(data))))};
     if(sha)body.sha=sha;
     const res=await fetch(url,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},hd),body:JSON.stringify(body)});
-    if(res.ok){_tpWeek=data;showArchiveToast('✅ Zones of the week saved: '+wk,true);runWeekly();}
+    if(res.ok){
+      _tpWeek=data;
+      showArchiveToast('✅ Zones of the week saved: '+wk,true);
+      // also save archive copy
+      try{
+        const archUrl=`https://api.github.com/repos/${REPO}/contents/archive/zones-${wk}.json`;
+        let archSha='';
+        try{const ac=await fetch(archUrl,{headers:hd});if(ac.ok){const aj=await ac.json();archSha=aj.sha||'';}}catch(e){}
+        const archBody={message:`Zone archive: week ending ${wk}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(data))))};
+        if(archSha)archBody.sha=archSha;
+        await fetch(archUrl,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},hd),body:JSON.stringify(archBody)});
+        loadWeekPicker();
+      }catch(e){}
+      runWeekly();
+    }
     else{const err=await res.json().catch(()=>({message:res.status}));showArchiveToast('❌ Weekly zones not saved: '+(err.message||res.status),false);}
   }catch(e){showArchiveToast('❌ Weekly zones error: '+e.message,false);}
 }
