@@ -1233,12 +1233,13 @@ async function getData(){}
 function exportCSV(){}
 
 /* ── Date handling ── */
-let _dataAsOf='';
-function setDataDate(d){ _dataAsOf=d; try{ localStorage.setItem('psx_dataAsOf',d); }catch(e){} showDataDate(); }
+let _dataAsOf='',_dataLoadedAt=null;
+function setDataDate(d){ _dataAsOf=d; _dataLoadedAt=new Date(); try{ localStorage.setItem('psx_dataAsOf',d); }catch(e){} showDataDate(); }
 function showDataDate(){
   if(!_dataAsOf) return;
   const dt=new Date(_dataAsOf+'T00:00:00');
-  const nice=dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const timeStr=_dataLoadedAt?_dataLoadedAt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'';
+  const nice=dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+(timeStr?' '+timeStr:'');
   const hd=document.getElementById('homeDataDate'); if(hd) hd.style.display='block';
   const hv=document.getElementById('homeDataDateVal'); if(hv) hv.textContent=nice;
   const ad=document.getElementById('analysisDataDate'); if(ad) ad.style.display='flex';
