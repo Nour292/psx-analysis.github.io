@@ -608,7 +608,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <!-- MY PORTFOLIO (qasim-Portfolio sheet) -->
 <div id="pgQasimPortfolio" class="open">
   <div class="overlay-nav">
-    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.98</span></span>
+    <span class="overlay-title">💼 My Portfolio <span style="font-size:10px;color:var(--emerald);font-weight:700;margin-left:4px">v3.99</span></span>
     <span class="asof-badge" id="asofBadge" style="display:none">📅 <span id="asofVal"></span></span>
     <span class="user-badge" id="userBadge">👤 <span id="userBadgeName"></span><button class="logout-btn" onclick="doLogout()">Logout</button></span>
     <button class="btn btn-ghost" onclick="loadQasimPortfolio()" style="font-size:11px">↺ Refresh</button>
@@ -1780,11 +1780,16 @@ async function loadHeldNews(){
   const note=document.getElementById('hnNote');
   if(note)note.textContent='Announcements for your holdings, last 3 months · updated '+new Date(d.updated).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
   const cutoff=new Date(Date.now()-92*864e5).toISOString().slice(0,10);
+  const fmtD=s=>{const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],p=s.split('-');return p[2]+' '+m[parseInt(p[1])-1]+' '+p[0];};
+  const catColors={'Corporate action':'#38BDF8','Results':'#10B981','Board meeting':'#A78BFA','Dividend':'#F59E0B','Meeting':'#94A3B8'};
+  const catChip=f=>`<span style="font-size:10px;padding:1px 7px;border-radius:3px;background:${catColors[f]||'#64748B'}22;color:${catColors[f]||'#94A3B8'};border:1px solid ${catColors[f]||'#64748B'}44;white-space:nowrap">${hEsc(f)}</span>`;
   whenHoldings(box,syms=>{
-    const rows=syms.map(s=>{const items=((d.rows[s]||{}).news||[]).filter(i=>i.date>=cutoff);return{s,items,fl:items.filter(i=>i.flags.length).length};})
-      .sort((a,b)=>(b.fl-a.fl)||a.s.localeCompare(b.s));
-    box.innerHTML=rows.map(r=>`<details class="hn-det"${r.fl?' open':''}><summary><b>${hEsc(r.s)}</b> <span style="color:var(--text3);font-size:11px">${r.fl} flagged</span></summary>`+
-      (r.items.length?r.items.map(i=>`<div class="hn-it${i.flags.length?' fl':''}"><i>${hEsc(i.date)}</i>${i.flags.map(f=>`<span class="hn-chip">${hEsc(f)}</span>`).join('')}${hEsc(i.title)}${i.doc?` <a class="hn-a" href="https://dps.psx.com.pk/download/document/${hEsc(i.doc)}.pdf" target="_blank" rel="noopener">PDF</a>`:''}</div>`).join(''):'<div class="hn-it">No announcements in the last 3 months.</div>')+`</details>`).join('');
+    const allNews=[];
+    syms.forEach(s=>{((d.rows[s]||{}).news||[]).filter(i=>i.date>=cutoff).forEach(i=>allNews.push({...i,symbol:s}));});
+    allNews.sort((a,b)=>b.date.localeCompare(a.date));
+    if(!allNews.length){box.innerHTML='<p style="padding:20px;color:var(--text3)">No announcements in the last 3 months.</p>';return;}
+    box.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">${allNews.length} items</div>`+
+      allNews.map(i=>`<div style="display:grid;grid-template-columns:96px 48px 120px 40px 1fr;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;overflow:hidden"><span style="font-family:var(--mono);color:var(--text3);white-space:nowrap">${fmtD(i.date)}</span><b style="color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hEsc(i.symbol)}</b><span style="white-space:nowrap;overflow:hidden">${(i.flags||[]).map(catChip).join('')}</span>${i.doc?`<a href="https://dps.psx.com.pk/download/document/${hEsc(i.doc)}.pdf" target="_blank" style="color:var(--accent);font-size:11px">PDF</a><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${i.flags&&i.flags.length?'var(--text)':'var(--text3)'}">${hEsc(i.title)}</span>`:`<span></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${i.flags&&i.flags.length?'var(--text)':'var(--text3)'}">${hEsc(i.title)}</span>`}</div>`).join('');
   });
 }
 
