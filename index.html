@@ -673,7 +673,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.46</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.47</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1258,13 +1258,24 @@ async function getData(){}
 function exportCSV(){}
 
 /* ── Date handling ── */
-let _dataAsOf='',_dataLoadedAt=null;
+let _dataAsOf='',_dataLoadedAt=null,_pricesUpdatedAt='';
 function setDataDate(d){ _dataAsOf=d; _dataLoadedAt=new Date(); try{ localStorage.setItem('psx_dataAsOf',d); }catch(e){} showDataDate(); }
 function showDataDate(){
   if(!_dataAsOf) return;
   const dt=new Date(_dataAsOf+'T00:00:00');
-  const timeStr=_dataLoadedAt?_dataLoadedAt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'';
-  const nice=dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+(timeStr?' '+timeStr:'');
+  let nice;
+  if(_pricesUpdatedAt){
+    // Parse "10-Nov-2026 17:35" from sheet
+    const parts=_pricesUpdatedAt.match(/^(\d{1,2})-([A-Za-z]+)-(\d{4})\s+(\d{2}):(\d{2})/);
+    if(parts){
+      const months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+      const pd=new Date(parts[3],months[parts[2]]||0,parts[1],parts[4],parts[5]);
+      nice=pd.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+' '+pd.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    } else { nice=_pricesUpdatedAt; }
+  } else {
+    const timeStr=_dataLoadedAt?_dataLoadedAt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'';
+    nice=dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short',year:'numeric'})+(timeStr?' '+timeStr:'');
+  }
   const hd=document.getElementById('homeDataDate'); if(hd) hd.style.display='block';
   const hv=document.getElementById('homeDataDateVal'); if(hv) hv.textContent=nice;
   const ad=document.getElementById('analysisDataDate'); if(ad) ad.style.display='flex';
@@ -1715,7 +1726,7 @@ function tpNewsText(sym){
   return parts.length?((n.quarter&&n.quarter.change!=null&&n.quarter.change<=-10?'Warning: ':'News: ')+parts.join('; ')+'.'):'';
 }
 async function tpLoadExtras(){
-  try{const r=await fetch(gsUrl('Prices'));const j=await r.json();const rows=j.values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());const li=h.indexOf('ldcp');_tpLdcp={};if(li>=0)rows.slice(1).forEach(r=>{const sy=String(r[0]||'').trim().toUpperCase(),l=parseFloat(r[li]);if(sy&&l>0)_tpLdcp[sy]=l;});}catch(e){}
+  try{const r=await fetch(gsUrl('Prices'));const j=await r.json();const rows=j.values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());const li=h.indexOf('ldcp'),ui=h.indexOf('updated');_tpLdcp={};if(li>=0)rows.slice(1).forEach(r=>{const sy=String(r[0]||'').trim().toUpperCase(),l=parseFloat(r[li]);if(sy&&l>0)_tpLdcp[sy]=l;});if(ui>=0&&rows[1]&&rows[1][ui]){_pricesUpdatedAt=String(rows[1][ui]).trim();showDataDate();}}catch(e){}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/news.json?${Date.now()}`);_tpNews=r.ok?await r.json():null;}catch(e){_tpNews=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);_tpList=r.ok?await r.json():null;}catch(e){_tpList=null;}
   try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/history.json?${Date.now()}`);const j=r.ok?await r.json():null;_tpHist=j&&j.data?j.data:{};}catch(e){_tpHist={};}
