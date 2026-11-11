@@ -683,7 +683,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.61</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.62</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1115,10 +1115,9 @@ function runWeekly(){
   showPage('pgAnalysis');
   if(!_rawData.length){ document.getElementById('fullTable').innerHTML='<tr><td style="padding:20px;color:var(--text3)">No data loaded yet.</td></tr>'; return; }
   const rows=processAll();
-  const order={'BUY ZONE':0,'SELL ZONE':1,'WAIT':2};
   const inL=r=>tpOnList(String(r.Symbol).toUpperCase())?0:1;
   const rk=new Map();rows.forEach(r=>rk.set(r,tpRank(r)));
-  _allRows=rows.slice().sort((a,b)=>{const x=rk.get(a),y=rk.get(b);const sd=a.Plan&&a.Plan.verdict==='SELL ZONE'?1:-1;return ((order[a.Plan&&a.Plan.verdict]??3)-(order[b.Plan&&b.Plan.verdict]??3))||(sd*((a.Score||0)-(b.Score||0)))||(inL(a)-inL(b))||(x.w-y.w)||(x.m-y.m)||(y.y-x.y)||String(a.Symbol).localeCompare(String(b.Symbol));});
+  _allRows=rows.slice().sort((a,b)=>{const x=rk.get(a),y=rk.get(b);const skd=(a.Plan?.sortKey??6)-(b.Plan?.sortKey??6);if(skd)return skd;const sd=a.Plan&&a.Plan.verdict==='SELL ZONE'?1:-1;return (sd*((a.Score||0)-(b.Score||0)))||(inL(a)-inL(b))||(x.w-y.w)||(x.m-y.m)||(y.y-x.y)||String(a.Symbol).localeCompare(String(b.Symbol));});
   applyFilters();
   try{const fz=z=>z?(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo)):'—';const zm={};_allRows.forEach(r=>{const pl=r.Plan;if(!pl)return;zm[(r.Symbol||'').toUpperCase()]={p:pl.p,verdict:pl.verdict||'',buy1:pl.zv&&pl.zv[0]?fz(pl.zv[0]):'—',buy2:pl.zv&&pl.zv[1]?fz(pl.zv[1]):'—',exit1:pl.tz&&pl.tz[0]?fz(pl.tz[0]):'—',exit2:pl.tz&&pl.tz[1]?fz(pl.tz[1]):'—',stop:pl.stop?tpF(pl.stop):'—'};});localStorage.setItem('psx_ta_zones',JSON.stringify(zm));}catch(e){}
   tpSaveWeek();
@@ -1579,10 +1578,11 @@ function tpPlan(s){
   const selZ=joinedX?o.tz[0]:(inRes?cz:null),fell=!!selZ&&tpFellInto(String(s.Symbol||'').toUpperCase(),selZ);
   if(joinedX?(p>=o.tz[0].lo&&p<=o.tz[0].hi&&!inEntry&&!fell):((inRes&&!fell)||h1on)){
     if(joinedX)o.sellTxt='Price is in the exit zone '+(tpF(o.tz[0].lo)!==tpF(o.tz[0].hi)?tpF(o.tz[0].lo)+'–'+tpF(o.tz[0].hi):tpF(o.tz[0].lo))+' (two close zones joined).';
-    o.verdict='SELL ZONE';o.target=joinedX?(o.tz[1]?o.tz[1].lo:o.tz[0].hi):(inRes?(o.target>p*1.03?o.target:(h1||p)):h1);o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+(o.trailingStop&&o.trailingStop.length?' If holding, raise stop to '+tpF(o.trailingStop[0])+' (ATR trailing stop).':'')+readyTxt()+wideTxt();return o;}
+    o.verdict='SELL ZONE';o.sortKey=5;o.target=joinedX?(o.tz[1]?o.tz[1].lo:o.tz[0].hi):(inRes?(o.target>p*1.03?o.target:(h1||p)):h1);o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+(o.trailingStop&&o.trailingStop.length?' If holding, raise stop to '+tpF(o.trailingStop[0])+' (ATR trailing stop).':'')+readyTxt()+wideTxt();return o;}
   if(!lv.length){o.why='Price is under every known support level. Wait for a new level to form.';return o;}
   if(p<=Math.max(lv[0],(o.zv[0]&&o.zv[0].hi)||0)*1.01){o.verdict='BUY ZONE';o.why='Price is at support '+zt(0)+zw(0)+(hot[0]?' (strong: a moving average is here too)':'')+'. Buy a lot here.'+(far?' If it breaks, there is no support until '+zt(1)+zw(1)+' ('+far.pct+'% lower).'+(far.lows.length?' Weak single lows on the way: '+far.lows.map(tpF).join(', ')+'.':''):(lv[1]?' If it breaks, the next support is '+zt(1)+zw(1)+'.':' No lower support zone found.'));}
   else{o.why='Wait for a pullback to '+zt(0)+zw(0)+', then buy.'+(far?' Next support is far: '+zt(1)+zw(1)+' ('+far.pct+'% lower).':(lv[1]?' Next support: '+zt(1)+zw(1)+'.':''));}
+  if(o.verdict==='BUY ZONE')o.sortKey=hot[0]?2:3;
   if(fell&&selZ&&p>=selZ.lo&&p<=(selZ.rt||selZ.hi))o.why+=' Price fell into the exit zone '+(tpF(selZ.lo)!==tpF(selZ.hi)?tpF(selZ.lo)+'–'+tpF(selZ.hi):tpF(selZ.lo))+' (for example after an ex-dividend drop), it did not rise into it: this is not a sell signal.';
   o.why+=buyRealTxt()+readyTxt()+wideTxt();
   if(o.stop!=null)o.why+=lv[1]?' Stop '+tpF(o.stop)+': if broken, hold and add at '+zt(1)+'.':' Stop '+tpF(o.stop)+': if broken, close position.';
@@ -1636,7 +1636,7 @@ function tpFreeze(pb,live,sym,after){
   const e=broke1?b2:b1,inEntry=p>=(e.rs||e.lo)*0.98&&p<=(e.rt||e.hi)*1.02;
   const fell=inEx>=0&&tpFellInto(sym,o.tz[inEx]);
   if(inEx>=0&&!inEntry&&!fell){
-    o.verdict='SELL ZONE';o.sellTxt='Price is in the exit zone '+T.rng(o.tz[inEx])+(o.tz[inEx].rs?' (two close zones joined).':'.');
+    o.verdict='SELL ZONE';o.sortKey=inEx>=1?4:5;o.sellTxt='Price is in the exit zone '+T.rng(o.tz[inEx])+(o.tz[inEx].rs?' (two close zones joined).':'.');
     o.target=o.tz[inEx+1]?o.tz[inEx+1].lo:o.tz[inEx].hi;
     o.why='Price is at a resistance level ('+tpF(p)+'), where it has turned down before. Sell the lots that are in profit.'+(o.trailingStop&&o.trailingStop[inEx]!=null?' If holding, raise stop to '+tpF(o.trailingStop[inEx])+' (ATR trailing stop).':'')+T.readyTxt()+T.wideTxt();
     return o;
@@ -1653,6 +1653,7 @@ function tpFreeze(pb,live,sym,after){
     else o.why='Buy 1 '+T.zt(0)+' is broken. Wait for the next support '+T.zt(1)+T.zw(1)+', then buy.';
     o.why+=T.readyTxt()+T.wideTxt();
   }
+  if(o.verdict==='BUY ZONE')o.sortKey=broke1?((pb.hot&&pb.hot[1])?0:1):((pb.hot&&pb.hot[0])?2:3);
   return o;
 }
 function tpWeekPlan(s){
