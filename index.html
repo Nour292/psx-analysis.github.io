@@ -673,7 +673,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.50</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.51</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1959,7 +1959,7 @@ function renderTkNews(){
   const onList=new Set((_tkData?_tkData.rows:[]).map(r=>r.symbol));
   const rows=(_tkNews.rows||[]).filter(r=>onList.has(r.symbol)&&r.items.length);
   const chip=f=>`<span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--accent-dim);color:var(--accent);margin-right:4px">${tkEsc(f)}</span>`;
-  box.innerHTML=`<div class="section-label"><span></span> News — last ${_tkNews.days} days <span style="font-weight:400;color:var(--text3);margin-left:8px;font-size:11px">updated ${tkEsc(new Date(_tkNews.updated).toLocaleString('en-GB'))} · ⚑ = flagged item</span></div>`+
+  box.innerHTML=`<div class="section-label"><span></span> News — last ${_tkNews.days} days</div><div style="font-size:11px;color:var(--text3);margin:-6px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border)">Updated ${tkEsc(new Date(_tkNews.updated).toLocaleString('en-GB'))} &nbsp;·&nbsp; ⚑ = flagged item</div>`+
     rows.map(r=>`<details style="margin:6px 0;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)"${r.flagged?' open':''}><summary style="cursor:pointer;font-size:13px"><b>${tkEsc(r.symbol)}</b> <span style="color:var(--text3);font-size:11px">${r.flagged} flagged</span> ${tkQChip(r.quarter)}</summary>`+
       r.items.map(i=>`<div style="font-size:12px;padding:3px 0;color:${i.flags.length?'var(--text)':'var(--text3)'}"><span style="font-family:var(--mono);color:var(--text3)">${tkEsc(i.date)}</span> ${i.flags.map(chip).join('')}${tkEsc(i.title)}${i.doc?` <a href="https://dps.psx.com.pk/download/document/${tkEsc(i.doc)}.pdf" target="_blank" style="color:var(--accent)">PDF</a>`:''}</div>`).join('')+'</details>').join('');
 }
