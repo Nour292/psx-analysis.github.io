@@ -683,7 +683,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.64</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.65</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1981,8 +1981,13 @@ function renderNewsPage(){
   allNews.sort((a,b)=>b.date.localeCompare(a.date));
   const catColors={'Corporate action':'#38BDF8','Results':'#10B981','Board meeting':'#A78BFA','Dividend':'#F59E0B','Meeting':'#94A3B8'};
   const catChip=f=>`<span style="font-size:10px;padding:1px 7px;border-radius:3px;background:${catColors[f]||'#64748B'}22;color:${catColors[f]||'#94A3B8'};border:1px solid ${catColors[f]||'#64748B'}44;white-space:nowrap">${tkEsc(f)}</span>`;
-  box.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">Updated ${tkEsc(new Date(_tkNews.updated).toLocaleString('en-GB'))} &nbsp;·&nbsp; ${allNews.length} items</div>`+
-    allNews.map(i=>`<div style="display:grid;grid-template-columns:96px 48px 120px 40px 1fr;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;overflow:hidden"><span style="font-family:var(--mono);color:var(--text3);white-space:nowrap">${fmtNewsDate(i.date)}</span><b style="color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${tkEsc(i.symbol)}</b><span style="white-space:nowrap;overflow:hidden">${i.flags.map(catChip).join('')}</span>${i.doc?`<a href="https://dps.psx.com.pk/download/document/${tkEsc(i.doc)}.pdf" target="_blank" style="color:var(--accent);font-size:11px">PDF</a><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${i.flags.length?'var(--text)':'var(--text3)'}">${tkEsc(i.title)}</span>`:`<span></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${i.flags.length?'var(--text)':'var(--text3)'}">${tkEsc(i.title)}</span>`}</div>`).join('');
+  const total=allNews.length;
+  box.innerHTML=
+    `<input id="newsSearch" type="text" placeholder="Search date, symbol, category, title…" oninput="(function(q){const rows=document.querySelectorAll('#newsRows>[data-s]');let n=0;rows.forEach(r=>{const m=!q||r.dataset.s.includes(q.toLowerCase());r.style.display=m?'':'none';if(m)n++;});const el=document.getElementById('newsCount');el.textContent=q?n+' of '+el.dataset.total+' items':el.dataset.total+' items';})(this.value.trim())" style="width:100%;box-sizing:border-box;padding:6px 10px;margin-bottom:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:12px;outline:none">`+
+    `<div style="font-size:11px;color:var(--text3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">Updated ${tkEsc(new Date(_tkNews.updated).toLocaleString('en-GB'))} &nbsp;·&nbsp; <span id="newsCount" data-total="${total}">${total} items</span></div>`+
+    `<div id="newsRows">`+
+    allNews.map(i=>`<div data-s="${tkEsc((fmtNewsDate(i.date)+' '+i.symbol+' '+i.flags.join(' ')+' '+i.title+(i.doc?' pdf':'')).toLowerCase())}" style="display:grid;grid-template-columns:96px 48px 120px 40px 1fr;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;overflow:hidden"><span style="font-family:var(--mono);color:var(--text3);white-space:nowrap">${fmtNewsDate(i.date)}</span><b style="color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${tkEsc(i.symbol)}</b><span style="white-space:nowrap;overflow:hidden">${i.flags.map(catChip).join('')}</span>${i.doc?`<a href="https://dps.psx.com.pk/download/document/${tkEsc(i.doc)}.pdf" target="_blank" style="color:var(--accent);font-size:11px">PDF</a><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${i.flags.length?'var(--text)':'var(--text3)'}">${tkEsc(i.title)}</span>`:`<span></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${i.flags.length?'var(--text)':'var(--text3)'}">${tkEsc(i.title)}</span>`}</div>`).join('')+
+    `</div>`;
 }
 async function runNewsNow(){
   if(!tkIsAdmin()) return;
