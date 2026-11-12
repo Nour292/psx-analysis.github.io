@@ -136,7 +136,8 @@ def main(trigger):
     if len(screener) < 100:
         raise SystemExit("Screener returned %d rows; PSX may be blocking." % len(screener))
     by_sym = {r["sym"]: r for r in screener}
-    cand = liquidity_top([r for r in screener if r["yld"] > 0 and r["pe"] > 0])
+    after_f1 = [r for r in screener if r["yld"] > 0 and r["pe"] > 0]
+    cand = liquidity_top(after_f1)
 
     syms = [r["sym"] for r in cand]
 
@@ -163,6 +164,7 @@ def main(trigger):
             prev = {r["symbol"]: r["status"] for r in json.load(fh).get("rows", [])}
 
     rows = []
+    after_f3 = 0
 
     def add(sym, status, r, vals, dy, reason):
         rows.append({"symbol": sym, "status": status, "price": r["price"] if r else None,
@@ -180,8 +182,10 @@ def main(trigger):
         elif dy is None:
             reason = "No dividend data"
         elif dy >= MIN_DIV_YEARS:
+            after_f3 += 1
             status = "pass"
         elif (age == 1 and dy >= 1) or (age == 3 and dy >= 2):
+            after_f3 += 1
             status, reason = "pass", "New listing, paid every year since listing"
         else:
             reason = "Dividend record under 3 years"
@@ -206,7 +210,8 @@ def main(trigger):
     rows.sort(key=lambda r: (order.get(r["status"], 9), r["symbol"]))
     counts = {k: sum(1 for r in rows if r["status"] == k) for k in order}
     result = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "trigger": trigger,
-              "universe": len(screener), "candidates": len(cand), "counts": counts, "rows": rows}
+              "universe": len(screener), "after_filter1": len(after_f1), "candidates": len(cand),
+              "after_filter3": after_f3, "counts": counts, "rows": rows}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(result, fh, indent=1)

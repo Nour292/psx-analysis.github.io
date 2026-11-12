@@ -683,7 +683,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.70</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.71</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1936,7 +1936,11 @@ function renderTickers(){
     strip.innerHTML=''; bar.innerHTML=''; tbl.innerHTML=''; extra.innerHTML=''; return;
   }
   const d=_tkData,c=d.counts||{},pass=tkPassRows(),toAdd=tkToAdd(),sh=tkSheetSet();
-  info.innerHTML=`<div id="tkRunLine"></div>List saved: ${tkEsc(new Date(d.updated).toLocaleString('en-GB'))} · ${tkEsc(d.trigger==='schedule'?'Auto (monthly)':'Manual')} · ${d.universe} stocks scanned · ${d.candidates} passed liquidity`;
+  const f1=d.after_filter1!=null?` → <b>${d.after_filter1}</b> yield+PE`:'';
+  const f2=` → <b>${d.candidates}</b> liquidity`;
+  const f3=d.after_filter3!=null?` → <b>${d.after_filter3}</b> profit rising`:'';
+  const f4=` → <b>${(d.counts&&d.counts.Active||0)+(d.counts&&d.counts.New||0)}</b> dividend 3yr+`;
+  info.innerHTML=`<div id="tkRunLine"></div>List saved: ${tkEsc(new Date(d.updated).toLocaleString('en-GB'))} · ${tkEsc(d.trigger==='schedule'?'Auto (monthly)':'Manual')} · <b>${d.universe}</b> scanned${f1}${f2}${f3}${f4}`;
   const card=(v,l,cls)=>`<div class="sig-card ${cls}"><div class="sv">${v}</div><div class="sl">${l}</div></div>`;
   strip.innerHTML=card(pass.length,'On list','buy')+card(c.New||0,'New','watch')+card(toAdd.length,'To add to sheet','caution')+card(c.Dropped||0,'Dropped','exit');
   bar.innerHTML=(!_rawData||!_rawData.length)?'<span style="font-size:12px;color:var(--accent)">Sheet data not loaded yet, so adding is switched off. Press Refresh once the dashboard has data.</span>':toAdd.length?`<button class="btn btn-primary" id="tkAddBtn" onclick="addTickersToSheet()">＋ Add ${toAdd.length} ticker${toAdd.length>1?'s':''} to sheet: ${tkEsc(toAdd.join(', '))}</button>`:'<span style="font-size:12px;color:var(--text3)">Every ticker on the list is already in the sheet.</span>';
