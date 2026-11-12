@@ -683,7 +683,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.66</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.67</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1977,7 +1977,7 @@ function renderNewsPage(){
   const box=document.getElementById('pgNewsBox'); if(!box) return;
   if(!_tkNews){ box.innerHTML='<div style="font-size:12px;color:var(--text3);padding:20px 0">No news saved yet.</div>'; return; }
   const allNews=[];
-  (_tkNews.rows||[]).filter(r=>r.items&&r.items.length).forEach(r=>r.items.forEach(i=>allNews.push({...i,symbol:r.symbol})));
+  (_tkNews.rows||[]).filter(r=>r.items&&r.items.length&&tpOnList(r.symbol)).forEach(r=>r.items.forEach(i=>allNews.push({...i,symbol:r.symbol})));
   allNews.sort((a,b)=>b.date.localeCompare(a.date));
   const catColors={'Corporate action':'#38BDF8','Results':'#10B981','Board meeting':'#A78BFA','Dividend':'#F59E0B','Meeting':'#94A3B8'};
   const catChip=f=>`<span style="font-size:10px;padding:1px 7px;border-radius:3px;background:${catColors[f]||'#64748B'}22;color:${catColors[f]||'#94A3B8'};border:1px solid ${catColors[f]||'#64748B'}44;white-space:nowrap">${tkEsc(f)}</span>`;
