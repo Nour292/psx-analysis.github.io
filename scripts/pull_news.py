@@ -19,8 +19,8 @@ LIST = os.path.join(ROOT, "tickers", "list.json")
 OUT = os.path.join(ROOT, "tickers", "news.json")
 COMPANY_URL = "https://dps.psx.com.pk/company/"
 UA = {"User-Agent": "Mozilla/5.0"}
-DAYS = 30
-MAX_ITEMS = 8
+DAYS = 90
+MAX_ITEMS = 20
 
 # (flag, pattern) in priority order. A title can carry several flags.
 FLAGS = [
