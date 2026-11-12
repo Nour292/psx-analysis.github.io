@@ -265,6 +265,23 @@
    ],
    "divYears": 2,
    "reason": "New listing, paid every year since listing"
-  }
+  },
+  {"symbol":"ABL","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"BAFL","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"EFERT","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"ENGROH","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"FCL","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"HBL","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"HUBC","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"INDU","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"ISL","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"MCB","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"MEBL","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"MTL","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"NBP","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"OGDC","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"POL","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"PSO","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"},
+  {"symbol":"SYS","status":"Override","price":0,"yield":0,"profit":[],"divYears":null,"reason":"Added for news tracking"}
  ]
 }
