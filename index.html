@@ -683,7 +683,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.62</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.63</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1675,17 +1675,13 @@ async function tpSaveWeek(){
     const wk=getLastFriday();
     // Friday 17:00 → Sunday: update if not yet saved after this Friday 17:00
     const now=new Date();
-    const day=now.getDay(); // 0=Sun,5=Fri,6=Sat
-    const inWindow=day===5?now.getHours()>=16:(day===6||day===0);
-    if(inWindow){
-      // Friday 16:00 → Sunday: overwrite only if not yet saved after this Friday 16:00
-      const thisFri=new Date(wk+'T16:00:00');
-      const alreadyDone=_tpWeek&&_tpWeek.saved&&new Date(_tpWeek.saved)>=thisFri;
-      if(alreadyDone)return;
-    } else {
-      // Mon–Thu: save only once this week, never overwrite
-      if(_tpWeek&&_tpWeek.week===wk)return;
-    }
+    const day=now.getDay(),h=now.getHours();
+    // save window: Friday 16:00 → Sunday 23:00 only; outside this window zones stay frozen
+    const inWindow=(day===5&&h>=16)||day===6||(day===0&&h<23);
+    if(!inWindow)return;
+    const thisFri=new Date(wk+'T16:00:00');
+    const alreadyDone=_tpWeek&&_tpWeek.saved&&new Date(_tpWeek.saved)>=thisFri;
+    if(alreadyDone)return;
     if(_allRows.length<30||Object.keys(_tpHist).length<30)return;
     _tpWeekTried=true;
     // before overwriting: ensure current week's archive exists
