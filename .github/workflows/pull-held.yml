@@ -1,7 +1,10 @@
 name: Pull held stocks
 on:
   schedule:
-    - cron: '10 13 * * 1-5'   # Mon-Fri, 18:10 Pakistan time
+    - cron: '35 4-10 * * 1-5'  # 9:35–15:35 PKT Mon–Fri (hourly, 5 min after news)
+    - cron: '5 11 * * 1-4'     # 16:05 PKT Mon–Thu (last run)
+    - cron: '35 11 * * 5'      # 16:35 PKT Friday
+    - cron: '5 12 * * 5'       # 17:05 PKT Friday (last run)
   workflow_dispatch:
   push:
     paths:

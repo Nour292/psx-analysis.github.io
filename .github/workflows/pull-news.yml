@@ -1,7 +1,10 @@
 name: Pull news
 on:
   schedule:
-    - cron: '0 13 * * 1-5'   # Mon-Fri, 18:00 Pakistan time
+    - cron: '30 4-10 * * 1-5'  # 9:30–15:30 PKT Mon–Fri (hourly)
+    - cron: '0 11 * * 1-4'     # 16:00 PKT Mon–Thu (last run)
+    - cron: '30 11 * * 5'      # 16:30 PKT Friday
+    - cron: '0 12 * * 5'       # 17:00 PKT Friday (last run)
   workflow_dispatch:          # "News now" button in the web app
   push:
     paths:
