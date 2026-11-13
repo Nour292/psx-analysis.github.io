@@ -1,108 +1,102 @@
 {
- "updated": "2026-11-12T18:45:45Z",
+ "updated": "2026-11-13T12:25:30Z",
  "days": 90,
  "rows": [
   {
-   "symbol": "BERG",
+   "symbol": "IPAK",
    "quarter": {
     "label": "Q1 2027",
-    "pat": 67366.0,
-    "prev": 69299.0,
-    "change": -2.8
+    "pat": 211101.0,
+    "prev": 182613.0,
+    "change": 15.6
    },
    "flagged": 10,
    "items": [
     {
-     "date": "2026-11-04",
-     "title": "Credit Of Final Cash Dividend",
+     "date": "2026-11-13",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-11-12",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-11-11",
+     "title": "Notice of Corporate Briefing Session 2026",
+     "flags": [],
+     "doc": "289021"
+    },
+    {
+     "date": "2026-11-06",
+     "title": "Credit of final cash dividend for the year ended June 30, 2026",
      "flags": [
       "Dividend"
      ],
-     "doc": "288564"
+     "doc": "288742"
     },
     {
-     "date": "2026-10-30",
-     "title": "APPOINTMENT OF CHAIRMAN AND CHIEF EXECUTIVE OFFICER OF THE COMPANY",
-     "flags": [
-      "Management"
-     ],
-     "doc": "288241"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Financial Result for the Quarter Ended 30 September 2026",
-     "flags": [],
-     "doc": "288021"
-    },
-    {
-     "date": "2026-10-23",
-     "title": "Board Meetings",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "286686"
-    },
-    {
-     "date": "2026-10-23",
-     "title": "Extracts of Annual General Meeting",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "286683"
-    },
-    {
-     "date": "2026-10-20",
-     "title": "WITHDRAWAL OF CANDIDATE FROM ELECTION OF DIRECTORS",
-     "flags": [],
-     "doc": "286080"
-    },
-    {
-     "date": "2026-10-16",
-     "title": "Notice under section 159 (4) and postal ballot paper for the annual general meeting (AGM) scheduled to be held on october 23, 2026.",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "285843"
-    },
-    {
-     "date": "2026-10-02",
-     "title": "Notice of Annual General Meeting",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "284222"
-    },
-    {
-     "date": "2026-09-23",
-     "title": "Financial Results for the Year Ended 2026-06-30",
+     "date": "2026-10-27",
+     "title": "Financial Results for the First Quarter Ended 30 September 2026",
      "flags": [
       "Results"
      ],
-     "doc": "283310"
+     "doc": "287027"
     },
     {
-     "date": "2026-09-23",
-     "title": "APPOINTMENT OF DIRECTOR TO FILL THE CASUAL VACANCY",
-     "flags": [
-      "Management"
-     ],
-     "doc": "283292"
-    },
-    {
-     "date": "2026-09-15",
-     "title": "Board Meeting",
+     "date": "2026-10-19",
+     "title": "Board Meeting for the First Quarter ended 30th September 2026",
      "flags": [
       "Board meeting"
      ],
-     "doc": "282733"
+     "doc": "285947"
     },
     {
-     "date": "2026-08-28",
-     "title": "UNUSUAL MOVEMENT IN THE VOLUME OF THE SHARES OF BERGER PAINTS PAKISTAN LIMITED (BERG)",
+     "date": "2026-10-02",
+     "title": "Notice of Annual General Meeting (Pre-Publication)",
      "flags": [
-      "Material"
+      "Meeting"
      ],
-     "doc": "281928"
+     "doc": "284243"
+    },
+    {
+     "date": "2026-09-18",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-09-10",
+     "title": "Financial Results for the Year Ended 30th June 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "282487"
+    },
+    {
+     "date": "2026-09-02",
+     "title": "Board Meeting - Annual",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "282137"
+    },
+    {
+     "date": "2026-08-27",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": ""
     }
    ]
   },
@@ -289,6 +283,108 @@
    ]
   },
   {
+   "symbol": "BERG",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 67366.0,
+    "prev": 69299.0,
+    "change": -2.8
+   },
+   "flagged": 9,
+   "items": [
+    {
+     "date": "2026-11-13",
+     "title": "Notice of Corporate Briefing Session",
+     "flags": [],
+     "doc": "289194"
+    },
+    {
+     "date": "2026-11-04",
+     "title": "Credit Of Final Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "288564"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "APPOINTMENT OF CHAIRMAN AND CHIEF EXECUTIVE OFFICER OF THE COMPANY",
+     "flags": [
+      "Management"
+     ],
+     "doc": "288241"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Financial Result for the Quarter Ended 30 September 2026",
+     "flags": [],
+     "doc": "288021"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Board Meetings",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286686"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Extracts of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "286683"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "WITHDRAWAL OF CANDIDATE FROM ELECTION OF DIRECTORS",
+     "flags": [],
+     "doc": "286080"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Notice under section 159 (4) and postal ballot paper for the annual general meeting (AGM) scheduled to be held on october 23, 2026.",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285843"
+    },
+    {
+     "date": "2026-10-02",
+     "title": "Notice of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "284222"
+    },
+    {
+     "date": "2026-09-23",
+     "title": "Financial Results for the Year Ended 2026-06-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": "283310"
+    },
+    {
+     "date": "2026-09-23",
+     "title": "APPOINTMENT OF DIRECTOR TO FILL THE CASUAL VACANCY",
+     "flags": [
+      "Management"
+     ],
+     "doc": "283292"
+    },
+    {
+     "date": "2026-09-15",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "282733"
+    }
+   ]
+  },
+  {
    "symbol": "CPHL",
    "quarter": {
     "label": "Q1 2027",
@@ -369,96 +465,6 @@
       "Results"
      ],
      "doc": "284383"
-    }
-   ]
-  },
-  {
-   "symbol": "IPAK",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 211101.0,
-    "prev": 182613.0,
-    "change": 15.6
-   },
-   "flagged": 9,
-   "items": [
-    {
-     "date": "2026-11-12",
-     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
-     "flags": [
-      "Insider"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-11-11",
-     "title": "Notice of Corporate Briefing Session 2026",
-     "flags": [],
-     "doc": "289021"
-    },
-    {
-     "date": "2026-11-06",
-     "title": "Credit of final cash dividend for the year ended June 30, 2026",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "288742"
-    },
-    {
-     "date": "2026-10-27",
-     "title": "Financial Results for the First Quarter Ended 30 September 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "287027"
-    },
-    {
-     "date": "2026-10-19",
-     "title": "Board Meeting for the First Quarter ended 30th September 2026",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "285947"
-    },
-    {
-     "date": "2026-10-02",
-     "title": "Notice of Annual General Meeting (Pre-Publication)",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "284243"
-    },
-    {
-     "date": "2026-09-18",
-     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
-     "flags": [
-      "Insider"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-09-10",
-     "title": "Financial Results for the Year Ended 30th June 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "282487"
-    },
-    {
-     "date": "2026-09-02",
-     "title": "Board Meeting - Annual",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "282137"
-    },
-    {
-     "date": "2026-08-27",
-     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
-     "flags": [
-      "Insider"
-     ],
-     "doc": ""
     }
    ]
   },
@@ -659,6 +665,12 @@
    },
    "flagged": 8,
    "items": [
+    {
+     "date": "2026-11-13",
+     "title": "Notice of Corporate Briefing Session",
+     "flags": [],
+     "doc": ""
+    },
     {
      "date": "2026-11-05",
      "title": "Credit of Final Cash Dividend",
