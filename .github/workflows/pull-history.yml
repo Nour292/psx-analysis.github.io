@@ -1,7 +1,8 @@
 name: Pull price history
 on:
   schedule:
-    - cron: '30 13 * * 1-5'   # Mon-Fri, 18:30 Pakistan time (after the close)
+    - cron: '30 13 * * 1-4'   # Mon-Thu, 18:30 PKT (after close)
+    - cron: '0 12 * * 5'    # Fri, 17:00 PKT (market closes 16:30, history ready by 17:00)
   workflow_dispatch:
   push:
     paths:
