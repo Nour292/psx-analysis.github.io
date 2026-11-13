@@ -683,7 +683,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.71</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.72</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1679,9 +1679,9 @@ async function tpSaveWeek(){
     const pkt=new Date(now.getTime()+5*3600000); // always evaluate in PKT (UTC+5)
     const day=pkt.getUTCDay(),h=pkt.getUTCHours();
     // save window: Friday 16:00 → Sunday 23:00 PKT only
-    const inWindow=(day===5&&h>=16)||day===6||(day===0&&h<23);
+    const inWindow=day===6||(day===0&&h<23);  // Sat 00:00 → Sun 23:00 PKT (after history updates at 18:30 Fri)
     if(!inWindow)return;
-    const thisFri=new Date(wk+'T11:00:00Z'); // 16:00 PKT = 11:00 UTC
+    const thisFri=new Date(wk+'T19:00:00Z'); // 00:00 PKT Sat = 19:00 UTC Fri (after pull_history runs at 18:30)
     const alreadyDone=_tpWeek&&_tpWeek.saved&&new Date(_tpWeek.saved)>=thisFri;
     if(alreadyDone)return;
     if(_allRows.length<30||Object.keys(_tpHist).length<30)return;
