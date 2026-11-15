@@ -302,7 +302,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 :root.light .wtbl .listed{ background:#d1fae5; color:#065f46; }
 .tbl-wrap.nobar{ overflow:visible; }
 .wtbl tr:first-child{ animation:none; }
-.wtbl th{ position:sticky; top:calc(var(--header-h) + 142px); z-index:20; }
+.wtbl th{ position:sticky; top:calc(var(--header-h) + var(--controls-h, 120px)); z-index:20; }
 .wtbl th{ font-size:12.5px; font-weight:800; letter-spacing:.2px; white-space:normal; line-height:1.3; color:#fff !important; background:#C2410C !important; }
 :root.light .wtbl th{ background:#C2410C !important; color:#fff !important; }
 @media (max-width:760px){
@@ -358,8 +358,9 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .qual-b{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);cursor:default;}
 .qual-c{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber);cursor:default;}
 .qual-d{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--rose-dim);color:var(--rose);border:1px solid var(--rose);cursor:default;}
-.filter-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:4px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);position:sticky;top:var(--header-h);z-index:31;}
-#tickerStrip{display:none;flex-wrap:wrap;gap:5px;padding:7px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:4px;position:sticky;top:calc(var(--header-h) + 62px);z-index:30;}
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:4px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);}
+#tickerStrip{display:none;flex-wrap:wrap;gap:5px;padding:7px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:4px;}
+#stickyControls{position:sticky;top:var(--header-h);z-index:31;background:var(--bg);}
 .ts-chip{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;border:1px solid;cursor:pointer;background:transparent;transition:opacity .15s;}
 .ts-chip:hover{opacity:.7;}
 .ts-chip.ts-buy{color:#04210f;border-color:#10B981;background:#10B981;}
@@ -689,10 +690,11 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.80</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.81</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
+    <div id="stickyControls">
     <div class="filter-bar" id="filterBar" style="flex-wrap:nowrap;gap:14px">
       <div class="filter-group">
         <button class="fpill sym-pill active" id="symPillAll"       onclick="setSymFilter('all',this)">All</button>
@@ -707,6 +709,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       <span class="filter-count" id="filterCount"></span>
     </div>
     <div id="tickerStrip"></div>
+    </div>
     <div class="tbl-wrap nobar"><table class="dtbl wtbl" id="fullTable"><tbody></tbody></table></div>
   </div>
 
@@ -1120,8 +1123,11 @@ function applyFilters(){
     :'<tr><td colspan="8" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">'+emptyMsg+'</td></tr>';
   const ts=document.getElementById('tickerStrip');
   if(ts){if(rows.length){ts.style.display='flex';ts.innerHTML=rows.map(r=>{const sym=String(r.Symbol).toUpperCase();const v=(r.Plan&&r.Plan.verdict)||'';const c=v==='BUY ZONE'?'ts-buy':v==='SELL ZONE'?'ts-sell':'ts-wait';return '<button class="ts-chip '+c+'" onclick="scrollToRow(\''+sym+'\')">'+sym+'</button>';}).join('');}else{ts.style.display='none';ts.innerHTML='';}}
+  requestAnimationFrame(syncControlsHeight);
 }
 function scrollToRow(sym){const el=document.getElementById('row-'+sym);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
+function syncControlsHeight(){const c=document.getElementById('stickyControls');if(c)document.documentElement.style.setProperty('--controls-h',c.offsetHeight+'px');}
+window.addEventListener('resize',syncControlsHeight);
 function runWeekly(){
   showPage('pgAnalysis');
   if(!_rawData.length){ document.getElementById('fullTable').innerHTML='<tr><td style="padding:20px;color:var(--text3)">No data loaded yet.</td></tr>'; return; }
