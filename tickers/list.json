@@ -1,31 +1,22 @@
 {
- "updated": "2026-11-12T12:58:07Z",
+ "updated": "2026-11-15T08:32:17Z",
  "trigger": "manual",
- "universe": 754,
+ "universe": 755,
  "after_filter1": 191,
- "candidates": 78,
+ "candidates": 77,
  "after_filter3": 18,
  "counts": {
   "New": 0,
   "Review": 0,
-  "Override": 1,
+  "Override": 0,
   "Active": 18,
-  "Dropped": 18
+  "Dropped": 1
  },
  "rows": [
   {
-   "symbol": "CPHL",
-   "status": "Override",
-   "price": 63.55,
-   "yield": 0.0,
-   "profit": [],
-   "divYears": null,
-   "reason": "Kept by owner decision"
-  },
-  {
    "symbol": "AGP",
    "status": "Active",
-   "price": 156.58,
+   "price": 156.37,
    "yield": 5.12,
    "profit": [
     2360314.0,
@@ -38,7 +29,7 @@
   {
    "symbol": "AHCL",
    "status": "Active",
-   "price": 13.64,
+   "price": 13.65,
    "yield": 7.73,
    "profit": [
     44480631.0,
@@ -51,7 +42,7 @@
   {
    "symbol": "AICL",
    "status": "Active",
-   "price": 91.68,
+   "price": 89.6,
    "yield": 5.27,
    "profit": [
     5132718.0,
@@ -64,7 +55,7 @@
   {
    "symbol": "BERG",
    "status": "Active",
-   "price": 109.55,
+   "price": 109.78,
    "yield": 4.19,
    "profit": [
     309427.0,
@@ -77,7 +68,7 @@
   {
    "symbol": "BOP",
    "status": "Active",
-   "price": 31.23,
+   "price": 31.39,
    "yield": 10.21,
    "profit": [
     15937630.0,
@@ -90,7 +81,7 @@
   {
    "symbol": "FCCL",
    "status": "Active",
-   "price": 61.54,
+   "price": 61.71,
    "yield": 2.84,
    "profit": [
     16182912.0,
@@ -103,7 +94,7 @@
   {
    "symbol": "FFC",
    "status": "Active",
-   "price": 570.19,
+   "price": 569.12,
    "yield": 9.24,
    "profit": [
     73564267.0,
@@ -116,7 +107,7 @@
   {
    "symbol": "GRR",
    "status": "Active",
-   "price": 17.05,
+   "price": 17.01,
    "yield": 17.75,
    "profit": [
     578181.0,
@@ -129,7 +120,7 @@
   {
    "symbol": "HCAR",
    "status": "Active",
-   "price": 205.22,
+   "price": 205.26,
    "yield": 3.74,
    "profit": [
     3233703.0,
@@ -142,7 +133,7 @@
   {
    "symbol": "IPAK",
    "status": "Active",
-   "price": 29.05,
+   "price": 30.5,
    "yield": 5.59,
    "profit": [
     1317364.0,
@@ -154,7 +145,7 @@
   {
    "symbol": "KOHTM",
    "status": "Active",
-   "price": 89.6,
+   "price": 89.47,
    "yield": 1.63,
    "profit": [
     291946.0,
@@ -167,7 +158,7 @@
   {
    "symbol": "LUCK",
    "status": "Active",
-   "price": 436.38,
+   "price": 443.04,
    "yield": 1.2,
    "profit": [
     46629367.0,
@@ -180,7 +171,7 @@
   {
    "symbol": "NATF",
    "status": "Active",
-   "price": 342.0,
+   "price": 337.93,
    "yield": 3.51,
    "profit": [
     5654889.0,
@@ -193,7 +184,7 @@
   {
    "symbol": "NICL",
    "status": "Active",
-   "price": 274.34,
+   "price": 271.01,
    "yield": 1.89,
    "profit": [
     2393050.0,
@@ -206,7 +197,7 @@
   {
    "symbol": "PSX",
    "status": "Active",
-   "price": 42.61,
+   "price": 42.83,
    "yield": 2.15,
    "profit": [
     2241275.0,
@@ -219,7 +210,7 @@
   {
    "symbol": "SAZEW",
    "status": "Active",
-   "price": 1502.1,
+   "price": 1486.81,
    "yield": 3.51,
    "profit": [
     23604643.0,
@@ -232,7 +223,7 @@
   {
    "symbol": "UBL",
    "status": "Active",
-   "price": 437.23,
+   "price": 433.72,
    "yield": 7.6,
    "profit": [
     128008847.0,
@@ -245,7 +236,7 @@
   {
    "symbol": "ZAL",
    "status": "Active",
-   "price": 32.96,
+   "price": 33.06,
    "yield": 2.33,
    "profit": [
     1379010.0,
@@ -256,222 +247,13 @@
    "reason": "New listing, paid every year since listing"
   },
   {
-   "symbol": "ABL",
+   "symbol": "CPHL",
    "status": "Dropped",
-   "price": 171.56,
-   "yield": 9.43,
-   "profit": [],
-   "divYears": null,
-   "reason": "Left the liquidity or dividend pool"
-  },
-  {
-   "symbol": "AHL",
-   "status": "Dropped",
-   "price": 109.13,
-   "yield": 10.75,
-   "profit": [],
-   "divYears": null,
-   "reason": "Left the liquidity or dividend pool"
-  },
-  {
-   "symbol": "BAFL",
-   "status": "Dropped",
-   "price": 59.71,
-   "yield": 13.19,
-   "profit": [
-    28337057.0,
-    38318131.0,
-    36456372.0
-   ],
-   "divYears": 9,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "EFERT",
-   "status": "Dropped",
-   "price": 210.17,
-   "yield": 6.81,
-   "profit": [
-    23770535.0,
-    30206762.0,
-    25678418.0
-   ],
-   "divYears": 12,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "ENGROH",
-   "status": "Dropped",
-   "price": 276.89,
+   "price": 63.42,
    "yield": 0.0,
    "profit": [],
    "divYears": null,
    "reason": "Left the liquidity or dividend pool"
-  },
-  {
-   "symbol": "FCL",
-   "status": "Dropped",
-   "price": 23.27,
-   "yield": 5.54,
-   "profit": [
-    2111134.0,
-    1270518.0,
-    1887592.0
-   ],
-   "divYears": 3,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "HBL",
-   "status": "Dropped",
-   "price": 310.65,
-   "yield": 7.84,
-   "profit": [
-    62492417.0,
-    56765819.0,
-    56855995.0
-   ],
-   "divYears": 19,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "HUBC",
-   "status": "Dropped",
-   "price": 205.33,
-   "yield": 9.93,
-   "profit": [
-    24467399.0,
-    19079478.0,
-    33879176.0
-   ],
-   "divYears": 6,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "INDU",
-   "status": "Dropped",
-   "price": 1831.82,
-   "yield": 11.11,
-   "profit": [],
-   "divYears": null,
-   "reason": "Left the liquidity or dividend pool"
-  },
-  {
-   "symbol": "ISL",
-   "status": "Dropped",
-   "price": 82.79,
-   "yield": 6.18,
-   "profit": [
-    3673234.0,
-    1559261.0,
-    3654814.0
-   ],
-   "divYears": 6,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "MCB",
-   "status": "Dropped",
-   "price": 406.56,
-   "yield": 9.23,
-   "profit": [
-    54195134.0,
-    57614510.0,
-    59631097.0
-   ],
-   "divYears": 29,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "MEBL",
-   "status": "Dropped",
-   "price": 558.18,
-   "yield": 5.5,
-   "profit": [
-    89041250.0,
-    101507524.0,
-    84475642.0
-   ],
-   "divYears": 15,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "MTL",
-   "status": "Dropped",
-   "price": 302.11,
-   "yield": 10.41,
-   "profit": [
-    7840789.0,
-    6372928.0,
-    10224875.0
-   ],
-   "divYears": 35,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "NBP",
-   "status": "Dropped",
-   "price": 175.28,
-   "yield": 21.26,
-   "profit": [
-    85912384.0,
-    26865744.0,
-    51840462.0
-   ],
-   "divYears": 2,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "OGDC",
-   "status": "Dropped",
-   "price": 313.39,
-   "yield": 4.5,
-   "profit": [
-    242373646.0,
-    169903614.0,
-    208975771.0
-   ],
-   "divYears": 23,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "POL",
-   "status": "Dropped",
-   "price": 670.11,
-   "yield": 13.25,
-   "profit": [
-    31918208.0,
-    24181657.0,
-    39151511.0
-   ],
-   "divYears": 31,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "PSO",
-   "status": "Dropped",
-   "price": 368.25,
-   "yield": 2.85,
-   "profit": [
-    15067770.0,
-    20911446.0,
-    15862552.0
-   ],
-   "divYears": 6,
-   "reason": "Profit not rising 3 years"
-  },
-  {
-   "symbol": "SYS",
-   "status": "Dropped",
-   "price": 116.3,
-   "yield": 1.68,
-   "profit": [
-    8019014.0,
-    6115297.0,
-    8559160.0
-   ],
-   "divYears": 12,
-   "reason": "Profit not rising 3 years"
   }
  ]
 }
