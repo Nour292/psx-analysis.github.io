@@ -20,7 +20,6 @@ SCREENER_URL = "https://dps.psx.com.pk/screener"
 COMPANY_URL = "https://dps.psx.com.pk/company/"
 TV_URL = "https://scanner.tradingview.com/pakistan/scan"
 MIN_DIV_YEARS = 3
-OVERRIDES = ["CPHL"]  # kept by owner decision, never dropped automatically
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tickers", "list.json")
 UA = {"User-Agent": "Mozilla/5.0"}
 
@@ -190,17 +189,13 @@ def main(trigger):
         else:
             reason = "Dividend record under 3 years"
         if status == "pass":
-            st = "Override" if s in OVERRIDES else ("Active" if prev.get(s) in ("Active", "New", "Override") else "New")
+            st = "Active" if prev.get(s) in ("Active", "New", "Override") else "New"
             add(s, st, r, vals, dy, reason)
         elif status == "review":
             add(s, "Review", r, vals, dy, reason)
-        elif prev.get(s) in ("Active", "New", "Override", "Review") and s not in OVERRIDES:
+        elif prev.get(s) in ("Active", "New", "Override", "Review"):
             add(s, "Dropped", r, vals, dy, reason)
 
-    listed = {r["symbol"] for r in rows}
-    for s in OVERRIDES:
-        if s not in listed:
-            add(s, "Override", by_sym.get(s), [], div.get(s, (None, 9))[0], "Kept by owner decision")
     listed = {r["symbol"] for r in rows}
     for s, st in prev.items():  # earlier members that fell out of the candidate pool
         if s not in listed and st in ("Active", "New", "Override", "Review"):
@@ -216,7 +211,7 @@ def main(trigger):
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(result, fh, indent=1)
     print("Screener rows %d | after filters 1-2: %d | %s" % (len(screener), len(cand), counts))
-    print("PASS:", ", ".join(r["symbol"] + ":" + r["status"] for r in rows if r["status"] in ("New", "Active", "Override")))
+    print("PASS:", ", ".join(r["symbol"] + ":" + r["status"] for r in rows if r["status"] in ("New", "Active")))
     print("REVIEW:", ", ".join(r["symbol"] for r in rows if r["status"] == "Review"))
 
 
