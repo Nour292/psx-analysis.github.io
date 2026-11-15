@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PSX Zones
 // @namespace    https://nour292.github.io/psx-analysis.github.io/
-// @version      1.11
+// @version      1.12
 // @description  Copies the app's Buy/Exit zones and draws them on the TradingView chart
 // @match        https://nour292.github.io/psx-analysis.github.io/index.html*
 // @match        https://www.tradingview.com/chart/*
@@ -43,7 +43,19 @@
   }
 
   // ---------- chart page: draw the saved zones ----------
-  const T1 = 1759104000, T2 = 1794268800;
+  // T1: fixed left anchor (Sep 29 2025) — zones always start from here
+  // T2: computed dynamically = now + 3 bars (timeframe-aware), so zones always end 3 candles ahead
+  const T1_BASE = 1759104000;
+  function barSecs(res) {
+    const r = String(res).toUpperCase();
+    if (r === 'D' || r === '1D') return 86400;
+    if (r === 'W' || r === '1W') return 604800;
+    if (r === 'M' || r === '1M') return 2592000;
+    if (r === '3M') return 7776000;
+    if (r === '12M' || r === '1Y') return 31536000;
+    const n = parseInt(r, 10);
+    return isNaN(n) ? 86400 : n * 60;
+  }
   const f2 = v => (Math.round(v * 100) / 100).toString();
   const MINE = /^(Buy [12]|Exit [12]|Stop |Trailing Stop )/;
   const GREEN = '#10b981', PURPLE = '#a78bfa', RED = '#ef4444';
@@ -57,6 +69,14 @@
     try { chart = api.activeChart(); } catch (e) { return; }
     if (!chart) return;
     const sym = String(chart.symbol() || '').split(':').pop().toUpperCase();
+    // Fix 4: get current timeframe so T2 and cache key are timeframe-aware
+    let res = 'D';
+    try { res = chart.resolution(); } catch(e) {}
+    const now = Math.floor(Date.now() / 1000);
+    const bs = barSecs(res);
+    const T1 = T1_BASE;
+    const T2 = now + 60 * 86400;
+    const dayBucket = Math.floor(now / 86400); // changes once per day, keeps T2 current
     let saved;
     try { saved = JSON.parse(GM_getValue(KEY, 'null')); } catch (e) { saved = null; }
     if (!saved || !saved.zones) return;
@@ -64,7 +84,8 @@
     const price = z && z.price ? parseFloat(z.price) : null;
     const inExit = z && price ? z.exit.findIndex(e=>price>=e.lo&&price<=e.hi) : -1;
     const priceZone = inExit>=0?'exit'+inExit:(price&&z.stop!=null&&price<=z.stop?'below':'normal');
-    const key = sym + '|' + JSON.stringify(z || null) + '|' + priceZone;
+    // Fix 4: include res + dayBucket so zones redraw on timeframe switch and daily T2 refresh
+    const key = sym + '|' + res + '|' + dayBucket + '|' + JSON.stringify(z || null) + '|' + priceZone;
     const want = z ? Math.min(z.buy.length, 2) + Math.min(z.exit.length, 2) + (z.stop != null ? 1 : 0) : 0;
     let have = 0;
     try {
@@ -92,7 +113,7 @@
             { shape: 'rectangle', text });
           const e = chart.getShapeById(id);
           e.setProperties({
-            color, backgroundColor: color, linewidth: 2, transparency: 62,
+            color, backgroundColor: color, linewidth: 2, transparency: 85,
             textColor: '#ffffff', fontSize: 10, horzLabelsAlign: 'right', vertLabelsAlign: 'middle', showLabel: true, text
           });
         };
@@ -121,7 +142,7 @@
         const e = chart.getShapeById(sh.id);
         if (MINE.test(String(e.getProperties().text || ''))) e.setProperties({ textColor: '#ffffff' });
       }
-      document.documentElement.setAttribute('data-psx-ver', '1.8');
+      document.documentElement.setAttribute('data-psx-ver', '1.12');
       lastKey = same() ? key : '';
     } catch (e) { console.warn('[PSX Zones]', e); }
     busy = false;

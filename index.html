@@ -359,6 +359,12 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .qual-c{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber);cursor:default;}
 .qual-d{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;font-size:12px;font-weight:800;font-family:var(--mono);background:var(--rose-dim);color:var(--rose);border:1px solid var(--rose);cursor:default;}
 .filter-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);}
+#tickerStrip{display:none;flex-wrap:wrap;gap:5px;padding:7px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;}
+.ts-chip{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;border:1px solid;cursor:pointer;background:transparent;transition:opacity .15s;}
+.ts-chip:hover{opacity:.7;}
+.ts-chip.ts-buy{color:var(--emerald);border-color:var(--emerald);}
+.ts-chip.ts-sell{color:var(--accent);border-color:var(--accent);}
+.ts-chip.ts-wait{color:var(--text3);border-color:var(--border2);}
 .filter-group{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
 .filter-label{font-size:10px;font-weight:800;text-transform:uppercase;color:var(--accent);letter-spacing:.08em;margin-right:4px;white-space:nowrap;padding:3px 8px;background:var(--accent-dim);border:1px solid var(--border2);border-radius:4px;}
 .filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px;}
@@ -683,7 +689,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.74</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.75</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -700,6 +706,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
       </div>
       <span class="filter-count" id="filterCount"></span>
     </div>
+    <div id="tickerStrip"></div>
     <div class="tbl-wrap nobar"><table class="dtbl wtbl" id="fullTable"><tbody></tbody></table></div>
   </div>
 
@@ -1053,7 +1060,7 @@ function tableRow(r,i){
     ?`<span style="color:#94A3B8;font-weight:600;font-size:12px">→ Sideways</span>`
     :`<span style="color:var(--text3);font-size:12px">${r.Trend||'—'}</span>`;
   const advHtml=tpAdviceHtml(String(r.Symbol).toUpperCase(),r.SrcRow||{},r.Plan);
-  return `<tr class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
+  return `<tr id="row-${String(r.Symbol).toUpperCase()}" class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
     <td class="sym-cell" data-l="">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell" data-l="Price">${fmt(r.Price)}</td>
     ${[0,1].map(i=>{const z=r.Plan&&r.Plan.zv&&r.Plan.zv[i],v=r.Plan&&r.Plan.buy[i];return `<td class="zone-cell${i?' gl':''}" data-l="${i+1}-Entry Zone">${v==null?'—':(z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v))+(r.Plan.hot&&r.Plan.hot[i]?' ★':'')+(r.Plan.zv&&r.Plan.zv[i]&&r.Plan.zv[i].weak?'<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">weak</small>':'')+tpTagHtml(r.Plan.eq&&r.Plan.eq[i])+(i===1&&r.Plan.far?`<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">far −${r.Plan.far.pct}%</small>`:'')}</td>`;}).join('')}
@@ -1111,7 +1118,10 @@ function applyFilters(){
   document.getElementById('fullTable').innerHTML=rows.length
     ?tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('')
     :'<tr><td colspan="8" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">'+emptyMsg+'</td></tr>';
+  const ts=document.getElementById('tickerStrip');
+  if(ts){if(rows.length){ts.style.display='flex';ts.innerHTML=rows.map(r=>{const sym=String(r.Symbol).toUpperCase();const v=(r.Plan&&r.Plan.verdict)||'';const c=v==='BUY ZONE'?'ts-buy':v==='SELL ZONE'?'ts-sell':'ts-wait';return '<button class="ts-chip '+c+'" onclick="scrollToRow(\''+sym+'\')">'+sym+'</button>';}).join('');}else{ts.style.display='none';ts.innerHTML='';}}
 }
+function scrollToRow(sym){const el=document.getElementById('row-'+sym);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
 function runWeekly(){
   showPage('pgAnalysis');
   if(!_rawData.length){ document.getElementById('fullTable').innerHTML='<tr><td style="padding:20px;color:var(--text3)">No data loaded yet.</td></tr>'; return; }
