@@ -377,7 +377,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
 .fpill.fv-caution.active{background:#FB923C;border-color:#FB923C;}
 .fpill.fv-exit.active{background:var(--rose);border-color:var(--rose);}
 .fpill.fv-wait.active{background:var(--slate);border-color:var(--slate);}
-.filter-count{font-size:11px;color:var(--text3);margin-left:auto;font-family:var(--mono);white-space:nowrap;}
+.filter-count{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap;}
 .filter-row-break{width:100%;height:0;border-top:1px solid var(--border);margin:2px 0;}
 .price-input{width:80px;padding:3px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;text-align:center;}
 .price-input:focus{border-color:var(--accent);}
@@ -690,14 +690,13 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.81</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.82</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
     <div id="stickyControls">
     <div class="filter-bar" id="filterBar" style="flex-wrap:nowrap;gap:14px">
       <div class="filter-group">
-        <button class="fpill sym-pill active" id="symPillAll"       onclick="setSymFilter('all',this)">All</button>
         <button class="fpill sym-pill"        id="symPillHoldings"  onclick="setSymFilter('holdings',this)">Portfolio</button>
         <button class="fpill sym-pill"        id="symPillTop"       onclick="setSymFilter('top',this)">Screened</button>
       </div>
@@ -706,6 +705,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         <button class="fpill plan-pill fv-exit"  onclick="setPlanFilter('SELL ZONE',this)">Sell</button>
         <button class="fpill plan-pill fv-wait"  onclick="setPlanFilter('WAIT',this)">Wait</button>
       </div>
+      <button class="fpill sym-pill active" id="symPillAll" onclick="setSymFilter('all',this)" style="margin-left:auto;">All</button>
       <span class="filter-count" id="filterCount"></span>
     </div>
     <div id="tickerStrip"></div>
@@ -1098,6 +1098,10 @@ function applyFilters(){
     rows=rows.filter(r=>held.includes((r.Symbol||'').toUpperCase()));
   }else if(sf==='top'){
     if(_topTickerSyms.length)rows=rows.filter(r=>_topTickerSyms.includes((r.Symbol||'').toUpperCase()));
+  }else if(sf==='all'){
+    let held=[];try{held=JSON.parse(localStorage.getItem('psx_my_holdings')||'[]');}catch(e){}
+    const excl=new Set([...held,...(_topTickerSyms||[])].map(s=>s.toUpperCase()));
+    rows=rows.filter(r=>!excl.has((r.Symbol||'').toUpperCase()));
   }
   if(_activeFilters.plan) rows=rows.filter(r=>r.Plan&&r.Plan.verdict===_activeFilters.plan);
   if(_activeFilters.verdict) rows=rows.filter(r=>r.Verdict===_activeFilters.verdict);
@@ -1122,7 +1126,7 @@ function applyFilters(){
     ?tableHeader()+rows.map((r,i)=>tableRow(r,i)).join('')
     :'<tr><td colspan="8" style="padding:30px;color:var(--text3);text-align:center;font-size:13px">'+emptyMsg+'</td></tr>';
   const ts=document.getElementById('tickerStrip');
-  if(ts){if(rows.length){ts.style.display='flex';ts.innerHTML=rows.map(r=>{const sym=String(r.Symbol).toUpperCase();const v=(r.Plan&&r.Plan.verdict)||'';const c=v==='BUY ZONE'?'ts-buy':v==='SELL ZONE'?'ts-sell':'ts-wait';return '<button class="ts-chip '+c+'" onclick="scrollToRow(\''+sym+'\')">'+sym+'</button>';}).join('');}else{ts.style.display='none';ts.innerHTML='';}}
+  if(ts){if(rows.length&&sf!=='all'){ts.style.display='flex';ts.innerHTML=rows.map(r=>{const sym=String(r.Symbol).toUpperCase();const v=(r.Plan&&r.Plan.verdict)||'';const c=v==='BUY ZONE'?'ts-buy':v==='SELL ZONE'?'ts-sell':'ts-wait';return '<button class="ts-chip '+c+'" onclick="scrollToRow(\''+sym+'\')">'+sym+'</button>';}).join('');}else{ts.style.display='none';ts.innerHTML='';}}
   requestAnimationFrame(syncControlsHeight);
 }
 function scrollToRow(sym){const el=document.getElementById('row-'+sym);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
