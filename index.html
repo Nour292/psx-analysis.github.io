@@ -690,14 +690,14 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.82</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.83</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
     <div id="stickyControls">
     <div class="filter-bar" id="filterBar" style="flex-wrap:nowrap;gap:14px">
       <div class="filter-group">
-        <button class="fpill sym-pill"        id="symPillHoldings"  onclick="setSymFilter('holdings',this)">Portfolio</button>
+        <button class="fpill sym-pill active"  id="symPillHoldings"  onclick="setSymFilter('holdings',this)">Portfolio</button>
         <button class="fpill sym-pill"        id="symPillTop"       onclick="setSymFilter('top',this)">Screened</button>
       </div>
       <div class="filter-group" style="margin-left:6px;padding-left:10px;border-left:1px solid var(--border)">
@@ -705,7 +705,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         <button class="fpill plan-pill fv-exit"  onclick="setPlanFilter('SELL ZONE',this)">Sell</button>
         <button class="fpill plan-pill fv-wait"  onclick="setPlanFilter('WAIT',this)">Wait</button>
       </div>
-      <button class="fpill sym-pill active" id="symPillAll" onclick="setSymFilter('all',this)" style="margin-left:auto;">All</button>
+      <button class="fpill sym-pill" id="symPillAll" onclick="setSymFilter('all',this)" style="margin-left:auto;">All</button>
       <span class="filter-count" id="filterCount"></span>
     </div>
     <div id="tickerStrip"></div>
@@ -1078,7 +1078,7 @@ function renderHome(){ if(_rawData.length&&document.getElementById('pgAnalysis')
 let _allRows=[];
 let _topTickerSyms=[];
 async function loadTopTickers(){try{const r=await fetch(`https://raw.githubusercontent.com/${REPO}/main/tickers/list.json?${Date.now()}`);if(!r.ok)return;const d=await r.json();_topTickerSyms=(d.rows||[]).filter(r=>['New','Active','Override'].includes(r.status)).map(r=>String(r.symbol||'').toUpperCase());}catch(e){}}
-const _activeFilters={verdict:'',quality:'',momentum:'',plan:'',priceMin:0,priceMax:0,symFilter:'all'};
+const _activeFilters={verdict:'',quality:'',momentum:'',plan:'',priceMin:0,priceMax:0,symFilter:'holdings'};
 function setSymFilter(val,btn){
   _activeFilters.symFilter=val;
   document.querySelectorAll('#filterBar .sym-pill').forEach(b=>b.classList.remove('active'));
