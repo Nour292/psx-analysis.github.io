@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-16T20:52:34Z",
+ "updated": "2026-11-17T13:40:23Z",
  "days": 90,
  "rows": [
   {
@@ -762,6 +762,14 @@
    "flagged": 7,
    "items": [
     {
+     "date": "2026-11-17",
+     "title": "RECEIPT OF FIRST TRANCHE - EQUITY INJECTION BY GOVERNMENT OF THE PUNJAB (GoPb)",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "289341"
+    },
+    {
      "date": "2026-11-16",
      "title": "EXTENSION IN TENURE OF MR. ZAFAR MASUD, PRESIDENT & CEO, THE BANK OF PUNJAB",
      "flags": [],
@@ -820,14 +828,6 @@
       "Meeting"
      ],
      "doc": "281339"
-    },
-    {
-     "date": "2026-08-18",
-     "title": "Notice of Extraordinary General Meeting",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "281296"
     }
    ]
   },
@@ -841,6 +841,14 @@
    },
    "flagged": 7,
    "items": [
+    {
+     "date": "2026-11-17",
+     "title": "Dispatch of Interim Dividend Warrants",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "289365"
+    },
     {
      "date": "2026-11-05",
      "title": "General Meetings / Briefing Sessions",
@@ -894,14 +902,6 @@
       "Board meeting"
      ],
      "doc": "286309"
-    },
-    {
-     "date": "2026-10-16",
-     "title": "Change of Director - Fauji Fertilizer Company Limited",
-     "flags": [
-      "Management"
-     ],
-     "doc": "285815"
     }
    ]
   },
