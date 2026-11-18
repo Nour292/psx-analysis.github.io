@@ -690,7 +690,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.84</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.85</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1048,6 +1048,7 @@ function tableHeader(){
 }
 function tableRow(r,i){
   const cls=r.Verdict==='BUY'?'buy-row':r.Verdict==='EXIT'?'exit-row':r.Verdict==='CAUTION'?'caution-row':r.Verdict==='WATCH'?'watch-row':'';
+  const sk=r.Plan?.sortKey??6;
   const vcls=r.Verdict==='BUY'?'badge-buy':r.Verdict==='EXIT'?'badge-exit':r.Verdict==='CAUTION'?'badge-caution':r.Verdict==='WATCH'?'badge-watch':r.Verdict==='WAIT'?'badge-wait':'badge-avoid';
   const deltaStr=r.ScoreDelta!==null?`<span style="font-size:10px;font-family:var(--mono);color:${r.ScoreDelta>0?'#10B981':r.ScoreDelta<0?'#F43F5E':'#64748B'};margin-left:4px">${r.ScoreDelta>0?'+':''}${r.ScoreDelta}</span>`:'';
   const spark=r.Sparkline?'<div style="font-size:9px;margin-top:2px;letter-spacing:0;font-family:var(--mono)">'+r.Sparkline.map((v,idx)=>{const isLast=(idx===r.Sparkline.length-1);const clr=isLast?'#E2E8F4':v==='?'?'#1E2D44':v>=(r.Score-2)?'#10B981':'#64748B';return `<span style="color:${clr};font-weight:${isLast?'700':'400'}">${v}</span>`;}).join('<span style="color:#1E2D44">›</span>')+'</div>':'';
@@ -1064,12 +1065,12 @@ function tableRow(r,i){
     :`<span style="color:var(--text3);font-size:12px">${r.Trend||'—'}</span>`;
   const advHtml=tpAdviceHtml(String(r.Symbol).toUpperCase(),r.SrcRow||{},r.Plan);
   return `<tr id="row-${String(r.Symbol).toUpperCase()}" class="${cls}${advHtml?' hasadv':''}" style="animation-delay:${delay}">
-    <td class="sym-cell" data-l="">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
+    <td class="sym-cell" data-l="" style="${sk===1?'border-left:3px solid #00E676':sk===4?'border-left:3px solid #00E5FF':''}">${tpOnList(String(r.Symbol).toUpperCase())?`<span class="listed" title="On your list: passed all your filters"><span class="flag">⚑</span>${r.Symbol}</span>`:r.Symbol}</td>
     <td class="price-cell" data-l="Price">${fmt(r.Price)}</td>
     ${[0,1].map(i=>{const z=r.Plan&&r.Plan.zv&&r.Plan.zv[i],v=r.Plan&&r.Plan.buy[i];return `<td class="zone-cell${i?' gl':''}" data-l="${i+1}-Entry Zone">${v==null?'—':(z&&tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(v))+(r.Plan.hot&&r.Plan.hot[i]?' ★':'')+(r.Plan.zv&&r.Plan.zv[i]&&r.Plan.zv[i].weak?'<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">weak</small>':'')+tpTagHtml(r.Plan.eq&&r.Plan.eq[i])+(i===1&&r.Plan.far?`<small style="display:block;font-size:10px;font-weight:600;color:#F59E0B">far −${r.Plan.far.pct}%</small>`:'')}</td>`;}).join('')}
     ${[0,1].map(i=>{const z=r.Plan&&r.Plan.tz&&r.Plan.tz[i];return `<td class="zone-cell${i?' gl':''}" data-l="${i+1}-Exit Zone" style="color:var(--accent);font-weight:600">${z?(tpF(z.lo)!==tpF(z.hi)?tpF(z.lo)+'–'+tpF(z.hi):tpF(z.lo))+(z.hot?' ★':'')+tpTagHtml(r.Plan.xq&&r.Plan.xq[i]):(i||!r.Plan?'—':tpF(r.Plan.target))}</td>`;}).join('')}
     <td class="zone-cell" data-l="Stop" style="color:#F43F5E;font-weight:600">${r.Plan?tpF(r.Plan.stop):'—'}</td>
-    <td data-l="">${r.Plan?tpBadge(r.Plan.verdict):'—'}</td>
+    <td data-l="">${r.Plan?tpBadge(r.Plan.verdict,sk):'—'}</td>
   </tr>${advHtml?`<tr class="advrow"><td></td><td colspan="6">${advHtml}</td><td></td></tr>`:''}`;
 }
 
@@ -1921,7 +1922,7 @@ function tpTagHtml(t){
   const tip={old:'not tested for more than 12 months',soft:'held fewer than 35% of its past tests',high:'only one visit: the last peak',MA50:'level taken from the 50-day moving average, not a history zone',MA200:'level taken from the 200-day moving average, not a history zone','recent low':'taken from a recent low, no history zone here yet',new:'only one visit: a fresh level'};
   return t?'<small title="'+tip[t]+'" style="display:block;font-size:10px;font-weight:600;color:var(--text3)">'+t+'</small>':'';
 }
-function tpBadge(v){const m={'BUY ZONE':'background:#10B981;color:#04210f','WAIT':'background:#F59E0B;color:#2a1a00','SELL ZONE':'background:#38BDF8;color:#04202e'};return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;${m[v]||''}">${v}</span>`;}
+function tpBadge(v,sk){if(sk===1)return '<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;background:#00E676;color:#002a0f">BUY ZONE ▼2</span>';if(sk===4)return '<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap;background:#00E5FF;color:#001a1f">SELL ZONE ▲2</span>';const m={'BUY ZONE':'background:#10B981;color:#04210f','WAIT':'background:#F59E0B;color:#2a1a00','SELL ZONE':'background:#38BDF8;color:#04202e'};return `<span style="display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;${m[v]||''}">${v}</span>`;}
 
 /* ════════════════════════════════════════════
    TICKERS TAB — admin ("qasim") only
