@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-17T19:41:18Z",
+ "updated": "2026-11-18T13:15:14Z",
  "days": 90,
  "rows": [
   {
@@ -379,96 +379,6 @@
    ]
   },
   {
-   "symbol": "IPAK",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 211101.0,
-    "prev": 182613.0,
-    "change": 15.6
-   },
-   "flagged": 9,
-   "items": [
-    {
-     "date": "2026-11-13",
-     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
-     "flags": [
-      "Insider"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-11-12",
-     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
-     "flags": [
-      "Insider"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-11-11",
-     "title": "Notice of Corporate Briefing Session 2026",
-     "flags": [],
-     "doc": "289021"
-    },
-    {
-     "date": "2026-11-06",
-     "title": "Credit of final cash dividend for the year ended June 30, 2026",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "288742"
-    },
-    {
-     "date": "2026-10-27",
-     "title": "Financial Results for the First Quarter Ended 30 September 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "287027"
-    },
-    {
-     "date": "2026-10-19",
-     "title": "Board Meeting for the First Quarter ended 30th September 2026",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "285947"
-    },
-    {
-     "date": "2026-10-02",
-     "title": "Notice of Annual General Meeting (Pre-Publication)",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "284243"
-    },
-    {
-     "date": "2026-09-18",
-     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
-     "flags": [
-      "Insider"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-09-10",
-     "title": "Financial Results for the Year Ended 30th June 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "282487"
-    },
-    {
-     "date": "2026-09-02",
-     "title": "Board Meeting - Annual",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "282137"
-    }
-   ]
-  },
-  {
    "symbol": "KOHTM",
    "quarter": {
     "label": "Q1 2027",
@@ -575,6 +485,14 @@
    "flagged": 9,
    "items": [
     {
+     "date": "2026-11-18",
+     "title": "PRIOR PUBLICATION CREDIT OF 1ST INTERIM CASH DIVIDEND-D-43",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "289400"
+    },
+    {
      "date": "2026-11-06",
      "title": "Credit of Final Cash Dividend (D-42)",
      "flags": [
@@ -597,14 +515,6 @@
       "Dividend"
      ],
      "doc": "288397"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "PRIOR NOTICE OF BOOK CLOSURE FOR FIRST INTERIM CASH DIVIDEND (D-43)",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "287879"
     },
     {
      "date": "2026-10-28",
@@ -752,82 +662,84 @@
    ]
   },
   {
-   "symbol": "BOP",
+   "symbol": "IPAK",
    "quarter": {
-    "label": "Q3 2026",
-    "pat": 4997190.0,
-    "prev": 5145137.0,
-    "change": -2.9
+    "label": "Q1 2027",
+    "pat": 211101.0,
+    "prev": 182613.0,
+    "change": 15.6
    },
-   "flagged": 7,
+   "flagged": 8,
    "items": [
     {
-     "date": "2026-11-17",
-     "title": "RECEIPT OF FIRST TRANCHE - EQUITY INJECTION BY GOVERNMENT OF THE PUNJAB (GoPb)",
+     "date": "2026-11-13",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
      "flags": [
-      "Corporate action"
+      "Insider"
      ],
-     "doc": "289341"
-    },
-    {
-     "date": "2026-11-16",
-     "title": "EXTENSION IN TENURE OF MR. ZAFAR MASUD, PRESIDENT & CEO, THE BANK OF PUNJAB",
-     "flags": [],
-     "doc": "289305"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Receipt of Regulatory Approvals for Phased Equity Injection by Government of Punjab (GoPb)",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "288277"
-    },
-    {
-     "date": "2026-10-29",
-     "title": "BOP | The Bank of Punjab Application for Further Issue of Shares by way of Other than Right",
-     "flags": [],
      "doc": ""
     },
     {
-     "date": "2026-10-26",
-     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-09-30",
+     "date": "2026-11-12",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
      "flags": [
-      "Results"
+      "Insider"
      ],
-     "doc": "286909"
+     "doc": ""
     },
     {
-     "date": "2026-10-16",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "285845"
+     "date": "2026-11-11",
+     "title": "Notice of Corporate Briefing Session 2026",
+     "flags": [],
+     "doc": "289021"
     },
     {
-     "date": "2026-09-24",
-     "title": "Dispatch of Interim Cash Dividend",
+     "date": "2026-11-06",
+     "title": "Credit of final cash dividend for the year ended June 30, 2026",
      "flags": [
       "Dividend"
      ],
-     "doc": ""
+     "doc": "288742"
     },
     {
-     "date": "2026-08-28",
-     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-06-30",
+     "date": "2026-10-27",
+     "title": "Financial Results for the First Quarter Ended 30 September 2026",
      "flags": [
       "Results"
      ],
-     "doc": "281916"
+     "doc": "287027"
     },
     {
-     "date": "2026-08-19",
-     "title": "Ballot Paper of Extraordinary General Meeting-2026",
+     "date": "2026-10-19",
+     "title": "Board Meeting for the First Quarter ended 30th September 2026",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285947"
+    },
+    {
+     "date": "2026-10-02",
+     "title": "Notice of Annual General Meeting (Pre-Publication)",
      "flags": [
       "Meeting"
      ],
-     "doc": "281339"
+     "doc": "284243"
+    },
+    {
+     "date": "2026-09-10",
+     "title": "Financial Results for the Year Ended 30th June 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "282487"
+    },
+    {
+     "date": "2026-09-02",
+     "title": "Board Meeting - Annual",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "282137"
     }
    ]
   },
@@ -1116,6 +1028,78 @@
      "title": "PUBLIC NOTICE - Intimation Regarding Circulation of Fraudulent Online Content and AI-Generated / Deepfake Material Misusing the Name and Likeness of Mr. Arif Habib",
      "flags": [],
      "doc": "282606"
+    }
+   ]
+  },
+  {
+   "symbol": "BOP",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 4997190.0,
+    "prev": 5145137.0,
+    "change": -2.9
+   },
+   "flagged": 6,
+   "items": [
+    {
+     "date": "2026-11-17",
+     "title": "RECEIPT OF FIRST TRANCHE - EQUITY INJECTION BY GOVERNMENT OF THE PUNJAB (GoPb)",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "289341"
+    },
+    {
+     "date": "2026-11-16",
+     "title": "EXTENSION IN TENURE OF MR. ZAFAR MASUD, PRESIDENT & CEO, THE BANK OF PUNJAB",
+     "flags": [],
+     "doc": "289305"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Receipt of Regulatory Approvals for Phased Equity Injection by Government of Punjab (GoPb)",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288277"
+    },
+    {
+     "date": "2026-10-29",
+     "title": "BOP | The Bank of Punjab Application for Further Issue of Shares by way of Other than Right",
+     "flags": [],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-26",
+     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-09-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": "286909"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285845"
+    },
+    {
+     "date": "2026-09-24",
+     "title": "Dispatch of Interim Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-08-28",
+     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-06-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": "281916"
     }
    ]
   },
