@@ -1,197 +1,7 @@
 {
- "updated": "2026-11-18T19:17:31Z",
+ "updated": "2026-11-19T13:36:26Z",
  "days": 90,
  "rows": [
-  {
-   "symbol": "SAZEW",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 4035691.0,
-    "prev": 4417012.0,
-    "change": -8.6
-   },
-   "flagged": 10,
-   "items": [
-    {
-     "date": "2026-11-03",
-     "title": "Clarification regarding News published in Electronic Media",
-     "flags": [
-      "Material"
-     ],
-     "doc": "288466"
-    },
-    {
-     "date": "2026-10-27",
-     "title": "SAZEW | Sazgar Engineering Works Limited - Financial Results for the quarter ended 2026-09-30",
-     "flags": [
-      "Results"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-26",
-     "title": "Board Meeting In Progress",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-19",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-08",
-     "title": "Credit of final cash dividend for the year ended June 30, 2026",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-06",
-     "title": "Production and Sales data regarding Four Wheelers and Three Wheelers for the months of August & September 2026",
-     "flags": [],
-     "doc": "284743"
-    },
-    {
-     "date": "2026-10-06",
-     "title": "Material Information",
-     "flags": [
-      "Material"
-     ],
-     "doc": "284740"
-    },
-    {
-     "date": "2026-09-25",
-     "title": "Material Information",
-     "flags": [
-      "Material"
-     ],
-     "doc": "283434"
-    },
-    {
-     "date": "2026-09-03",
-     "title": "Notice of Annual General Meeting of the Company",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "282197"
-    },
-    {
-     "date": "2026-08-27",
-     "title": "Financial Results for the Year Ended 2026-06-30",
-     "flags": [
-      "Results"
-     ],
-     "doc": "281788"
-    },
-    {
-     "date": "2026-08-20",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": ""
-    }
-   ]
-  },
-  {
-   "symbol": "ZAL",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 551273.0,
-    "prev": 558177.0,
-    "change": -1.2
-   },
-   "flagged": 10,
-   "items": [
-    {
-     "date": "2026-11-16",
-     "title": "Notice of Closure of Share Transfer Books For Right Issue",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "289275"
-    },
-    {
-     "date": "2026-11-16",
-     "title": "Final Offer Document of Right Issue",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "289274"
-    },
-    {
-     "date": "2026-11-04",
-     "title": "Credit of Final Cash Dividend",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "288569"
-    },
-    {
-     "date": "2026-11-02",
-     "title": "Right Issue Draft Offer Document",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "288459"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Declaration of Right Shares",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "288278"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Financial Results for the Quarter Ended 30 September 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "288274"
-    },
-    {
-     "date": "2026-10-23",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-07",
-     "title": "Notice of Annual General Meeting",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "285223"
-    },
-    {
-     "date": "2026-09-30",
-     "title": "Financial Results for the Year Ended June 30, 2026.",
-     "flags": [
-      "Results"
-     ],
-     "doc": "284004"
-    },
-    {
-     "date": "2026-09-23",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "283303"
-    }
-   ]
-  },
   {
    "symbol": "AGP",
    "quarter": {
@@ -485,6 +295,14 @@
    "flagged": 9,
    "items": [
     {
+     "date": "2026-11-19",
+     "title": "Credit of 1st Interim Cash Dividend D-43",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "289494"
+    },
+    {
      "date": "2026-11-18",
      "title": "PRIOR PUBLICATION CREDIT OF 1ST INTERIM CASH DIVIDEND-D-43",
      "flags": [
@@ -507,14 +325,6 @@
       "Dividend"
      ],
      "doc": "288675"
-    },
-    {
-     "date": "2026-11-02",
-     "title": "Notice of Closure of Share Transfer Books - Interim Dividend For Others",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "288397"
     },
     {
      "date": "2026-10-28",
@@ -658,6 +468,186 @@
       "Results"
      ],
      "doc": "282482"
+    }
+   ]
+  },
+  {
+   "symbol": "SAZEW",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 4035691.0,
+    "prev": 4417012.0,
+    "change": -8.6
+   },
+   "flagged": 9,
+   "items": [
+    {
+     "date": "2026-11-03",
+     "title": "Clarification regarding News published in Electronic Media",
+     "flags": [
+      "Material"
+     ],
+     "doc": "288466"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "SAZEW | Sazgar Engineering Works Limited - Financial Results for the quarter ended 2026-09-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-26",
+     "title": "Board Meeting In Progress",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-19",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-08",
+     "title": "Credit of final cash dividend for the year ended June 30, 2026",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Production and Sales data regarding Four Wheelers and Three Wheelers for the months of August & September 2026",
+     "flags": [],
+     "doc": "284743"
+    },
+    {
+     "date": "2026-10-06",
+     "title": "Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "284740"
+    },
+    {
+     "date": "2026-09-25",
+     "title": "Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "283434"
+    },
+    {
+     "date": "2026-09-03",
+     "title": "Notice of Annual General Meeting of the Company",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "282197"
+    },
+    {
+     "date": "2026-08-27",
+     "title": "Financial Results for the Year Ended 2026-06-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": "281788"
+    }
+   ]
+  },
+  {
+   "symbol": "ZAL",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 551273.0,
+    "prev": 558177.0,
+    "change": -1.2
+   },
+   "flagged": 9,
+   "items": [
+    {
+     "date": "2026-11-19",
+     "title": "Declaration of Letter of Right of Zarea Limited as CDS Eligible Security",
+     "flags": [],
+     "doc": "289467"
+    },
+    {
+     "date": "2026-11-19",
+     "title": "ZAL | Zarea Limited -45.71% Right Issue PKR.25/- Per Ordinary Shares",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-11-16",
+     "title": "Notice of Closure of Share Transfer Books For Right Issue",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "289275"
+    },
+    {
+     "date": "2026-11-16",
+     "title": "Final Offer Document of Right Issue",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "289274"
+    },
+    {
+     "date": "2026-11-04",
+     "title": "Credit of Final Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "288569"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Financial Results for the Quarter Ended 30 September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "288274"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Notice of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285223"
+    },
+    {
+     "date": "2026-09-30",
+     "title": "Financial Results for the Year Ended June 30, 2026.",
+     "flags": [
+      "Results"
+     ],
+     "doc": "284004"
+    },
+    {
+     "date": "2026-09-23",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "283303"
     }
    ]
   },
@@ -814,86 +804,6 @@
       "Board meeting"
      ],
      "doc": "286309"
-    }
-   ]
-  },
-  {
-   "symbol": "PSX",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 558068.0,
-    "prev": 696391.0,
-    "change": -19.9
-   },
-   "flagged": 7,
-   "items": [
-    {
-     "date": "2026-10-30",
-     "title": "Notice of Corporate Briefing Session 2026",
-     "flags": [],
-     "doc": "288202"
-    },
-    {
-     "date": "2026-10-28",
-     "title": "Financial Results for the Quarter Ended September 30, 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "287134"
-    },
-    {
-     "date": "2026-10-27",
-     "title": "Board Meeting In Progress",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "287103"
-    },
-    {
-     "date": "2026-10-20",
-     "title": "Notice of Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "286116"
-    },
-    {
-     "date": "2026-10-14",
-     "title": "Payment of Final Cash Dividend",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "285656"
-    },
-    {
-     "date": "2026-09-30",
-     "title": "Submission of Mandatory Shariah Disclosures",
-     "flags": [],
-     "doc": "283952"
-    },
-    {
-     "date": "2026-09-11",
-     "title": "Notice of 79th Annual General Meeting",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "282571"
-    },
-    {
-     "date": "2026-08-27",
-     "title": "Financial Results for the Year Ended June 30, 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "281737"
-    },
-    {
-     "date": "2026-08-20",
-     "title": "Notice of Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "281450"
     }
    ]
   },
@@ -1170,6 +1080,78 @@
    ]
   },
   {
+   "symbol": "PSX",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 558068.0,
+    "prev": 696391.0,
+    "change": -19.9
+   },
+   "flagged": 6,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "Notice of Corporate Briefing Session 2026",
+     "flags": [],
+     "doc": "288202"
+    },
+    {
+     "date": "2026-10-28",
+     "title": "Financial Results for the Quarter Ended September 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287134"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "Board Meeting In Progress",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "287103"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "Notice of Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286116"
+    },
+    {
+     "date": "2026-10-14",
+     "title": "Payment of Final Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "285656"
+    },
+    {
+     "date": "2026-09-30",
+     "title": "Submission of Mandatory Shariah Disclosures",
+     "flags": [],
+     "doc": "283952"
+    },
+    {
+     "date": "2026-09-11",
+     "title": "Notice of 79th Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "282571"
+    },
+    {
+     "date": "2026-08-27",
+     "title": "Financial Results for the Year Ended June 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "281737"
+    }
+   ]
+  },
+  {
    "symbol": "AICL",
    "quarter": {
     "label": "Q3 2026",
@@ -1287,7 +1269,7 @@
     "prev": 178349.0,
     "change": 28.9
    },
-   "flagged": 4,
+   "flagged": 3,
    "items": [
     {
      "date": "2026-10-30",
@@ -1312,14 +1294,6 @@
       "Dividend"
      ],
      "doc": "285913"
-    },
-    {
-     "date": "2026-08-20",
-     "title": "Financial Results For The Year Ended June 30, 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "281439"
     }
    ]
   },
