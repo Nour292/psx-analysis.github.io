@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-19T19:26:18Z",
+ "updated": "2026-11-20T13:18:02Z",
  "days": 90,
  "rows": [
   {
@@ -482,6 +482,14 @@
    "flagged": 9,
    "items": [
     {
+     "date": "2026-11-20",
+     "title": "Credit of Interim Cash Dividend for the year ending June 30, 2027",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": ""
+    },
+    {
      "date": "2026-11-03",
      "title": "Clarification regarding News published in Electronic Media",
      "flags": [
@@ -550,14 +558,6 @@
       "Meeting"
      ],
      "doc": "282197"
-    },
-    {
-     "date": "2026-08-27",
-     "title": "Financial Results for the Year Ended 2026-06-30",
-     "flags": [
-      "Results"
-     ],
-     "doc": "281788"
     }
    ]
   },
@@ -942,78 +942,6 @@
    ]
   },
   {
-   "symbol": "BOP",
-   "quarter": {
-    "label": "Q3 2026",
-    "pat": 4997190.0,
-    "prev": 5145137.0,
-    "change": -2.9
-   },
-   "flagged": 6,
-   "items": [
-    {
-     "date": "2026-11-17",
-     "title": "RECEIPT OF FIRST TRANCHE - EQUITY INJECTION BY GOVERNMENT OF THE PUNJAB (GoPb)",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "289341"
-    },
-    {
-     "date": "2026-11-16",
-     "title": "EXTENSION IN TENURE OF MR. ZAFAR MASUD, PRESIDENT & CEO, THE BANK OF PUNJAB",
-     "flags": [],
-     "doc": "289305"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Receipt of Regulatory Approvals for Phased Equity Injection by Government of Punjab (GoPb)",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "288277"
-    },
-    {
-     "date": "2026-10-29",
-     "title": "BOP | The Bank of Punjab Application for Further Issue of Shares by way of Other than Right",
-     "flags": [],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-26",
-     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-09-30",
-     "flags": [
-      "Results"
-     ],
-     "doc": "286909"
-    },
-    {
-     "date": "2026-10-16",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "285845"
-    },
-    {
-     "date": "2026-09-24",
-     "title": "Dispatch of Interim Cash Dividend",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-08-28",
-     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-06-30",
-     "flags": [
-      "Results"
-     ],
-     "doc": "281916"
-    }
-   ]
-  },
-  {
    "symbol": "LUCK",
    "quarter": {
     "label": "Q1 2027",
@@ -1152,54 +1080,72 @@
    ]
   },
   {
-   "symbol": "AICL",
+   "symbol": "BOP",
    "quarter": {
     "label": "Q3 2026",
-    "pat": 1733242.0,
-    "prev": 1546927.0,
-    "change": 12.0
+    "pat": 4997190.0,
+    "prev": 5145137.0,
+    "change": -2.9
    },
    "flagged": 5,
    "items": [
     {
-     "date": "2026-10-28",
-     "title": "Financial Results for the Quarter Ended 30 September 2026",
+     "date": "2026-11-20",
+     "title": "ISSUANCE OF SHARES TO GOVERNMENT OF THE PUNJAB (GoPb), FIRST TRANCHE",
+     "flags": [],
+     "doc": "289553"
+    },
+    {
+     "date": "2026-11-17",
+     "title": "RECEIPT OF FIRST TRANCHE - EQUITY INJECTION BY GOVERNMENT OF THE PUNJAB (GoPb)",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "289341"
+    },
+    {
+     "date": "2026-11-16",
+     "title": "EXTENSION IN TENURE OF MR. ZAFAR MASUD, PRESIDENT & CEO, THE BANK OF PUNJAB",
+     "flags": [],
+     "doc": "289305"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Receipt of Regulatory Approvals for Phased Equity Injection by Government of Punjab (GoPb)",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288277"
+    },
+    {
+     "date": "2026-10-29",
+     "title": "BOP | The Bank of Punjab Application for Further Issue of Shares by way of Other than Right",
+     "flags": [],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-26",
+     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-09-30",
      "flags": [
       "Results"
      ],
-     "doc": "287390"
+     "doc": "286909"
     },
     {
-     "date": "2026-10-21",
+     "date": "2026-10-16",
      "title": "Board Meeting",
      "flags": [
       "Board meeting"
      ],
-     "doc": ""
+     "doc": "285845"
     },
     {
-     "date": "2026-09-22",
-     "title": "Credit of Interim Cash Dividend",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": ""
-    },
-    {
-     "date": "2026-08-27",
-     "title": "Financial Results for the Quarter Ended 30 June 2026",
+     "date": "2026-08-28",
+     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-06-30",
      "flags": [
       "Results"
      ],
-     "doc": "281783"
-    },
-    {
-     "date": "2026-08-21",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": ""
+     "doc": "281916"
     }
    ]
   },
@@ -1258,6 +1204,50 @@
       "Meeting"
      ],
      "doc": "282315"
+    }
+   ]
+  },
+  {
+   "symbol": "AICL",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 1733242.0,
+    "prev": 1546927.0,
+    "change": 12.0
+   },
+   "flagged": 4,
+   "items": [
+    {
+     "date": "2026-10-28",
+     "title": "Financial Results for the Quarter Ended 30 September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287390"
+    },
+    {
+     "date": "2026-10-21",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-09-22",
+     "title": "Credit of Interim Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": ""
+    },
+    {
+     "date": "2026-08-27",
+     "title": "Financial Results for the Quarter Ended 30 June 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "281783"
     }
    ]
   },
