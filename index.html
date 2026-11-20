@@ -690,7 +690,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.85</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.86</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1810,7 +1810,7 @@ async function tpLoadLots(){
     const num=v=>{const n=parseFloat(String(v==null?'':v).replace(/,/g,''));return isNaN(n)?0:n;};
     const mon={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
     const pd=x=>{const m=String(x||'').trim().match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);if(!m)return 0;let y=+m[3];if(y<100)y+=2000;return new Date(y,mon[m[2].toLowerCase()],+m[1]).getTime();};
-    const tr=rows.slice(1).map(r=>({d:pd(r[ci.d]),t:String(r[ci.t]||'').trim(),s:String(r[ci.s]||'').trim().toUpperCase(),u:num(r[ci.u]),p:num(r[ci.p])})).filter(x=>(x.t==='Buy'||x.t==='Sell')&&x.s&&x.u>0&&x.p>0).sort((a,b)=>a.d-b.d);
+    const tr=rows.slice(1).map(r=>({d:pd(r[ci.d]),t:String(r[ci.t]||'').trim(),s:String(r[ci.s]||'').trim().toUpperCase(),u:num(r[ci.u]),p:num(r[ci.p])})).filter(x=>(x.t==='Buy'||x.t==='Sell')&&x.s&&x.u>0&&x.p>0);
     const lots={};
     tr.forEach(x=>{
       const L=lots[x.s]=lots[x.s]||[];
