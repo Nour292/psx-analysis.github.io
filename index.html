@@ -690,7 +690,7 @@ body{ font-family:var(--font); background:var(--bg); color:var(--text); min-heig
         </select>
         <button class="btn btn-ghost" style="font-size:12px" onclick="loadWeekFromPicker('')" title="Back to current data">↩ Current</button>
         <button class="btn btn-primary" onclick="runWeekly()">▶ Refresh</button>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.86</span>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">v4.87</span>
       </div>
     </div>
     <div id="weekBanner" style="display:none;margin-bottom:10px;padding:7px 14px;background:var(--accent-dim);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);font-family:var(--mono);border:1px solid var(--border2)"></div>
@@ -1803,21 +1803,15 @@ function tpUserName(){try{return sessionStorage.getItem('psx_user')||localStorag
 async function tpLoadLots(){
   _tpLots={};const u=tpUserName();if(!u)return;
   try{
-    const r=await fetch(gsUrl(u+'-stock'));if(!r.ok)return;
+    const r=await fetch(gsUrl(u+'-Portfolio'));if(!r.ok)return;
     const rows=(await r.json()).values||[];const h=(rows[0]||[]).map(x=>String(x||'').trim().toLowerCase());
-    const ci={d:h.indexOf('date'),t:h.indexOf('type'),s:h.indexOf('stock'),u:h.indexOf('units'),p:h.indexOf('price / share')};
-    if(Object.values(ci).some(v=>v<0))return;
+    const si=h.indexOf('stock'),ui=h.indexOf('units'),ai=h.indexOf('avg cost');
+    if(si<0||ui<0||ai<0)return;
     const num=v=>{const n=parseFloat(String(v==null?'':v).replace(/,/g,''));return isNaN(n)?0:n;};
-    const mon={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
-    const pd=x=>{const m=String(x||'').trim().match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);if(!m)return 0;let y=+m[3];if(y<100)y+=2000;return new Date(y,mon[m[2].toLowerCase()],+m[1]).getTime();};
-    const tr=rows.slice(1).map(r=>({d:pd(r[ci.d]),t:String(r[ci.t]||'').trim(),s:String(r[ci.s]||'').trim().toUpperCase(),u:num(r[ci.u]),p:num(r[ci.p])})).filter(x=>(x.t==='Buy'||x.t==='Sell')&&x.s&&x.u>0&&x.p>0);
-    const lots={};
-    tr.forEach(x=>{
-      const L=lots[x.s]=lots[x.s]||[];
-      if(x.t==='Buy')L.push({d:x.d,p:x.p,u:x.u});
-      else{let need=x.u;while(need>0.5&&L.length){const f=L[0],take=Math.min(need,f.u);f.u-=take;need-=take;if(f.u<=0.5)L.shift();}}
+    rows.slice(1).forEach(r=>{
+      const sym=String(r[si]||'').trim().toUpperCase(),units=num(r[ui]),avg=Math.abs(num(r[ai]));
+      if(sym&&units>0.5&&avg>0)_tpLots[sym]=[{u:units,p:avg,d:0}];
     });
-    Object.keys(lots).forEach(k=>{const L=lots[k].filter(l=>l.u>0.5);if(L.length)_tpLots[k]=L;});
   }catch(e){_tpLots={};}
 }
 function tpHoldInfo(sym,price){
