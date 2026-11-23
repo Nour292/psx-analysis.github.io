@@ -1,193 +1,7 @@
 {
- "updated": "2026-11-20T19:21:33Z",
+ "updated": "2026-11-23T15:03:03Z",
  "days": 90,
  "rows": [
-  {
-   "symbol": "AGP",
-   "quarter": {
-    "label": "Q3 2026",
-    "pat": 314611.0,
-    "prev": 671271.0,
-    "change": -53.1
-   },
-   "flagged": 9,
-   "items": [
-    {
-     "date": "2026-10-30",
-     "title": "FINAL REPORT ON THE PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "288184"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Financial Results for the Quarter Ended September 30, 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "287791"
-    },
-    {
-     "date": "2026-10-29",
-     "title": "Board Meeting In Progress",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "287728"
-    },
-    {
-     "date": "2026-10-22",
-     "title": "BOARD MEETING",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "286536"
-    },
-    {
-     "date": "2026-10-20",
-     "title": "COMPLETION OF PURCHASE PERIOD FOR BUY-BACK OF SHARES BY AGP LIMITED",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "286210"
-    },
-    {
-     "date": "2026-10-19",
-     "title": "INTIMATION OF PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "285930"
-    },
-    {
-     "date": "2026-10-16",
-     "title": "INTIMATION OF PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "285787"
-    },
-    {
-     "date": "2026-10-15",
-     "title": "INTIMATION OF PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "285709"
-    },
-    {
-     "date": "2026-08-24",
-     "title": "Financial Results for the Half Year Ended June 30, 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "281567"
-    }
-   ]
-  },
-  {
-   "symbol": "BERG",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 67366.0,
-    "prev": 69299.0,
-    "change": -2.8
-   },
-   "flagged": 9,
-   "items": [
-    {
-     "date": "2026-11-13",
-     "title": "Notice of Corporate Briefing Session",
-     "flags": [],
-     "doc": "289194"
-    },
-    {
-     "date": "2026-11-04",
-     "title": "Credit Of Final Cash Dividend",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "288564"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "APPOINTMENT OF CHAIRMAN AND CHIEF EXECUTIVE OFFICER OF THE COMPANY",
-     "flags": [
-      "Management"
-     ],
-     "doc": "288241"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Financial Result for the Quarter Ended 30 September 2026",
-     "flags": [],
-     "doc": "288021"
-    },
-    {
-     "date": "2026-10-23",
-     "title": "Board Meetings",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "286686"
-    },
-    {
-     "date": "2026-10-23",
-     "title": "Extracts of Annual General Meeting",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "286683"
-    },
-    {
-     "date": "2026-10-20",
-     "title": "WITHDRAWAL OF CANDIDATE FROM ELECTION OF DIRECTORS",
-     "flags": [],
-     "doc": "286080"
-    },
-    {
-     "date": "2026-10-16",
-     "title": "Notice under section 159 (4) and postal ballot paper for the annual general meeting (AGM) scheduled to be held on october 23, 2026.",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "285843"
-    },
-    {
-     "date": "2026-10-02",
-     "title": "Notice of Annual General Meeting",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "284222"
-    },
-    {
-     "date": "2026-09-23",
-     "title": "Financial Results for the Year Ended 2026-06-30",
-     "flags": [
-      "Results"
-     ],
-     "doc": "283310"
-    },
-    {
-     "date": "2026-09-23",
-     "title": "APPOINTMENT OF DIRECTOR TO FILL THE CASUAL VACANCY",
-     "flags": [
-      "Management"
-     ],
-     "doc": "283292"
-    },
-    {
-     "date": "2026-09-15",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "282733"
-    }
-   ]
-  },
   {
    "symbol": "KOHTM",
    "quarter": {
@@ -295,6 +109,14 @@
    "flagged": 9,
    "items": [
     {
+     "date": "2026-11-23",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": "289729"
+    },
+    {
      "date": "2026-11-19",
      "title": "Credit of 1st Interim Cash Dividend D-43",
      "flags": [
@@ -317,14 +139,6 @@
       "Dividend"
      ],
      "doc": "288747"
-    },
-    {
-     "date": "2026-11-05",
-     "title": "PRIOR PUBLICATION - CREDIT OF FINAL CASH DIVIDEND - D-42",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "288675"
     },
     {
      "date": "2026-10-28",
@@ -652,6 +466,182 @@
    ]
   },
   {
+   "symbol": "AGP",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 314611.0,
+    "prev": 671271.0,
+    "change": -53.1
+   },
+   "flagged": 8,
+   "items": [
+    {
+     "date": "2026-10-30",
+     "title": "FINAL REPORT ON THE PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288184"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Financial Results for the Quarter Ended September 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287791"
+    },
+    {
+     "date": "2026-10-29",
+     "title": "Board Meeting In Progress",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "287728"
+    },
+    {
+     "date": "2026-10-22",
+     "title": "BOARD MEETING",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286536"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "COMPLETION OF PURCHASE PERIOD FOR BUY-BACK OF SHARES BY AGP LIMITED",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "286210"
+    },
+    {
+     "date": "2026-10-19",
+     "title": "INTIMATION OF PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "285930"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "INTIMATION OF PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "285787"
+    },
+    {
+     "date": "2026-10-15",
+     "title": "INTIMATION OF PURCHASE / BUY-BACK OF SHARES BY AGP LIMITED",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "285709"
+    }
+   ]
+  },
+  {
+   "symbol": "BERG",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 67366.0,
+    "prev": 69299.0,
+    "change": -2.8
+   },
+   "flagged": 8,
+   "items": [
+    {
+     "date": "2026-11-23",
+     "title": "Video Recording Of Corporate Briefing Session 2026",
+     "flags": [],
+     "doc": ""
+    },
+    {
+     "date": "2026-11-13",
+     "title": "Notice of Corporate Briefing Session",
+     "flags": [],
+     "doc": "289194"
+    },
+    {
+     "date": "2026-11-04",
+     "title": "Credit Of Final Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "288564"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "APPOINTMENT OF CHAIRMAN AND CHIEF EXECUTIVE OFFICER OF THE COMPANY",
+     "flags": [
+      "Management"
+     ],
+     "doc": "288241"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Financial Result for the Quarter Ended 30 September 2026",
+     "flags": [],
+     "doc": "288021"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Board Meetings",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "286686"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "Extracts of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "286683"
+    },
+    {
+     "date": "2026-10-20",
+     "title": "WITHDRAWAL OF CANDIDATE FROM ELECTION OF DIRECTORS",
+     "flags": [],
+     "doc": "286080"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Notice under section 159 (4) and postal ballot paper for the annual general meeting (AGM) scheduled to be held on october 23, 2026.",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "285843"
+    },
+    {
+     "date": "2026-10-02",
+     "title": "Notice of Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "284222"
+    },
+    {
+     "date": "2026-09-23",
+     "title": "Financial Results for the Year Ended 2026-06-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": "283310"
+    },
+    {
+     "date": "2026-09-15",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "282733"
+    }
+   ]
+  },
+  {
    "symbol": "IPAK",
    "quarter": {
     "label": "Q1 2027",
@@ -885,6 +875,12 @@
    },
    "flagged": 6,
    "items": [
+    {
+     "date": "2026-11-23",
+     "title": "Arif Habib Corporation Limited - Notice of Corporate Briefing Session",
+     "flags": [],
+     "doc": "289736"
+    },
     {
      "date": "2026-11-04",
      "title": "Credit of Final Cash Dividend",
