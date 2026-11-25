@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-24T21:02:33Z",
+ "updated": "2026-11-25T14:42:11Z",
  "days": 90,
  "rows": [
   {
@@ -1250,6 +1250,50 @@
    ]
   },
   {
+   "symbol": "HCAR",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 2485650.0,
+    "prev": 828439.0,
+    "change": 200.0
+   },
+   "flagged": 4,
+   "items": [
+    {
+     "date": "2026-11-25",
+     "title": "Financial Results for the Quarter Ended September 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "289917"
+    },
+    {
+     "date": "2026-11-24",
+     "title": "Board Meeting in Progress",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "289897"
+    },
+    {
+     "date": "2026-11-12",
+     "title": "Board of Directors Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "289051"
+    },
+    {
+     "date": "2026-10-01",
+     "title": "Material Information",
+     "flags": [
+      "Material"
+     ],
+     "doc": "284160"
+    }
+   ]
+  },
+  {
    "symbol": "GRR",
    "quarter": {
     "label": "Q1 2027",
@@ -1288,42 +1332,6 @@
       "Dividend"
      ],
      "doc": "285913"
-    }
-   ]
-  },
-  {
-   "symbol": "HCAR",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 2485650.0,
-    "prev": 828439.0,
-    "change": 200.0
-   },
-   "flagged": 3,
-   "items": [
-    {
-     "date": "2026-11-24",
-     "title": "Board Meeting in Progress",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "289897"
-    },
-    {
-     "date": "2026-11-12",
-     "title": "Board of Directors Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "289051"
-    },
-    {
-     "date": "2026-10-01",
-     "title": "Material Information",
-     "flags": [
-      "Material"
-     ],
-     "doc": "284160"
     }
    ]
   }
