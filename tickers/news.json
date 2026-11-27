@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-26T20:02:14Z",
+ "updated": "2026-11-27T14:03:41Z",
  "days": 90,
  "rows": [
   {
@@ -194,96 +194,6 @@
       "Board meeting"
      ],
      "doc": ""
-    }
-   ]
-  },
-  {
-   "symbol": "NATF",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 916361.0,
-    "prev": 1046797.0,
-    "change": -12.5
-   },
-   "flagged": 9,
-   "items": [
-    {
-     "date": "2026-11-23",
-     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
-     "flags": [
-      "Insider"
-     ],
-     "doc": "289729"
-    },
-    {
-     "date": "2026-11-19",
-     "title": "Credit of 1st Interim Cash Dividend D-43",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "289494"
-    },
-    {
-     "date": "2026-11-18",
-     "title": "PRIOR PUBLICATION CREDIT OF 1ST INTERIM CASH DIVIDEND-D-43",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "289400"
-    },
-    {
-     "date": "2026-11-06",
-     "title": "Credit of Final Cash Dividend (D-42)",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "288747"
-    },
-    {
-     "date": "2026-10-28",
-     "title": "General Meetings / Briefing Sessions",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "287412"
-    },
-    {
-     "date": "2026-10-27",
-     "title": "General Meetings / Briefing Sessions",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "286992"
-    },
-    {
-     "date": "2026-10-26",
-     "title": "Financial Results for the Quarter Ended September 30, 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "286926"
-    },
-    {
-     "date": "2026-10-23",
-     "title": "CORPORATE BRIEFING SESSION FOR THE YEAR ENDED JUNE 30, 2026",
-     "flags": [],
-     "doc": "286650"
-    },
-    {
-     "date": "2026-10-16",
-     "title": "BOARD MEETING",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "285846"
-    },
-    {
-     "date": "2026-09-18",
-     "title": "Financial Results for the Year Ended June 30, 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "282980"
     }
    ]
   },
@@ -710,6 +620,92 @@
    ]
   },
   {
+   "symbol": "NATF",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 916361.0,
+    "prev": 1046797.0,
+    "change": -12.5
+   },
+   "flagged": 7,
+   "items": [
+    {
+     "date": "2026-11-27",
+     "title": "Submission of Mandatory Shariah Disclosure",
+     "flags": [],
+     "doc": "290271"
+    },
+    {
+     "date": "2026-11-27",
+     "title": "Notice of Closure of Share Transfer Books For Change of Face Value",
+     "flags": [],
+     "doc": "290260"
+    },
+    {
+     "date": "2026-11-27",
+     "title": "BOOK CLOSURE OF SUBDIVISION OF SHARES - NATIONAL FOODS LIMITED",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "290210"
+    },
+    {
+     "date": "2026-11-23",
+     "title": "Disclosure of Interest by a Director CEO, or Executive of a listed company and their Spouses and the Substantial Shareholders u/c 5.6.1.(d) of PSX Regulations",
+     "flags": [
+      "Insider"
+     ],
+     "doc": "289729"
+    },
+    {
+     "date": "2026-10-28",
+     "title": "General Meetings / Briefing Sessions",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "287412"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "General Meetings / Briefing Sessions",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "286992"
+    },
+    {
+     "date": "2026-10-26",
+     "title": "Financial Results for the Quarter Ended September 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "286926"
+    },
+    {
+     "date": "2026-10-23",
+     "title": "CORPORATE BRIEFING SESSION FOR THE YEAR ENDED JUNE 30, 2026",
+     "flags": [],
+     "doc": "286650"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "BOARD MEETING",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285846"
+    },
+    {
+     "date": "2026-09-18",
+     "title": "Financial Results for the Year Ended June 30, 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "282980"
+    }
+   ]
+  },
+  {
    "symbol": "UBL",
    "quarter": {
     "label": "Q3 2026",
@@ -850,6 +846,72 @@
    ]
   },
   {
+   "symbol": "FCCL",
+   "quarter": {
+    "label": "Q1 2027",
+    "pat": 4958143.0,
+    "prev": 3286437.0,
+    "change": 50.9
+   },
+   "flagged": 6,
+   "items": [
+    {
+     "date": "2026-11-27",
+     "title": "Mandatory Shariah Disclosure for the Year Ended 30 June 2026",
+     "flags": [],
+     "doc": "290281"
+    },
+    {
+     "date": "2026-11-27",
+     "title": "Change of Director of Fauji Cement Company Limited (FCCL)",
+     "flags": [
+      "Management"
+     ],
+     "doc": "290233"
+    },
+    {
+     "date": "2026-11-10",
+     "title": "MATERIAL INFORMATION - EARLY REPAYMENT OF LONG-TERM LOAN",
+     "flags": [
+      "Material"
+     ],
+     "doc": "288897"
+    },
+    {
+     "date": "2026-10-27",
+     "title": "Financial Results for the 1st Quarter Ended 30th September 2026",
+     "flags": [
+      "Results"
+     ],
+     "doc": "287026"
+    },
+    {
+     "date": "2026-10-07",
+     "title": "Credit of Final Cash Dividend",
+     "flags": [
+      "Dividend"
+     ],
+     "doc": "285013"
+    },
+    {
+     "date": "2026-10-05",
+     "title": "173 Board Meeting of FCCL - 27 October 2026",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "284522"
+    },
+    {
+     "date": "2026-09-07",
+     "title": "Notice of 34th Annual General Meeting",
+     "flags": [
+      "Meeting"
+     ],
+     "doc": "282315"
+    }
+   ]
+  },
+  {
    "symbol": "LUCK",
    "quarter": {
     "label": "Q1 2027",
@@ -926,6 +988,12 @@
    "flagged": 6,
    "items": [
     {
+     "date": "2026-11-27",
+     "title": "Right Share Subscription Amount By Director and Substantial Sharholders",
+     "flags": [],
+     "doc": ""
+    },
+    {
      "date": "2026-11-26",
      "title": "Credit of Unpaid Rights in CDS and Intimation to Shareholders",
      "flags": [],
@@ -942,12 +1010,6 @@
      "title": "ZAL | Zarea Limited -NCCPL Notice",
      "flags": [],
      "doc": ""
-    },
-    {
-     "date": "2026-11-19",
-     "title": "Declaration of Letter of Right of Zarea Limited as CDS Eligible Security",
-     "flags": [],
-     "doc": "289467"
     },
     {
      "date": "2026-11-19",
@@ -996,134 +1058,6 @@
       "Board meeting"
      ],
      "doc": "283303"
-    }
-   ]
-  },
-  {
-   "symbol": "BOP",
-   "quarter": {
-    "label": "Q3 2026",
-    "pat": 4997190.0,
-    "prev": 5145137.0,
-    "change": -2.9
-   },
-   "flagged": 5,
-   "items": [
-    {
-     "date": "2026-11-20",
-     "title": "ISSUANCE OF SHARES TO GOVERNMENT OF THE PUNJAB (GoPb), FIRST TRANCHE",
-     "flags": [],
-     "doc": "289553"
-    },
-    {
-     "date": "2026-11-17",
-     "title": "RECEIPT OF FIRST TRANCHE - EQUITY INJECTION BY GOVERNMENT OF THE PUNJAB (GoPb)",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "289341"
-    },
-    {
-     "date": "2026-11-16",
-     "title": "EXTENSION IN TENURE OF MR. ZAFAR MASUD, PRESIDENT & CEO, THE BANK OF PUNJAB",
-     "flags": [],
-     "doc": "289305"
-    },
-    {
-     "date": "2026-10-30",
-     "title": "Receipt of Regulatory Approvals for Phased Equity Injection by Government of Punjab (GoPb)",
-     "flags": [
-      "Corporate action"
-     ],
-     "doc": "288277"
-    },
-    {
-     "date": "2026-10-29",
-     "title": "BOP | The Bank of Punjab Application for Further Issue of Shares by way of Other than Right",
-     "flags": [],
-     "doc": ""
-    },
-    {
-     "date": "2026-10-26",
-     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-09-30",
-     "flags": [
-      "Results"
-     ],
-     "doc": "286909"
-    },
-    {
-     "date": "2026-10-16",
-     "title": "Board Meeting",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "285845"
-    },
-    {
-     "date": "2026-08-28",
-     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-06-30",
-     "flags": [
-      "Results"
-     ],
-     "doc": "281916"
-    }
-   ]
-  },
-  {
-   "symbol": "FCCL",
-   "quarter": {
-    "label": "Q1 2027",
-    "pat": 4958143.0,
-    "prev": 3286437.0,
-    "change": 50.9
-   },
-   "flagged": 5,
-   "items": [
-    {
-     "date": "2026-11-10",
-     "title": "MATERIAL INFORMATION - EARLY REPAYMENT OF LONG-TERM LOAN",
-     "flags": [
-      "Material"
-     ],
-     "doc": "288897"
-    },
-    {
-     "date": "2026-10-27",
-     "title": "Financial Results for the 1st Quarter Ended 30th September 2026",
-     "flags": [
-      "Results"
-     ],
-     "doc": "287026"
-    },
-    {
-     "date": "2026-10-07",
-     "title": "Credit of Final Cash Dividend",
-     "flags": [
-      "Dividend"
-     ],
-     "doc": "285013"
-    },
-    {
-     "date": "2026-10-05",
-     "title": "173 Board Meeting of FCCL - 27 October 2026",
-     "flags": [
-      "Board meeting"
-     ],
-     "doc": "284522"
-    },
-    {
-     "date": "2026-10-05",
-     "title": "Corporate Briefing Session",
-     "flags": [],
-     "doc": "284516"
-    },
-    {
-     "date": "2026-09-07",
-     "title": "Notice of 34th Annual General Meeting",
-     "flags": [
-      "Meeting"
-     ],
-     "doc": "282315"
     }
    ]
   },
@@ -1188,6 +1122,68 @@
       "Meeting"
      ],
      "doc": "282571"
+    }
+   ]
+  },
+  {
+   "symbol": "BOP",
+   "quarter": {
+    "label": "Q3 2026",
+    "pat": 4997190.0,
+    "prev": 5145137.0,
+    "change": -2.9
+   },
+   "flagged": 4,
+   "items": [
+    {
+     "date": "2026-11-20",
+     "title": "ISSUANCE OF SHARES TO GOVERNMENT OF THE PUNJAB (GoPb), FIRST TRANCHE",
+     "flags": [],
+     "doc": "289553"
+    },
+    {
+     "date": "2026-11-17",
+     "title": "RECEIPT OF FIRST TRANCHE - EQUITY INJECTION BY GOVERNMENT OF THE PUNJAB (GoPb)",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "289341"
+    },
+    {
+     "date": "2026-11-16",
+     "title": "EXTENSION IN TENURE OF MR. ZAFAR MASUD, PRESIDENT & CEO, THE BANK OF PUNJAB",
+     "flags": [],
+     "doc": "289305"
+    },
+    {
+     "date": "2026-10-30",
+     "title": "Receipt of Regulatory Approvals for Phased Equity Injection by Government of Punjab (GoPb)",
+     "flags": [
+      "Corporate action"
+     ],
+     "doc": "288277"
+    },
+    {
+     "date": "2026-10-29",
+     "title": "BOP | The Bank of Punjab Application for Further Issue of Shares by way of Other than Right",
+     "flags": [],
+     "doc": ""
+    },
+    {
+     "date": "2026-10-26",
+     "title": "FINANCIAL RESULTS FOR THE QUARTER ENDED 2026-09-30",
+     "flags": [
+      "Results"
+     ],
+     "doc": "286909"
+    },
+    {
+     "date": "2026-10-16",
+     "title": "Board Meeting",
+     "flags": [
+      "Board meeting"
+     ],
+     "doc": "285845"
     }
    ]
   },
